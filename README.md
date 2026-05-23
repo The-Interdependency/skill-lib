@@ -8,7 +8,7 @@ agents can use the same module-build doctrine inside each repository.
 
 ## Corrected handoff status
 
-create The-Interdependency/skill-lib, seed it from a0/skill-lib, then propagate repo-local .agents/skills copies organization-wide
+Create The-Interdependency/skill-lib, seed it from a0/skill-lib, then propagate repo-local .agents/skills copies organization-wide.
 
 ## PR 0 — create canonical org skill repo
 
@@ -39,4 +39,4 @@ Install into each target repo:
 - `.agents/skills/README.md`
 
 Required PR sentence:
-`This PR installs the canonical organization-wide skill library repo-locally for agents. It does not require retroactive MODULE_BUILD coverage for existing modules.`
+This PR installs the canonical organization-wide skill library repo-locally for agents. It does not require retroactive MODULE_BUILD coverage for existing modules.

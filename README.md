@@ -19,7 +19,7 @@ New repo:
 `The-Interdependency/skill-lib`
 
 Seed source:
-`The-Interdependency/a0/skill-lib`
+`The-Interdependency/a0` repository, `skill-lib/` directory
 
 Copy from `a0`:
 - `README.md`
@@ -39,4 +39,4 @@ Install into each target repo:
 - `.agents/skills/README.md`
 
 Required PR sentence:
-`This PR installs the canonical organization skill library repo-locally for agents. It does not require retroactive MODULE_BUILD coverage for existing modules.`
+`This PR installs the canonical organization-wide skill library repo-locally for agents. It does not require retroactive MODULE_BUILD coverage for existing modules.`

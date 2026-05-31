@@ -20,6 +20,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `msdmd/` — Module Self-Declared Metadata Markdown
 * `test-build/` — contract-test metadata blocks
 * `meta-module-build/` — metadata-first module scaffolding
+* `visitor-intro/` — onboarding tour for newcomers landing at any org repo
 
 ## Target repos
 

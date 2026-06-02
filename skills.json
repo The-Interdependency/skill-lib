@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "repo": "The-Interdependency/skill-lib",
+  "install_path": ".agents/skills/<skill-name>/",
+  "skills": [
+    {
+      "name": "msdmd",
+      "path": "msdmd/SKILL.md",
+      "kind": "metadata-block",
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for test-build, meta-module-build, and future msdmd applications."
+    },
+    {
+      "name": "test-build",
+      "path": "test-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Self-declaring contract tests built on msdmd. Each module owns the tests that protect its contracts via a CONTRACTS block; a runner discovers and executes them and reports per-contract status plus visible coverage gaps."
+    },
+    {
+      "name": "meta-module-build",
+      "path": "meta-module-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Metadata-first module build skill built on msdmd. Use when turning a capability idea into a bounded module manifest, file plan, public/internal surface, permission boundary, tests, docs, rollout, and rollback notes before implementation."
+    },
+    {
+      "name": "visitor-intro",
+      "path": "visitor-intro/SKILL.md",
+      "kind": "procedural",
+      "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
+    }
+  ]
+}

@@ -4,9 +4,16 @@ A portable library of agent skills built on **msdmd** — Module Self-
 Declared Metadata Markdown — a language-agnostic convention where each
 module declares its own structured metadata in a fenced comment block.
 
-Licensed under Apache 2.0. Drop the directory into any repo's `.skills/`,
-`.local/skills/`, or wherever your agent looks for skills, and the
-contents work as-is.
+Licensed under Apache 2.0. The canonical install path inside a
+consuming repo is `.agents/skills/<skill-name>/`; every target repo in
+The Interdependency follows this convention (see
+[`ORG_DISTRIBUTION.md`](ORG_DISTRIBUTION.md)). Other paths like
+`.skills/` or `.local/skills/` also work as long as your agent harness
+walks them.
+
+Agents consuming this lib should start at
+[`AGENTS.md`](AGENTS.md); a machine-readable index of skills is at
+[`skills.json`](skills.json).
 
 ## What's inside
 
@@ -15,6 +22,7 @@ contents work as-is.
 | [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every other skill in this lib depends on it. |
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract test runner. Each module declares its test contracts in a `# === CONTRACTS ===` block; the runner walks the tree, parses, runs them, and reports per-contract status plus visible coverage gaps. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
+| [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 
 ## The core idea
 
@@ -52,8 +60,11 @@ authoritative spec.
 
 ## Extending the lib
 
-Adding a new application of msdmd is a small skill on top of the
-foundation:
+Skills come in two kinds. Pick the right one for what you're adding.
+
+**Metadata-block skills** apply the `msdmd` convention to a new block
+name (`test-build`, `meta-module-build` are the existing examples).
+To add one:
 
 1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`).
 2. Decide the field schema (which fields are required, which optional).
@@ -62,6 +73,19 @@ foundation:
 4. Author a `SKILL.md` that documents the convention and the executor.
 
 `test-build/` is the canonical worked example.
+
+**Procedural skills** define an agent behaviour without an `msdmd`
+block (`visitor-intro` is the existing example). To add one:
+
+1. Define when the skill loads (the `description` field in the YAML
+   frontmatter is what your harness will read).
+2. State the doctrine the skill enforces and the output shape it
+   produces.
+3. Author the `SKILL.md` as a self-contained behavioural spec — no
+   block schema or executor is required.
+
+Whichever kind you add, register it in [`skills.json`](skills.json)
+and link it from the table above.
 
 ## Versioning and stability
 

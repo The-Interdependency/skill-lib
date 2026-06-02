@@ -94,7 +94,7 @@ Name these only as needed. Do not lecture.
   tensor; the Psi ring's filesystem companion.
 - **msdmd** — Module Self-Declared Metadata Markdown. The org's
   convention for keeping module contracts in the same file as the code.
-  Defined in `skill-lib/msdmd/SKILL.md`.
+  Defined in `../msdmd/SKILL.md`.
 - **The Interdependent Way** — The founding sociopolitical document.
   `a0/interdependent_way.md`. Long, poetic, and load-bearing for the
   org's framing. Quote sparingly; link instead.
@@ -112,7 +112,7 @@ start". Pick the first item to match the repo they are in.
    channels). Long; skim.
 5. `a0/interdependent_way.md` — founding philosophy. Optional but
    recommended before any contribution.
-6. `skill-lib/README.md` — the doctrinal toolkit agents use here.
+6. `../README.md` — the doctrinal toolkit agents use here.
 
 ## Tailoring by landing repo
 

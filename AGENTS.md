@@ -33,7 +33,8 @@ the skill. Treat it as the public contract.
 
 ## How to load a skill
 
-1. Walk the repo root for directories containing `SKILL.md`.
+1. Walk the configured skills root (commonly `.agents/skills/` in
+   consuming repos) for directories containing `SKILL.md`.
 2. Parse the YAML frontmatter; index by `name` and `description`.
 3. When a user request matches the triggers in a `description`, read
    that skill's full `SKILL.md` before acting.

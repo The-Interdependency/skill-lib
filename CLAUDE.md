@@ -34,6 +34,7 @@ README.md              # human-facing overview, what's-inside table, block synta
 AGENTS.md              # agent-facing entry point (how to load/install skills)
 ORG_DISTRIBUTION.md    # canonical-source rule, target-repo list, propagation contract
 skills.json            # machine-readable skill index (version, install_path, skills[])
+CLAUDE.md              # this file — AI-assistant guidance and repo context
 LICENSE                # Apache 2.0
 <skill-name>/SKILL.md  # one directory per skill, each with a required SKILL.md
 ```

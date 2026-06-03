@@ -75,7 +75,27 @@ Flags: `--root <dir>` (default `.`), `--file <doc>` (default `CLAUDE.md`),
    markers in place; never hand-edit between them.
 3. Add a CI step that runs `--check` (a tiny `manifest-check.yml` workflow, or a
    step in the existing one) so a stale block fails the build.
-4. After any change to `pyproject.toml` / version / deps / layout, run `--write`
+4. **Pin the vendored copy (drift gate).** Vendoring duplicates this file, so
+   guard the duplication: record its checksum and verify it in CI, so a repo's
+   copy can never be silently forked.
+
+   ```bash
+   # at vendor time, from the repo root:
+   ( cd .agents/skills/manifest && sha256sum generate.py > generate.py.sha256 )
+   ```
+   ```yaml
+   # in the CI job, before the --check step:
+   - name: Vendored generate.py matches skill-lib (no local fork)
+     run: cd .agents/skills/manifest && sha256sum -c generate.py.sha256
+   ```
+
+   The checksum is the same one `skill-lib@<recorded-sha>/manifest/generate.py`
+   produces, so a reviewer can verify the copy is a pristine artifact of that
+   commit. The only legal way to change a repo's generator is to change it here
+   and re-vendor (which updates the SHA + checksum together). Catching the *other*
+   direction — copies falling behind a newer skill-lib — is a skill-lib-side push
+   concern (mirror/propagation), not the consumer gate.
+5. After any change to `pyproject.toml` / version / deps / layout, run `--write`
    and commit the refreshed block — the same discipline as a lockfile.
 
 ## Contract & boundaries

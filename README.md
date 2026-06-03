@@ -23,6 +23,7 @@ Agents consuming this lib should start at
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract test runner. Each module declares its test contracts in a `# === CONTRACTS ===` block; the runner walks the tree, parses, runs them, and reports per-contract status plus visible coverage gaps. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
+| [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. Keeps the factual half of a doc generated, not hand-typed. |
 
 ## The core idea
 

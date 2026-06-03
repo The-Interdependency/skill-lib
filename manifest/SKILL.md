@@ -68,8 +68,9 @@ Flags: `--root <dir>` (default `.`), `--file <doc>` (default `CLAUDE.md`),
 ## Wiring a repo (the propagation recipe)
 
 1. Vendor `generate.py` to `.agents/skills/manifest/generate.py` (verbatim copy
-   from this canonical source; cite the source commit SHA in a local
-   `.agents/skills/README.md`, per `ORG_DISTRIBUTION.md`).
+   from this canonical source). Record the source commit SHA in the local
+   `.agents/skills/README.md` note, and cite this repo + SHA in the propagation
+   PR (the PR-citation requirement is in `ORG_DISTRIBUTION.md`).
 2. Run `--write` once to insert the block near the top of `CLAUDE.md`. Leave the
    markers in place; never hand-edit between them.
 3. Add a CI step that runs `--check` (a tiny `manifest-check.yml` workflow, or a

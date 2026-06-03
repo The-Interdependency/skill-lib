@@ -20,16 +20,18 @@ the build when it drifts from the code.
 It only derives facts it can read with confidence; anything genuinely absent
 renders as `hmmm` (a visible gap to fix at the source), never a guess. Fuzzy
 inference (e.g. the exact test command) is intentionally left to hand-authored
-prose rather than risk emitting a wrong "fact".
+prose rather than risk emitting a wrong "fact". If the pyproject itself is
+missing or unparseable, the tool fails loudly rather than emit an all-`hmmm`
+block.
 
 Stdlib only (msdmd ethos). Requires Python 3.11+ to run because it uses
 `tomllib`; it is a dev/CI tool and is never shipped inside any package.
 
-Usage:
+Usage (exactly one mode is required):
     python generate.py --print                       # show the block, no writes
     python generate.py --write                       # splice/refresh the block
     python generate.py --check                       # exit 1 if the block is stale
-    python generate.py --root . --file CLAUDE.md --pyproject backend/pyproject.toml
+    python generate.py --root . --file CLAUDE.md --pyproject backend/pyproject.toml --write
 """
 from __future__ import annotations
 
@@ -45,11 +47,6 @@ except ModuleNotFoundError:  # Python < 3.11
 
 BEGIN = "<!-- BEGIN GENERATED:manifest -->"
 END = "<!-- END GENERATED:manifest -->"
-NOTE = (
-    "<!-- Generated from pyproject + repo tree by "
-    ".agents/skills/manifest/generate.py — DO NOT EDIT BY HAND. "
-    "Refresh with `python .agents/skills/manifest/generate.py --write`. -->"
-)
 HMMM = "hmmm"  # never guess an unknown fact; surface it as a visible gap
 
 # Directories that are noise rather than structure.
@@ -60,14 +57,32 @@ SKIP_DIRS = {
 }
 
 
+class ManifestError(Exception):
+    """Raised for unrecoverable conditions (unreadable source, broken markers)."""
+
+
+def _refresh_cmd(args: argparse.Namespace) -> str:
+    """The exact command to regenerate this block, including non-default args."""
+    parts = ["python .agents/skills/manifest/generate.py"]
+    if args.root != ".":
+        parts.append(f"--root {args.root}")
+    if args.file != "CLAUDE.md":
+        parts.append(f"--file {args.file}")
+    if args.pyproject != "pyproject.toml":
+        parts.append(f"--pyproject {args.pyproject}")
+    parts.append("--write")
+    return " ".join(parts)
+
+
 def _load_pyproject(path: Path) -> dict:
-    if tomllib is None or not path.exists():
-        return {}
+    """Parse pyproject; raise ManifestError if missing or invalid (never silent)."""
+    if not path.exists():
+        raise ManifestError(f"pyproject not found: {path}")
     try:
         with path.open("rb") as fh:
             return tomllib.load(fh)
-    except (OSError, tomllib.TOMLDecodeError):
-        return {}
+    except (OSError, tomllib.TOMLDecodeError) as exc:
+        raise ManifestError(f"could not parse {path}: {exc}") from exc
 
 
 def _top_dirs(root: Path) -> list[str]:
@@ -169,7 +184,12 @@ def _joined(items: list[str], code: bool = False, empty: str = "none") -> str:
     return ", ".join(f"`{_cell(i)}`" for i in items) if code else ", ".join(_cell(i) for i in items)
 
 
-def render(facts: dict) -> str:
+def render(facts: dict, refresh_cmd: str) -> str:
+    note = (
+        f"<!-- Generated from pyproject + repo tree by "
+        f".agents/skills/manifest/generate.py — DO NOT EDIT BY HAND. "
+        f"Refresh with `{refresh_cmd}`. -->"
+    )
     py = _scalar(facts["requires_python"])
     if facts["py_versions"]:
         py += f" (classifiers: {', '.join(facts['py_versions'])})"
@@ -191,7 +211,7 @@ def render(facts: dict) -> str:
         ("Top-level directories", " · ".join(f"`{d}`" for d in facts["dirs"]) or HMMM),
     ]
 
-    lines = [BEGIN, NOTE, "", "| Field | Value |", "|---|---|"]
+    lines = [BEGIN, note, "", "| Field | Value |", "|---|---|"]
     lines += [f"| {label} | {value} |" for label, value in rows]
     lines += [
         "",
@@ -203,11 +223,23 @@ def render(facts: dict) -> str:
 
 
 def splice(text: str, block: str) -> str:
-    """Replace an existing manifest block, or append one if none is present."""
-    if BEGIN in text and END in text:
+    """Replace an existing manifest block, or append one if none is present.
+
+    Fails loudly on a malformed doc (only one marker, or duplicates) so a broken
+    block is repaired rather than silently compounded by a second one.
+    """
+    n_begin, n_end = text.count(BEGIN), text.count(END)
+    if n_begin != n_end or n_begin > 1:
+        raise ManifestError(
+            f"malformed manifest markers in document ({n_begin}x BEGIN, {n_end}x END); "
+            "repair the file so it has exactly one matched pair (or none)."
+        )
+    if n_begin == 1:
         pre = text.split(BEGIN, 1)[0]
         post = text.split(END, 1)[1]
         return pre + block + post
+    if not text:
+        return block + "\n"
     sep = "" if text.endswith("\n") else "\n"
     return text + sep + "\n" + block + "\n"
 
@@ -217,18 +249,26 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--root", default=".", help="repo root (default: .)")
     ap.add_argument("--file", default="CLAUDE.md", help="doc to splice, relative to root")
     ap.add_argument("--pyproject", default="pyproject.toml", help="pyproject path, relative to root")
-    mode = ap.add_mutually_exclusive_group()
+    mode = ap.add_mutually_exclusive_group(required=True)
     mode.add_argument("--write", action="store_true", help="splice/refresh the block in place")
     mode.add_argument("--check", action="store_true", help="exit 1 if the block is stale")
     mode.add_argument("--print", dest="do_print", action="store_true", help="print the block to stdout")
     args = ap.parse_args(argv)
 
-    if tomllib is None and not args.do_print:
+    if tomllib is None:
         sys.stderr.write("[manifest] needs Python 3.11+ (tomllib) to read pyproject.toml\n")
         return 2
 
     root = Path(args.root).resolve()
-    block = render(derive_facts(root, args.pyproject))
+    if not root.is_dir():
+        sys.stderr.write(f"[manifest] --root is not a directory: {root}\n")
+        return 2
+    refresh_cmd = _refresh_cmd(args)
+    try:
+        block = render(derive_facts(root, args.pyproject), refresh_cmd)
+    except ManifestError as exc:
+        sys.stderr.write(f"[manifest] {exc}\n")
+        return 2
 
     if args.do_print:
         print(block)
@@ -236,13 +276,17 @@ def main(argv: list[str] | None = None) -> int:
 
     doc = root / args.file
     current = doc.read_text(encoding="utf-8") if doc.exists() else ""
-    updated = splice(current, block)
+    try:
+        updated = splice(current, block)
+    except ManifestError as exc:
+        sys.stderr.write(f"[manifest] {exc}\n")
+        return 2
 
     if args.check:
         if current != updated:
             sys.stderr.write(
                 f"[manifest] {args.file} manifest block is stale or missing.\n"
-                f"           Run: python .agents/skills/manifest/generate.py --write\n"
+                f"           Run: {refresh_cmd}\n"
             )
             return 1
         print(f"[manifest] {args.file} manifest block is up to date.")

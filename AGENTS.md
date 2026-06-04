@@ -38,8 +38,8 @@ the skill. Treat it as the public contract.
 2. Parse the YAML frontmatter; index by `name` and `description`.
 3. When a user request matches the triggers in a `description`, read
    that skill's full `SKILL.md` before acting.
-4. Some skills (currently `msdmd`, `test-build`, `meta-module-build`)
-   define metadata blocks that other modules declare inside their own
+4. Some skills (currently `msdmd`, `test-build`, `meta-module-build`,
+   `ratios`) define metadata blocks that other modules declare inside their own
    source files. Other skills (currently `visitor-intro`) are purely
    procedural and define no block.
 

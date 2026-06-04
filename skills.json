@@ -62,6 +62,13 @@
       "path": "visitor-intro/SKILL.md",
       "kind": "procedural",
       "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
+    },
+    {
+      "name": "manifest",
+      "path": "manifest/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Living-spec generator. Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from pyproject.toml + the file tree and splices them into a machine-owned marked block in CLAUDE.md, with a CI --check drift gate. Use to keep the factual half of a doc generated rather than hand-typed."
     }
   ]
 }

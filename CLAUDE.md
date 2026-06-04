@@ -46,6 +46,7 @@ Skills present:
 | `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
 | `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 
 ---
@@ -72,9 +73,9 @@ of the skill. Keep it specific and list the triggers explicitly — do not bury 
 ### Two kinds of skill
 
 - **Metadata-block skills** apply the msdmd convention to a named block (`CONTRACTS`,
-  `MODULE_BUILD`, …). They define a field schema, a thin executor that consumes parsed
+  `MODULE_BUILD`, `RATIOS`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
-  example. `msdmd` itself is the foundation.
+  example; `ratios/` defines self-verifying composition measurements. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
   they enforce and the output shape they produce. `visitor-intro/` is the example.
 

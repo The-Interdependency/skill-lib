@@ -22,6 +22,7 @@ Agents consuming this lib should start at
 | [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every other skill in this lib depends on it. |
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract test runner. Each module declares its test contracts in a `# === CONTRACTS ===` block; the runner walks the tree, parses, runs them, and reports per-contract status plus visible coverage gaps. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
+| [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks that a runner recomputes and checks for drift. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 
 ## The core idea
@@ -63,7 +64,7 @@ authoritative spec.
 Skills come in two kinds. Pick the right one for what you're adding.
 
 **Metadata-block skills** apply the `msdmd` convention to a new block
-name (`test-build`, `meta-module-build` are the existing examples).
+name (`test-build`, `meta-module-build`, `ratios` are the existing examples).
 To add one:
 
 1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`).

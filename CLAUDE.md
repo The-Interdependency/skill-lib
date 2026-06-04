@@ -44,8 +44,13 @@ Skills present:
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
 | `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
+| `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
+| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
+| `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 
 ---
@@ -71,12 +76,13 @@ of the skill. Keep it specific and list the triggers explicitly — do not bury 
 
 ### Two kinds of skill
 
-- **Metadata-block skills** apply the msdmd convention to a named block (`CONTRACTS`,
-  `MODULE_BUILD`, …). They define a field schema, a thin executor that consumes parsed
+- **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `CONTRACTS`,
+  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
-  example. `msdmd` itself is the foundation.
+  example; `doc-build/`, `cap-build/`, `risk-boundary-build/`, and `ratios/`
+  define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `visitor-intro/` is the example.
+  they enforce and the output shape they produce. `canon/` and `visitor-intro/` are the examples.
 
 ### The msdmd block syntax
 

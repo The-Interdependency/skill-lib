@@ -38,10 +38,11 @@ the skill. Treat it as the public contract.
 2. Parse the YAML frontmatter; index by `name` and `description`.
 3. When a user request matches the triggers in a `description`, read
    that skill's full `SKILL.md` before acting.
-4. Some skills (currently `msdmd`, `test-build`, `meta-module-build`)
-   define metadata blocks that other modules declare inside their own
-   source files. Other skills (currently `visitor-intro`) are purely
-   procedural and define no block.
+4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `test-build`,
+   `meta-module-build`, `risk-boundary-build`, and `ratios`) define metadata
+   blocks that other modules declare inside their own source files. Other
+   skills (currently `canon` and `visitor-intro`) are purely procedural and
+   define no block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.
@@ -72,6 +73,8 @@ propagate from here.
   metadata block declared via `msdmd`.
 - New module work in any repo should start with a `MODULE_BUILD`
   block; see `meta-module-build/SKILL.md`.
+- If you are deciding whether repo-local practice should become org doctrine,
+  load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
 - If you are an agent introducing a newcomer to the org, load
   `visitor-intro/SKILL.md` and follow its output rubric.
 

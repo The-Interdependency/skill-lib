@@ -1,6 +1,6 @@
 ---
 name: msdmd
-description: Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Other skills in this lib (test-build, doc-build, cap-build, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
+description: Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
 ---
 
 # msdmd — Module Self-Declared Metadata in Markdown
@@ -183,7 +183,9 @@ their own SKILL.md.
    executor's behavior, and at least one worked example.
 
 `test-build/` is the canonical reference application. Read its
-SKILL.md alongside this one to see the pattern fully realized.
+SKILL.md alongside this one to see the pattern fully realized; read
+`doc-build/`, `cap-build/`, `risk-boundary-build/`, and `ratios/` for
+additional applications over the same parser contract.
 
 ## Anti-patterns
 

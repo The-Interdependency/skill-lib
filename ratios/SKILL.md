@@ -8,7 +8,7 @@ description: Self-declaring module composition ratios built on msdmd. Each modul
 `ratios` is an application of [msdmd](../msdmd/SKILL.md). The foundational
 skill defines the comment-block convention, the universal parser, and the
 gap-reporting requirement; this skill applies the convention to a module's
-own composition ratios and ships an executor.
+own composition ratios and defines the executor contract.
 
 Read `msdmd/SKILL.md` first if you haven't — block syntax, the parser
 contract, and the visibility rules below are inherited from there and not

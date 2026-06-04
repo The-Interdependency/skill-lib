@@ -19,10 +19,14 @@ Agents consuming this lib should start at
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every other skill in this lib depends on it. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every metadata-block skill in this lib depends on it. |
+| [`doc-build/`](doc-build/SKILL.md) | Applies msdmd → documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths and anchors, reports stale docs, and surfaces visible gaps. |
+| [`cap-build/`](cap-build/SKILL.md) | Applies msdmd → capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract test runner. Each module declares its test contracts in a `# === CONTRACTS ===` block; the runner walks the tree, parses, runs them, and reports per-contract status plus visible coverage gaps. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
+| [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Applies msdmd → runtime boundary declarations. Modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
 | [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks that a runner recomputes and checks for drift. |
+| [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 | [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. Keeps the factual half of a doc generated, not hand-typed. |
 
@@ -65,7 +69,7 @@ authoritative spec.
 Skills come in two kinds. Pick the right one for what you're adding.
 
 **Metadata-block skills** apply the `msdmd` convention to a new block
-name (`test-build`, `meta-module-build`, `ratios` are the existing examples).
+name (`doc-build`, `cap-build`, `test-build`, `meta-module-build`, `risk-boundary-build`, `ratios` are the existing examples).
 To add one:
 
 1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`).
@@ -77,7 +81,7 @@ To add one:
 `test-build/` is the canonical worked example.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
-block (`visitor-intro` is the existing example). To add one:
+block (`canon` and `visitor-intro` are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML
    frontmatter is what your harness will read).

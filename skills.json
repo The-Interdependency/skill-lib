@@ -7,7 +7,21 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for test-build, meta-module-build, ratios, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, test-build, meta-module-build, risk-boundary-build, ratios, and future msdmd applications."
+    },
+    {
+      "name": "doc-build",
+      "path": "doc-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible coverage gaps."
+    },
+    {
+      "name": "cap-build",
+      "path": "cap-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Self-declaring capability inventory built on msdmd. Modules declare CAPABILITIES blocks; a runner builds a capability map, verifies exposed surfaces, reports duplicates, and surfaces visible gaps."
     },
     {
       "name": "test-build",
@@ -24,11 +38,24 @@
       "description": "Metadata-first module build skill built on msdmd. Use when turning a capability idea into a bounded module manifest, file plan, public/internal surface, permission boundary, tests, docs, rollout, and rollback notes before implementation."
     },
     {
+      "name": "risk-boundary-build",
+      "path": "risk-boundary-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd", "meta-module-build"],
+      "description": "Self-declaring runtime risk and permission boundaries built on msdmd. Modules declare BOUNDARIES blocks for auth, storage, network, user-data, admin, and operational effects."
+    },
+    {
       "name": "ratios",
       "path": "ratios/SKILL.md",
       "kind": "metadata-block",
       "depends_on": ["msdmd"],
       "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a RATIOS block; a runner recomputes values, fails on drift, and reports visible coverage gaps."
+    },
+    {
+      "name": "canon",
+      "path": "canon/SKILL.md",
+      "kind": "procedural",
+      "description": "Canonical-source and doctrine maintenance for The Interdependency skill library. Load when deciding whether a claim, pattern, workflow, or repo-local practice should become canon, or when preserving unresolved doctrine as hmmm."
     },
     {
       "name": "visitor-intro",

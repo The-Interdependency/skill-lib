@@ -9,8 +9,8 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Edit skills here first; propagate later with the source commit SHA.
 - License: Apache 2.0.
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, each `<skill>/SKILL.md`.
-- No build system, package manifest, test runner, Makefile, package.json, pyproject.toml, or CI is declared here.
-- Validation here is editorial: keep skill frontmatter, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, and this file synchronized.
+- No package manifest, Makefile, package.json, pyproject.toml, or CI is declared here.
+- Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
 
 ## Layout
 
@@ -21,6 +21,8 @@ ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
 skills.json            # machine-readable skill index
 CLAUDE.md              # assistant guidance
 LICENSE                # Apache 2.0
+tools/README.md        # local maintenance helper documentation
+tools/*.py             # pure-stdlib helper scripts
 <skill-name>/SKILL.md  # required skill spec
 <skill-name>/<helpers> # optional parsers, runners, examples
 ```
@@ -96,6 +98,21 @@ Parser contract:
 - return empty list when no matching block exists;
 - runners must report gap lists visibly.
 
+## Maintenance tools
+
+```bash
+python tools/check_skill_lib_drift.py
+python tools/char_compress_check.py
+python tools/propagate_skills.py ../target-repo          # dry-run
+python tools/propagate_skills.py ../target-repo --apply  # local copy
+```
+
+Tool boundaries:
+
+- `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`.
+- `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not a full natural-language codec.
+- `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
+
 ## Consumption and propagation
 
 - Canonical install path inside consuming repos: `.agents/skills/<skill-name>/`.
@@ -114,12 +131,12 @@ Parser contract:
 5. New module work in consuming repos should start with `MODULE_BUILD`.
 6. Contracts belong in source modules, not test files.
 7. Do not fork parser dialects; propose an `msdmd` extension instead.
-8. Do not invent build/test/lint commands for this repo.
+8. Do not invent undeclared package/build commands for this repo.
 9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
 10. Do not claim UCNS-A theorem support or edcmbone metric status for `char-compress` unless a future implementation and tests explicitly establish that boundary.
 
 ## hmmm
 
-- no automated drift checker exists here for `README.md` / `skills.json` / `ORG_DISTRIBUTION.md` / `AGENTS.md` / `CLAUDE.md`
-- no propagation runner exists here for copying canonical skills into target repos
-- no executable `char-compress` codec or fixture runner exists yet
+- no CI currently runs the helper tools automatically
+- propagation still requires review, commit, and pull request work in target repos
+- `char_compress_check.py` is deterministic fixture support, not a full codec

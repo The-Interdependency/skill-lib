@@ -39,10 +39,10 @@ the skill. Treat it as the public contract.
 3. When a user request matches the triggers in a `description`, read
    that skill's full `SKILL.md` before acting.
 4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `test-build`,
-   `meta-module-build`, `risk-boundary-build`, and `ratios`) define metadata
-   blocks that other modules declare inside their own source files. Other
-   skills (currently `canon` and `visitor-intro`) are purely procedural and
-   define no block.
+   `meta-module-build`, `risk-boundary-build`, `ratios`, and `manifest`)
+   define metadata blocks that other modules declare inside their own source
+   files. Other skills (currently `canon`, `visitor-intro`, and
+   `char-compress`) are purely procedural and define no block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.
@@ -75,6 +75,9 @@ propagate from here.
   block; see `meta-module-build/SKILL.md`.
 - If you are deciding whether repo-local practice should become org doctrine,
   load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
+- If you are compressing a thread, document, repo audit, canon handoff, or
+  working-memory state, load `char-compress/SKILL.md`; carry flesh, frozen
+  bones, transforms, and `hmmm`; drop only safely regenerable scaffold.
 - If you are an agent introducing a newcomer to the org, load
   `visitor-intro/SKILL.md` and follow its output rubric.
 

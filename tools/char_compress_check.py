@@ -12,10 +12,9 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Sequence
+from typing import Any, Dict, List, Mapping, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_FIXTURES = ROOT / "char-compress" / "fixtures.json"
@@ -39,6 +38,8 @@ TOKEN_RE = re.compile(
     r"[A-Za-z0-9_./:-]+|[≤≥!=]=|[+\-*/=<>]|[^\s]",
     re.UNICODE,
 )
+TRAILING_PUNCT = ".,;!?)]}”'\""
+LEADING_PUNCT = "([{“'\""
 
 
 @dataclass
@@ -49,6 +50,15 @@ class Failure:
 
 def tokenize(text: str) -> List[str]:
     return TOKEN_RE.findall(text)
+
+
+def normalize_token(token: str) -> str:
+    """Normalize punctuation while preserving paths, URLs, and dotted filenames."""
+    token = token.strip()
+    token = token.lstrip(LEADING_PUNCT)
+    if re.search(r"\w[./:-]\w", token):
+        return token.rstrip(",;!?)]}”'\"")
+    return token.strip(LEADING_PUNCT + TRAILING_PUNCT)
 
 
 def inventory_fingerprint(token: str) -> str:
@@ -62,7 +72,9 @@ def inventory_fingerprint(token: str) -> str:
 
 
 def classify_token(token: str) -> str:
-    stripped = token.strip()
+    stripped = normalize_token(token)
+    if not stripped:
+        return "dropped_bone"
     lowered = stripped.lower()
 
     if stripped == "hmmm" or lowered.startswith("hmmm"):
@@ -91,8 +103,9 @@ def compress_text(text: str) -> Dict[str, Any]:
     }
     seen = {"flesh": set(), "frozen_bones": set(), "hmmm": set(), "dropped_bones": set()}
 
-    for token in tokenize(text):
-        cls = classify_token(token)
+    for raw_token in tokenize(text):
+        token = normalize_token(raw_token)
+        cls = classify_token(raw_token)
         if cls == "flesh":
             key = token
             if key not in seen["flesh"]:

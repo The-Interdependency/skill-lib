@@ -270,6 +270,26 @@ Test a skill by stripping the connective prose. If the operative content still
 stands, the skill is dense. If the rule changes when prose is removed, the
 removed prose was misclassified.
 
+## Executable support
+
+Minimum preservation fixtures live in:
+
+```text
+char-compress/fixtures.json
+```
+
+Run them with:
+
+```bash
+python tools/char_compress_check.py
+python tools/char_compress_check.py --json
+```
+
+The runner is a guardrail, not a complete natural-language codec. It verifies
+that the fixture skeleton preserves negation, quantifier, order, values,
+statuses, secrets, `hmmm`, and the no-UCNS-transfer / no-edcmbone-status-claim
+boundary.
+
 ## Falsifiability tests
 
 A char-compression fails if reconstruction produces any of these:
@@ -342,8 +362,7 @@ no UCNS-A theorem/proof status is transferred.
 - transform vocabulary may be closed in one repo and open in another
 - reconstruction assumes a shared grammar; a different agent grammar may
   regenerate different bones
-- an implementation can be deterministic, but this SKILL.md is procedural until
-  code and fixtures exist
+- `tools/char_compress_check.py` is deterministic fixture support, not a full codec
 - whether future structure-preserving mode should carry bone fingerprints,
   dependency slots, or both
 - whether opacity should layer on top of this compression or replace the

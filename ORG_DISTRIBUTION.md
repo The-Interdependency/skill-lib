@@ -27,6 +27,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `canon/` — canonical-source and doctrine maintenance
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
 * `char-compress/` — bone/flesh context compression for handoffs and skill writing
+* `manifest/` — living-spec generation
 
 ## Target repos
 

@@ -57,7 +57,7 @@ def normalize_token(token: str) -> str:
     token = token.strip()
     token = token.lstrip(LEADING_PUNCT)
     if re.search(r"\w[./:-]\w", token):
-        return token.rstrip(",;!?)]}”'\"")
+        return token.rstrip(TRAILING_PUNCT)
     return token.strip(LEADING_PUNCT + TRAILING_PUNCT)
 
 

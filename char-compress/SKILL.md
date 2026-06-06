@@ -1,12 +1,20 @@
 ---
 name: char-compress
-description: Character-based context compression for agent handoff and skill writing, built on the bone/flesh inventory asymmetry. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. This is a procedural skill, not a UCNS-A proof surface and not an edcmbone metric implementation.
+description: Character-based context compression for agent handoff and skill writing, derived from the mathematics of the Unit Circle Number System. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. This is a procedural skill-level projection of UCNS compression mathematics, not a UCNS-A theorem/status transfer and not an edcmbone metric implementation.
 ---
 
-# char-compress — Bone/flesh compression for agent context
+# char-compress — UCNS-derived bone/flesh compression for agent context
 
-`char-compress` is a procedural skill for shrinking agent context without
-flattening the operative structure of the work. It separates text into:
+`char-compress` is a procedural skill for applying the compression side of the
+Unit Circle Number System to agent context. The mathematics of the Unit Circle
+Number System comprises the compression algorithm: preserve the irreducible
+content, suppress the regenerable recurrence, and reconstruct only through a
+shared grammar/domain.
+
+This skill is the agent-facing projection of that mathematics. It is not the
+full UCNS compression engine.
+
+It separates text into:
 
 - irreducible content that must be carried in full;
 - meaning-critical small operators that must be frozen even though they look
@@ -37,25 +45,31 @@ this repo remains the canonical source.
 
 ### Relation to `ucns`
 
-`ucns` owns UCNS-A: recursive factorization algebra, `UCNSObject`, factor
-search, theorem/status vocabulary, and the proof-scope boundary. This skill
-does not implement UCNS-A, does not transfer UCNS-A theorem status, and does
-not make claims about recursive factorization.
+`ucns` owns the Unit Circle Number System. Its mathematics is the source of the
+compression algorithm: inventory, recurrence, carrier position, suppression,
+reconstruction, and proof/status boundaries all belong to the UCNS side of the
+system.
+
+This skill does state that `char-compress` is UCNS-derived. It does not state
+that the current skill file or fixture runner is a full implementation of the
+UCNS compression engine.
 
 Allowed relation:
 
-- char inventories and suppressed fingerprints may be treated as symbolic
-  compression artifacts;
-- a future implementation may encode those artifacts into UCNS-shaped records
-  only as audit or transport data;
-- any bridge to UCNS-A requires the explicit bridge checklist and status labels.
+- char inventories and suppressed fingerprints are compression artifacts of
+  the Unit Circle Number System;
+- this skill may define agent behavior for applying those artifacts to context;
+- future code may promote the current guardrail runner into a fuller UCNS
+  compression engine;
+- proof/status claims must remain scoped to the specific UCNS theorem or tested
+  implementation that establishes them.
 
 Forbidden phrasing:
 
 ```text
-UCNS proves char-compress.
-Theorem N validates char-compress.
-char-compress implements UCNS-A.
+Theorem N validates the char-compress skill implementation.
+The fixture runner is the full UCNS compression engine.
+char-compress has DEFENDED UCNS theorem status.
 SEQ-PRIME applies to compressed transcript objects.
 ```
 
@@ -167,11 +181,12 @@ banana -> ban
 committee -> comite
 ```
 
-The result is an inventory fingerprint. For closed-class words in known slots,
-that fingerprint plus grammar often recovers the word. For open-class content,
-the same operation destroys needed information.
+The result is an inventory fingerprint. In UCNS terms, it preserves the
+inventory carrier and suppresses recurrence. For closed-class words in known
+slots, that fingerprint plus grammar often recovers the word. For open-class
+content, the same operation destroys needed information.
 
-Use suppression as a classifier, not as a complete codec:
+Use suppression as a classifier, not as the complete codec:
 
 ```text
 survives suppression + grammar can restore it -> candidate bone
@@ -217,6 +232,7 @@ Use this shape when compressing a thread or repo audit:
 char_compress:
   domain: <repo/thread/document/language>
   mode: context-compression | structure-preserving
+  ucns_relation: skill-level projection of Unit Circle Number System compression mathematics
   flesh:
     - <distinct operative item>
   frozen_bones:
@@ -285,10 +301,9 @@ python tools/char_compress_check.py
 python tools/char_compress_check.py --json
 ```
 
-The runner is a guardrail, not a complete natural-language codec. It verifies
-that the fixture skeleton preserves negation, quantifier, order, values,
-statuses, secrets, `hmmm`, and the no-UCNS-transfer / no-edcmbone-status-claim
-boundary.
+The runner is a guardrail, not the full Unit Circle Number System compression
+engine. It verifies that the fixture skeleton preserves negation, quantifier,
+order, values, statuses, secrets, `hmmm`, and the theorem/status boundary.
 
 ## Falsifiability tests
 
@@ -315,7 +330,7 @@ Minimum fixture set for an implementation:
 5. status_preserved: EXPERIMENTAL does not reconstruct as DEFENDED
 6. secret_preserved: private carrier material stays private
 7. hmmm_preserved: unresolved constraints remain visible
-8. no_ucns_transfer: output does not claim UCNS-A theorem support
+8. no_theorem_transfer: output does not claim unearned theorem/status support
 ```
 
 ## Security note
@@ -341,7 +356,7 @@ regenerable scaffold is absent or fingerprinted according to mode;
 hmmm is visible;
 reconstruction preserves named objects, values, decisions, negation,
 quantifiers, order, operators, statuses, and unresolved constraints;
-no UCNS-A theorem/proof status is transferred.
+no theorem/proof/status support is transferred beyond the tested UCNS domain.
 ```
 
 ## Anti-patterns
@@ -352,7 +367,8 @@ no UCNS-A theorem/proof status is transferred.
 - Treating a short token as safe because it is common.
 - Treating the bone channel as opaque.
 - Compressing an unresolved constraint into silence.
-- Claiming UCNS-A proof support for a context-compression procedure.
+- Treating the fixture runner as the full Unit Circle Number System compression engine.
+- Claiming theorem/status support without an implementation and tests.
 - Claiming edcmbone metric status without an implementation and tests.
 
 ## hmmm
@@ -363,6 +379,7 @@ no UCNS-A theorem/proof status is transferred.
 - reconstruction assumes a shared grammar; a different agent grammar may
   regenerate different bones
 - `tools/char_compress_check.py` is deterministic fixture support, not a full codec
+- the full UCNS compression engine is not implemented in this skill-lib helper yet
 - whether future structure-preserving mode should carry bone fingerprints,
   dependency slots, or both
 - whether opacity should layer on top of this compression or replace the

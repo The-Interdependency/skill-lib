@@ -7,7 +7,7 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - `skill-lib` is the canonical organization-wide source for reusable agent skills.
 - Other The Interdependency repos vendor repo-local copies from here.
 - Edit skills here first; propagate later with the source commit SHA.
-- License: Apache 2.0.
+- License: MIT.
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, each `<skill>/SKILL.md`.
 - No package manifest, Makefile, package.json, pyproject.toml, or CI is declared here.
 - Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
@@ -20,7 +20,7 @@ AGENTS.md              # agent-facing entry point
 ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
 skills.json            # machine-readable skill index
 CLAUDE.md              # assistant guidance
-LICENSE                # Apache 2.0
+LICENSE                # MIT
 tools/README.md        # local maintenance helper documentation
 tools/*.py             # pure-stdlib helper scripts
 <skill-name>/SKILL.md  # required skill spec

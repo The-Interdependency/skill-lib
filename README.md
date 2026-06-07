@@ -30,7 +30,7 @@ Agents consuming this lib should start at
 | [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks that a runner recomputes and checks for drift. |
 | [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
-| [`char-compress/`](char-compress/SKILL.md) | Bone/flesh context compression for agent handoff and skill writing. Preserves irreducible flesh, frozen bones, transforms, and `hmmm`; drops only safely regenerable scaffold. Independent of msdmd. |
+| [`char-compress/`](char-compress/SKILL.md) | Unit Circle Number System-derived bone/flesh context compression for agent handoff and skill writing. Preserves irreducible flesh, frozen bones, transforms, and `hmmm`; drops only safely regenerable scaffold. Independent of msdmd. |
 | [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. Keeps the factual half of a doc generated, not hand-typed. |
 
 ## Maintenance tools
@@ -49,8 +49,7 @@ The drift checker compares skill directories, `skills.json`, `README.md`,
 `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The propagation helper
 copies canonical skill directories into a checked-out target repo. The
 char-compress runner executes preservation fixtures for negation, quantifier,
-order, values, statuses, secrets, `hmmm`, and no UCNS-A / edcmbone status
-leakage.
+order, values, statuses, secrets, `hmmm`, and unearned theorem/status leakage.
 
 |∆|Implementation status: this repo ships the universal msdmd parsers and skill
 specifications. Most application skills define runner contracts for consuming

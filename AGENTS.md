@@ -79,6 +79,9 @@ propagate from here.
   block; see `meta-module-build/SKILL.md`.
 - If you are deciding whether repo-local practice should become org doctrine,
   load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
+- If you are compressing a thread, document, repo audit, canon handoff, or
+  working-memory state, load `char-compress/SKILL.md`; carry flesh, frozen
+  bones, transforms, and `hmmm`; drop only safely regenerable scaffold.
 - If you are an agent introducing a newcomer to the org, load
   `visitor-intro/SKILL.md` and follow its output rubric.
 

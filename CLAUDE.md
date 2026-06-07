@@ -31,7 +31,7 @@ tools/*.py             # pure-stdlib helper scripts
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, parser contract, runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
 | `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
 | `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
@@ -42,6 +42,7 @@ tools/*.py             # pure-stdlib helper scripts
 | `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
 | `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
+| `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
 
 ---
 
@@ -71,7 +72,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, and `ratios/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/` and `visitor-intro/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, and `char-compress/` are the examples.
 
 ## msdmd block syntax
 
@@ -131,15 +132,14 @@ checks that exist here.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.
 - `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`.
-- `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not a full natural-language codec.
+- `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
-
-- The parsers are reference implementations; this repo does not ship a test suite for them.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
   implement against their own source trees, not scripts that live or run here unless the skill
   directory includes a helper file.
 - Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
   README table in sync with the directories present, and keep the parsers stdlib-only.
+
 ## Consumption and propagation
 
 - Canonical install path inside consuming repos: `.agents/skills/<skill-name>/`.
@@ -160,10 +160,10 @@ checks that exist here.
 7. Do not fork parser dialects; propose an `msdmd` extension instead.
 8. Do not invent undeclared package/build commands for this repo.
 9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
-10. Do not claim UCNS-A theorem support or edcmbone metric status for `char-compress` unless a future implementation and tests explicitly establish that boundary.
+10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
 
 ## hmmm
 
 - no CI currently runs the helper tools automatically
 - propagation still requires review, commit, and pull request work in target repos
-- `char_compress_check.py` is deterministic fixture support, not a full codec
+- `char_compress_check.py` is deterministic fixture support, not the full Unit Circle Number System compression engine

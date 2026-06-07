@@ -38,14 +38,18 @@ the skill. Treat it as the public contract.
 2. Parse the YAML frontmatter; index by `name` and `description`.
 3. When a user request matches the triggers in a `description`, read
    that skill's full `SKILL.md` before acting.
-4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `test-build`,
-   `meta-module-build`, `risk-boundary-build`, `ratios`, and `manifest`)
-   define metadata blocks that other modules declare inside their own source
-   files. Other skills (currently `canon`, `visitor-intro`, and
-   `char-compress`) are purely procedural and define no block.
+4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `deps-build`,
+   `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
+   and `ratios`) define metadata blocks that other modules declare inside their own source files. Other
+   skills (currently `canon`, `char-compress`, `manifest`, and `visitor-intro`) are procedural and
+   define no block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.
+
+This repo ships the universal msdmd parser implementations plus skill
+specifications. Treat per-skill runner sections as contracts for consuming
+repos unless the skill directory includes an actual helper script.
 
 ## How to install this lib into another repo
 

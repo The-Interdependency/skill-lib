@@ -14,6 +14,10 @@ This complements `meta-module-build`: MODULE_BUILD describes intended
 boundaries before new work starts; BOUNDARIES records the actual runtime
 boundary of an existing module.
 
+Implementation status: this skill defines the `BOUNDARIES` block and runner
+contract. This repo does not currently ship a BOUNDARIES runner script;
+consuming repos should implement the contract below with local risk heuristics.
+
 ## The block
 
 ```python

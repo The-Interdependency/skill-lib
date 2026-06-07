@@ -22,6 +22,8 @@ Agents consuming this lib should start at
 | [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every metadata-block skill in this lib depends on it. |
 | [`doc-build/`](doc-build/SKILL.md) | Applies msdmd → documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths and anchors, reports stale docs, and surfaces visible gaps. |
 | [`cap-build/`](cap-build/SKILL.md) | Applies msdmd → capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
+| [`deps-build/`](deps-build/SKILL.md) | Applies msdmd → dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs, detects unresolved edges, and reports cycles. |
+| [`owner-build/`](owner-build/SKILL.md) | Applies msdmd → module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract test runner. Each module declares its test contracts in a `# === CONTRACTS ===` block; the runner walks the tree, parses, runs them, and reports per-contract status plus visible coverage gaps. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
 | [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Applies msdmd → runtime boundary declarations. Modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
@@ -49,6 +51,11 @@ copies canonical skill directories into a checked-out target repo. The
 char-compress runner executes preservation fixtures for negation, quantifier,
 order, values, statuses, secrets, `hmmm`, and no UCNS-A / edcmbone status
 leakage.
+
+|∆|Implementation status: this repo ships the universal msdmd parsers and skill
+specifications. Most application skills define runner contracts for consuming
+repos; they do not ship standalone executors here unless a helper file exists
+in that skill directory.|∆|
 
 ## The core idea
 
@@ -89,14 +96,15 @@ authoritative spec.
 Skills come in two kinds. Pick the right one for what you're adding.
 
 **Metadata-block skills** apply the `msdmd` convention to a new block
-name (`doc-build`, `cap-build`, `test-build`, `meta-module-build`, `risk-boundary-build`, `ratios` are the existing examples).
+name (`doc-build`, `cap-build`, `deps-build`, `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`, `ratios` are the existing examples).
 To add one:
 
 1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`).
 2. Decide the field schema (which fields are required, which optional).
-3. Write a thin executor that takes parsed entries from
-   `msdmd/parsers/universal.py` and does something with them.
-4. Author a `SKILL.md` that documents the convention and the executor.
+3. Specify the runner/executor contract, or write a thin executor that takes
+   parsed entries from `msdmd/parsers/universal.py` and does something with
+   them.
+4. Author a `SKILL.md` that documents the convention and runner behavior.
 
 `test-build/` is the canonical worked example.
 

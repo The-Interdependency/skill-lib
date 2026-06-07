@@ -9,6 +9,10 @@ description: Self-declaring documentation coverage built on msdmd. Each module d
 module's documentation obligations into colocated metadata so docs drift is
 observable instead of discovered by surprise.
 
+Implementation status: this skill defines the `DOCS` block and runner contract.
+This repo does not currently ship a DOCS runner script; consuming repos should
+implement the contract below against their own documentation tree.
+
 Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
 contract, and visible gap rule are inherited.
 

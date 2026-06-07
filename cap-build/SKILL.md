@@ -9,6 +9,10 @@ description: Self-declaring capability inventory built on msdmd. Each module dec
 agents and humans a source-backed inventory of what modules can do, where
 those capabilities are exposed, and which boundaries they cross.
 
+Implementation status: this skill defines the `CAPABILITIES` block and runner
+contract. This repo does not currently ship a CAPABILITIES runner script;
+consuming repos should implement the contract below against their own surfaces.
+
 Read `msdmd/SKILL.md` first if you have not. The block syntax, parser
 contract, and visible gap rule are inherited.
 

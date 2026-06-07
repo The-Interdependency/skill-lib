@@ -7,7 +7,7 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, test-build, meta-module-build, risk-boundary-build, ratios, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, and future msdmd applications."
     },
     {
       "name": "doc-build",
@@ -22,6 +22,20 @@
       "kind": "metadata-block",
       "depends_on": ["msdmd"],
       "description": "Self-declaring capability inventory built on msdmd. Modules declare CAPABILITIES blocks; a runner builds a capability map, verifies exposed surfaces, reports duplicates, and surfaces visible gaps."
+    },
+    {
+      "name": "deps-build",
+      "path": "deps-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd"],
+      "description": "Self-declaring dependency topology built on msdmd. Modules declare DEPENDENCIES blocks; a runner builds import/call/capability graphs, detects unresolved edges and cycles, and surfaces visible gaps."
+    },
+    {
+      "name": "owner-build",
+      "path": "owner-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": ["msdmd", "risk-boundary-build"],
+      "description": "Self-declaring module stewardship built on msdmd. Modules declare OWNERS blocks; a runner reports unowned modules, unresolved hmmm owners, and review coverage gaps."
     },
     {
       "name": "test-build",

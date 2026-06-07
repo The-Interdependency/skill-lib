@@ -10,6 +10,10 @@ skill defines the comment-block convention, the universal parser, and the
 gap-reporting requirement; this skill applies the convention to a module's
 own composition ratios and defines the executor contract.
 
+Implementation status: this skill defines the `RATIOS` block, registry, and
+runner contract. This repo does not currently ship `ratios_check.py`; the CLI
+below is the expected interface for a consuming repo's implementation.
+
 Read `msdmd/SKILL.md` first if you haven't — block syntax, the parser
 contract, and the visibility rules below are inherited from there and not
 redefined.

@@ -31,21 +31,28 @@ tools/*.py             # pure-stdlib helper scripts
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Module Self-Declared Metadata Markdown. Foundational comment-block syntax, parser contract, runner protocol, reserved fields, visible gap reporting, reference parsers. |
-| `doc-build/` | metadata-block | `msdmd` | Documentation coverage through `DOCS` blocks; verifies paths and anchors; reports stale docs and visible gaps. |
-| `cap-build/` | metadata-block | `msdmd` | Capability inventory through `CAPABILITIES` blocks; verifies exposed surfaces and duplicates. |
-| `test-build/` | metadata-block | `msdmd` | Contract tests through `CONTRACTS` blocks in source modules; runner discovers contracts and reports gaps. |
-| `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding through `MODULE_BUILD`; surfaces, boundaries, tests, rollout, rollback. |
-| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime boundaries through `BOUNDARIES`; auth, storage, network, user-data, admin, operational effects. |
-| `ratios/` | metadata-block | `msdmd` | Module composition ratios; comments/code, imports/exports, calls/definitions; recompute and drift-check. |
-| `canon/` | procedural | — | Canonical-source and doctrine maintenance; separates declared, implemented, repo-local, inferred, desired, and `hmmm`. |
-| `visitor-intro/` | procedural | — | Newcomer orientation for any org repo without inventing org-level facts. |
-| `char-compress/` | procedural | — | Bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. No UCNS-A theorem transfer; no edcmbone metric claim. |
-| `manifest/` | metadata-block | `msdmd` | Living-spec generator; derives repo facts from pyproject/tree and splices a machine-owned block into `CLAUDE.md` in consuming repos. |
+| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
+| `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
+| `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
+| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Self-declaring module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
+| `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
+| `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
+| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
+| `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
+| `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 
-## Skill anatomy
+---
 
-Every skill directory contains at least `SKILL.md` with YAML frontmatter:
+## Anatomy of a skill
+
+Every skill is a directory at the repo root containing **at least a `SKILL.md`**. Optional
+supporting files (parsers, executors, examples) live alongside it.
+
+### SKILL.md frontmatter
+
+`SKILL.md` opens with YAML frontmatter:
 
 ```yaml
 ---
@@ -58,8 +65,13 @@ The `description` is the loading contract. Keep it specific. List triggers. Do n
 
 Two kinds:
 
-- **Metadata-block skills:** define a block schema and executor pattern over `msdmd` parser output.
-- **Procedural skills:** define agent behavior, doctrine, output shape, and hmmm; no block schema required.
+- **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
+  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, …). They define a field schema, a thin executor that consumes parsed
+  entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
+  example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
+  `risk-boundary-build/`, and `ratios/` define adjacent applications. `msdmd` itself is the foundation.
+- **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
+  they enforce and the output shape they produce. `canon/` and `visitor-intro/` are the examples.
 
 ## msdmd block syntax
 
@@ -113,6 +125,12 @@ Tool boundaries:
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not a full natural-language codec.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
 
+- The parsers are reference implementations; this repo does not ship a test suite for them.
+- Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
+  implement against their own source trees, not scripts that live or run here unless the skill
+  directory includes a helper file.
+- Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
+  README table in sync with the directories present, and keep the parsers stdlib-only.
 ## Consumption and propagation
 
 - Canonical install path inside consuming repos: `.agents/skills/<skill-name>/`.

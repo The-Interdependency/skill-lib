@@ -121,6 +121,15 @@ python tools/propagate_skills.py ../target-repo --apply  # local copy
 
 Tool boundaries:
 
+There is a small stdlib Python editorial test suite. There is still no `package.json`,
+`pyproject.toml`, `Makefile`, or CI workflow. Do not invent commands beyond the
+checks that exist here.
+
+- Run `python -m unittest discover -s tests` to validate skill registration,
+  per-skill spec coverage, SKILL.md frontmatter, README index coverage,
+  universal parser behavior, and parser ratio bookends.
+- The parsers are reference implementations; the test suite covers core parser
+  behavior and library integration, not every consuming-runner contract.
 - `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not a full natural-language codec.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.

@@ -119,6 +119,35 @@ A reference implementation in pure stdlib Python lives at
 Both commit to zero non-stdlib dependencies so you can copy them into
 any project.
 
+## Repo collection point and visualizer
+
+Every consuming repo SHOULD maintain one repo-level collection point named
+`<reponame>_msdmd.ts` (for example, `a0_msdmd.ts`). This file is the
+canonical aggregation surface for all parsed msdmd declarations in that
+repo. It does not replace module-local blocks; it is generated from them
+or maintained as a thin index over them.
+
+The collection point SHOULD export:
+
+```typescript
+export const repo = "<reponame>";
+export const declarations = [
+  { file: "path/to/module.py", block: "CONTRACTS", id: "...", fields: { /* parsed fields */ } },
+];
+export const gaps = [
+  { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
+];
+```
+
+A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
+relationships between modules: `DEPENDENCIES.requires`, `CAPABILITIES.exposes`,
+`OWNERS.owner`, `BOUNDARIES` risk fields, `DOCS.covers`, `CONTRACTS.call`, and
+any `requires` edges shared across application skills. The visualizer is a
+consumer of the collection point, not a second metadata source.
+
+If a repo has no collection point or visualizer yet, record that as `hmmm` in
+repo-local planning rather than pretending the graph exists.
+
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:

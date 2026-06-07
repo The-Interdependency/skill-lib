@@ -56,6 +56,11 @@ specifications. Most application skills define runner contracts for consuming
 repos; they do not ship standalone executors here unless a helper file exists
 in that skill directory.|∆|
 
+|∆|Implementation status: this repo ships the universal msdmd parsers and skill
+specifications. Most application skills define runner contracts for consuming
+repos; they do not ship standalone executors here unless a helper file exists
+in that skill directory.|∆|
+
 ## The core idea
 
 Most "keep docs/tests/configs in sync with code" attempts rot because the
@@ -120,6 +125,18 @@ examples). To add one:
 
 Whichever kind you add, register it in [`skills.json`](skills.json)
 and link it from the table above.
+
+## Testing
+
+Run the stdlib editorial test suite after changing skills or parser files:
+
+```bash
+python -m unittest discover -s tests
+```
+
+The suite checks skill/index consistency, per-skill spec coverage, SKILL.md
+frontmatter, README skill links, universal parser behavior, and parser ratio
+bookends.
 
 ## Versioning and stability
 

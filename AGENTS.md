@@ -41,7 +41,7 @@ the skill. Treat it as the public contract.
 4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `deps-build`,
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
    and `ratios`) define metadata blocks that other modules declare inside their own source files. Other
-   skills (currently `canon` and `visitor-intro`) are purely procedural and
+   skills (currently `canon`, `char-compress`, `manifest`, and `visitor-intro`) are procedural and
    define no block.
 
 A machine-readable index is also available at `skills.json` if you

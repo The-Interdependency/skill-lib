@@ -14,7 +14,7 @@
       "path": "doc-build/SKILL.md",
       "kind": "metadata-block",
       "depends_on": ["msdmd"],
-      "description": "Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible coverage gaps."
+      "description": "Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible gaps."
     },
     {
       "name": "cap-build",
@@ -81,7 +81,7 @@
       "name": "char-compress",
       "path": "char-compress/SKILL.md",
       "kind": "procedural",
-      "description": "Character-based context compression for agent handoff and skill writing, built on the bone/flesh inventory asymmetry. Load when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when writing flesh-dense SKILL.md files; or when checking whether compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm."
+      "description": "Character-based context compression for agent handoff and skill writing, derived from Unit Circle Number System compression mathematics. Load when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when writing flesh-dense SKILL.md files; or when checking whether compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm."
     },
     {
       "name": "manifest",

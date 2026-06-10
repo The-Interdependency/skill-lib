@@ -145,6 +145,9 @@ export default defineMsdmdCollection({
     { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
   ],
 });
+
+export const declarations = [];
+export const gaps = [];
 ```
 
 A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render

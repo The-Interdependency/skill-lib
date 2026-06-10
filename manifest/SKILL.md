@@ -1,6 +1,6 @@
 ---
 name: manifest
-description: "Living-spec generator: derives observable repo facts from pyproject.toml and the file tree and splices them into a machine-owned block in CLAUDE.md with a CI drift gate. Load this when setting up or maintaining a generated doc block, wiring a CI check that fails on drift, or onboarding a repo to the living-spec convention."
+description: Living-spec generator for machine-owned CLAUDE.md facts, derived from pyproject.toml and the file tree. Load this when generating or checking drift for repo metadata blocks instead of hand-authoring those facts.
 ---
 
 # manifest — living spec from source

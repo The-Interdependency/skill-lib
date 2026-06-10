@@ -18,8 +18,15 @@ Propagation PRs should cite this repository and the source commit SHA.
 ## Installed skills
 
 * `msdmd/` — Module Self-Declared Metadata Markdown
+* `doc-build/` — documentation coverage metadata blocks
+* `cap-build/` — capability inventory metadata blocks
+* `deps-build/` — dependency topology metadata blocks
+* `owner-build/` — module stewardship metadata blocks
 * `test-build/` — contract-test metadata blocks
 * `meta-module-build/` — metadata-first module scaffolding
+* `risk-boundary-build/` — runtime risk and permission boundary metadata blocks
+* `ratios/` — module composition ratio verification
+* `canon/` — canonical-source and doctrine maintenance
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
 
 ## Target repos

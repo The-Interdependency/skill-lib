@@ -180,6 +180,7 @@ The visualizer is deliberately small: it renders declaration nodes, normalized
 edge relationships, and visible gap nodes. Rich repo-specific UIs should consume
 the same collection shape rather than re-parsing source files.
 
+
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:

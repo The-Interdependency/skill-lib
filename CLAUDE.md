@@ -9,7 +9,7 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Edit skills here first; propagate later with the source commit SHA.
 - License: MIT.
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, each `<skill>/SKILL.md`.
-- No package manifest, Makefile, package.json, pyproject.toml, or CI is declared here.
+- No package manifest, Makefile, package.json, or pyproject.toml is declared here. The only CI is `.github/workflows/hygiene.yml`, a narrow guard that fails any push/PR carrying tracked Python bytecode (`*.pyc`/`__pycache__`); it does not run the editorial helper tools.
 - Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
 
 ## Layout
@@ -149,7 +149,8 @@ python tools/propagate_skills.py ../target-repo --apply  # local copy
 Tool boundaries:
 
 There is a small stdlib Python editorial test suite. There is still no `package.json`,
-`pyproject.toml`, `Makefile`, or CI workflow. Do not invent commands beyond the
+`pyproject.toml`, or `Makefile`. The only CI workflow is `hygiene.yml` (tracked-bytecode
+guard); it does not run the editorial helper tools. Do not invent commands beyond the
 checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,

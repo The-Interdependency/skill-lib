@@ -1,6 +1,6 @@
 ---
 name: msdmd
-description: Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Other skills in this lib (test-build, doc-build, cap-build, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
+description: Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
 ---
 
 # msdmd — Module Self-Declared Metadata in Markdown
@@ -119,6 +119,35 @@ A reference implementation in pure stdlib Python lives at
 Both commit to zero non-stdlib dependencies so you can copy them into
 any project.
 
+## Repo collection point and visualizer
+
+Every consuming repo SHOULD maintain one repo-level collection point named
+`<reponame>_msdmd.ts` (for example, `a0_msdmd.ts`). This file is the
+canonical aggregation surface for all parsed msdmd declarations in that
+repo. It does not replace module-local blocks; it is generated from them
+or maintained as a thin index over them.
+
+The collection point SHOULD export:
+
+```typescript
+export const repo = "<reponame>";
+export const declarations = [
+  { file: "path/to/module.py", block: "CONTRACTS", id: "...", fields: { /* parsed fields */ } },
+];
+export const gaps = [
+  { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
+];
+```
+
+A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
+relationships between modules: `DEPENDENCIES.requires`, `CAPABILITIES.exposes`,
+`OWNERS.owner`, `BOUNDARIES` risk fields, `DOCS.covers`, `CONTRACTS.call`, and
+any `requires` edges shared across application skills. The visualizer is a
+consumer of the collection point, not a second metadata source.
+
+If a repo has no collection point or visualizer yet, record that as `hmmm` in
+repo-local planning rather than pretending the graph exists.
+
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:
@@ -183,7 +212,10 @@ their own SKILL.md.
    executor's behavior, and at least one worked example.
 
 `test-build/` is the canonical reference application. Read its
-SKILL.md alongside this one to see the pattern fully realized.
+SKILL.md alongside this one to see the pattern fully realized; read
+`doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
+`risk-boundary-build/`, and `ratios/` for additional applications over
+the same parser contract.
 
 ## Anti-patterns
 

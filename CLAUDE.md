@@ -44,8 +44,15 @@ Skills present:
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
 | `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
+| `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
+| `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
+| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Self-declaring module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
 | `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
+| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
+| `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 
 ---
@@ -71,12 +78,13 @@ of the skill. Keep it specific and list the triggers explicitly — do not bury 
 
 ### Two kinds of skill
 
-- **Metadata-block skills** apply the msdmd convention to a named block (`CONTRACTS`,
-  `MODULE_BUILD`, …). They define a field schema, a thin executor that consumes parsed
+- **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
+  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
-  example. `msdmd` itself is the foundation.
+  example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
+  `risk-boundary-build/`, and `ratios/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `visitor-intro/` is the example.
+  they enforce and the output shape they produce. `canon/` and `visitor-intro/` are the examples.
 
 ### The msdmd block syntax
 
@@ -136,13 +144,18 @@ with no block of the requested type.
 
 ## Build / test / lint
 
-There is **no build, test, or lint tooling in this repository** — no `package.json`,
-`pyproject.toml`, `Makefile`, or CI workflow. Do not invent commands.
+There is a small stdlib Python editorial test suite. There is still no `package.json`,
+`pyproject.toml`, `Makefile`, or CI workflow. Do not invent commands beyond the
+checks that exist here.
 
-- The parsers are reference implementations; this repo does not ship a test suite for them.
-- The runners shown in `test-build/SKILL.md` and described in `meta-module-build/SKILL.md` are
-  patterns for *consuming* repos to implement against their own source trees, not scripts that
-  live or run here.
+- Run `python -m unittest discover -s tests` to validate skill registration,
+  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
+  index coverage, universal parser behavior, and parser ratio bookends.
+- The parsers are reference implementations; the test suite covers core parser
+  behavior and library integration, not every consuming-runner contract.
+- Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
+  implement against their own source trees, not scripts that live or run here unless the skill
+  directory includes a helper file.
 - Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
   README table in sync with the directories present, and keep the parsers stdlib-only.
 

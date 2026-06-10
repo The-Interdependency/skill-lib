@@ -101,6 +101,8 @@ Two kinds:
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
 `<reponame>_msdmd.ts` collection points.
+`msdmd/collect.py` is a stdlib generator prototype that emits that shape from
+parsed module-local blocks.
 
 Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
 file extension. They are designed to be copied verbatim into any consuming project. A parser is
@@ -150,13 +152,9 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,
-no  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
-  index coverage, collection-point schema coverage, universal parser behavior,
-  and parser ratio bookends.
-- The parsers are reference implementations; the test suite covers core parser
-  behavior and library integration, not every consuming-runner contract.
-  per-skill spec coverage, SKILL.md frontmatter, README index coverage,
-  universal parser behavior, and parser ratio bookends.
+  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
+  index coverage, collection-point schema/generator coverage, universal parser
+  behavior, and parser ratio bookends.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.
 - `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`.

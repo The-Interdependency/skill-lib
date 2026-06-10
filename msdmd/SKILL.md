@@ -145,6 +145,9 @@ export default defineMsdmdCollection({
     { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
   ],
 });
+
+export const declarations = [];
+export const gaps = [];
 ```
 
 A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
@@ -157,6 +160,17 @@ source.
 If a repo has no collection point or visualizer yet, record that as `hmmm` in
 repo-local planning rather than pretending the graph exists.
 
+A small stdlib generator prototype lives at `msdmd/collect.py`. Consuming repos
+can run it directly or copy it as a starting point:
+
+```bash
+python -m msdmd.collect --root . --repo <reponame> --out <reponame>_msdmd.ts
+```
+
+The generator is intentionally conservative: it parses module-local blocks,
+emits declarations, optional expected-block gaps, and simple relationship
+edges from reserved fields. Repo-specific runners may enrich the output, but
+should preserve the `MsdmdCollection` shape.
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:

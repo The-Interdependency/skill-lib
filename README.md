@@ -61,6 +61,11 @@ specifications. Most application skills define runner contracts for consuming
 repos; they do not ship standalone executors here unless a helper file exists
 in that skill directory.|∆|
 
+|∆|Implementation status: this repo ships the universal msdmd parsers and skill
+specifications. Most application skills define runner contracts for consuming
+repos; they do not ship standalone executors here unless a helper file exists
+in that skill directory.|∆|
+
 ## The core idea
 
 Most "keep docs/tests/configs in sync with code" attempts rot because the
@@ -134,9 +139,9 @@ Run the stdlib editorial test suite after changing skills or parser files:
 python -m unittest discover -s tests
 ```
 
-The suite checks skill/index consistency, per-skill spec coverage, SKILL.md
-frontmatter, README skill links, universal parser behavior, and parser ratio
-bookends.
+The suite checks skill/index consistency, skills.json semantics, per-skill
+spec coverage, SKILL.md frontmatter, README skill links, collection-point
+schema coverage, universal parser behavior, and parser ratio bookends.
 
 ## Versioning and stability
 
@@ -146,3 +151,5 @@ bookends.
   may evolve independently.
 - The universal parsers (`msdmd/parsers/universal.{py,ts}`) commit to
   pure-stdlib dependencies; you can copy them anywhere.
+- The repo-level collection point shape lives in `msdmd/collection.ts`;
+  consuming repos can import or copy it for `<reponame>_msdmd.ts`.

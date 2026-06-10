@@ -127,23 +127,32 @@ canonical aggregation surface for all parsed msdmd declarations in that
 repo. It does not replace module-local blocks; it is generated from them
 or maintained as a thin index over them.
 
-The collection point SHOULD export:
+The collection point SHOULD use the shared shapes in `msdmd/collection.ts`
+(or a verbatim copy in consuming repos) and export a `MsdmdCollection`:
 
 ```typescript
-export const repo = "<reponame>";
-export const declarations = [
-  { file: "path/to/module.py", block: "CONTRACTS", id: "...", fields: { /* parsed fields */ } },
-];
-export const gaps = [
-  { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
-];
+import { defineMsdmdCollection } from "./.agents/skills/msdmd/collection";
+
+export default defineMsdmdCollection({
+  repo: "<reponame>",
+  declarations: [
+    { file: "path/to/module.py", block: "CONTRACTS", id: "...", fields: { summary: "..." } },
+  ],
+  gaps: [
+    { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
+  ],
+  edges: [
+    { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
+  ],
+});
 ```
 
 A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
-relationships between modules: `DEPENDENCIES.requires`, `CAPABILITIES.exposes`,
-`OWNERS.owner`, `BOUNDARIES` risk fields, `DOCS.covers`, `CONTRACTS.call`, and
-any `requires` edges shared across application skills. The visualizer is a
-consumer of the collection point, not a second metadata source.
+relationships between modules using the `MsdmdEdge` shape: `DEPENDENCIES.requires`,
+`CAPABILITIES.exposes`, `OWNERS.owner`, `BOUNDARIES` risk fields, `DOCS.covers`,
+`CONTRACTS.call`, and any `requires` edges shared across application skills.
+The visualizer is a consumer of the collection point, not a second metadata
+source.
 
 If a repo has no collection point or visualizer yet, record that as `hmmm` in
 repo-local planning rather than pretending the graph exists.

@@ -31,7 +31,7 @@ tools/*.py             # pure-stdlib helper scripts
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, parser contract, runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
 | `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
 | `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
@@ -84,6 +84,29 @@ Two kinds:
 # === END <BLOCK_NAME> ===
 ```
 
+- The comment marker (`#`, `//`, `--`) is whatever is idiomatic for the file's language; the
+  fence text and field structure are identical across languages.
+- `BLOCK_NAME` is uppercase snake_case. Every entry begins with `id:` (unique within the block,
+  stable across refactors). Field lines are indented one level beneath the id.
+- A file may contain multiple blocks of the same or different types; parsers concatenate entries.
+- See `msdmd/SKILL.md` for the authoritative spec, reserved field names, and runner protocol.
+
+### The reference parsers (`msdmd/parsers/`)
+
+| File | Public API | Notes |
+|---|---|---|
+| `universal.py` | `parse_text(text, block_name, marker="#")`, `parse_file(path, block_name)`, `walk_tree(root, block_name, *, skip=None, extensions=None)`, `marker_for(path)` | Pure Python stdlib. `walk_tree` returns `(annotated, untested)` so coverage gaps stay observable. |
+| `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart. |
+| `__init__.py` | — | Package marker / docstring. |
+
+`msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
+`<reponame>_msdmd.ts` collection points.
+
+Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
+file extension. They are designed to be copied verbatim into any consuming project. A parser is
+a pure function over file text: it returns all entries from all matching blocks, does not
+interpret field semantics (that is the executor's job), and returns an empty list for files
+with no block of the requested type.
 Flesh to preserve:
 
 - comment marker is language-idiomatic;
@@ -127,6 +150,11 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,
+no  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
+  index coverage, collection-point schema coverage, universal parser behavior,
+  and parser ratio bookends.
+- The parsers are reference implementations; the test suite covers core parser
+  behavior and library integration, not every consuming-runner contract.
   per-skill spec coverage, SKILL.md frontmatter, README index coverage,
   universal parser behavior, and parser ratio bookends.
 - The parsers are reference implementations; the test suite covers core parser

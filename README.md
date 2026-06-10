@@ -146,9 +146,8 @@ python -m unittest discover -s tests
 
 The suite checks skill/index consistency, skills.json semantics, per-skill
 spec coverage, SKILL.md frontmatter, README skill links, collection-point
-schema coverage, universal parser behavior, and parser ratio bookends.
-schema and generator coverage, universal parser behavior, and parser ratio
-bookends.
+schema, generator, and visualizer coverage, universal parser behavior, and
+parser ratio bookends.
 
 ## Versioning and stability
 
@@ -162,3 +161,5 @@ bookends.
   consuming repos can import or copy it for `<reponame>_msdmd.ts`.
 - A stdlib collection generator prototype lives at `msdmd/collect.py` and can
   emit `<reponame>_msdmd.ts` from parsed module-local blocks.
+- A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and can
+  render collection edges and gaps.

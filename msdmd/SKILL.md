@@ -171,6 +171,19 @@ The generator is intentionally conservative: it parses module-local blocks,
 emits declarations, optional expected-block gaps, and simple relationship
 edges from reserved fields. Repo-specific runners may enrich the output, but
 should preserve the `MsdmdCollection` shape.
+
+A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and reads
+raw JSON or generated TypeScript collection points:
+
+```bash
+python -m msdmd.visualize <reponame>_msdmd.ts --out <reponame>_msdmd.mmd
+```
+
+The visualizer is deliberately small: it renders declaration nodes, normalized
+edge relationships, and visible gap nodes. Rich repo-specific UIs should consume
+the same collection shape rather than re-parsing source files.
+
+
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:

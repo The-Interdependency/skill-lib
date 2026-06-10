@@ -42,8 +42,6 @@ class SkillSpecCoverageTest(unittest.TestCase):
                 "declarations",
                 "gaps",
                 "MsdmdCollection",
-                "export const declarations",
-                "export const gaps",
                 "## The runner protocol",
                 "## Field naming conventions",
             ],

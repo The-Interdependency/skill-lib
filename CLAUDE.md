@@ -100,9 +100,10 @@ Two kinds:
 | `__init__.py` | — | Package marker / docstring. |
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
-`<reponame>_msdmd.ts` collection points.
-`msdmd/collect.py` is a stdlib generator prototype that emits that shape from
-parsed module-local blocks.
+`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
+generator prototype that emits that shape from parsed module-local blocks.
+`msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
+TypeScript collection points.
 
 Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
 file extension. They are designed to be copied verbatim into any consuming project. A parser is
@@ -153,7 +154,7 @@ checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,
   skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
-  index coverage, collection-point schema/generator coverage, universal parser
+  index coverage, collection-point schema/generator/visualizer coverage, universal parser
   behavior, and parser ratio bookends.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.

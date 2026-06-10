@@ -114,6 +114,9 @@ of the skill. Keep it specific and list the triggers explicitly — do not bury 
 | `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart. |
 | `__init__.py` | — | Package marker / docstring. |
 
+`msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
+`<reponame>_msdmd.ts` collection points.
+
 Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
 file extension. They are designed to be copied verbatim into any consuming project. A parser is
 a pure function over file text: it returns all entries from all matching blocks, does not
@@ -150,7 +153,8 @@ checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,
   skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
-  index coverage, universal parser behavior, and parser ratio bookends.
+  index coverage, collection-point schema coverage, universal parser behavior,
+  and parser ratio bookends.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to

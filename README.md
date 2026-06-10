@@ -109,8 +109,8 @@ python -m unittest discover -s tests
 ```
 
 The suite checks skill/index consistency, skills.json semantics, per-skill
-spec coverage, SKILL.md frontmatter, README skill links, universal parser
-behavior, and parser ratio bookends.
+spec coverage, SKILL.md frontmatter, README skill links, collection-point
+schema coverage, universal parser behavior, and parser ratio bookends.
 
 ## Versioning and stability
 
@@ -120,3 +120,5 @@ behavior, and parser ratio bookends.
   may evolve independently.
 - The universal parsers (`msdmd/parsers/universal.{py,ts}`) commit to
   pure-stdlib dependencies; you can copy them anywhere.
+- The repo-level collection point shape lives in `msdmd/collection.ts`;
+  consuming repos can import or copy it for `<reponame>_msdmd.ts`.

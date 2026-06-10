@@ -145,6 +145,9 @@ export default defineMsdmdCollection({
     { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
   ],
 });
+
+export const declarations = [];
+export const gaps = [];
 ```
 
 A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
@@ -168,7 +171,6 @@ The generator is intentionally conservative: it parses module-local blocks,
 emits declarations, optional expected-block gaps, and simple relationship
 edges from reserved fields. Repo-specific runners may enrich the output, but
 should preserve the `MsdmdCollection` shape.
-
 ## The runner protocol
 
 A msdmd runner combines a parser and an executor:

@@ -13,7 +13,8 @@ walks them.
 
 Agents consuming this lib should start at
 [`AGENTS.md`](AGENTS.md); a machine-readable index of skills is at
-[`skills.json`](skills.json).
+[`skills.json`](skills.json). Root LLM-facing instructions are generated
+into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 ## What's inside
 
@@ -28,21 +29,25 @@ Agents consuming this lib should start at
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
 | [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Applies msdmd → runtime boundary declarations. Modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
 | [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks that a runner recomputes and checks for drift. |
+| [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
+| [`llms-build/`](llms-build/SKILL.md) | Applies msdmd → canonical root `llms.txt`. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them, writes `llms.txt`, and reports drift. |
 | [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 | [`char-compress/`](char-compress/SKILL.md) | Unit Circle Number System-derived bone/flesh context compression for agent handoff and skill writing. Preserves irreducible flesh, frozen bones, transforms, and `hmmm`; drops only safely regenerable scaffold. Independent of msdmd. |
-| [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. Keeps the factual half of a doc generated, not hand-typed. |
 
 ## Maintenance tools
 
-Pure-stdlib helper scripts live in [`tools/`](tools/README.md). They do not
-make this repo a package and do not create a build system.
+Pure-stdlib helper scripts live in [`tools/`](tools/README.md). The small
+`llms/` package exists only to provide the `python -m llms.build` command.
 
 ```bash
 python tools/check_skill_lib_drift.py
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # copy local files
+python -m llms.build --root . --out llms.txt             # dry-run
+python -m llms.build --root . --out llms.txt --apply     # write generated file
+python -m llms.build --root . --out llms.txt --check     # drift gate
 ```
 
 The drift checker compares skill directories, `skills.json`, `README.md`,
@@ -50,26 +55,14 @@ The drift checker compares skill directories, `skills.json`, `README.md`,
 copies canonical skill directories into a checked-out target repo. The
 char-compress runner executes preservation fixtures for negation, quantifier,
 order, values, statuses, secrets, `hmmm`, and unearned theorem/status leakage.
+The llms-build runner generates the root `llms.txt` from `LLMS` blocks and can
+fail on drift in `--check` mode.
 
-|∆|Implementation status: this repo ships the universal msdmd parsers and skill
-specifications. Most application skills define runner contracts for consuming
-repos; they do not ship standalone executors here unless a helper file exists
-in that skill directory.|∆|
-
-|∆|Implementation status: this repo ships the universal msdmd parsers and skill
-specifications. Most application skills define runner contracts for consuming
-repos; they do not ship standalone executors here unless a helper file exists
-in that skill directory.|∆|
-
-|∆|Implementation status: this repo ships the universal msdmd parsers and skill
-specifications. Most application skills define runner contracts for consuming
-repos; they do not ship standalone executors here unless a helper file exists
-in that skill directory.|∆|
-
-|∆|Implementation status: this repo ships the universal msdmd parsers and skill
-specifications. Most application skills define runner contracts for consuming
-repos; they do not ship standalone executors here unless a helper file exists
-in that skill directory.|∆|
+|∆|Implementation status: this repo ships the universal msdmd parsers, skill
+specifications, selected pure-stdlib helper tools, and the `llms-build` runner.
+Most other application skills define runner contracts for consuming repos; they
+do not ship standalone executors here unless a helper file exists in that skill
+directory or package.|∆|
 
 ## The core idea
 
@@ -110,17 +103,18 @@ authoritative spec.
 Skills come in two kinds. Pick the right one for what you're adding.
 
 **Metadata-block skills** apply the `msdmd` convention to a new block
-name (`doc-build`, `cap-build`, `deps-build`, `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`, `ratios` are the existing examples).
+name (`doc-build`, `cap-build`, `deps-build`, `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`, `ratios`, `manifest`, and `llms-build` are the existing examples).
 To add one:
 
-1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`).
+1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`, `LLMS`).
 2. Decide the field schema (which fields are required, which optional).
 3. Specify the runner/executor contract, or write a thin executor that takes
-   parsed entries from `msdmd/parsers/universal.py` and does something with
+   parsed entries from `msdmd/parsers/universal.py` or an equivalent parser and does something with
    them.
 4. Author a `SKILL.md` that documents the convention and runner behavior.
 
-`test-build/` is the canonical worked example.
+`test-build/` is the canonical worked example. `llms-build/` is the worked
+example for a metadata-block skill that also ships a stdlib command module.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
 block (`canon`, `visitor-intro`, and `char-compress` are the existing
@@ -146,8 +140,8 @@ python -m unittest discover -s tests
 
 The suite checks skill/index consistency, skills.json semantics, per-skill
 spec coverage, SKILL.md frontmatter, README skill links, collection-point
-schema, generator, and visualizer coverage, universal parser behavior, and
-parser ratio bookends.
+schema, generator, visualizer coverage, universal parser behavior, llms-build
+behavior, and parser ratio bookends.
 
 ## Versioning and stability
 
@@ -163,3 +157,5 @@ parser ratio bookends.
   emit `<reponame>_msdmd.ts` from parsed module-local blocks.
 - A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and can
   render collection edges and gaps.
+- The `llms-build` runner lives at `llms/build.py` and can generate or check
+  root `llms.txt` from `LLMS` blocks.

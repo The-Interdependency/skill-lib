@@ -1,6 +1,18 @@
 ---
 name: manifest
-description: Living-spec generator for machine-owned CLAUDE.md facts, derived from pyproject.toml and the file tree. Load this when generating or checking drift for repo metadata blocks instead of hand-authoring those facts.
+description: >-
+  Living-spec generator. Derives the mechanical, observable facts of a repo
+  (package name, version, description, license, authors, repository, build
+  backend, development status, supported Python versions, keywords, runtime
+  dependencies, optional extras, top-level layout, CI workflows) from
+  pyproject.toml + the file tree and splices them into a machine-owned, marked
+  block inside CLAUDE.md — keeping the doc from silently drifting from the code.
+  Ships a stdlib-only generator with --write (refresh), --check (CI drift gate),
+  and --print modes. Load this when: setting up or maintaining a CLAUDE.md /
+  AGENTS.md so its factual half is generated rather than hand-typed; wiring a CI
+  check that fails when docs drift from pyproject/version/deps/layout; deciding
+  which parts of a doc to generate vs. hand-author; or onboarding a new org repo
+  to the living-spec convention.
 ---
 
 # manifest — living spec from source

@@ -2,8 +2,8 @@
 """Editorial drift checker for The-Interdependency/skill-lib.
 
 Checks that the canonical skill directories, skills.json, README.md,
-ORG_DISTRIBUTION.md, AGENTS.md, and CLAUDE.md agree about installed skills.
-Pure stdlib. No network access.
+ORG_DISTRIBUTION.md, AGENTS.md, CLAUDE.md, and generated llms.txt agree about
+installed skills and root LLM instructions. Pure stdlib. No network access.
 """
 
 from __future__ import annotations
@@ -14,7 +14,7 @@ import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Sequence, Set
+from typing import Any, Dict, List, Mapping, Set
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
@@ -22,8 +22,9 @@ README = ROOT / "README.md"
 ORG = ROOT / "ORG_DISTRIBUTION.md"
 AGENTS = ROOT / "AGENTS.md"
 CLAUDE = ROOT / "CLAUDE.md"
+LLMS_TXT = ROOT / "llms.txt"
 
-IGNORE_DIRS = {".git", ".github", "tools", "__pycache__"}
+IGNORE_DIRS = {".git", ".github", "tools", "__pycache__", "llms"}
 
 
 @dataclass
@@ -77,6 +78,23 @@ def has_mention(text: str, skill: str) -> bool:
     return skill in text or f"`{skill}`" in text or f"`{skill}/`" in text
 
 
+def llms_drift_finding() -> Finding | None:
+    sys.path.insert(0, str(ROOT))
+    try:
+        from llms.build import collect, generate
+    except Exception as exc:  # pragma: no cover - defensive editorial check
+        return Finding("error", "llms_build_import_failed", f"could not import llms.build: {exc}")
+
+    generated = generate(collect(ROOT), repo_name=ROOT.name)
+    try:
+        current = LLMS_TXT.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return Finding("error", "missing_llms_txt", "llms.txt is missing")
+    if current != generated:
+        return Finding("error", "llms_txt_drift", "llms.txt differs from generated LLMS output")
+    return None
+
+
 def check() -> List[Finding]:
     findings: List[Finding] = []
     dirs = skill_dirs()
@@ -118,10 +136,14 @@ def check() -> List[Finding]:
         if not has_mention(claude_text, name):
             findings.append(Finding("warning", "missing_claude_mention", f"{name} is not mentioned in CLAUDE.md"))
 
+    llms_finding = llms_drift_finding()
+    if llms_finding is not None:
+        findings.append(llms_finding)
+
     return findings
 
 
-def main(argv: Sequence[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Check skill-lib editorial drift.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")
     parser.add_argument("--warnings-fail", action="store_true", help="Exit nonzero on warnings as well as errors.")

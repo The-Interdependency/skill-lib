@@ -2,8 +2,9 @@
 
 Small pure-stdlib helpers for maintaining this content repository.
 
-These tools do not make `skill-lib` a package and do not introduce a build
-system. They are local editorial checks and copy helpers.
+These tools do not introduce an external build system. They are local editorial
+checks, copy helpers, and generated-file drift gates. The small `llms/` package
+exists only to expose `python -m llms.build`.
 
 ## Drift checker
 
@@ -49,6 +50,30 @@ The helper copies canonical skill directories into:
 
 It also writes `.agents/skills/README.md` in the target repo with the source
 commit SHA. It does not commit, push, open pull requests, or contact GitHub.
+
+## llms-build runner
+
+Dry-run generated root instructions:
+
+```bash
+python -m llms.build --root . --out llms.txt
+```
+
+Write the generated file:
+
+```bash
+python -m llms.build --root . --out llms.txt --apply
+```
+
+Check committed drift:
+
+```bash
+python -m llms.build --root . --out llms.txt --check
+```
+
+The runner parses `LLMS` blocks, ignores Markdown fenced-code examples, emits
+unknowns as `hmmm`, and generates the canonical root `llms.txt` shape declared
+in `llms-build/SKILL.md`.
 
 ## char-compress fixtures
 

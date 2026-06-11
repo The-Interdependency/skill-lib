@@ -16,6 +16,7 @@ copies are propagated from.
 ```text
 <skill-name>/SKILL.md          # required: the skill itself
 <skill-name>/<helpers>...      # optional: parsers, executors, examples
+llms/                          # stdlib module for python -m llms.build
 ```
 
 Every skill is a directory at the repo root containing at least a
@@ -40,16 +41,18 @@ the skill. Treat it as the public contract.
    that skill's full `SKILL.md` before acting.
 4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `deps-build`,
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
-   and `ratios`) define metadata blocks that other modules declare inside their own source files. Other
-   skills (currently `canon`, `char-compress`, `manifest`, and `visitor-intro`) are procedural and
-   define no block.
+   `ratios`, `manifest`, and `llms-build`) define metadata blocks that other
+   modules declare inside their own source files. Other skills (currently
+   `canon`, `char-compress`, and `visitor-intro`) are procedural and define no
+   block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.
 
 This repo ships the universal msdmd parser implementations plus skill
 specifications. Treat per-skill runner sections as contracts for consuming
-repos unless the skill directory includes an actual helper script.
+repos unless the skill directory or repo package includes an actual helper
+script. `llms-build` includes the stdlib command module `llms/build.py`.
 
 ## How to install this lib into another repo
 
@@ -77,6 +80,9 @@ propagate from here.
   metadata block declared via `msdmd`.
 - New module work in any repo should start with a `MODULE_BUILD`
   block; see `meta-module-build/SKILL.md`.
+- If you are creating or maintaining a root `llms.txt`, load
+  `llms-build/SKILL.md`, edit source `LLMS` blocks first, then run
+  `python -m llms.build --root . --out llms.txt --apply`.
 - If you are deciding whether repo-local practice should become org doctrine,
   load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
 - If you are compressing a thread, document, repo audit, canon handoff, or
@@ -92,4 +98,6 @@ propagate from here.
 - `ORG_DISTRIBUTION.md` — canonical-source rule, target-repo list,
   propagation contract.
 - `skills.json` — machine-readable skill index.
+- `llms.txt` — generated LLM-facing root instructions.
 - Each `<skill>/SKILL.md` — the authoritative skill spec.
+- `llms/build.py` — reference runner for `llms-build`.

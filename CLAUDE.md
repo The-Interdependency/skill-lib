@@ -8,9 +8,10 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Other The Interdependency repos vendor repo-local copies from here.
 - Edit skills here first; propagate later with the source commit SHA.
 - License: MIT.
-- Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, each `<skill>/SKILL.md`.
+- Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
 - No package manifest, Makefile, package.json, or pyproject.toml is declared here. The only CI is `.github/workflows/hygiene.yml`, a narrow guard that fails any push/PR carrying tracked Python bytecode (`*.pyc`/`__pycache__`); it does not run the editorial helper tools.
 - Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
+- The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
 
 ## Layout
 
@@ -19,10 +20,12 @@ README.md              # human-facing overview and skill index
 AGENTS.md              # agent-facing entry point
 ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
 skills.json            # machine-readable skill index
+llms.txt               # generated root LLM instructions from LLMS blocks
 CLAUDE.md              # assistant guidance
 LICENSE                # MIT
 tools/README.md        # local maintenance helper documentation
 tools/*.py             # pure-stdlib helper scripts
+llms/                  # python -m llms.build reference runner
 <skill-name>/SKILL.md  # required skill spec
 <skill-name>/<helpers> # optional parsers, runners, examples
 ```
@@ -40,6 +43,8 @@ tools/*.py             # pure-stdlib helper scripts
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
 | `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
 | `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
+| `manifest/` | metadata-block | `msdmd` | Living-spec generator. Derives observable repo facts from `pyproject.toml` + the file tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
+| `llms-build/` | metadata-block | `msdmd` | Root LLM instruction generation. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them into canonical root `llms.txt` and reports drift. |
 | `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 | `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
@@ -49,7 +54,8 @@ tools/*.py             # pure-stdlib helper scripts
 ## Anatomy of a skill
 
 Every skill is a directory at the repo root containing **at least a `SKILL.md`**. Optional
-supporting files (parsers, executors, examples) live alongside it.
+supporting files (parsers, executors, examples) live alongside it. Repo-level helper packages may
+also exist when a skill exposes a module command, as `llms-build` does with `llms/build.py`.
 
 ### SKILL.md frontmatter
 
@@ -67,10 +73,10 @@ The `description` is the loading contract. Keep it specific. List triggers. Do n
 Two kinds:
 
 - **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
-  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, …). They define a field schema, a thin executor that consumes parsed
+  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
-  `risk-boundary-build/`, and `ratios/` define adjacent applications. `msdmd` itself is the foundation.
+  `risk-boundary-build/`, `ratios/`, `manifest/`, and `llms-build/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
   they enforce and the output shape they produce. `canon/`, `visitor-intro/`, and `char-compress/` are the examples.
 
@@ -86,7 +92,7 @@ Two kinds:
 
 - The comment marker (`#`, `//`, `--`) is whatever is idiomatic for the file's language; the
   fence text and field structure are identical across languages.
-- `BLOCK_NAME` is uppercase snake_case. Every entry begins with `id:` (unique within the block,
+- `BLOCK_NAME` is uppercase snake case. Every entry begins with `id:` (unique within the block,
   stable across refactors). Field lines are indented one level beneath the id.
 - A file may contain multiple blocks of the same or different types; parsers concatenate entries.
 - See `msdmd/SKILL.md` for the authoritative spec, reserved field names, and runner protocol.
@@ -110,6 +116,7 @@ file extension. They are designed to be copied verbatim into any consuming proje
 a pure function over file text: it returns all entries from all matching blocks, does not
 interpret field semantics (that is the executor's job), and returns an empty list for files
 with no block of the requested type.
+
 Flesh to preserve:
 
 - comment marker is language-idiomatic;
@@ -137,6 +144,20 @@ Parser contract:
 - return empty list when no matching block exists;
 - runners must report gap lists visibly.
 
+## llms-build runner
+
+`llms-build/SKILL.md` defines the `LLMS` metadata block. The reference command is:
+
+```bash
+python -m llms.build --root . --out llms.txt
+python -m llms.build --root . --out llms.txt --apply
+python -m llms.build --root . --out llms.txt --check
+```
+
+The runner lives in `llms/build.py`. It parses `LLMS` blocks, ignores Markdown fenced-code examples,
+generates the canonical root `llms.txt`, and reports drift in `--check` mode. Edit source `LLMS`
+blocks first; do not hand-edit `llms.txt` as independent doctrine.
+
 ## Maintenance tools
 
 ```bash
@@ -144,6 +165,7 @@ python tools/check_skill_lib_drift.py
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # local copy
+python -m llms.build --root . --out llms.txt --check
 ```
 
 Tool boundaries:
@@ -156,17 +178,18 @@ checks that exist here.
 - Run `python -m unittest discover -s tests` to validate skill registration,
   skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
   index coverage, collection-point schema/generator/visualizer coverage, universal parser
-  behavior, and parser ratio bookends.
+  behavior, llms-build behavior, and parser ratio bookends.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.
-- `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`.
+- `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt`.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
   implement against their own source trees, not scripts that live or run here unless the skill
-  directory includes a helper file.
+  directory includes a helper file or package module.
 - Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
-  README table in sync with the directories present, and keep the parsers stdlib-only.
+  README table in sync with the directories present, keep generated files in sync with declarations,
+  and keep the parsers/runners stdlib-only.
 
 ## Consumption and propagation
 
@@ -180,7 +203,7 @@ checks that exist here.
 ## Editing doctrine
 
 1. Edit here first.
-2. Keep `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md` synchronized when adding, renaming, or removing a skill.
+2. Keep `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt` synchronized when adding, renaming, or removing a skill.
 3. Preserve load-bearing descriptions.
 4. Mark unknowns as `hmmm`; do not guess.
 5. New module work in consuming repos should start with `MODULE_BUILD`.
@@ -189,6 +212,7 @@ checks that exist here.
 8. Do not invent undeclared package/build commands for this repo.
 9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
 10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
+11. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
 
 ## hmmm
 

@@ -7,7 +7,7 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown \u2014 the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
     },
     {
       "name": "doc-build",
@@ -97,6 +97,15 @@
         "msdmd"
       ],
       "description": "Living-spec generator. Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from pyproject.toml + the file tree and splices them into a machine-owned marked block in CLAUDE.md, with a CI --check drift gate. Use to keep the factual half of a doc generated rather than hand-typed."
+    },
+    {
+      "name": "llms-build",
+      "path": "llms-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring LLM instructions file built on msdmd. Modules or central files declare LLMS blocks; the python -m llms.build runner aggregates them into a standardized root llms.txt and surfaces drift/gaps."
     },
     {
       "name": "char-compress",

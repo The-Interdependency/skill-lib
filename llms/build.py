@@ -49,6 +49,7 @@ _DEFAULT_SKIP = {
     ".pytest_cache",
     ".mypy_cache",
     ".tox",
+    "tests",
 }
 
 

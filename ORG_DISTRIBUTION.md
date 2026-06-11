@@ -18,9 +18,19 @@ Propagation PRs should cite this repository and the source commit SHA.
 ## Installed skills
 
 * `msdmd/` — Module Self-Declared Metadata Markdown
+* `doc-build/` — documentation coverage metadata blocks
+* `cap-build/` — capability inventory metadata blocks
+* `deps-build/` — dependency topology metadata blocks
+* `owner-build/` — module stewardship metadata blocks
 * `test-build/` — contract-test metadata blocks
 * `meta-module-build/` — metadata-first module scaffolding
+* `risk-boundary-build/` — runtime risk and permission boundary metadata blocks
+* `ratios/` — module composition ratio verification
+* `canon/` — canonical-source and doctrine maintenance
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
+* `char-compress/` — bone/flesh context compression for handoffs and skill writing
+* `manifest/` — living-spec generation
+* `llms-build/` — root llms.txt generation from LLMS blocks
 
 ## Target repos
 
@@ -48,6 +58,15 @@ engine, UI panel, migration, or experiment, agents should read:
 
 New module work should start with a `MODULE_BUILD` block. Unknown fields
 must be marked `hmmm`, not guessed.
+
+Before creating or maintaining a root `llms.txt`, agents should read:
+
+```text
+.agents/skills/llms-build/SKILL.md
+```
+
+Root LLM instructions should be declared in source `LLMS` blocks and generated
+with the llms-build runner, not hand-maintained as separate doctrine.
 
 Existing files are not retroactively noncompliant merely because they predate
 this skill.

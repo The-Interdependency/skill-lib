@@ -7,21 +7,111 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for test-build, meta-module-build, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
+    },
+    {
+      "name": "doc-build",
+      "path": "doc-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible coverage gaps."
+    },
+    {
+      "name": "cap-build",
+      "path": "cap-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring capability inventory built on msdmd. Modules declare CAPABILITIES blocks; a runner builds a capability map, verifies exposed surfaces, reports duplicates, and surfaces visible gaps."
+    },
+    {
+      "name": "deps-build",
+      "path": "deps-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring dependency topology built on msdmd. Modules declare DEPENDENCIES blocks; a runner builds import/call/capability graphs, detects unresolved edges and cycles, and surfaces visible gaps."
+    },
+    {
+      "name": "owner-build",
+      "path": "owner-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd",
+        "risk-boundary-build"
+      ],
+      "description": "Self-declaring module stewardship built on msdmd. Modules declare OWNERS blocks; a runner reports unowned modules, unresolved hmmm owners, and review coverage gaps."
     },
     {
       "name": "test-build",
       "path": "test-build/SKILL.md",
       "kind": "metadata-block",
-      "depends_on": ["msdmd"],
+      "depends_on": [
+        "msdmd"
+      ],
       "description": "Self-declaring contract tests built on msdmd. Each module owns the tests that protect its contracts via a CONTRACTS block; a runner discovers and executes them and reports per-contract status plus visible coverage gaps."
     },
     {
       "name": "meta-module-build",
       "path": "meta-module-build/SKILL.md",
       "kind": "metadata-block",
-      "depends_on": ["msdmd"],
+      "depends_on": [
+        "msdmd"
+      ],
       "description": "Metadata-first module build skill built on msdmd. Use when turning a capability idea into a bounded module manifest, file plan, public/internal surface, permission boundary, tests, docs, rollout, and rollback notes before implementation."
+    },
+    {
+      "name": "risk-boundary-build",
+      "path": "risk-boundary-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd",
+        "meta-module-build"
+      ],
+      "description": "Self-declaring runtime risk and permission boundaries built on msdmd. Modules declare BOUNDARIES blocks for auth, storage, network, user-data, admin, and operational effects."
+    },
+    {
+      "name": "ratios",
+      "path": "ratios/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a RATIOS block; a runner recomputes values, fails on drift, and reports visible coverage gaps."
+    },
+    {
+      "name": "canon",
+      "path": "canon/SKILL.md",
+      "kind": "procedural",
+      "description": "Canonical-source and doctrine maintenance for The Interdependency skill library. Load when deciding whether a claim, pattern, workflow, or repo-local practice should become canon, or when preserving unresolved doctrine as hmmm."
+    },
+    {
+      "name": "manifest",
+      "path": "manifest/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Living-spec generator. Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from pyproject.toml + the file tree and splices them into a machine-owned marked block in CLAUDE.md, with a CI --check drift gate. Use to keep the factual half of a doc generated rather than hand-typed."
+    },
+    {
+      "name": "llms-build",
+      "path": "llms-build/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd"
+      ],
+      "description": "Self-declaring LLM instructions file built on msdmd. Modules or central files declare LLMS blocks; the python -m llms.build runner aggregates them into a standardized root llms.txt and surfaces drift/gaps."
+    },
+    {
+      "name": "char-compress",
+      "path": "char-compress/SKILL.md",
+      "kind": "procedural",
+      "description": "Character-based context compression for agent handoff and skill writing, derived from Unit Circle Number System compression mathematics. Load when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when writing flesh-dense SKILL.md files; or when checking whether compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm."
     },
     {
       "name": "visitor-intro",

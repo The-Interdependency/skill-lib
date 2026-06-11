@@ -1,59 +1,61 @@
 # CLAUDE.md — skill-lib
 
-This file gives AI assistants context needed to work effectively in this repository.
+AI-assistant guidance for `The-Interdependency/skill-lib`.
 
----
+## Core facts
 
-## Overview
+- `skill-lib` is the canonical organization-wide source for reusable agent skills.
+- Other The Interdependency repos vendor repo-local copies from here.
+- Edit skills here first; propagate later with the source commit SHA.
+- License: MIT.
+- Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
+- No package manifest, Makefile, package.json, or pyproject.toml is declared here. The only CI is `.github/workflows/hygiene.yml`, a narrow guard that fails any push/PR carrying tracked Python bytecode (`*.pyc`/`__pycache__`); it does not run the editorial helper tools.
+- Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
+- The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
 
-`skill-lib` is the canonical, organization-wide library of reusable agent skills for
-**The Interdependency**. It is the single source of truth from which every other org repo
-propagates its local copy of these skills.
-
-The library is built around **msdmd** — *Module Self-Declared Metadata in Markdown* — a
-language-agnostic convention where each source module declares its own structured metadata
-inside a fenced comment block. A meta-runner walks the tree, parses every block, and acts on
-it; modules without the relevant block surface as *visible coverage gaps*. The contract lives
-in the same file as the code it describes, so deleting the code deletes its declaration in the
-same diff.
-
-- **Role in the org:** canonical skill source. Other repos vendor copies; edits happen here first.
-- **License:** Apache 2.0 (see `LICENSE`).
-- **Entry points:** `README.md` (human-facing), `AGENTS.md` (agent-facing), `skills.json`
-  (machine-readable index), `ORG_DISTRIBUTION.md` (propagation rules and target-repo list).
-
-There is **no build system, package manifest, test runner, or CI** in this repo. It is a
-content library plus two reference parsers. See *Build / test / lint* below.
-
----
-
-## Repository layout
+## Layout
 
 ```text
-README.md              # human-facing overview, what's-inside table, block syntax
-AGENTS.md              # agent-facing entry point (how to load/install skills)
-ORG_DISTRIBUTION.md    # canonical-source rule, target-repo list, propagation contract
-skills.json            # machine-readable skill index (version, install_path, skills[])
-CLAUDE.md              # this file — AI-assistant guidance and repo context
-LICENSE                # Apache 2.0
-<skill-name>/SKILL.md  # one directory per skill, each with a required SKILL.md
+README.md              # human-facing overview and skill index
+AGENTS.md              # agent-facing entry point
+ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
+skills.json            # machine-readable skill index
+llms.txt               # generated root LLM instructions from LLMS blocks
+CLAUDE.md              # assistant guidance
+LICENSE                # MIT
+tools/README.md        # local maintenance helper documentation
+tools/*.py             # pure-stdlib helper scripts
+llms/                  # python -m llms.build reference runner
+<skill-name>/SKILL.md  # required skill spec
+<skill-name>/<helpers> # optional parsers, runners, examples
 ```
 
-Skills present:
+## Skills
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
 | `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
+| `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
+| `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
+| `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
+| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Self-declaring module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
 | `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
+| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in bookend `# === RATIOS ===` blocks; a runner recomputes values, fails on drift, and reports visible gaps. |
+| `manifest/` | metadata-block | `msdmd` | Living-spec generator. Derives observable repo facts from `pyproject.toml` + the file tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
+| `llms-build/` | metadata-block | `msdmd` | Root LLM instruction generation. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them into canonical root `llms.txt` and reports drift. |
+| `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
+| `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
 
 ---
 
 ## Anatomy of a skill
 
 Every skill is a directory at the repo root containing **at least a `SKILL.md`**. Optional
-supporting files (parsers, executors, examples) live alongside it.
+supporting files (parsers, executors, examples) live alongside it. Repo-level helper packages may
+also exist when a skill exposes a module command, as `llms-build` does with `llms/build.py`.
 
 ### SKILL.md frontmatter
 
@@ -62,38 +64,35 @@ supporting files (parsers, executors, examples) live alongside it.
 ```yaml
 ---
 name: <slug>
-description: <one paragraph; ends with explicit "Load this when …" triggers>
+description: <load-bearing trigger paragraph>
 ---
 ```
 
-The `description` is **load-bearing**: the harness reads it to decide whether to load the rest
-of the skill. Keep it specific and list the triggers explicitly — do not bury them.
+The `description` is the loading contract. Keep it specific. List triggers. Do not bury operative conditions in prose.
 
-### Two kinds of skill
+Two kinds:
 
-- **Metadata-block skills** apply the msdmd convention to a named block (`CONTRACTS`,
-  `MODULE_BUILD`, …). They define a field schema, a thin executor that consumes parsed
+- **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
+  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
-  example. `msdmd` itself is the foundation.
+  example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
+  `risk-boundary-build/`, `ratios/`, `manifest/`, and `llms-build/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `visitor-intro/` is the example.
+  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, and `char-compress/` are the examples.
 
-### The msdmd block syntax
+## msdmd block syntax
 
 ```python
 # === <BLOCK_NAME> ===
 # id: <unique_snake_case_id>
 #   <field>: <value>
 #   <field>: <value>
-#
-# id: <next_entry_id>
-#   <field>: <value>
 # === END <BLOCK_NAME> ===
 ```
 
 - The comment marker (`#`, `//`, `--`) is whatever is idiomatic for the file's language; the
   fence text and field structure are identical across languages.
-- `BLOCK_NAME` is uppercase snake_case. Every entry begins with `id:` (unique within the block,
+- `BLOCK_NAME` is uppercase snake case. Every entry begins with `id:` (unique within the block,
   stable across refactors). Field lines are indented one level beneath the id.
 - A file may contain multiple blocks of the same or different types; parsers concatenate entries.
 - See `msdmd/SKILL.md` for the authoritative spec, reserved field names, and runner protocol.
@@ -106,79 +105,117 @@ of the skill. Keep it specific and list the triggers explicitly — do not bury 
 | `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart. |
 | `__init__.py` | — | Package marker / docstring. |
 
+`msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
+`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
+generator prototype that emits that shape from parsed module-local blocks.
+`msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
+TypeScript collection points.
+
 Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
 file extension. They are designed to be copied verbatim into any consuming project. A parser is
 a pure function over file text: it returns all entries from all matching blocks, does not
 interpret field semantics (that is the executor's job), and returns an empty list for files
 with no block of the requested type.
 
----
+Flesh to preserve:
 
-## How skills are consumed by other repos
+- comment marker is language-idiomatic;
+- fence text and field structure are identical across languages;
+- `BLOCK_NAME` is uppercase snake case;
+- every entry begins with stable `id:`;
+- field lines are indented beneath the id;
+- files may contain multiple blocks;
+- parsers concatenate matching entries;
+- unknown fields stay visible as `hmmm` where the skill requires it.
 
-`skill-lib` is the canonical source. Every target repo in the org carries a repo-local copy.
+Reference parsers:
 
-- **Canonical install path:** `.agents/skills/<skill-name>/` inside the consuming repo. Other
-  paths (`.skills/`, `.local/skills/`, `skill-lib/`) also work as long as the agent harness
-  walks them.
-- **Loading:** a harness walks the skills root for directories containing `SKILL.md`, parses
-  the frontmatter, indexes by `name` and `description`, and reads a skill's full `SKILL.md`
-  when a request matches its triggers. `skills.json` is the machine-readable alternative to
-  walking the tree.
-- **Propagation:** copy a skill directory verbatim into the target repo and add a short
-  `.agents/skills/README.md` there citing this repo and the source commit SHA. Propagation PRs
-  must cite this repo and the SHA. **Repo-local copies are never the source of truth — edit
-  here first, then propagate.**
-- **Target repos** (see `ORG_DISTRIBUTION.md`): `a0`, `ucns`, `edcmbone`, `interdependent-lib`,
-  `PTCA`, `PCEA`, `aimmh`, `pcna`, `ZFAE`, `ai-tiw`, `a0ucns`, `eml_ucns`.
+```text
+msdmd/parsers/universal.py  # Python stdlib
+msdmd/parsers/universal.ts  # Node stdlib
+```
 
----
+Parser contract:
 
-## Build / test / lint
+- pure functions over file text;
+- no non-stdlib dependencies;
+- auto-detect comment marker by extension;
+- return entries, not interpreted semantics;
+- return empty list when no matching block exists;
+- runners must report gap lists visibly.
 
-There is **no build, test, or lint tooling in this repository** — no `package.json`,
-`pyproject.toml`, `Makefile`, or CI workflow. Do not invent commands.
+## llms-build runner
 
-- The parsers are reference implementations; this repo does not ship a test suite for them.
-- The runners shown in `test-build/SKILL.md` and described in `meta-module-build/SKILL.md` are
-  patterns for *consuming* repos to implement against their own source trees, not scripts that
-  live or run here.
+`llms-build/SKILL.md` defines the `LLMS` metadata block. The reference command is:
+
+```bash
+python -m llms.build --root . --out llms.txt
+python -m llms.build --root . --out llms.txt --apply
+python -m llms.build --root . --out llms.txt --check
+```
+
+The runner lives in `llms/build.py`. It parses `LLMS` blocks, ignores Markdown fenced-code examples,
+generates the canonical root `llms.txt`, and reports drift in `--check` mode. Edit source `LLMS`
+blocks first; do not hand-edit `llms.txt` as independent doctrine.
+
+## Maintenance tools
+
+```bash
+python tools/check_skill_lib_drift.py
+python tools/char_compress_check.py
+python tools/propagate_skills.py ../target-repo          # dry-run
+python tools/propagate_skills.py ../target-repo --apply  # local copy
+python -m llms.build --root . --out llms.txt --check
+```
+
+Tool boundaries:
+
+There is a small stdlib Python editorial test suite. There is still no `package.json`,
+`pyproject.toml`, or `Makefile`. The only CI workflow is `hygiene.yml` (tracked-bytecode
+guard); it does not run the editorial helper tools. Do not invent commands beyond the
+checks that exist here.
+
+- Run `python -m unittest discover -s tests` to validate skill registration,
+  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
+  index coverage, collection-point schema/generator/visualizer coverage, universal parser
+  behavior, llms-build behavior, and parser ratio bookends.
+- The parsers are reference implementations; the test suite covers core parser
+  behavior and library integration, not every consuming-runner contract.
+- `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt`.
+- `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
+- `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
+- Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
+  implement against their own source trees, not scripts that live or run here unless the skill
+  directory includes a helper file or package module.
 - Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
-  README table in sync with the directories present, and keep the parsers stdlib-only.
+  README table in sync with the directories present, keep generated files in sync with declarations,
+  and keep the parsers/runners stdlib-only.
 
----
+## Consumption and propagation
 
-## Conventions & gotchas
+- Canonical install path inside consuming repos: `.agents/skills/<skill-name>/`.
+- Other paths may work only if the harness walks them.
+- Copy skill directories verbatim.
+- Add or preserve a target `.agents/skills/README.md` citing this repo and source commit SHA.
+- Repo-local copies are never the source of truth.
+- Target repos are listed in `ORG_DISTRIBUTION.md`.
 
-- **`description` is a public contract.** It decides whether a skill loads. Keep it specific;
-  list triggers explicitly; never bury them.
-- **Unknown fields are written `hmmm`, not guessed.** Applies to any msdmd metadata block and to
-  manifest authoring under `meta-module-build`.
-- **New module work starts with a `MODULE_BUILD` block** (`meta-module-build/SKILL.md`),
-  including its boundary fields (`auth_boundary`, `storage_boundary`, `network_boundary`,
-  `user_data_boundary`, `admin_only`). Existing files are not retroactively noncompliant merely
-  because they predate the skill.
-- **Contracts belong in the source module, not the test file.** Putting a `CONTRACTS` block in
-  the test file inverts the doctrine. Ids must describe the protected capability
-  (`chat_get_other_owner_404`), not the implementation (`chat_returns_200`).
-- **Never silently drop modules without a block.** A msdmd runner must emit the gap list in
-  normal output; that visibility is the whole point.
-- **Don't fork the parser or introduce parser dialects.** If you need richer syntax, propose an
-  msdmd extension rather than a variant; portability depends on one parser contract.
-- **Block syntax is a stable contract.** Breaking changes (renaming the fence, changing
-  field-line indentation, renaming reserved fields) require a major version bump and a migration
-  note in the README. Reserved field names are additive-only. Application SKILLs version
-  independently in their own files.
+## Editing doctrine
 
----
+1. Edit here first.
+2. Keep `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt` synchronized when adding, renaming, or removing a skill.
+3. Preserve load-bearing descriptions.
+4. Mark unknowns as `hmmm`; do not guess.
+5. New module work in consuming repos should start with `MODULE_BUILD`.
+6. Contracts belong in source modules, not test files.
+7. Do not fork parser dialects; propose an `msdmd` extension instead.
+8. Do not invent undeclared package/build commands for this repo.
+9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
+10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
+11. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
 
-## Workflow for editing this repo
+## hmmm
 
-1. Edit skills here first; this is the canonical source.
-2. Keep `skills.json`, the `README.md` table, and `ORG_DISTRIBUTION.md` consistent whenever you
-   add, rename, or remove a skill.
-3. When adding a skill, register it in `skills.json`, link it from the README table, and follow
-   the appropriate authoring path (metadata-block vs procedural) in `README.md` and
-   `msdmd/SKILL.md`.
-4. Propagation to target repos happens via separate PRs in those repos that cite this repo and
-   the source commit SHA — not from within this repo.
+- no CI currently runs the helper tools automatically
+- propagation still requires review, commit, and pull request work in target repos
+- `char_compress_check.py` is deterministic fixture support, not the full Unit Circle Number System compression engine

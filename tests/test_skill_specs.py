@@ -184,6 +184,24 @@ class SkillSpecCoverageTest(unittest.TestCase):
             "ratios",
         )
 
+    def test_llms_build_spec(self) -> None:
+        text = read_skill("llms-build")
+        self.assertContainsAll(
+            text,
+            [
+                "# === LLMS ===",
+                "project_overview",
+                "key_definitions",
+                "architecture_summary",
+                "usage_rules",
+                "python -m llms.build",
+                "--apply",
+                "--check",
+                "hmmm",
+            ],
+            "llms-build",
+        )
+
     def test_canon_spec(self) -> None:
         text = read_skill("canon")
         self.assertContainsAll(

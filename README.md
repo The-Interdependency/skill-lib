@@ -4,7 +4,8 @@ A portable library of agent skills built on **msdmd** — Module Self-
 Declared Metadata Markdown — a language-agnostic convention where each
 module declares its own structured metadata in a fenced comment block.
 
-Licensed under MIT. The canonical install path inside a
+Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
+changes to these files must be published). The canonical install path inside a
 consuming repo is `.agents/skills/<skill-name>/`; every target repo in
 The Interdependency follows this convention (see
 [`ORG_DISTRIBUTION.md`](ORG_DISTRIBUTION.md)). Other paths like

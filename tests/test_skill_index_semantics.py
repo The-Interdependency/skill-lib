@@ -4,21 +4,11 @@ import json
 import unittest
 from pathlib import Path
 
+from frontmatter import frontmatter_for
+
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
 ALLOWED_KINDS = {"metadata-block", "procedural"}
-
-
-def frontmatter_for(path: Path) -> dict[str, str]:
-    text = path.read_text(encoding="utf-8")
-    _, frontmatter, _ = text.split("---\n", 2)
-    data: dict[str, str] = {}
-    for line in frontmatter.splitlines():
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        data[key.strip()] = value.strip()
-    return data
 
 
 class SkillIndexSemanticsTest(unittest.TestCase):

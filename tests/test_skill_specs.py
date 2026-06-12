@@ -3,6 +3,8 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
+from frontmatter import frontmatter_for
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -18,13 +20,7 @@ class SkillSpecCoverageTest(unittest.TestCase):
 
     def test_frontmatter_descriptions_include_load_triggers(self) -> None:
         for path in sorted(ROOT.glob("*/SKILL.md")):
-            text = path.read_text(encoding="utf-8")
-            _, frontmatter, _ = text.split("---\n", 2)
-            description = " ".join(
-                line.removeprefix("description:").strip()
-                for line in frontmatter.splitlines()
-                if line.startswith("description:")
-            )
+            description = frontmatter_for(path).get("description", "")
             self.assertTrue(
                 "Load this when" in description or "Use this when" in description,
                 f"{path} description must include explicit load/use triggers",

@@ -9,12 +9,13 @@ installed skills and root LLM instructions. Pure stdlib. No network access.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import json
 import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Set
+from typing import Any, Dict, List, Mapping, Sequence, Set
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
@@ -51,27 +52,56 @@ def skill_dirs(root: Path = ROOT) -> Set[str]:
     return out
 
 
-def load_index(path: Path = SKILLS_JSON) -> Dict[str, Mapping[str, Any]]:
+def load_index_entries(path: Path = SKILLS_JSON) -> List[Mapping[str, Any]]:
     data = json.loads(path.read_text(encoding="utf-8"))
     skills = data.get("skills", [])
     if not isinstance(skills, list):
         raise ValueError("skills.json must contain a skills list")
+    return [entry for entry in skills if isinstance(entry, Mapping)]
+
+
+def load_index(path: Path = SKILLS_JSON) -> Dict[str, Mapping[str, Any]]:
     indexed: Dict[str, Mapping[str, Any]] = {}
-    for entry in skills:
-        if not isinstance(entry, Mapping):
-            continue
+    for entry in load_index_entries(path):
         name = str(entry.get("name", ""))
         if name:
             indexed[name] = entry
     return indexed
 
 
+def duplicate_names(names: Sequence[str]) -> List[str]:
+    return sorted(name for name, count in Counter(names).items() if count > 1)
+
+
+def names_in_readme_list(text: str) -> List[str]:
+    return re.findall(r"\[`([^`/]+)/`\]\([^)]*?/SKILL\.md\)", text)
+
+
 def names_in_readme(text: str) -> Set[str]:
-    return set(re.findall(r"\[`([^`/]+)/`\]\([^)]*?/SKILL\.md\)", text))
+    return set(names_in_readme_list(text))
+
+
+def names_in_org_list(text: str) -> List[str]:
+    return re.findall(r"\* `([^`/]+)/` —", text)
 
 
 def names_in_org(text: str) -> Set[str]:
-    return set(re.findall(r"\* `([^`/]+)/` —", text))
+    return set(names_in_org_list(text))
+
+
+def duplicate_entry_findings(
+    index_entries: Sequence[Mapping[str, Any]],
+    readme_name_list: Sequence[str],
+    org_name_list: Sequence[str],
+) -> List[Finding]:
+    findings: List[Finding] = []
+    for name in duplicate_names([str(entry.get("name", "")) for entry in index_entries if entry.get("name")]):
+        findings.append(Finding("error", "duplicate_index_entry", f"{name} appears multiple times in skills.json"))
+    for name in duplicate_names(readme_name_list):
+        findings.append(Finding("error", "duplicate_readme_entry", f"{name} appears multiple times in README.md skill table"))
+    for name in duplicate_names(org_name_list):
+        findings.append(Finding("error", "duplicate_org_entry", f"{name} appears multiple times in ORG_DISTRIBUTION.md installed skills"))
+    return findings
 
 
 def has_mention(text: str, skill: str) -> bool:
@@ -98,12 +128,19 @@ def llms_drift_finding() -> Finding | None:
 def check() -> List[Finding]:
     findings: List[Finding] = []
     dirs = skill_dirs()
+    index_entries = load_index_entries()
     index = load_index()
     index_names = set(index)
-    readme_names = names_in_readme(read(README))
-    org_names = names_in_org(read(ORG))
+    readme_text = read(README)
+    org_text = read(ORG)
+    readme_name_list = names_in_readme_list(readme_text)
+    org_name_list = names_in_org_list(org_text)
+    readme_names = set(readme_name_list)
+    org_names = set(org_name_list)
     agents_text = read(AGENTS)
     claude_text = read(CLAUDE)
+
+    findings.extend(duplicate_entry_findings(index_entries, readme_name_list, org_name_list))
 
     for name in sorted(dirs - index_names):
         findings.append(Finding("error", "missing_index_entry", f"{name} has SKILL.md but is absent from skills.json"))

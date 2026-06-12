@@ -35,11 +35,14 @@ class SkillLibraryTest(unittest.TestCase):
             self.assertIn("name", keys, path)
             self.assertIn("description", keys, path)
 
-    def test_readme_lists_every_skill(self) -> None:
+    def test_readme_lists_every_skill_once(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         data = json.loads(SKILLS_JSON.read_text(encoding="utf-8"))
+        linked_names = re.findall(r"\[`([^`/]+)/`\]\([^)]*?/SKILL\.md\)", readme)
+        self.assertEqual(len(linked_names), len(set(linked_names)), linked_names)
         for skill in data["skills"]:
-            self.assertIn(f"[`{skill['name']}/`]({skill['path']})", readme)
+            link = f"[`{skill['name']}/`]({skill['path']})"
+            self.assertEqual(1, readme.count(link), link)
 
     def test_parser_ratio_bookends_are_single_matching_lines(self) -> None:
         parser_files = sorted((ROOT / "msdmd" / "parsers").glob("*"))

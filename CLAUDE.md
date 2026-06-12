@@ -7,7 +7,7 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - `skill-lib` is the canonical organization-wide source for reusable agent skills.
 - Other The Interdependency repos vendor repo-local copies from here.
 - Edit skills here first; propagate later with the source commit SHA.
-- License: MIT.
+- License: MPL-2.0 (relicensed from MIT; weak/file-level copyleft — embed anywhere, changes to these files must be published).
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
 - No package manifest, Makefile, package.json, or pyproject.toml is declared here. The only CI is `.github/workflows/hygiene.yml`, a narrow guard that fails any push/PR carrying tracked Python bytecode (`*.pyc`/`__pycache__`); it does not run the editorial helper tools.
 - Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
@@ -22,7 +22,7 @@ ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
 skills.json            # machine-readable skill index
 llms.txt               # generated root LLM instructions from LLMS blocks
 CLAUDE.md              # assistant guidance
-LICENSE                # MIT
+LICENSE                # MPL-2.0
 tools/README.md        # local maintenance helper documentation
 tools/*.py             # pure-stdlib helper scripts
 llms/                  # python -m llms.build reference runner

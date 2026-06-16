@@ -7,7 +7,7 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown \u2014 the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
     },
     {
       "name": "doc-build",
@@ -118,6 +118,12 @@
       "path": "visitor-intro/SKILL.md",
       "kind": "procedural",
       "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
+    },
+    {
+      "name": "agent-instantiation",
+      "path": "agent-instantiation/SKILL.md",
+      "kind": "procedural",
+      "description": "Methodology for instantiating, forking, running, merging, and retiring agents in the a0-family agent platform (a0, a0ucns, a0-betatest). Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."
     }
   ]
 }

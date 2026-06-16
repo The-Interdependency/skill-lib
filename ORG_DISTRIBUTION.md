@@ -31,6 +31,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `char-compress/` — bone/flesh context compression for handoffs and skill writing
 * `manifest/` — living-spec generation
 * `llms-build/` — root llms.txt generation from LLMS blocks
+* `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 
 ## Target repos
 

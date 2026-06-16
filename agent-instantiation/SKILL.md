@@ -1,6 +1,6 @@
 ---
 name: agent-instantiation
-description: Methodology for instantiating, forking, running, merging, and retiring agents in the a0-family agent platform (a0, a0ucns, a0-betatest). Load this when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat-driven agent task, or a checkpoint of agent state. Use it before writing any code that creates, addresses, schedules, or tears down an agent or sub-agent, so the new code follows the platform's existing lifecycle, fork/merge, identity, and gating contracts rather than inventing a parallel one.
+description: Methodology for instantiating, forking, running, merging, and retiring agents in the a0 platform and its near-identical mirror a0ucns. Load this when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat-driven agent task, or a checkpoint of agent state. Use it before writing any code that creates, addresses, schedules, or tears down an agent or sub-agent, so the new code follows the platform's existing lifecycle, fork/merge, identity, and gating contracts rather than inventing a parallel one. NOTE: a0-betatest (a0p) has diverged to a different per-user CRUD + native-ZFAE instancing model — this skill's spawn/fork/merge sequence does NOT apply there; see "a0-betatest divergence".
 ---
 
 # agent-instantiation — How a0 brings agents into being
@@ -31,7 +31,10 @@ create or reshape an agent instance.
 ## Scope and source boundary
 
 The **canonical source is `a0`** (`python/engine/`, `python/services/`,
-`python/agents/`, `shared/schema.ts`). `a0ucns` and `a0-betatest` mirror it.
+`python/agents/`, `shared/schema.ts`). `a0ucns` is a near-identical mirror and
+follows this skill verbatim. **`a0-betatest` (a0p) has diverged** to a
+different instancing model and does **not** follow the sequence below — see
+"a0-betatest divergence" before touching that repo.
 This is **repo-specific runtime doctrine**, not org-universal math: it
 transfers no UCNS / PCNA / PCTA theorem status (see each repo's boundary
 notes). Cite the a0 files below; if a mechanism is not in them, mark it
@@ -160,6 +163,39 @@ The constants above are a0's current values, not invariants — read them from
   `executing` rows / dangling registry entries).
 - Skipping `require_admin` / approval-scope checks on a new spawn or merge
   surface.
+
+## a0-betatest divergence (does not follow this skill)
+
+`a0-betatest` (a0p) replaced the a0 model wholesale. Do **not** apply the
+spawn/fork/merge sequence there; its instancing is:
+
+- **An instance is a per-user CRUD entity, not a forked singleton.**
+  `AgentInstance` (UUID + editable `CharacterSheet`) created/read/updated/
+  archived via routes — `backend/agents/{schema.py,store.py,routes.py}`.
+  There is no single persistent `PCNAEngine`; each agent is its own entity.
+- **Each instance owns a native ZFAE weight bank**, not shared ring tensors:
+  three 157-seed cores `[157,53,7,7]` (1,223,187 scalars), `A0ZFAEWeightBank`
+  in `backend/interdependent_lib/zfae/weights.py`; the native engine refuses
+  LLM fallback in `zfae_native` mode and trains by teacher distillation.
+- **No `sub_agent_spawn`, spawn executor, or `InstanceMerge`.** The only
+  "spawn/merge" is volatile in-memory sub-context scoping —
+  `MemoryCore.spawn_sub` / `merge_sub` in
+  `backend/interdependent_lib/pcna/memory_core.py`. No ring/weight forking,
+  no federated averaging, no `agent_runs` state machine.
+- **Identity is a UUID + character-sheet name**, per `user_id` — not the
+  `a0(model)zfae` / `zeta{n}` naming convention.
+- **Persistence is filesystem + Mongo + FIQ**, not `system_toggles` /
+  `agent_logs`: per-agent `storage/agents/{id}/zfae_core.safetensors` (+ meta
+  JSON), agent metadata in the Mongo `agent_instances` collection, and a
+  hash-chained **FIQ audit log** for events.
+- **Gating is sentinel + override**, not spawn caps + ContextVars: 13
+  sentinels (S1–S13) with per-agent modes/weights and a pending-override
+  halt gate, plus `MODULE_BUILD`/`BOUNDARIES`/`CAPABILITIES`/`RATIOS`
+  enforced by the vendored `a0p_skills` runners.
+
+`a0-betatest/_legacy_a0/` is a reference copy of canonical a0 (which *does*
+follow this skill). If a0-betatest's per-instance native-ZFAE model needs its
+own doctrine, it belongs in a **separate** skill, not by stretching this one.
 
 ## hmmm
 

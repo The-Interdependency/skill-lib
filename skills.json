@@ -123,7 +123,7 @@
       "name": "agent-instantiation",
       "path": "agent-instantiation/SKILL.md",
       "kind": "procedural",
-      "description": "Methodology for instantiating, forking, running, merging, and retiring agents in the a0-family agent platform (a0, a0ucns, a0-betatest). Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."
+      "description": "Methodology for instantiating, forking, running, merging, and retiring agents in the a0 platform and its near-identical mirror a0ucns. Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. a0-betatest (a0p) has diverged to a per-user CRUD + native-ZFAE model and is out of scope. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."
     }
   ]
 }

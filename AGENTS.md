@@ -43,8 +43,8 @@ the skill. Treat it as the public contract.
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
    `ratios`, `manifest`, and `llms-build`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
-   `canon`, `char-compress`, `visitor-intro`, and `agent-instantiation`) are
-   procedural and define no block.
+   `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`, and
+   `a0p-instancing`) are procedural and define no block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.
@@ -91,8 +91,9 @@ propagate from here.
 - If you are an agent introducing a newcomer to the org, load
   `visitor-intro/SKILL.md` and follow its output rubric.
 - If you are instantiating, forking, merging, or retiring an agent or
-  sub-agent in the a0-family platform, load
-  `agent-instantiation/SKILL.md` and follow its instantiation sequence.
+  sub-agent in `a0` / `a0ucns`, load `agent-instantiation/SKILL.md` and
+  follow its instantiation sequence. For `a0-betatest` (a0p), whose model
+  diverges, load `a0p-instancing/SKILL.md` instead.
 
 ## Pointers
 

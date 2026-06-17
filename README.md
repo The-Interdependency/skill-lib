@@ -36,6 +36,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 | [`char-compress/`](char-compress/SKILL.md) | Unit Circle Number System-derived bone/flesh context compression for agent handoff and skill writing. Preserves irreducible flesh, frozen bones, transforms, and `hmmm`; drops only safely regenerable scaffold. Independent of msdmd. |
 | [`agent-instantiation/`](agent-instantiation/SKILL.md) | Methodology for instantiating, forking, running, merging, and retiring agents in `a0` and its mirror `a0ucns`. Spawn via the `sub_agent_spawn` tool → executor; fork/merge `PCNAEngine` instances via `InstanceMerge`; compose identities; honor spawn caps and write-route gating. `a0-betatest` diverges (per-user native-ZFAE) and is out of scope. Independent of msdmd. |
+| [`a0p-instancing/`](a0p-instancing/SKILL.md) | Peer of `agent-instantiation` for a0-betatest (a0p), whose model diverges: agents are per-user CRUD `AgentInstance` entities bound to a `CharacterSheet`, each owning a trained native ZFAE weight bank; no spawn/fork/merge — only volatile sub-context memory. Covers create→train→readiness-gate→mode inference→sentinel/override→safetensors checkpoint. Independent of msdmd. |
 
 ## Maintenance tools
 

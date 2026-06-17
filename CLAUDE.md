@@ -49,6 +49,7 @@ llms/                  # python -m llms.build reference runner
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 | `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
 | `agent-instantiation/` | procedural | — | a0/a0ucns agent lifecycle methodology. Spawn sub-agents via the `sub_agent_spawn` tool → spawn executor; fork/merge `PCNAEngine` instances via `InstanceMerge` (fork/absorb/converge); compose identities (`a0(model)zfae`/`zeta{n}`); honor spawn caps + write-route gating. Canonical source is `a0`; `a0-betatest` diverged (per-user native-ZFAE) and is out of scope. Repo-specific runtime doctrine (no theorem transfer). |
+| `a0p-instancing/` | procedural | — | Peer for a0-betatest (a0p): agents are per-user CRUD `AgentInstance` + `CharacterSheet`, each owning a trained native ZFAE weight bank (three 157-seed cores); no `sub_agent_spawn`/executor/`InstanceMerge` — only volatile `MemoryCore.spawn_sub/merge_sub`. Sequence: create→distill-train→readiness gate→mode inference→sentinel/pending-override→safetensors checkpoint. Canonical source is `a0-betatest`. |
 
 ---
 
@@ -79,7 +80,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, and `llms-build/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, and `agent-instantiation/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, and `a0p-instancing/` are the examples.
 
 ## msdmd block syntax
 

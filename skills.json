@@ -81,7 +81,7 @@
       "depends_on": [
         "msdmd"
       ],
-      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a RATIOS block; a runner recomputes values, fails on drift, and reports visible coverage gaps."
+      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on the file's first and last line (not a fenced block); a runner recomputes values, fails on drift or misplacement, and reports visible coverage gaps."
     },
     {
       "name": "canon",

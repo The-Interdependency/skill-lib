@@ -168,13 +168,14 @@ class SkillSpecCoverageTest(unittest.TestCase):
         self.assertContainsAll(
             text,
             [
-                "# === RATIOS ===",
-                "bookend rule",
+                "ratios: loc_comments=",
+                "not a fenced block",
+                "first line and its last non-blank line",
                 "loc_comments",
                 "imports_exports",
                 "calls_definitions",
+                "parse_ratios",
                 "python ratios_check.py",
-                "Implementation status:",
                 "hmmm",
             ],
             "ratios",

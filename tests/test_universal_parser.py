@@ -4,7 +4,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from msdmd.parsers.universal import marker_for, parse_file, parse_text, walk_tree
+from msdmd.parsers.universal import (
+    marker_for,
+    parse_file,
+    parse_ratios,
+    parse_text,
+    ratios_placement,
+    walk_tree,
+)
 
 
 class UniversalParserTest(unittest.TestCase):
@@ -103,20 +110,39 @@ class UniversalParserTest(unittest.TestCase):
             skipped = skipped_dir / "ignored.py"
 
             annotated.write_text(
-                """# === RATIOS ===
-# id: loc_comments
-#   value: 1:1
-# === END RATIOS ===
+                """# === DOCS ===
+# id: module_doc
+#   path: docs/module.md
+# === END DOCS ===
 """,
                 encoding="utf-8",
             )
             gap.write_text("print('gap')\n", encoding="utf-8")
             skipped.write_text("print('ignored')\n", encoding="utf-8")
 
-            annotated_files, gap_files = walk_tree(root, "RATIOS")
+            annotated_files, gap_files = walk_tree(root, "DOCS")
 
-            self.assertEqual([(annotated, [{"id": "loc_comments", "value": "1:1"}])], annotated_files)
+            self.assertEqual([(annotated, [{"id": "module_doc", "path": "docs/module.md"}])], annotated_files)
             self.assertEqual([gap], gap_files)
+
+    def test_parse_ratios_reads_single_line_declarations(self) -> None:
+        text = (
+            "# ratios: loc_comments=120:40 imports_exports=4:7 calls_definitions=50:10\n"
+            '"""body"""\n'
+            "x = 1\n"
+            "# ratios: loc_comments=120:40 imports_exports=4:7 calls_definitions=50:10\n"
+        )
+        entries = parse_ratios(text, "#")
+        # one entry per (line x ratio token): 2 lines x 3 ratios
+        self.assertEqual(6, len(entries))
+        self.assertEqual({"id": "loc_comments", "value": "120:40"}, entries[0])
+        self.assertEqual((True, True), ratios_placement(text, "#"))
+
+    def test_parse_ratios_detects_misplacement(self) -> None:
+        text = "x = 1\n# ratios: loc_comments=1:0 imports_exports=0:0 calls_definitions=0:0\ny = 2\n"
+        # present but on neither the first nor the last non-blank line
+        self.assertEqual((False, False), ratios_placement(text, "#"))
+        self.assertEqual(3, len(parse_ratios(text, "#")))
 
 
 if __name__ == "__main__":

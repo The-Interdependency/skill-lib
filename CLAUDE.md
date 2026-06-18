@@ -48,6 +48,7 @@ llms/                  # python -m llms.build reference runner
 | `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 | `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
+| `plain-lens/` | procedural | — | Plain-language, multi-lens companion views of dense canonical text. Build easier on-ramps (domain/audience/role lens selectors, progressive disclosure) that never replace or talk down to the source, keep a static fallback under any dynamic layer, preserve operators/negations/quantifiers, and report an EDCM-style body-vs-footnote tension reading as an illustrative heuristic (not an edcmbone metric runtime). |
 
 ---
 

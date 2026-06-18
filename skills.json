@@ -118,6 +118,12 @@
       "path": "visitor-intro/SKILL.md",
       "kind": "procedural",
       "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
+    },
+    {
+      "name": "plain-lens",
+      "path": "plain-lens/SKILL.md",
+      "kind": "procedural",
+      "description": "Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
     }
   ]
 }

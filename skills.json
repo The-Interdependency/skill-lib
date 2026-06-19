@@ -7,7 +7,7 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown \u2014 the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
     },
     {
       "name": "doc-build",
@@ -120,6 +120,16 @@
       "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
     },
     {
+      "name": "agent-instantiation",
+      "path": "agent-instantiation/SKILL.md",
+      "kind": "procedural",
+      "description": "Methodology for instantiating, forking, running, merging, and retiring agents in the a0 platform and its near-identical mirror a0ucns. Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. a0-betatest (a0p) has diverged to a per-user CRUD + native-ZFAE model and is out of scope. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."
+    },
+    {
+      "name": "a0p-instancing",
+      "path": "a0p-instancing/SKILL.md",
+      "kind": "procedural",
+      "description": "Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its teacher-distillation training, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory under a0-betatest backend/. a0p has no sub_agent_spawn, spawn executor, or InstanceMerge; for canonical a0/a0ucns use agent-instantiation instead. Repo-specific runtime doctrine; canonical source is a0-betatest. Independent of msdmd."
       "name": "plain-lens",
       "path": "plain-lens/SKILL.md",
       "kind": "procedural",

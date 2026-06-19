@@ -29,6 +29,8 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `canon/` — canonical-source and doctrine maintenance
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
 * `char-compress/` — bone/flesh context compression for handoffs and skill writing
+* `agent-instantiation/` — a0/a0ucns agent spawn/fork/merge lifecycle methodology
+* `a0p-instancing/` — a0-betatest (a0p) per-user CRUD + native-ZFAE instancing methodology
 * `manifest/` — living-spec generation
 * `llms-build/` — root llms.txt generation from LLMS blocks
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text

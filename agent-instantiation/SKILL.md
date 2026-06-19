@@ -126,18 +126,53 @@ Blending uses `_fed_avg(a, b, alpha) = clip(alpha*a + (1-alpha)*b, 0, 1)`.
 The constants above are a0's current values, not invariants — read them from
 `merge.py`, don't reproduce them from memory.
 
+## Canonical agent nomenclature
+
+The maintainer-defined identity grammar for an a0 agent is:
+
+```
+username( a0( <energy / inference provider> ) <auditor / teacher / …> )
+```
+
+- Inside `a0( … )` is the **energy / inference provider** — the LLM that
+  supplies compute, or `zfae` when the **native inference engine** is the
+  source. Read this slot as "what thinks".
+- The trailing token (optional) is the **auditor / teacher / other special
+  access** layered over that energy. The slot is open-ended — "other special
+  access yet to evolve".
+- The outer `username( … )` names the **owning user**.
+
+| Identity | Energy / inference | Auditor / teacher |
+|---|---|---|
+| `a0(gpt 5.5)` | gpt 5.5 | — |
+| `a0(gemini 3.5)gpt5.5` | gemini 3.5 | gpt 5.5 (auditor) |
+| `a0(zfae)` | native ZFAE engine | — |
+| `a0(zfae)gpt 5.5` | native ZFAE engine | gpt 5.5 (teacher / auditor) |
+
+Energy is inside the parens, auditor is outside, the user wraps the whole
+thing. `zfae` *inside* the parens means native inference is the energy — it
+is not an auditor.
+
+> Reconciliation note (`hmmm`): a0's current code emits a different,
+> pre-nomenclature form — `compose_name(...)` → `a0({model})zfae` and
+> `sub_agent_name(index, ...)` → `a0({model})zeta{index}` — where the trailing
+> token is a fixed slot / sub-agent index, not the auditor, and there is no
+> `username( … )` wrapper. Treat the grammar above as the canonical target and
+> the code form as the implemented-but-unreconciled state. How the sub-agent
+> index (`zeta{n}`) composes with the energy/auditor grammar is not yet
+> specified — leave it `hmmm`, do not invent a merged form.
+
 ## Identity and addressing
 
-- **Names are composed, never literal.** Primary: `compose_name(...)` →
-  `a0({model})zfae`. Sub-agent: `sub_agent_name(index, ...)` →
-  `a0({model})zeta{index}`. The model tag is `model_id`, else `provider`,
-  else `?`.
+- **Names follow the canonical nomenclature above; compose them, never
+  hardcode a literal.** The model/energy tag resolves `model_id`, else
+  `provider`, else `?`.
 - **The instance address is `engine.theta.instance_id`** (generated per
   Θ tensor). Use it as the canonical handle for a running instance.
 - **Run lineage is `(run_id, parent_run_id, root_run_id, depth)`** on
-  `agent_runs`; logs in `agent_logs` carry the same keys. Identity (who),
-  lineage (where in the tree), and instance (which tensors) are distinct —
-  keep them so.
+  `agent_runs`; logs in `agent_logs` carry the same keys. The human label
+  (nomenclature), the instance address (`instance_id`), and the run lineage
+  are distinct identities — keep them so.
 
 ## Guardrails to honor
 

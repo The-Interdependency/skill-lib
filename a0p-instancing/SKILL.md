@@ -111,8 +111,15 @@ Modes are per-agent on the `CharacterSheet`; read the enum from
 
 ## Identity, persistence, governance
 
-- **Identity** is `AgentInstance.id` (UUID) + the character-sheet name,
-  scoped by `user_id`. There is **no** `a0(model)zfae` / `zeta{n}` naming.
+- **Identity.** The durable handle is `AgentInstance.id` (UUID) + the
+  character-sheet name, scoped by `user_id`. The human-facing label follows
+  the canonical grammar `username( a0( <energy> ) <auditor/teacher> )` (see
+  `agent-instantiation`): the `username( … )` wrapper is the owning `user_id`,
+  the energy inside `a0( … )` is the sheet's `base_model` (or `zfae` for the
+  native core), and the auditor/teacher maps to the sheet's mode / outer model
+  — e.g. `a0(zfae)` is `ZFAE_NATIVE`, `a0(zfae)gpt5.5` is native energy with a
+  gpt5.5 teacher (`ZFAE_ASSISTED` / `MODEL_PLUS_CRITIC`), and `a0(gpt5.5)` is
+  `BARE_MODEL`. a0p does **not** use a0's `zeta{n}` sub-agent suffix.
 - **Persistence** is three-part: Mongo `agent_instances` (metadata),
   per-agent filesystem `storage/agents/{id}/` (safetensors + meta), and the
   FIQ hash-chained audit log (events). Not `system_toggles` / `agent_logs`.

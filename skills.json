@@ -81,7 +81,7 @@
       "depends_on": [
         "msdmd"
       ],
-      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a RATIOS block; a runner recomputes values, fails on drift, and reports visible coverage gaps."
+      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on the file's first and last line (not a fenced block); a runner recomputes values, fails on drift or misplacement, and reports visible coverage gaps."
     },
     {
       "name": "canon",
@@ -130,6 +130,10 @@
       "path": "a0p-instancing/SKILL.md",
       "kind": "procedural",
       "description": "Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its teacher-distillation training, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory under a0-betatest backend/. a0p has no sub_agent_spawn, spawn executor, or InstanceMerge; for canonical a0/a0ucns use agent-instantiation instead. Repo-specific runtime doctrine; canonical source is a0-betatest. Independent of msdmd."
+      "name": "plain-lens",
+      "path": "plain-lens/SKILL.md",
+      "kind": "procedural",
+      "description": "Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
     }
   ]
 }

@@ -94,6 +94,10 @@ propagate from here.
   sub-agent in `a0` / `a0ucns`, load `agent-instantiation/SKILL.md` and
   follow its instantiation sequence. For `a0-betatest` (a0p), whose model
   diverges, load `a0p-instancing/SKILL.md` instead.
+- If you are making a dense document approachable — a plain-language or
+  multi-lens companion view, a progressive-disclosure reader, or a dynamic
+  page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
+  paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
 
 ## Pointers
 

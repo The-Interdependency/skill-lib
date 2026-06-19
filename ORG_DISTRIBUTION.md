@@ -33,6 +33,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `a0p-instancing/` — a0-betatest (a0p) per-user CRUD + native-ZFAE instancing methodology
 * `manifest/` — living-spec generation
 * `llms-build/` — root llms.txt generation from LLMS blocks
+* `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 
 ## Target repos
 

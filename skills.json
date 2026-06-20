@@ -130,6 +130,8 @@
       "path": "a0p-instancing/SKILL.md",
       "kind": "procedural",
       "description": "Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its teacher-distillation training, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory under a0-betatest backend/. a0p has no sub_agent_spawn, spawn executor, or InstanceMerge; for canonical a0/a0ucns use agent-instantiation instead. Repo-specific runtime doctrine; canonical source is a0-betatest. Independent of msdmd."
+    },
+    {
       "name": "plain-lens",
       "path": "plain-lens/SKILL.md",
       "kind": "procedural",

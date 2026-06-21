@@ -43,8 +43,9 @@ the skill. Treat it as the public contract.
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
    `ratios`, `manifest`, and `llms-build`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
-   `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`, and
-   `a0p-instancing`) are procedural and define no block.
+   `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`,
+   `a0p-instancing`, `plain-lens`, and `gonal-morphology`) are procedural and
+   define no block.
 
 A machine-readable index is also available at `skills.json` if you
 prefer not to walk the tree.

@@ -13,6 +13,8 @@ Read order:
    examples.
 3. [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — overlap grid showing which domain
    example informs the other examples in each resonance triple.
+4. [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface invariants that
+   prevent resonance from collapsing into identity.
 
 Core rule:
 

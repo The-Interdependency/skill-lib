@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Meta Energy Theory Axioms — the agent skill for extracting, preserving, and applying Energy Theory axioms without flattening them into EDCMBONE flesh/bone or FLAR implementation detail. Load this when asked to define or extend Energy Theory; when comparing Ohm, Fick, chemistry, electronics, linguistics, computation, cognition, or social-system resonances; when documenting gradients, flow, coupling, threshold, phase, resonance, closure, fiqs, Ficks Law, or small network architectures; or when a repo needs an Energy Theory narrative that keeps resonance distinct from identity.
+description: Meta Energy Theory Axioms — the agent skill for extracting, preserving, and applying Energy Theory root axioms, derived law families, and cross-domain resonances without flattening them into EDCMBONE flesh/bone or FLAR implementation detail. Load this when asked to define or extend Energy Theory; when comparing Ohm, Fick, Green, chemistry, electronics, linguistics, computation, cognition, or social-system resonances; when documenting gradients, flow, coupling, threshold, phase, resonance, closure, fiqs, Ficks Law, or small network architectures; or when a repo needs an Energy Theory narrative that keeps axiom, law, resonance, postulate, and interface doctrine distinct.
 ---
 
 # meta — Meta Energy Theory Axioms
@@ -9,7 +9,7 @@ description: Meta Energy Theory Axioms — the agent skill for extracting, prese
 
 This skill exists because Energy Theory is being extracted through resonances among
 small network architectures, and those resonances are easy to flatten into the
-wrong native vocabulary.
+wrong native vocabulary or the wrong status category.
 
 ## Native scope
 
@@ -44,32 +44,39 @@ Do **not** replace those terms with `flesh` / `bone` as root Energy Theory
 vocabulary. Flesh/bone belongs natively to `edcmbone`. It may be used as a
 resonance example or translation layer, not as the parent ontology.
 
-## Doctrine
+## Status doctrine
 
-1. **Resonance is not identity.** Ohm's law, Fick's law, Arrhenius kinetics,
-   phonemic contrast, semantic context, and fiq-mediated PCNA flow may rhyme.
-   They do not become the same equation merely because they rhyme.
-2. **Formulae are bridges, not thefts.** When importing a formula from physics,
-   chemistry, electronics, information theory, or linguistics, name the source
-   domain and state what transfers.
-3. **Small architecture is the microscope, not the boundary.** Atomic structure,
+1. **Axioms are rare.** A root axiom must be self-evident once terms are defined.
+   If it needs a formula, an empirical domain, or FLAR implementation to make it
+   plausible, it is probably not a root axiom.
+2. **Resonance is not identity.** Ohm's law, Fick's law, Green response,
+   Arrhenius kinetics, phonemic contrast, semantic context, and fiq-mediated
+   PCNA flow may rhyme. They do not become the same equation merely because they
+   rhyme.
+3. **Formulae are bridges, not thefts.** When importing a formula from physics,
+   chemistry, electronics, information theory, linguistics, or another domain,
+   name the source domain and state what transfers.
+4. **Small architecture is the microscope, not the boundary.** Atomic structure,
    circuits, molecules, social triads, linguistic contexts, and PCTA heptagrams
    are small architectures through which more general energy behavior becomes
    legible.
-4. **Keep EDCMBONE separate.** EDCM/EDCMBONE measure semantic fidelity and
+5. **Keep EDCMBONE separate.** EDCM/EDCMBONE measure semantic fidelity and
    meaning-operator behavior. Energy Theory studies energy behavior across
    architectures. They resonate; they are not identical.
-5. **Mark status.** These axioms are working Energy Theory canon candidates, not
-   completed formal proof. Unproven transfer claims remain `hmmm`.
+6. **Mark status.** Use `axiom`, `definition`, `derived law-family`, `resonance`,
+   `FLAR postulate`, `FLAR implementation law`, or `interface doctrine` before
+   extending canon. Unproven transfer claims remain `hmmm`.
 
 ## Required companion files
 
 When this skill loads, read these files before applying it:
 
-- [`AXIOMS.md`](AXIOMS.md) — axiom definitions, mathematical resonance formulae,
-  and at least three domain examples per axiom.
-- [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — cross-domain overlap grid showing which
-  theory example informs the other examples in each resonance triple.
+- [`AXIOMS.md`](AXIOMS.md) — the strict root axiom core. Currently: Distinction,
+  Permitted Relation, Coupled Emergence, and Ordered Transformation.
+- [`LAW_FAMILIES.md`](LAW_FAMILIES.md) — derived operational law families,
+  resonance formulae, and FLAR postulates that are useful but not root axioms.
+- [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — cross-domain overlap grid showing status,
+  examples, informing resonance, transfer, and limits.
 - [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface doctrine: the
   load-bearing seams where Energy Theory, FLAR, EDCM, EDCMBONE, and The
   Interdependent Way touch without becoming each other.
@@ -91,7 +98,7 @@ difference across architecture
 → actual flow governed by medium / geometry
 ```
 
-Canonical first axiom:
+Canonical first law-family extraction:
 
 ```text
 Gradient permits flow; architecture determines flow.
@@ -104,10 +111,29 @@ Difference does not move by itself.
 Difference moves only through available geometry.
 ```
 
+This is not the root axiom core. It derives from Distinction plus Permitted
+Relation plus domain architecture.
+
+## Root axiom core
+
+```text
+0. Distinction
+    Without distinction, nothing is legible.
+
+1. Permitted Relation
+    Change occurs only through permitted relation.
+
+2. Coupled Emergence
+    Relations can possess properties not possessed by isolated terms.
+
+3. Ordered Transformation
+    Order can change what a transformation is.
+```
+
 ## FLAR relation
 
-This skill does not implement FLAR. It supplies Energy Theory axioms for FLAR
-repo narratives and agent reasoning.
+This skill does not implement FLAR. It supplies Energy Theory axioms, law-family
+language, and resonance boundaries for FLAR repo narratives and agent reasoning.
 
 Current FLAR mapping:
 
@@ -133,6 +159,8 @@ Inference condition:
 ```text
 inference occurs when all three cores fiq simultaneously
 ```
+
+These are FLAR postulates / implementation laws, not root Energy Theory axioms.
 
 ## EDCMBONE relation
 
@@ -168,9 +196,12 @@ A load-bearing line is a distinction whose collapse changes system behavior.
 
 When asked to extend or apply Energy Theory, produce:
 
-1. the candidate axiom in Energy Theory native terminology;
-2. at least three resonance examples from existing conceptual understandings;
-3. full domain formulae for those examples where formulae exist;
-4. a statement of what transfers and what does not;
-5. an overlap note: which example informs the other two;
-6. `hmmm` for unproven equivalence or unresolved formalization.
+1. status classification: axiom, definition, derived law-family, resonance, FLAR
+   postulate, FLAR implementation law, or interface doctrine;
+2. the candidate statement in Energy Theory native terminology;
+3. at least three resonance examples from existing conceptual understandings for
+   law-families or resonance claims;
+4. full domain formulae for those examples where formulae exist;
+5. a statement of what transfers and what does not;
+6. an overlap note: which example informs the other two;
+7. `hmmm` for unproven equivalence or unresolved formalization.

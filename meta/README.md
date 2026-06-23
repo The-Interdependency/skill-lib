@@ -2,18 +2,22 @@
 
 Meta Energy Theory Axioms.
 
-This folder preserves the current Energy Theory axiom extraction as a skill-lib
+This folder preserves the current Energy Theory extraction as a skill-lib
 procedural skill. It exists to keep Energy Theory from being flattened into
-EDCMBONE flesh/bone terminology or into FLAR implementation detail.
+EDCMBONE flesh/bone terminology, FLAR implementation detail, or overgrown axiom
+lists.
 
 Read order:
 
-1. [`SKILL.md`](SKILL.md) — agent-facing skill contract and separation doctrine.
-2. [`AXIOMS.md`](AXIOMS.md) — Energy Theory axioms with formula-backed resonance
-   examples.
-3. [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — overlap grid showing which domain
-   example informs the other examples in each resonance triple.
-4. [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface invariants that
+1. [`SKILL.md`](SKILL.md) — agent-facing skill contract, status doctrine, and
+   separation rules.
+2. [`AXIOMS.md`](AXIOMS.md) — strict root axiom core: Distinction, Permitted
+   Relation, Coupled Emergence, and Ordered Transformation.
+3. [`LAW_FAMILIES.md`](LAW_FAMILIES.md) — derived operational law families,
+   resonance formulae, and FLAR postulates that are useful but not root axioms.
+4. [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — overlap grid showing status,
+   cross-domain examples, informing resonance, transfer, and limits.
+5. [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface invariants that
    prevent resonance from collapsing into identity.
 
 Core rule:
@@ -22,10 +26,21 @@ Core rule:
 resonance is not identity
 ```
 
-Core extraction:
+Root axiom core:
+
+```text
+0. Distinction
+1. Permitted Relation
+2. Coupled Emergence
+3. Ordered Transformation
+```
+
+Core law-family extraction:
 
 ```text
 Gradient permits flow; architecture determines flow.
 ```
 
-hmmm: the axioms are working canon candidates. They are not completed proof.
+hmmm: the roots are small on purpose. Formula-rich resonances belong in law
+families unless they can stand as self-evident starting points without the
+formula.

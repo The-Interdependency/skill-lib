@@ -70,6 +70,9 @@ When this skill loads, read these files before applying it:
   and at least three domain examples per axiom.
 - [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — cross-domain overlap grid showing which
   theory example informs the other examples in each resonance triple.
+- [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface doctrine: the
+  load-bearing seams where Energy Theory, FLAR, EDCM, EDCMBONE, and The
+  Interdependent Way touch without becoming each other.
 
 ## Core extraction
 
@@ -143,6 +146,23 @@ valid          second-order rule-conformity marker
 ```
 
 This is a resonance and translation, not an Energy Theory root.
+
+## Load-bearing lines
+
+When applying Meta Energy Theory, preserve interface distinctions.
+
+Do not collapse:
+
+- Energy Theory into EDCMBONE.
+- EDCMBONE into linguistics.
+- PCTA geometry into PCNA tensors.
+- Fiq traversal into energy.
+- PTCA assignment into PCTA geometry.
+- Resonance into identity.
+- Provenance into fluency.
+- hmmm into decoration.
+
+A load-bearing line is a distinction whose collapse changes system behavior.
 
 ## Output shape when applying this skill
 

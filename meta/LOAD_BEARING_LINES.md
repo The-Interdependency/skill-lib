@@ -1,11 +1,11 @@
 # Load-Bearing Lines of Differentiation
 
 **Status**: Working interface doctrine (not axiom doctrine).  
-**Purpose**: Identify the seams where Energy Theory, FLAR (PCTA/PCNA/PTCA/fiqs/Ficks), EDCM, EDCMBONE, and The Interdependent Way touch *without becoming each other*.  
+**Purpose**: Identify the seams where Energy Theory, FLAR (PCTA/PCNA/PTCA/fiqs/Ficks), EDCM, EDCMBONE, and The Interdependent Way touch *without becoming each other*.
 
-These lines mark where collapse produces distortion, provenance error, semantic contagion, architectural bleed, or loss of recursive stability.  
+These lines mark where collapse produces distortion, provenance error, semantic contagion, architectural bleed, or loss of recursive stability.
 
-A line is load-bearing when it preserves a distinction required for ordered flow, faithful transformation, or coherent continuation.  
+A line is load-bearing when it preserves a distinction required for ordered flow, faithful transformation, or coherent continuation.
 
 **Resonance is permitted. Identity is refused.**
 
@@ -22,24 +22,27 @@ A line is load-bearing when it preserves a distinction required for ordered flow
    fiqs temporalize traversal: ticks per tock (temporal resolution events).  
    Ficks Law governs fiq-mediated flow.  
    PCNA hosts tensor/state substrate.  
-   PTCA supplies ψ / φ / ω core and rate context.  
+   PTCA supplies ψ / φ / ω core and rate context.
 
-   **Cleaner loop (interface spine)**:  
-   PTCA core/rate assignment  
-   ↓  
-   PCTA heptagram geometry  
-   ↓  
-   fiq tick within tock  
-   ↓  
-   Ficks Law computes permitted flow  
-   ↓  
-   PCNA tensor/state update  
-   ↓  
-   synchronization check  
-   ↓  
-   inference if ψ, φ, and ω fiq simultaneously  
+   **Cleaner loop (interface spine)**:
 
-   *No ownership bleed*: PCTA does not own tensors; PTCA does not own geometry or flow; fiqs do not own energy or select cores; PCNA owns tensors. This line prevents implementation drift.
+   ```text
+   PTCA core/rate assignment
+       ↓
+   PCTA heptagram geometry
+       ↓
+   fiq tick within tock
+       ↓
+   Ficks Law computes permitted flow
+       ↓
+   PCNA tensor/state update
+       ↓
+   synchronization check
+       ↓
+   inference if ψ, φ, and ω fiq simultaneously
+   ```
+
+   *No ownership bleed*: PCTA does not own tensors; PTCA does not own geometry, tensors, or flow; fiqs do not own energy or select cores; PCNA owns tensors. This line prevents implementation drift.
 
 3. **Gradient / Architecture / Flow**  
    Difference does not move by itself. Difference becomes possible flow only when arranged as gradient across available architecture. Actual flow is determined by that architecture (impedance, capacity, threshold).  
@@ -81,19 +84,20 @@ A line is load-bearing when it preserves a distinction required for ordered flow
     Adulthood is claimed through demonstrated competence (proclamation + portfolio).  
     Not merely age. Dependency / independence / interdependence are relational states to environment and responsibility.
 
-## Guidance for Meta Application (from meta/SKILL.md addition)
+## Guidance for Meta Application
 
-When applying Meta Energy Theory or FLAR implementations, preserve interface distinctions.  
+When applying Meta Energy Theory or FLAR implementations, preserve interface distinctions.
 
-**Do not collapse**:  
-- Energy Theory into EDCMBONE.  
-- EDCMBONE into linguistics.  
-- PCTA geometry into PCNA tensors.  
-- Fiq traversal into energy.  
-- PTCA assignment into PCTA geometry.  
-- Resonance into identity.  
-- Provenance into fluency.  
-- hmmm into decoration.  
+**Do not collapse**:
+
+- Energy Theory into EDCMBONE.
+- EDCMBONE into linguistics.
+- PCTA geometry into PCNA tensors.
+- Fiq traversal into energy.
+- PTCA assignment into PCTA geometry.
+- Resonance into identity.
+- Provenance into fluency.
+- hmmm into decoration.
 
 A load-bearing line is a distinction whose collapse changes system behavior. External resonances (thermodynamics, information theory, electromagnetism, etc.) are usable with careful epistemic status labels.
 

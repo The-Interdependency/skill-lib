@@ -138,6 +138,12 @@
       "description": "Plain-language, multi-lens companion views of dense canonical text \u2014 easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
     },
     {
+      "name": "meta",
+      "path": "meta/SKILL.md",
+      "kind": "procedural",
+      "description": "Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."
+    },
+    {
       "name": "gonal-morphology",
       "path": "gonal-morphology/SKILL.md",
       "kind": "procedural",

@@ -38,6 +38,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`agent-instantiation/`](agent-instantiation/SKILL.md) | Methodology for instantiating, forking, running, merging, and retiring agents in `a0` and its mirror `a0ucns`. Spawn via the `sub_agent_spawn` tool → executor; fork/merge `PCNAEngine` instances via `InstanceMerge`; compose identities; honor spawn caps and write-route gating. `a0-betatest` diverges (per-user native-ZFAE) and is out of scope. Independent of msdmd. |
 | [`a0p-instancing/`](a0p-instancing/SKILL.md) | Peer of `agent-instantiation` for a0-betatest (a0p), whose model diverges: agents are per-user CRUD `AgentInstance` entities bound to a `CharacterSheet`, each owning a trained native ZFAE weight bank; no spawn/fork/merge — only volatile sub-context memory. Covers create→train→readiness-gate→mode inference→sentinel/override→safetensors checkpoint. Independent of msdmd. |
 | [`plain-lens/`](plain-lens/SKILL.md) | Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Domain/audience/role lens selectors, progressive-disclosure reading UX, static fallback for dynamic pages, and EDCM-style body-vs-footnote tension readings. Independent of msdmd. |
+| [`meta/`](meta/SKILL.md) | Meta Energy Theory Axioms. Extracts and preserves Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keeps Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. Independent of msdmd. |
 | [`gonal-morphology/`](gonal-morphology/SKILL.md) | Canonical three-core gonal morphology: text as UCNS objects across a char→root/bone/word→phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS `multiplyFuel`). omega=bones, phi=roots, psi=words=`phi⊠omega`; adj/adv are flesh. Reuse the UCNS operator. Recomposition runs; decomposition is domain-confirmed (`AlignedComplete`) but proof-pending. Independent of msdmd. |
 
 ## Maintenance tools
@@ -122,8 +123,8 @@ To add one:
 example for a metadata-block skill that also ships a stdlib command module.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
-block (`canon`, `visitor-intro`, and `char-compress` are the existing
-examples). To add one:
+block (`canon`, `visitor-intro`, `char-compress`, `agent-instantiation`,
+`a0p-instancing`, `plain-lens`, and `meta` are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML
    frontmatter is what your harness will read).

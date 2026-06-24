@@ -20,6 +20,7 @@
     {"name":"agent-instantiation","path":"agent-instantiation/SKILL.md","kind":"procedural","description":"Methodology for instantiating, forking, running, merging, and retiring agents in canonical a0 and a0ucns."},
     {"name":"a0p-instancing","path":"a0p-instancing/SKILL.md","kind":"procedural","description":"Methodology for instancing agents in a0-betatest."},
     {"name":"plain-lens","path":"plain-lens/SKILL.md","kind":"procedural","description":"Plain-language, multi-lens companion views of dense canonical text."},
-    {"name":"meta","path":"meta/SKILL.md","kind":"procedural","description":"Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."}
+    {"name":"meta","path":"meta/SKILL.md","kind":"procedural","description":"Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."},
+    {"name":"the-interdependency","path":"the-interdependency/SKILL.md","kind":"procedural","description":"Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates."}
   ]
 }

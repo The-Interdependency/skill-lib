@@ -98,6 +98,7 @@ propagate from here.
   multi-lens companion view, a progressive-disclosure reader, or a dynamic
   page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
   paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
+- If you are building code, researching, performing GitHub maintenance or updates, assembling EDCMBONE transcripts for analysis, or any work that touches The Interdependency organization, The Interdependent Way projects, or related assets (edcmbone, ucns, pcea, skill-lib, a0, aimmh, etc.), load `the-interdependency/SKILL.md` and follow its structure-preservation, EDCMBONE framework, mandatory usage-guidance, and org-workflow rules.
 
 ## Pointers
 

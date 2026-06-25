@@ -46,6 +46,8 @@ The form is:
   declared-but-not-yet-resolved.
 - The same line opens and closes the file. The file is a self-measuring
   object; its boundary lines carry the measurement, opening and closing.
+- Scope: executable source files only. `json` and `.md` files are out of
+  scope for first/last-line RATIOS bookends.
 
 There is no fenced `# === RATIOS === … # === END RATIOS ===` block. An earlier
 draft of this skill described one; that was wrong. Tooling reads the single

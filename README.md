@@ -40,6 +40,8 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`plain-lens/`](plain-lens/SKILL.md) | Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Domain/audience/role lens selectors, progressive-disclosure reading UX, static fallback for dynamic pages, and EDCM-style body-vs-footnote tension readings. Independent of msdmd. |
 | [`meta/`](meta/SKILL.md) | Meta Energy Theory Axioms. Extracts and preserves Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keeps Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. Independent of msdmd. |
 | [`gonal-morphology/`](gonal-morphology/SKILL.md) | Canonical three-core gonal morphology: text as UCNS objects across a char→root/bone/word→phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS `multiplyFuel`). omega=bones, phi=roots, psi=words=`phi⊠omega`; adj/adv are flesh. Reuse the UCNS operator. Recomposition runs; decomposition is domain-confirmed (`AlignedComplete`) but proof-pending. Independent of msdmd. |
+| [`the-interdependency/`](the-interdependency/SKILL.md) | Workflow and protocol for code building, researching, GitHub maintenance and updates, EDCMBONE transcript assembly for analysis, and anything that touches The Interdependency organization or The Interdependent Way projects. Enforces structure preservation (neurodivergence-compatible), mandatory usage guidance in all artifacts, framework-aligned EDCMBONE analysis, and org-standard GitHub hygiene. Independent of msdmd. |
+| [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 
 ## Maintenance tools
 
@@ -68,7 +70,7 @@ fail on drift in `--check` mode.
 specifications, selected pure-stdlib helper tools, and the `llms-build` runner.
 Most other application skills define runner contracts for consuming repos; they
 do not ship standalone executors here unless a helper file exists in that skill
-directory or package.|∆|
+directory or package.| ∆|
 
 ## The core idea
 

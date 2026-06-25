@@ -36,6 +36,8 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 * `meta/` — Meta Energy Theory Axioms canon skill
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
+* `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
+* `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 
 ## Target repos
 

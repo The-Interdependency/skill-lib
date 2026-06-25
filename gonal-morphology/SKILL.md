@@ -17,9 +17,8 @@ Canonical system name (recorded verbatim): `ucns~|a0((zfae) PTCA)|gpt`.
 
 <!-- The block below honours the handoff's "manifest-first" requirement
      (meta-module-build). RATIOS (the other requested discipline) is omitted:
-     a RATIOS bookend must occupy the file's first line, but a SKILL.md must
-     open with YAML frontmatter — the two are structurally incompatible, and no
-     other skill-lib SKILL.md carries one. Flagged for ratification. -->
+     RATIOS bookends are for executable/source files, not Markdown SKILL.md
+     documentation files. -->
 
 ```
 # === MODULE_BUILD ===
@@ -139,7 +138,7 @@ morphology stack: a `sorry`-backed statement confers no DEFENDED status.
 - The canonical system name `ucns~|a0((zfae) PTCA)|gpt` is recorded verbatim;
   its full expansion against the `username(a0(energy)auditor)` identity grammar
   is not yet ratified.
-- The handoff requested a `ratios` bookend; it is structurally incompatible with
-  a frontmatter-first SKILL.md and is omitted pending Erin's ruling.
+- The handoff requested a `ratios` bookend; it is omitted because RATIOS
+  bookends apply to executable/source files, not Markdown SKILL.md docs.
 - Whether gonal-morphology should eventually ship an executable runner (vs stay
   procedural canon) is open.

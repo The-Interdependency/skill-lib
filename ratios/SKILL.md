@@ -1,6 +1,6 @@
 ---
 name: ratios
-description: Self-declaring module composition ratios built on msdmd for executable source files. Each executable module records its own ratios (lines of code to lines commented, imports to exports, and calls to definitions) in a single `ratios:` comment line placed on the file's first line and last line — not a fenced block — and a runner recomputes each recorded ratio from the source and fails on drift or misplacement, while reporting visible coverage gaps. Do not apply this to json or markdown files. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
+description: Self-declaring module composition ratios built on msdmd. Each executable/source module records its own ratios (lines of code to lines commented, imports to exports, and calls to definitions) in a single `ratios:` comment line placed on the file's first line and last line — not a fenced block — and a runner recomputes each recorded ratio from the source and fails on drift or misplacement, while reporting visible coverage gaps. JSON, Markdown, and other data/documentation files are out of scope for the first-line/last-line rule. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
 ---
 
 # ratios — Module composition ratios on msdmd
@@ -13,7 +13,7 @@ own composition ratios and defines the executor contract.
 Read `msdmd/SKILL.md` first if you haven't — the parser contract and the
 visibility rules below are inherited from there and not redefined.
 
-A ratio is a fact a module owns about its own shape. Like a contract, it
+A ratio is a fact an executable/source module owns about its own shape. Like a contract, it
 belongs in the file it describes, not in a side report that can drift out
 of sync. Unlike a contract, it is not asserted by a human — it is
 *recomputed from the source*, so a recorded ratio that no longer matches
@@ -21,8 +21,10 @@ the file is a build failure, not a stale comment nobody noticed.
 
 ## The single line, and the first/last rule
 
-RATIOS is the one msdmd declaration that is **not a fenced block**. It is a
-single comment line carrying all three ratios, placed on an executable source
+RATIOS is the one msdmd declaration that is **not a fenced block**. It applies
+to executable/source files with a language comment marker (`#`, `//`, or `--`),
+not to JSON, Markdown, or other data/documentation files. In covered source
+files it is a single comment line carrying all three ratios, placed on the
 file's **literal first line and its last non-blank line**:
 
 ```python
@@ -38,7 +40,7 @@ The form is:
 <marker> ratios: loc_comments=N:M imports_exports=N:M calls_definitions=N:M
 ```
 
-- `<marker>` is the language-idiomatic comment marker (`#`, `//`, `--`).
+- `<marker>` is the language-idiomatic comment marker (`#`, `//`, `--`) for executable/source files only; JSON and Markdown are intentionally not covered by this rule.
 - The three ids are fixed: `loc_comments`, `imports_exports`,
   `calls_definitions`. Each carries an `A:B` value, or `hmmm` if the ratio is
   declared-but-not-yet-resolved.
@@ -86,8 +88,10 @@ registry. A computer is a pure function `file_text -> "A:B"`. The runner:
   unverifiable (informational), so unknown ratios stay visible rather than
   silently trusted.
 
-Files with no `ratios:` line surface as coverage gaps, exactly as in the
-build checker. The gap list is informational unless `--strict`.
+Covered source files with no `ratios:` line surface as coverage gaps, exactly
+as in the build checker. JSON, Markdown, and other files with no supported
+source comment marker are skipped rather than reported as gaps. The gap list is
+informational unless `--strict`.
 
 ## The three ratios
 
@@ -153,7 +157,7 @@ The reference runner ships here as `ratios_check.py` (pure stdlib; it reuses
 # verify one file's recorded ratios against its source
 python ratios_check.py path/to/module.py
 
-# walk a tree, verifying every ratios: line and listing files that have none
+# walk a tree, verifying executable/source files and listing source gaps
 python ratios_check.py --root .
 
 # strict: files with no ratios: line also fail (CI gate)
@@ -183,7 +187,7 @@ misplaced, or — under `--strict` — a coverage gap.
 
 ## Completion criteria
 
-A run is complete when every covered file carries a correctly placed `ratios:`
+A run is complete when every covered executable/source file carries a correctly placed `ratios:`
 line on its first and last line, the registry's three computers
 (`loc_comments`, `imports_exports`, `calls_definitions`) recompute each
 recorded value with no drift, and any unresolved ratio is recorded as `hmmm`

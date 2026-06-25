@@ -1,6 +1,6 @@
 ---
 name: loop-eng
-description: Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Load when building or orchestrating agent systems (a0p, AIMMH), EDCMBONE analysis pipelines, repeatable AI workflows, or any The-Interdependency project that benefits from structured loops instead of manual prompting. Cross-load with the-interdependency for org workflow context.
+description: Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Load this when building or orchestrating agent systems (a0p, AIMMH), EDCMBONE analysis pipelines, repeatable AI workflows, or any The-Interdependency project that benefits from structured loops instead of manual prompting. Cross-load with the-interdependency for org workflow context.
 ---
 
 # loop-eng — Loop Engineering for Agent Workflows

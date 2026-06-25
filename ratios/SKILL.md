@@ -1,6 +1,6 @@
 ---
 name: ratios
-description: Self-declaring module composition ratios built on msdmd. Each module records its own ratios (lines of code to lines commented, imports to exports, and calls to definitions) in a single `ratios:` comment line placed on the file's first line and last line — not a fenced block — and a runner recomputes each recorded ratio from the source and fails on drift or misplacement, while reporting visible coverage gaps. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
+description: Self-declaring module composition ratios built on msdmd for executable source files. Each executable module records its own ratios (lines of code to lines commented, imports to exports, and calls to definitions) in a single `ratios:` comment line placed on the file's first line and last line — not a fenced block — and a runner recomputes each recorded ratio from the source and fails on drift or misplacement, while reporting visible coverage gaps. Do not apply this to json or markdown files. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
 ---
 
 # ratios — Module composition ratios on msdmd
@@ -22,8 +22,8 @@ the file is a build failure, not a stale comment nobody noticed.
 ## The single line, and the first/last rule
 
 RATIOS is the one msdmd declaration that is **not a fenced block**. It is a
-single comment line carrying all three ratios, placed on the file's **literal
-first line and its last non-blank line**:
+single comment line carrying all three ratios, placed on an executable source
+file's **literal first line and its last non-blank line**:
 
 ```python
 # ratios: loc_comments=128:49 imports_exports=4:7 calls_definitions=51:10
@@ -44,6 +44,8 @@ The form is:
   declared-but-not-yet-resolved.
 - The same line opens and closes the file. The file is a self-measuring
   object; its boundary lines carry the measurement, opening and closing.
+- Scope: executable source files only. `json` and `.md` files are out of
+  scope for first/last-line RATIOS bookends.
 
 There is no fenced `# === RATIOS === … # === END RATIOS ===` block. An earlier
 draft of this skill described one; that was wrong. Tooling reads the single

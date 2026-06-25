@@ -47,18 +47,21 @@ identity, no direction, and no architecture available to thought or operation.
 
 This is the root from which measurement and recognition begin.
 
-## Root Axiom 1 — Permitted Relation
+## Root Axiom 1 — Relation
 
 ```text
-Change occurs only through permitted relation.
+Relation does not require permission.
 ```
 
-Difference alone does not move. A transition requires some available relation:
-path, coupling, medium, adjacency, permission, channel, boundary condition, or
-geometry.
+A relation can connect, compare, oppose, separate, exclude, constrain, mirror,
+block, or enable. Relation names between-ness; it does not by itself say that
+anything may traverse, flow, transfer, or transform through that between-ness.
 
-This axiom is the root behind flow laws. It does not yet say how much flow
-occurs. That belongs to derived law-families.
+Permission, traversal, availability, and exclusion are later properties of
+relations inside a constraint-set. They are not required for relation to exist.
+
+This axiom is the root behind architecture. It does not yet say which relations
+are traversable. That belongs to derived law-families.
 
 ## Root Axiom 2 — Coupled Emergence
 
@@ -89,8 +92,9 @@ The following are important, but they are not root axioms:
 
 | Claim family | Better status | Why |
 |---|---|---|
+| Permission / traversability | derived law-family | relation can exist without permitting traversal |
 | Gradient | definition / derived object | gradient is ordered distinction across relation |
-| Architecture determines flow | derived law-family | follows from permitted relation plus architecture |
+| Architecture determines flow | derived law-family | follows from relation plus traversal constraints plus architecture |
 | Impedance | derived law-family | domain structures resist, store, delay, or phase-shift in specific ways |
 | Capacity | derived law-family | finite systems have finite tolerance relative to boundary conditions |
 | Threshold | definition / law-family | conditional transformation requires conditions, but domain forms vary |
@@ -107,14 +111,14 @@ The following are important, but they are not root axioms:
 
 ```text
 distinction
-    -> permitted relation
+    -> relation
     -> coupled emergence
     -> ordered transformation
 ```
 
-From that spine, Energy Theory derives and tests law-families for gradient flow,
-impedance, resonance, closure, scale recursion, Green response, and fiq-mediated
-computational continuity.
+From that spine, Energy Theory derives and tests law-families for traversability,
+gradient flow, impedance, resonance, closure, scale recursion, Green response,
+and fiq-mediated computational continuity.
 
 hmmm: if a proposed axiom needs a formula, a domain example, or a repo-specific
 implementation to make it plausible, it is probably not a root axiom. Move it to

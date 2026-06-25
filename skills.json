@@ -81,7 +81,7 @@
       "depends_on": [
         "msdmd"
       ],
-      "description": "Self-declaring module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on the file's first and last line (not a fenced block); a runner recomputes values, fails on drift or misplacement, and reports visible coverage gaps."
+      "description": "Self-declaring module composition ratios built on msdmd for executable source files (not json/markdown). Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on the file's first and last line (not a fenced block); a runner recomputes values, fails on drift or misplacement, and reports visible coverage gaps."
     },
     {
       "name": "canon",
@@ -148,6 +148,18 @@
       "path": "gonal-morphology/SKILL.md",
       "kind": "procedural",
       "description": "Canonical three-core gonal morphology: text as UCNS objects across a char->root/bone/word->phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS multiplyFuel). omega=bones (closed-class+affixes), phi=roots (open-class stems), psi=words=phi⊠omega; adjectives/adverbs are flesh, not bones. Reuse the UCNS operator, do not reimplement. Load for gonal morphology, inscription, or bone/flesh classification. Recomposition RUNS; decomposition is domain-confirmed (UCNS AlignedComplete) but proof-pending — not machine-verified. Independent of msdmd."
+    },
+    {
+      "name": "the-interdependency",
+      "path": "the-interdependency/SKILL.md",
+      "kind": "procedural",
+      "description": "Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates."
+    },
+    {
+      "name": "loop-eng",
+      "path": "loop-eng/SKILL.md",
+      "kind": "procedural",
+      "description": "Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows."
     }
   ]
 }

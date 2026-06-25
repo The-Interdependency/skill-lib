@@ -22,6 +22,8 @@ Use Energy Theory's native terms first:
 
 ```text
 energy
+distinction
+relation
 architecture
 gradient
 flow
@@ -49,21 +51,25 @@ resonance example or translation layer, not as the parent ontology.
 1. **Axioms are rare.** A root axiom must be self-evident once terms are defined.
    If it needs a formula, an empirical domain, or FLAR implementation to make it
    plausible, it is probably not a root axiom.
-2. **Resonance is not identity.** Ohm's law, Fick's law, Green response,
+2. **Relation is broader than permission.** A relation can connect, oppose,
+   exclude, constrain, block, or enable. Traversability, permission, and
+   availability are derived properties of relations inside constraint-sets, not
+   requirements for relation to exist.
+3. **Resonance is not identity.** Ohm's law, Fick's law, Green response,
    Arrhenius kinetics, phonemic contrast, semantic context, and fiq-mediated
    PCNA flow may rhyme. They do not become the same equation merely because they
    rhyme.
-3. **Formulae are bridges, not thefts.** When importing a formula from physics,
+4. **Formulae are bridges, not thefts.** When importing a formula from physics,
    chemistry, electronics, information theory, linguistics, or another domain,
    name the source domain and state what transfers.
-4. **Small architecture is the microscope, not the boundary.** Atomic structure,
+5. **Small architecture is the microscope, not the boundary.** Atomic structure,
    circuits, molecules, social triads, linguistic contexts, and PCTA heptagrams
    are small architectures through which more general energy behavior becomes
    legible.
-5. **Keep EDCMBONE separate.** EDCM/EDCMBONE measure semantic fidelity and
+6. **Keep EDCMBONE separate.** EDCM/EDCMBONE measure semantic fidelity and
    meaning-operator behavior. Energy Theory studies energy behavior across
    architectures. They resonate; they are not identical.
-6. **Mark status.** Use `axiom`, `definition`, `derived law-family`, `resonance`,
+7. **Mark status.** Use `axiom`, `definition`, `derived law-family`, `resonance`,
    `FLAR postulate`, `FLAR implementation law`, or `interface doctrine` before
    extending canon. Unproven transfer claims remain `hmmm`.
 
@@ -72,7 +78,7 @@ resonance example or translation layer, not as the parent ontology.
 When this skill loads, read these files before applying it:
 
 - [`AXIOMS.md`](AXIOMS.md) — the strict root axiom core. Currently: Distinction,
-  Permitted Relation, Coupled Emergence, and Ordered Transformation.
+  Relation, Coupled Emergence, and Ordered Transformation.
 - [`LAW_FAMILIES.md`](LAW_FAMILIES.md) — derived operational law families,
   resonance formulae, and FLAR postulates that are useful but not root axioms.
 - [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — cross-domain overlap grid showing status,
@@ -111,8 +117,8 @@ Difference does not move by itself.
 Difference moves only through available geometry.
 ```
 
-This is not the root axiom core. It derives from Distinction plus Permitted
-Relation plus domain architecture.
+This is not the root axiom core. It derives from Distinction plus Relation plus
+a traversability condition inside domain architecture.
 
 ## Root axiom core
 
@@ -120,8 +126,8 @@ Relation plus domain architecture.
 0. Distinction
     Without distinction, nothing is legible.
 
-1. Permitted Relation
-    Change occurs only through permitted relation.
+1. Relation
+    Relation does not require permission.
 
 2. Coupled Emergence
     Relations can possess properties not possessed by isolated terms.

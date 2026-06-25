@@ -34,6 +34,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `manifest/` — living-spec generation
 * `llms-build/` — root llms.txt generation from LLMS blocks
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
+* `meta/` — Meta Energy Theory Axioms canon skill
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
 * `meta/` — Meta Energy Theory axioms and cross-domain resonance preservation
 

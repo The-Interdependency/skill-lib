@@ -52,6 +52,7 @@ llms/                  # python -m llms.build reference runner
 | `a0p-instancing/` | procedural | — | Peer for a0-betatest (a0p): agents are per-user CRUD `AgentInstance` + `CharacterSheet`, each owning a trained native ZFAE weight bank (three 157-seed cores); no `sub_agent_spawn`/executor/`InstanceMerge` — only volatile `MemoryCore.spawn_sub/merge_sub`. Sequence: create→distill-train→readiness gate→mode inference→sentinel/pending-override→safetensors checkpoint. Canonical source is `a0-betatest`. |
 | `plain-lens/` | procedural | — | Plain-language, multi-lens companion views of dense canonical text. Build easier on-ramps (domain/audience/role lens selectors, progressive disclosure) that never replace or talk down to the source, keep a static fallback under any dynamic layer, preserve operators/negations/quantifiers, and report an EDCM-style body-vs-footnote tension reading as an illustrative heuristic (not an edcmbone metric runtime). |
 | `gonal-morphology/` | procedural | — | Three-core gonal morphology canon. omega=bones (closed-class+affixes, weight 0.8), phi=roots (open-class, 0.4), psi=words=`phi⊠omega` (1.0); leaf=157 chars, seed=phrase/clause (equivalent under LCM). One operator ⊠ = UCNS `multiplyFuel` at every depth — reuse, don't reimplement. Recomposition runs; decomposition domain-confirmed (`AlignedComplete`) but proof-pending (no theorem-status transfer). |
+| `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. |
 
 ---
 
@@ -82,7 +83,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, and `llms-build/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, and `gonal-morphology/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, and `meta/` are the examples.
 
 ## msdmd block syntax
 

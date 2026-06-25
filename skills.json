@@ -7,7 +7,7 @@
       "name": "msdmd",
       "path": "msdmd/SKILL.md",
       "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown \u2014 the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
+      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
     },
     {
       "name": "doc-build",
@@ -135,7 +135,7 @@
       "name": "plain-lens",
       "path": "plain-lens/SKILL.md",
       "kind": "procedural",
-      "description": "Plain-language, multi-lens companion views of dense canonical text \u2014 easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
+      "description": "Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
     },
     {
       "name": "meta",
@@ -147,7 +147,13 @@
       "name": "gonal-morphology",
       "path": "gonal-morphology/SKILL.md",
       "kind": "procedural",
-      "description": "Canonical three-core gonal morphology: text as UCNS objects across a char->root/bone/word->phrase/clause ladder under one carrier-LCM operator (\u22a0 = UCNS multiplyFuel). omega=bones (closed-class+affixes), phi=roots (open-class stems), psi=words=phi\u22a0omega; adjectives/adverbs are flesh, not bones. Reuse the UCNS operator, do not reimplement. Load for gonal morphology, inscription, or bone/flesh classification. Recomposition RUNS; decomposition is domain-confirmed (UCNS AlignedComplete) but proof-pending \u2014 not machine-verified. Independent of msdmd."
+      "description": "Canonical three-core gonal morphology: text as UCNS objects across a char->root/bone/word->phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS multiplyFuel). omega=bones (closed-class+affixes), phi=roots (open-class stems), psi=words=phi⊠omega; adjectives/adverbs are flesh, not bones. Reuse the UCNS operator, do not reimplement. Load for gonal morphology, inscription, or bone/flesh classification. Recomposition RUNS; decomposition is domain-confirmed (UCNS AlignedComplete) but proof-pending — not machine-verified. Independent of msdmd."
+    },
+    {
+      "name": "meta",
+      "path": "meta/SKILL.md",
+      "kind": "procedural",
+      "description": "Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."
     }
   ]
 }

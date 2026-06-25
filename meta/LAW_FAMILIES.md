@@ -15,8 +15,8 @@ Root axioms live in [`AXIOMS.md`](AXIOMS.md). Interface doctrine lives in
 Distinction
     makes measurement and difference legible.
 
-Permitted Relation
-    makes change possible only through available relation.
+Relation
+    makes between-ness legible without requiring traversal, permission, or flow.
 
 Coupled Emergence
     allows relations and networks to possess properties isolated parts lack.
@@ -27,10 +27,40 @@ Ordered Transformation
 
 Law families are extracted by applying those roots to constrained architectures.
 
-## 1. Gradient Flow
+## 1. Traversability / Availability
 
-**Derived claim:** ordered difference across permitted relation can drive flow.
-Actual flow depends on architecture.
+**Derived claim:** a relation may connect, oppose, block, compare, or constrain
+without permitting traversal. Flow requires a relation that is traversable under
+the current constraints.
+
+Formula resonances:
+
+```math
+A_{ij}\in\{0,1\}
+```
+
+for graph adjacency.
+
+```math
+J=P(C_{out}-C_{in})
+```
+
+for membrane permeability.
+
+```math
+I=\frac{\Delta V}{R}
+```
+
+where finite conductance is required for current.
+
+What transfers: relation and traversability are separable. What does not
+transfer: structural availability is not moral permission, legal permission, or
+personal approval unless translated into a social doctrine.
+
+## 2. Gradient Flow
+
+**Derived claim:** ordered difference across a traversable relation can drive
+flow. Actual flow depends on architecture.
 
 Formula resonances:
 
@@ -47,10 +77,10 @@ Formula resonances:
 ```
 
 What transfers: gradient supplies direction; architecture supplies rate and
-permitted movement. What does not transfer: heat, concentration, and learning
+available movement. What does not transfer: heat, concentration, and learning
 parameters are not the same substance.
 
-## 2. Architecture-Determined Flow
+## 3. Architecture-Determined Flow
 
 **Derived claim:** difference does not move by itself; it moves only through
 available geometry.
@@ -72,7 +102,7 @@ Q=-\frac{kA}{\mu}\frac{\Delta P}{L}
 What transfers: Ohm, Fick, and Darcy expose the same skeleton: gradient-like
 difference plus medium/geometry determines flow. Identity remains refused.
 
-## 3. Impedance
+## 4. Impedance
 
 **Derived claim:** architecture participates in flow by resisting, storing,
 filtering, delaying, or phase-shifting it.
@@ -94,7 +124,7 @@ F_d=-cv
 What transfers: impedance is not mere blockage; it is architecture-specific
 participation in response.
 
-## 4. Capacity
+## 5. Capacity
 
 **Derived claim:** bounded architectures have finite tolerance, storage,
 throughput, or transformation range relative to boundary conditions.
@@ -116,7 +146,7 @@ Q=mc\Delta T
 What transfers: capacity can absorb disturbance until saturation or transition.
 What does not transfer: capacity does not mean invulnerability.
 
-## 5. Threshold
+## 6. Threshold
 
 **Derived claim:** conditional transformations occur only when the required
 conditions are met; domain laws determine whether the boundary is sharp,
@@ -139,7 +169,7 @@ I_D=\frac12\mu_nC_{ox}\frac{W}{L}(V_{GS}-V_T)^2
 What transfers: thresholds create gated transformation. What does not transfer:
 not all thresholds are binary cliffs.
 
-## 6. Coupling and Valence
+## 7. Coupling and Valence
 
 **Derived claim:** coupled parts can form relation-specific properties, and not
 all couplings are equally viable.
@@ -162,7 +192,7 @@ What transfers: coupling is dependence; valence is compatibility under
 architecture. What does not transfer: compatibility is contextual, not moral or
 permanent.
 
-## 7. Path Dependence
+## 8. Path Dependence
 
 **Derived claim:** if prior flow alters present architecture, history becomes
 part of effective state.
@@ -183,7 +213,7 @@ P(X_{t+1}\mid X_t,X_{t-1},\ldots)\ne P(X_{t+1}\mid X_t)
 
 What transfers: same apparent present can hide different histories.
 
-## 8. Quantized Transition and Sampling
+## 9. Quantized Transition and Sampling
 
 **Derived claim:** many stable architectures restrict transformation to permitted
 steps; continuity at one scale can be discrete at another.
@@ -206,7 +236,7 @@ What transfers: discrete events can preserve continuity when sampling is
 sufficient. What does not transfer: discreteness does not automatically imply
 semantic rupture.
 
-## 9. Phase and Resonance
+## 10. Phase and Resonance
 
 **Derived claim:** timing changes coupling. Aligned rates can amplify; misaligned
 rates can cancel, reflect, dissipate, or distort.
@@ -228,7 +258,7 @@ P=V_{rms}I_{rms}\cos\phi
 What transfers: activity alone is not effective work; phase and rate relation
 matter.
 
-## 10. Closure
+## 11. Closure
 
 **Derived claim:** closed loops can generate stability, recursion, or runaway
 behavior not present in open chains.
@@ -251,7 +281,7 @@ What transfers: closure changes system behavior. What does not transfer: not
 every loop is stable, and the triadic closure claim remains doctrine/postulate
 until formalized.
 
-## 11. Boundary Exchange and Green Response
+## 12. Boundary Exchange and Green Response
 
 **Derived claim:** a system is characterized by what crosses its boundary, what
 remains inside, what is transformed within, and how local events distribute
@@ -279,7 +309,7 @@ response are coupled under an operator. What does not transfer: Green functions
 are naturally linear-operator tools unless localized, generalized, or explicitly
 nonlinear.
 
-## 12. Catalysis
+## 13. Catalysis
 
 **Derived claim:** some structures change transformation cost or path without
 being the transported payload.
@@ -301,7 +331,7 @@ I_C=\beta I_B
 What transfers: an architecture can lower path cost or control larger flow.
 What does not transfer: practical catalysts may degrade or have side effects.
 
-## 13. Symmetry Breaking
+## 14. Symmetry Breaking
 
 **Derived claim:** when one possibility becomes actual among equivalent
 possibilities, some differentiating condition has entered.
@@ -323,7 +353,7 @@ H(M\mid C)=-\sum_m p(m\mid C)\log p(m\mid C)
 What transfers: constraint selects among live possibilities. What does not
 transfer: selection does not imply inevitability.
 
-## 14. Scale Recursion
+## 15. Scale Recursion
 
 **Derived claim:** an emergent pattern at one scale may become a component,
 constraint, or medium at another scale.
@@ -345,7 +375,7 @@ G=(V,E),\quad V=\{\text{atoms}\},\quad E=\{\text{bonds}\}
 What transfers: stable emergence can become substrate for further emergence.
 What does not transfer: scale-specific laws must not be erased.
 
-## 15. Conceptual Emergence
+## 16. Conceptual Emergence
 
 **Derived claim:** a concept is a stable emergent pattern across variation; it
 must recur enough to be recognized and vary enough to require abstraction.

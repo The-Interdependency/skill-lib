@@ -160,6 +160,17 @@
       "path": "loop-eng/SKILL.md",
       "kind": "procedural",
       "description": "Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows."
+    },
+    {
+      "name": "typed-meta-frontend",
+      "path": "typed-meta-frontend/SKILL.md",
+      "kind": "metadata-block",
+      "depends_on": [
+        "msdmd",
+        "meta-module-build",
+        "doc-build"
+      ],
+      "description": "TypeScript frontend generation from backend-owned module metadata and living specs. Load this when building, reviewing, or refactoring a self-building UI that reads backend metadata, exposes every editable field per module, renders each module's living spec, generates TypeScript types/forms/routes from metadata, or keeps admin/editor frontends synchronized with msdmd-style source declarations."
     }
   ]
 }

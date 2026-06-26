@@ -41,7 +41,7 @@ the skill. Treat it as the public contract.
    that skill's full `SKILL.md` before acting.
 4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `deps-build`,
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
-   `ratios`, `manifest`, and `llms-build`) define metadata blocks that other
+   `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
    `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `gonal-morphology`, and `meta`) are procedural and

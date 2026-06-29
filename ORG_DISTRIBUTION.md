@@ -33,11 +33,13 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `a0p-instancing/` — a0-betatest (a0p) per-user CRUD + native-ZFAE instancing methodology
 * `manifest/` — living-spec generation
 * `llms-build/` — root llms.txt generation from LLMS blocks
+* `typed-meta-frontend/` — TypeScript self-building frontend generation from backend module metadata
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 * `meta/` — Meta Energy Theory Axioms canon skill
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 
 ## Target repos
 

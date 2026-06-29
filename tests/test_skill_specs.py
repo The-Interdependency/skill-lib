@@ -231,6 +231,23 @@ class SkillSpecCoverageTest(unittest.TestCase):
             "visitor-intro",
         )
 
+    def test_skill_build_spec(self) -> None:
+        text = read_skill("skill-build")
+        self.assertContainsAll(
+            text,
+            [
+                "## Required question set",
+                "## Individualized test-suite question set",
+                "metadata-block",
+                "procedural",
+                "Activation test",
+                "Repo-index test",
+                "## Compliance workflow for existing skills",
+                "hmmm",
+            ],
+            "skill-build",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

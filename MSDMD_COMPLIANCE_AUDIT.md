@@ -29,8 +29,12 @@ CLAUDE.md expectations:
    *visible gaps*, not failures — that visibility is the point.
 3. **Collection point** — a repo-level `<reponame>_msdmd.ts` aggregation surface
    (msdmd spec says SHOULD).
-4. **RATIOS bookends** — the single-line `ratios:` declaration on first/last
-   non-blank lines (only for repos that adopt the `ratios` skill).
+4. **RATIOS bookends** — `ratios` is the **one declaration that is NOT a fenced
+   block**: it is a single `ratios:` comment line carried on the file's **first
+   and last non-blank lines** (`<marker> ratios: loc_comments=N:M
+   imports_exports=N:M calls_definitions=N:M`). Measured here with
+   `ratios_placement`, which checks first/last placement — not a block parse.
+   Only for repos that adopt the `ratios` skill.
 5. **Parser fidelity** — stdlib-only, unforked parsers (verbatim vendor copies).
 
 ## Scorecard
@@ -63,8 +67,13 @@ CLAUDE.md expectations:
 Highest compliance in the org: **MODULE_BUILD 164/170, BOUNDARIES 163,
 CAPABILITIES 158, CONTRACTS 132 files (151 entries), RATIOS bookends 125/170.**
 Vendors 52 skills. This is the de-facto reference for what full module-local
-msdmd adoption looks like. **Gap:** no `a0-betatest_msdmd.ts` collection point.
-**No action** — Emergent force-pushes overwrite local commits.
+msdmd adoption looks like. Verified that the RATIOS bookends are the **correct
+single-line `# ratios:` form** on first/last lines (e.g. `backend/api_extensions.py`),
+**not** fenced blocks. **Doc bug (cannot fix — read-only):** a0-betatest's own
+`CLAUDE.md` says ratios are "bookended via `# === RATIOS ===`" — there are zero
+such fenced blocks in the repo; the canonical form (and the actual usage) is the
+single line. **Gap:** no `a0-betatest_msdmd.ts` collection point. **No action** —
+Emergent force-pushes overwrite local commits.
 
 ### interdependent-lib — Good (71%)
 `MODULE_BUILD` on 45/63 files. Vendors `msdmd`, `meta-module-build`,
@@ -154,8 +163,11 @@ Compliant in its role.
 1. **Collection points are almost entirely missing.** Only `metapat` has a
    `<reponame>_msdmd.ts`. The msdmd spec marks this SHOULD; 15/16 repos lack the
    aggregation surface, so no repo-level visualizer can render the module graph.
-2. **RATIOS adoption is isolated.** Only `a0-betatest` (skill-lib form) and `a0`
-   (own `N:M C:D I:O` form) bookend files; everyone else has zero.
+2. **RATIOS adoption is isolated.** Recall ratios is a single `ratios:` line on
+   first/last non-blank lines, not a block. Only `a0-betatest` (correct
+   single-line `# ratios:` form) and `a0` (own single-line `N:M C:D I:O` form)
+   bookend files; everyone else has zero. Note a0-betatest's CLAUDE.md
+   mis-documents the form as a fenced `=== RATIOS ===` block (it isn't).
 3. **Vendored ≠ used.** `aimmh` (0%), `ptca`/`pcta` (~1 file), and `edcmbone`
    (5%) vendor the skills but barely apply them. The skill being present is not
    compliance; declared blocks are.

@@ -52,6 +52,7 @@ Pure-stdlib helper scripts live in [`tools/`](tools/README.md). The small
 
 ```bash
 python tools/check_skill_lib_drift.py
+python tools/check_skill_compliance.py
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # copy local files
@@ -61,12 +62,14 @@ python -m llms.build --root . --out llms.txt --check     # drift gate
 ```
 
 The drift checker compares skill directories, `skills.json`, `README.md`,
-`ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The propagation helper
-copies canonical skill directories into a checked-out target repo. The
-char-compress runner executes preservation fixtures for negation, quantifier,
-order, values, statuses, secrets, `hmmm`, and unearned theorem/status leakage.
-The llms-build runner generates the root `llms.txt` from `LLMS` blocks and can
-fail on drift in `--check` mode.
+`ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The skill compliance
+checker enforces baseline `skill-build` invariants and reports softer
+normalization guidance as warnings. The propagation helper copies canonical
+skill directories into a checked-out target repo. The char-compress runner
+executes preservation fixtures for negation, quantifier, order, values,
+statuses, secrets, `hmmm`, and unearned theorem/status leakage. The llms-build
+runner generates the root `llms.txt` from `LLMS` blocks and can fail on drift in
+`--check` mode.
 
 |∆|Implementation status: this repo ships the universal msdmd parsers, skill
 specifications, selected pure-stdlib helper tools, and the `llms-build` runner.

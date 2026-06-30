@@ -108,6 +108,17 @@ This file is the single source of truth. If something is not explicitly stated i
 - Unknowns in any section are written as `hmmm`, never guessed.
 - Definitions in `key_definitions` are canonical source text. Do not infer expansions from acronyms, repo names, or neighboring prose.
 
+## Anti-patterns
+
+- Hand-editing `llms.txt` as independent doctrine instead of changing source
+  `LLMS` blocks and regenerating.
+- Letting Markdown examples become declarations; runners must ignore fenced code
+  examples.
+- Expanding acronyms or definitions from model memory when the source block did
+  not define them.
+- Treating missing `LLMS` blocks as proof that no repo instructions exist;
+  report the gap and preserve `hmmm`.
+
 ## Primary source files for this skill
 
 - `llms-build/SKILL.md` — canonical spec for the skill.

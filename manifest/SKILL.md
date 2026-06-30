@@ -65,6 +65,21 @@ Flags: `--root <dir>` (default `.`), `--file <doc>` (default `CLAUDE.md`),
 `--pyproject <path>` (default `pyproject.toml`), and exactly one of
 `--write` / `--check` / `--print`.
 
+## Field requirements
+
+The required generated fields are the observable repo facts the runner can
+derive: package metadata, runtime dependencies, optional extras, top-level
+layout, and CI workflow names. Judgement, rationale, test-command guesses, and
+doctrine stay hand-authored outside the generated block. Unknown observable
+facts render as `hmmm`.
+
+## Runner contract
+
+A compliant manifest runner is stdlib-only, deterministic, idempotent, and
+non-destructive. It reads `pyproject.toml` plus the file tree, rewrites only the
+bytes between the manifest markers, supports `--write`, `--check`, and
+`--print`, and exits non-zero when `--check` detects drift.
+
 ## Wiring a repo (the propagation recipe)
 
 1. Vendor `generate.py` to `.agents/skills/manifest/generate.py` (verbatim copy
@@ -109,3 +124,11 @@ Flags: `--root <dir>` (default `.`), `--file <doc>` (default `CLAUDE.md`),
 - **Additive scope.** Start with the high-signal/low-noise fields above. New
   derived fields are an extension here (bump the block, keep markers stable), not
   a per-repo fork — portability depends on one generator.
+
+## Anti-patterns
+
+- Hand-editing bytes inside the generated manifest markers.
+- Emitting fuzzy or judgement-shaped facts as if they were mechanically derived.
+- Forking the vendored generator in a consuming repo instead of changing this
+  canonical source and re-vendoring.
+- Running `--write` in CI when the intended gate is `--check`.

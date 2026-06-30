@@ -59,7 +59,8 @@ def frontmatter_text(text: str) -> str:
 
 def has_heading(text: str, *names: str) -> bool:
     headings = {line.strip().lower() for line in text.splitlines() if line.startswith("## ")}
-    return any(f"## {name}".lower() in headings for name in names)
+    wanted = [f"## {name}".lower() for name in names]
+    return any(any(heading == item or heading.startswith(f"{item}:") for heading in headings) for item in wanted)
 
 
 def check_skill(path: Path, indexed: dict[str, dict]) -> list[Finding]:

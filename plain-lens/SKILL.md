@@ -37,7 +37,7 @@ Do not load this skill to edit the canon itself. Companion views never
 become the source of truth. If a paraphrase and the canon disagree, the
 canon wins and the paraphrase is wrong.
 
-## The five rules
+## Workflow: the five rules
 
 1. **On-ramp, not replacement.** The plain reading is the default view,
    but the original text and its footnotes are always one interaction
@@ -134,7 +134,7 @@ A good plain-lens deliverable is:
 - an accreditation line and a visible link back to the full canon;
 - a `hmmm` wherever a mapping is uncertain.
 
-## Things to refuse
+## Anti-patterns / things to refuse
 
 - Do not let the companion view drift from or override the canon.
 - Do not drop negations, quantifiers, conditions, or named obligations

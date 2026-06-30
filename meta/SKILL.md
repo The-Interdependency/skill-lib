@@ -181,7 +181,7 @@ valid          second-order rule-conformity marker
 
 This is a resonance and translation, not an Energy Theory root.
 
-## Load-bearing lines
+## Workflow: load-bearing lines
 
 When applying Meta Energy Theory, preserve interface distinctions.
 
@@ -197,6 +197,14 @@ Do not collapse:
 - hmmm into decoration.
 
 A load-bearing line is a distinction whose collapse changes system behavior.
+
+## Anti-patterns
+
+- Treating resonance as identity between systems.
+- Promoting a FLAR implementation law into an Energy Theory root axiom.
+- Collapsing EDCMBONE semantics into Energy Theory or Energy Theory into
+  EDCMBONE.
+- Removing `hmmm` from unproven equivalence or unresolved formalization.
 
 ## Output shape when applying this skill
 

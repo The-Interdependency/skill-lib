@@ -53,6 +53,13 @@ There is no fenced `# === RATIOS === … # === END RATIOS ===` block. An earlier
 draft of this skill described one; that was wrong. Tooling reads the single
 line from both ends and verifies they agree.
 
+## Field requirements
+
+The required ratio ids are exactly `loc_comments`, `imports_exports`, and
+`calls_definitions`. Each covered executable/source file records all three ids
+on both boundary lines. Unknown ratio values are written `hmmm`; unknown ratio
+ids stay unresolved until a matching computer is defined.
+
 ## How it is parsed
 
 The reader lives in the msdmd universal parser as a sanctioned extension, not

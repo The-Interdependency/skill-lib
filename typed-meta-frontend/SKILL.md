@@ -123,6 +123,15 @@ If the repo already uses msdmd, prefer adding a dedicated module-local metadata 
    - Add tests for living spec presence, read-only reasons, validation errors, nested field paths, array fields, and `hmmm` display.
    - Add a drift check when generated TypeScript contracts are committed.
 
+## Runner / generator contract
+
+A compliant generator or frontend build step reads backend-owned metadata,
+derives TypeScript contracts before UI rendering, keeps generated files marked
+as generated, and fails visibly when a declared module, living spec, editable
+field, permission, or validation rule cannot be represented. If a consuming repo
+does not ship a generator, the same contract applies to its adapter layer and
+tests.
+
 ## UI implementation guidance
 
 - Use schema-driven components: `ModuleList`, `ModuleSpecPanel`, `EditableFieldRenderer`, `FieldControl`, `MetadataHealthBadge`, and `SaveBar`.
@@ -141,6 +150,16 @@ If the repo already uses msdmd, prefer adding a dedicated module-local metadata 
 - Save payloads use backend-declared paths and permissions.
 - Tests cover full metadata-to-UI field exposure.
 - Usage guidance documents where metadata comes from, how to regenerate types, how to run the frontend, and how to add a new editable field.
+
+## Anti-patterns
+
+- Hand-authoring field forms that silently diverge from backend metadata.
+- Dropping read-only fields, permission-denied fields, unknown field kinds, or
+  missing specs from the UI.
+- Trusting backend-provided markdown without a sanitization boundary.
+- Saving optimistic edits without rollback and server reconciliation.
+- Treating frontend convenience fields as canonical when the backend has not
+  declared them.
 
 hmmm
 - Preferred concrete backend metadata transport is repo-specific: REST, GraphQL, generated JSON, OpenAPI, or msdmd collection can all satisfy the contract.

@@ -117,5 +117,6 @@ When editing, replace the proposal with a concise summary, tests, commit hash, a
 
 hmmm
 - Baseline compliance is now checkable with `python tools/check_skill_compliance.py`; fuller family-by-family normalization still needs human approval before doctrine-shaped edits.
+- Whether future compliance should be enforced by a new checker script, by extending existing drift checks, or by human review only.
 - The exact minimum section set for every existing historical skill is not yet canon; this skill supplies the question set first, then lets the compliance pass reveal the honest shape.
 - A skill that teaches skill-building is a ladder carrying a small pocket ladder; suspicious, but surprisingly useful near roofs.

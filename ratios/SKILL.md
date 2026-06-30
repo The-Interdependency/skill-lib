@@ -1,6 +1,6 @@
 ---
 name: ratios
-description: Self-declaring module composition ratios built on msdmd. Each executable/source module records its own ratios (lines of code to lines commented, imports to exports, and calls to definitions) in a single `ratios:` comment line placed on the file's first line and last line — not a fenced block — and a runner recomputes each recorded ratio from the source and fails on drift or misplacement, while reporting visible coverage gaps. JSON, Markdown, and other data/documentation files are out of scope for the first-line/last-line rule. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
+description: Self-declaring module composition ratios on msdmd — a single comment line on a file's first and last line (never a fenced block). The canonical seal is `The-Interdependency/a0`'s compact positional `N:M C:D I:O` annotation (code:comment · consumed:declared · fan-in:fan-out), computed by a0's `scripts/annotate.py`; the named `loc_comments=… imports_exports=… calls_definitions=…` line is a portable, per-file adaptation for standalone libraries, verified by the stdlib `ratios_check.py` (drift/misplacement failures, visible gaps). JSON/Markdown are out of scope. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
 ---
 
 # ratios — Module composition ratios on msdmd
@@ -19,7 +19,44 @@ of sync. Unlike a contract, it is not asserted by a human — it is
 *recomputed from the source*, so a recorded ratio that no longer matches
 the file is a build failure, not a stale comment nobody noticed.
 
-## The single line, and the first/last rule
+## The canonical seal: a0's `N:M C:D I:O`
+
+`The-Interdependency/a0` is the **canonical origin** of the ratios seal — the
+convention every other form adapts, not the other way round. a0 stamps three
+composition metrics on the first and last line of every Python / TypeScript
+file, written and verified by its own `scripts/annotate.py`:
+
+```text
+# N:M C:D I:O        (Python)
+// N:M C:D I:O       (TypeScript / TSX)
+```
+
+| pair | meaning | how computed |
+|---|---|---|
+| `N:M` | code lines : comment+docstring lines (internal density; `N` budget ≤ 400) | per-file |
+| `C:D` | consumed : declared (surface utility — `D` = declared `# DOC` endpoints / exported symbols; `C` = those actually consumed elsewhere in the repo) | repo-wide index |
+| `I:O` | fan-in : fan-out (graph position — `I` = files importing this one; `O` = project-internal modules it imports) | repo-wide index |
+
+`C:D` and `I:O` are **not single-file computable**: they need the inverted
+import/usage index `annotate.py` builds across the whole repo. a0's annotator is
+therefore the canonical computer — there is no per-file shortcut for them.
+
+## The portable named form (per-file adaptation)
+
+The verbose `loc_comments=… imports_exports=… calls_definitions=…` line below is
+a **portable, per-file adaptation** of the canon for standalone libraries that
+lack a0's app structure (no `client/src` / `server` to measure "consumed"
+against, no meaningful repo-wide fan-in). Its three ids are single-file
+computable, so the stdlib `ratios_check.py` verifies them with no repo index.
+`loc_comments` is exactly a0's `N:M`; `imports_exports` and `calls_definitions`
+are per-file stand-ins for the surface/graph intent of `C:D` and `I:O`. Repos
+already stamped in this form (skill-lib, aimmh, edcmbone, pcna, pcta, ptca,
+pcea) remain valid and are **not** required to reconvert.
+
+Both forms keep one seal discipline: a single line on the file's first and last
+non-blank line, with nothing above it.
+
+### The single line, and the first/last rule
 
 RATIOS is the one msdmd declaration that is **not a fenced block**. It applies
 to executable/source files with a language comment marker (`#`, `//`, or `--`),
@@ -175,36 +212,19 @@ Exit codes: `0` all recorded ratios match and are correctly placed (gaps
 allowed unless `--strict`); `1` a ratio drifted from source, a declaration was
 misplaced, or — under `--strict` — a coverage gap.
 
-## Sanctioned serialization dialect: a0's `N:M C:D I:O`
+## a0 is the canon, not a dialect
 
-The named `loc_comments=… imports_exports=… calls_definitions=…` line above is
-the canonical, verifiable form — it is what `ratios_check.py` recomputes and
-gates. One org repo, `The-Interdependency/a0`, predates this skill and stamps
-the **same three composition ratios** on the same first/last seal line, in a
-compact positional dialect written by its own `scripts/annotate.py`:
+The compact `N:M C:D I:O` form under **The canonical seal** above is the origin
+the named form adapts — not a dialect *of* it. The mapping back to the portable
+ids: `N:M` ≡ `loc_comments` (identical); `C:D` (consumed:declared) and `I:O`
+(fan-in:fan-out) are the repo-wide surface/graph measures that `imports_exports`
+and `calls_definitions` only approximate per-file.
 
-```text
-# N:M C:D I:O        (Python)
-// N:M C:D I:O       (TypeScript / TSX)
-```
-
-The mapping:
-
-| a0 pair | canonical id | relationship |
-|---|---|---|
-| `N:M` — code : comment+docstring | `loc_comments` | **identical** definition |
-| `C:D` — consumed : declared | `imports_exports` | same intent; a0's `C` (cross-repo "actually consumed" + `# DOC` endpoints) is a richer surface measure |
-| `I:O` — fan-in : fan-out (file import graph) | `calls_definitions` | adjacent, **not** identical — a0 measures the module import graph, not call/def line counts |
-
-This compact form is a **recognized dialect, not a parser fork**: it is the
-ratios seal in a different serialization, enforced by a0's own `annotate.py`
-and CI rather than by `ratios_check.py`. The canonical reader (`parse_ratios`)
-deliberately reads only the named form, so pointing `ratios_check.py` at a0 will
-report the compact lines as gaps — that is expected, not a bug. **Do not** teach
-`parse_ratios` to read both; keep the canonical reader single-purpose (see the
-parser-dialect anti-pattern below). New repos use the named form; a0 may keep
-its dialect or migrate to it later. The seal discipline — ratios owns the file's
-first and last line, with nothing above it — is identical in both.
+Do **not** teach the canonical `parse_ratios` reader to parse a0's compact line:
+a0's `scripts/annotate.py` owns reading and verifying the canonical seal (its
+`C:D` / `I:O` need the repo-wide index `parse_ratios` deliberately does not
+build). Pointing `ratios_check.py` at a0 and seeing the compact lines reported
+as gaps is expected, not a bug.
 
 ## Anti-patterns
 

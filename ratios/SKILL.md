@@ -175,6 +175,37 @@ Exit codes: `0` all recorded ratios match and are correctly placed (gaps
 allowed unless `--strict`); `1` a ratio drifted from source, a declaration was
 misplaced, or — under `--strict` — a coverage gap.
 
+## Sanctioned serialization dialect: a0's `N:M C:D I:O`
+
+The named `loc_comments=… imports_exports=… calls_definitions=…` line above is
+the canonical, verifiable form — it is what `ratios_check.py` recomputes and
+gates. One org repo, `The-Interdependency/a0`, predates this skill and stamps
+the **same three composition ratios** on the same first/last seal line, in a
+compact positional dialect written by its own `scripts/annotate.py`:
+
+```text
+# N:M C:D I:O        (Python)
+// N:M C:D I:O       (TypeScript / TSX)
+```
+
+The mapping:
+
+| a0 pair | canonical id | relationship |
+|---|---|---|
+| `N:M` — code : comment+docstring | `loc_comments` | **identical** definition |
+| `C:D` — consumed : declared | `imports_exports` | same intent; a0's `C` (cross-repo "actually consumed" + `# DOC` endpoints) is a richer surface measure |
+| `I:O` — fan-in : fan-out (file import graph) | `calls_definitions` | adjacent, **not** identical — a0 measures the module import graph, not call/def line counts |
+
+This compact form is a **recognized dialect, not a parser fork**: it is the
+ratios seal in a different serialization, enforced by a0's own `annotate.py`
+and CI rather than by `ratios_check.py`. The canonical reader (`parse_ratios`)
+deliberately reads only the named form, so pointing `ratios_check.py` at a0 will
+report the compact lines as gaps — that is expected, not a bug. **Do not** teach
+`parse_ratios` to read both; keep the canonical reader single-purpose (see the
+parser-dialect anti-pattern below). New repos use the named form; a0 may keep
+its dialect or migrate to it later. The seal discipline — ratios owns the file's
+first and last line, with nothing above it — is identical in both.
+
 ## Anti-patterns
 
 - Writing RATIOS as a fenced `# === RATIOS === … # === END RATIOS ===` block.

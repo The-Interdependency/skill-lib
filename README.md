@@ -43,6 +43,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`gonal-morphology/`](gonal-morphology/SKILL.md) | Canonical three-core gonal morphology: text as UCNS objects across a char→root/bone/word→phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS `multiplyFuel`). omega=bones, phi=roots, psi=words=`phi⊠omega`; adj/adv are flesh. Reuse the UCNS operator. Recomposition runs; decomposition is domain-confirmed (`AlignedComplete`) but proof-pending. Independent of msdmd. |
 | [`the-interdependency/`](the-interdependency/SKILL.md) | Workflow and protocol for code building, researching, GitHub maintenance and updates, EDCMBONE transcript assembly for analysis, and anything that touches The Interdependency organization or The Interdependent Way projects. Enforces structure preservation (neurodivergence-compatible), mandatory usage guidance in all artifacts, framework-aligned EDCMBONE analysis, and org-standard GitHub hygiene. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
+| [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
 
 ## Maintenance tools
 
@@ -51,6 +52,7 @@ Pure-stdlib helper scripts live in [`tools/`](tools/README.md). The small
 
 ```bash
 python tools/check_skill_lib_drift.py
+python tools/check_skill_compliance.py
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # copy local files
@@ -60,12 +62,14 @@ python -m llms.build --root . --out llms.txt --check     # drift gate
 ```
 
 The drift checker compares skill directories, `skills.json`, `README.md`,
-`ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The propagation helper
-copies canonical skill directories into a checked-out target repo. The
-char-compress runner executes preservation fixtures for negation, quantifier,
-order, values, statuses, secrets, `hmmm`, and unearned theorem/status leakage.
-The llms-build runner generates the root `llms.txt` from `LLMS` blocks and can
-fail on drift in `--check` mode.
+`ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The skill compliance
+checker enforces baseline `skill-build` invariants and reports softer
+normalization guidance as warnings. The propagation helper copies canonical
+skill directories into a checked-out target repo. The char-compress runner
+executes preservation fixtures for negation, quantifier, order, values,
+statuses, secrets, `hmmm`, and unearned theorem/status leakage. The llms-build
+runner generates the root `llms.txt` from `LLMS` blocks and can fail on drift in
+`--check` mode.
 
 |∆|Implementation status: this repo ships the universal msdmd parsers, skill
 specifications, selected pure-stdlib helper tools, and the `llms-build` runner.
@@ -127,7 +131,7 @@ example for a metadata-block skill that also ships a stdlib command module.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
 block (`canon`, `visitor-intro`, `char-compress`, `agent-instantiation`,
-`a0p-instancing`, `plain-lens`, `gonal-morphology`, and `meta` are the existing examples). To add one:
+`a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `loop-eng`, and `skill-build` are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML
    frontmatter is what your harness will read).

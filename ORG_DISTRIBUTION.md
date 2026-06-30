@@ -39,6 +39,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 
 ## Target repos
 

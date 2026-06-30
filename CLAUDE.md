@@ -56,6 +56,7 @@ llms/                  # python -m llms.build reference runner
 | `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. |
 | `the-interdependency/` | procedural | — | Workflow protocol for The Interdependency org: code/research/GitHub maintenance, EDCMBONE transcript assembly and analysis, and mandatory usage-guidance + structure-preservation doctrine across artifacts. |
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
+| `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
 
 ---
 
@@ -86,7 +87,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, and `loop-eng/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `loop-eng/`, and `skill-build/` are the examples.
 
 ## msdmd block syntax
 

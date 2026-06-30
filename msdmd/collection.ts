@@ -1,3 +1,4 @@
+// ratios: loc_comments=64:0 imports_exports=0:0 calls_definitions=1:0
 /**
  * Shared TypeScript shapes for repo-level msdmd collection points.
  *
@@ -68,3 +69,4 @@ export interface MsdmdCollection {
 export function defineMsdmdCollection(collection: MsdmdCollection): MsdmdCollection {
   return collection;
 }
+// ratios: loc_comments=64:0 imports_exports=0:0 calls_definitions=1:0

@@ -58,7 +58,7 @@ CLAUDE.md expectations:
 | edcmbone | 189 | 9 | 5% | ✅ | ❌ | 0 | Large repo, low coverage |
 | ptca | 24 | 1 | 4% | ✅ | ❌ | 0 | Entry module only |
 | aimmh | 188 | 0 | **0%** | ✅ | ❌ | 0 | **Skill vendored, unused** |
-| skill-lib | 27 | (n/a) | — | source | ❌ | 4 | Canonical source (see note) |
+| skill-lib | 27 | (n/a) | — | source | ❌ | 15/15 ✅ | Canonical source; ratios fixed in this PR |
 | zfae | 0 | — | — | ✅ | ❌ | — | Conceptual repo, no code |
 | ai-tiw | 0 | — | — | ✅ | ❌ | — | Content archive, no code |
 
@@ -156,19 +156,22 @@ zfae is a conceptual/spec repo (no runtime code yet); ai-tiw is a content
 archive. Both correctly vendor the skill set for future use; nothing to annotate
 today. Compliant by absence.
 
-### skill-lib — Canonical source (not a consumer), but ratios-incomplete
-27 own source files (parsers, `tools/`, `llms/`, `tests/`). As the editorial
-source it is **not** expected to carry `MODULE_BUILD` on its tools; it does carry
-`DOCS` (2) and `LLMS` (2) blocks. **RATIOS gap:** every executable source file
-needs the single-line `ratios:` bookend, but only **4/27** carry it, both ends —
-`msdmd/parsers/__init__.py`, `msdmd/parsers/universal.py`,
-`msdmd/parsers/universal.ts`, and `ratios/ratios_check.py` (the three parser
-files **plus** `ratios_check.py`, not "the parsers" as an earlier draft said).
-The other 23 executables (`tools/`, `tests/`, `llms/`, `manifest/generate.py`,
-`msdmd/collect.py`, `msdmd/visualize.py`, `collection.ts`) carry none. The test
-suite only enforces the bookend on the parser files ("parser ratio bookends"),
-which is why coverage stops there. So skill-lib ships correct ratios *exemplars*
-but is **not itself ratios-complete**.
+### skill-lib — Canonical source (not a consumer); ratios now complete ✅
+27 own source files. As the editorial source it is **not** expected to carry
+`MODULE_BUILD` on its tools; it does carry `DOCS` (2) and `LLMS` (2) blocks.
+**RATIOS — fixed in this PR.** Every executable source file needs the single-line
+`ratios:` bookend. `ratios_check.py`'s own scope (it skips `tests/`) is 15 files;
+previously only 4 carried the bookend. This PR stamped the remaining **11** using
+`ratios_check.py`'s own compute functions, so `python ratios/ratios_check.py
+--strict` now reports **15/15 covered, 0 gaps, 0 drift, 0 misplaced**:
+`manifest/generate.py`, `llms/{__init__,build,metadata}.py`,
+`tools/{char_compress_check,check_skill_compliance,check_skill_lib_drift,propagate_skills}.py`,
+`msdmd/{collect,visualize}.py`, `msdmd/collection.ts`. Because placement is
+strict (ratios on the first non-blank line), the **shebangs were removed from the
+5 affected scripts** (`manifest/generate.py` + the 4 `tools/`) to match the
+a0-betatest convention (no shebangs; everything is invoked via `python …`/`-m`,
+per CLAUDE.md). All 52 skill-lib tests still pass and `llms.txt` shows no drift.
+(`tests/` files are out of the checker's scope, so they were left unstamped.)
 
 ## Systemic findings
 
@@ -179,8 +182,9 @@ but is **not itself ratios-complete**.
    first/last non-blank lines (not a block) and **every executable source file
    needs it**. Measured against that bar, only `a0-betatest` (correct single-line
    `# ratios:` form, 125/170) and `a0` (its own single-line `N:M C:D I:O` form)
-   carry bookends at scale; **skill-lib itself is only 4/27**, and every other
-   repo is at zero. This is the largest systemic gap after collection points:
+   carry bookends at scale; **skill-lib itself was only 4/15 — now fixed to
+   15/15 in this PR** — and every other repo is at zero. This is the largest
+   systemic gap after collection points:
    the overwhelming majority of executable files across the org are missing the
    required bookend. (Aside: a0-betatest's CLAUDE.md mis-documents the form as a
    fenced `=== RATIOS ===` block — it isn't.)
@@ -203,8 +207,10 @@ Ranked by leverage; none touch `a0-betatest`:
    file (not `.json`/`.md`) needs the single-line `ratios:` bookend on its first
    and last non-blank lines. Use the `ratios` skill's `ratios_check.py` to
    recompute and stamp values, then gate it in CI like a0/a0-betatest do.
-   **skill-lib should fix its own gap first (4/27)** to be the exemplar it
-   claims; then the consuming repos.
+   **skill-lib's own gap is fixed in this PR (now 15/15);** the consuming repos
+   are next. Note ratios placement is strict (first non-blank line), so scripts
+   that need a shebang must instead be invoked via `python …`/`-m` (the org
+   convention) — plan for that when stamping repos that ship CLI shebangs.
 2. **aimmh** — onboard `MODULE_BUILD` + `CONTRACTS` across `routes/` and
    `services/`; it has the skills but 0 usage on 188 files.
 2. **Collection points** — run the prototype generator

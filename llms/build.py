@@ -1,3 +1,4 @@
+# ratios: loc_comments=229:5 imports_exports=6:7 calls_definitions=66:12
 from __future__ import annotations
 
 import argparse
@@ -279,3 +280,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=229:5 imports_exports=6:7 calls_definitions=66:12

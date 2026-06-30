@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=158:7 imports_exports=7:11 calls_definitions=62:11
 """Executable guardrails for char-compress fixtures.
 
 This is not a full natural-language compressor. It is a preservation checker
@@ -205,3 +205,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=158:7 imports_exports=7:11 calls_definitions=62:11

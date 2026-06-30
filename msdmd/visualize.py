@@ -1,3 +1,4 @@
+# ratios: loc_comments=63:8 imports_exports=5:3 calls_definitions=40:5
 """Render an msdmd collection as a small Mermaid relationship graph.
 
 The input may be raw JSON or the generated TypeScript shape emitted by
@@ -90,3 +91,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=63:8 imports_exports=5:3 calls_definitions=40:5

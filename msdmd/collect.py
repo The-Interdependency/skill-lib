@@ -1,3 +1,4 @@
+# ratios: loc_comments=139:7 imports_exports=6:3 calls_definitions=35:6
 """Generate repo-level msdmd collection-point TypeScript.
 
 This is a small stdlib helper for consuming repos that want to generate a
@@ -169,3 +170,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=139:7 imports_exports=6:3 calls_definitions=35:6

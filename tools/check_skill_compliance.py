@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=91:6 imports_exports=8:9 calls_definitions=44:9
 """Check baseline SKILL.md compliance for skill-lib.
 
 This checker intentionally enforces only repo-wide invariants that are already
@@ -132,3 +132,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+# ratios: loc_comments=91:6 imports_exports=8:9 calls_definitions=44:9

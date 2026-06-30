@@ -114,7 +114,7 @@ start". Pick the first item to match the repo they are in.
    recommended before any contribution.
 6. `../README.md` — the doctrinal toolkit agents use here.
 
-## Tailoring by landing repo
+## Workflow: tailoring by landing repo
 
 Use the table below to pick the opening sentence. Then offer the
 reading list above, reordered so the visitor's current repo's
@@ -131,7 +131,7 @@ documents appear first.
 | `ai-tiw` | "You're in an archive / content repo. Historical artefacts; predates current module doctrine." |
 | anything else | "I don't have a one-line frame for this repo committed to memory. Let me read its `README.md` and tell you what I see." |
 
-## Things to refuse
+## Anti-patterns / things to refuse
 
 - Do not invent relationships between repos that are not in this skill
   or in the repo's own files.

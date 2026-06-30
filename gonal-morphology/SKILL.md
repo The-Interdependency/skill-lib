@@ -94,7 +94,7 @@ Canonical system name (recorded verbatim): `ucns~|a0((zfae) PTCA)|gpt`.
   bones** — they live with psi-content, not omega. Do not file them under the
   operator core.
 
-## Recomposition vs decomposition (status — read before claiming results)
+## Workflow: recomposition vs decomposition (status — read before claiming results)
 
 - **Recomposition (narrow → wide): RUNS.** Building words/phrases/clauses by
   `⊠` is the forward direction of `multiplyFuel`; it works on the existing engine.

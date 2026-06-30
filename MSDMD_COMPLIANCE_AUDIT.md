@@ -53,7 +53,7 @@ CLAUDE.md expectations:
 | ucns | 123 | 26 | 21% | ✅ | ❌ | 0 | Core annotated; artifacts not |
 | edcm | 11 | 2 | 18% | ❌ | ❌ | 0 | **Not onboarded** |
 | pcta | 6 | 1 | 17% | ✅ | ❌ | 0 | Entry module only |
-| a0 | 503 | 80 | 16%† | ✅ (44 skills) | ❌ | 0† | Own dialect (see note) |
+| a0 | 503 | 80 | 16%† | ✅ (44 skills) | ❌ | 0† | Canonical seal origin (see note) |
 | pcea | 42 | 6 | 14% | ✅ | ❌ | 0 | Engine modules only |
 | edcmbone | 189 | 9 | 5% | ✅ | ❌ | 0 | Large repo, low coverage |
 | ptca | 24 | 1 | 4% | ✅ | ❌ | 0 | Entry module only |
@@ -62,7 +62,8 @@ CLAUDE.md expectations:
 | zfae | 0 | — | — | ✅ | ❌ | — | Conceptual repo, no code |
 | ai-tiw | 0 | — | — | ✅ | ❌ | — | Content archive, no code |
 
-† **a0 uses its own annotation dialect**, not the skill-lib forms — see a0 note.
+† **a0's `N:M C:D I:O` annotation is the canonical ratios seal** — the skill-lib
+`ratios:` form is the portable adaptation; the parser reads 0 here by design. See a0 note.
 🔒 read-only mirror; do not modify.
 
 ## Per-repo findings
@@ -105,22 +106,24 @@ Effective coverage of *live* engine modules is far higher than 21% implies.
 Worth excluding artifact dirs from any future runner config so the gap list is
 honest.
 
-### a0 — Own dialect, not the skill-lib forms (16% by skill-lib parser)
-a0 deliberately uses **its own annotation conventions**, so the skill-lib parser
-under-counts it:
+### a0 — the canonical origin of the ratios seal (16% by skill-lib parser)
+a0 uses **its own annotation conventions**, so the skill-lib parser under-counts
+it — but the framing is the reverse of a "fork": **a0 is the canonical origin**;
+the skill-lib `ratios:` form is the later, portable reinvention.
 - **Ratios:** a0 stamps `# N:M C:D I:O` (code:comment, consumed:declared,
-  fan-in:fan-out) via `scripts/annotate.py` on every file's first/last line —
-  **not** the skill-lib `ratios:` line. Hence RATIOS-both-ends reads 0 even
-  though a0 has near-universal bookend annotation in its own format.
+  fan-in:fan-out) via `scripts/annotate.py` on every file's first/last line.
+  This **is the canonical seal** (settled by the maintainer); the skill-lib
+  `ratios:` line is a per-file adaptation for standalone libraries. The
+  skill-lib parser reads 0 here because it deliberately only parses the named
+  form — expected, not a gap.
 - **Docs:** a0 route modules carry `# DOC` header comments, **not** `DOCS`
   blocks.
 - **Contracts:** measured `CONTRACTS` on 8 files (34 entries) via
   `python/tests/contracts/`; `MODULE_BUILD` on 76 files.
-This is a genuine **dialect divergence**: a0's self-declaration is real and
-enforced (contract runner, console-tab guard, 400-line budget), but it is not
-the canonical skill-lib block forms. Decision needed (see Recommendations):
-treat a0's dialect as a sanctioned variant, or reconcile toward the canonical
-`ratios:`/`DOCS` forms.
+a0's self-declaration is real and enforced (annotate.py + contract runner,
+console-tab guard, 400-line budget). **Resolved:** a0 is canon; the named
+`ratios:` form is documented as the portable adaptation in `ratios/SKILL.md`.
+No conversion of a0 is required.
 
 ### pcea (14%), ptca (4%), pcta (17%)
 Stack libraries: `MODULE_BUILD` present only on the entry/constants module(s)
@@ -191,9 +194,10 @@ per CLAUDE.md). All 52 skill-lib tests still pass and `llms.txt` shows no drift.
 3. **Vendored ≠ used.** `aimmh` (0%), `ptca`/`pcta` (~1 file), and `edcmbone`
    (5%) vendor the skills but barely apply them. The skill being present is not
    compliance; declared blocks are.
-4. **One dialect fork (a0).** a0's self-declaration is substantive but diverges
-   from the canonical block forms — the one place the "don't fork the
-   convention" doctrine is under tension.
+4. **a0 is the canonical seal origin (not a fork).** a0's `N:M C:D I:O`
+   first/last-line annotation predates and is the canon for the ratios seal; the
+   skill-lib `ratios:` form is the portable per-file adaptation. Resolved in
+   `ratios/SKILL.md` — no tension, no conversion needed.
 5. **Coverage % needs artifact-aware denominators.** ucns/edcmbone percentages
    are depressed by read-only research artifacts and migration stubs that
    legitimately carry no blocks. A per-repo runner `skip`/`extensions` config
@@ -220,10 +224,12 @@ Ranked by leverage; none touch `a0-betatest`:
    (currently 9/189).
 4. **pcea / ptca / pcta** — extend beyond the entry module; add `BOUNDARIES` to
    `pcea` (crypto surfaces).
-5. **a0 dialect decision** — explicitly sanction a0's `N:M C:D I:O` + `# DOC`
-   forms as a documented variant, **or** reconcile toward canonical
-   `ratios:`/`DOCS`. Record the choice in `ORG_DISTRIBUTION.md` so the fork is
-   intentional, not drift.
+5. **a0 ratios canon — RESOLVED.** a0's `N:M C:D I:O` annotation is the
+   canonical ratios seal; the named `ratios:` form is documented as the portable
+   per-file adaptation in `ratios/SKILL.md`. a0 is not converted; already-stamped
+   libraries keep the named form (grandfathered). Open follow-up: porting a0's
+   repo-wide `C:D`/`I:O` index into a shared checker so the canonical metrics are
+   verifiable outside a0 (today only `N:M`/`loc_comments` is per-file checkable).
 6. **edcm** — decide whether it vendors the skill set at all (currently none).
 7. **Runner configs** — give ucns/edcmbone artifact/stub skip lists so coverage
    gap lists are honest.

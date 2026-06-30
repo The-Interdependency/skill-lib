@@ -22,6 +22,19 @@ Checks that:
 - `ORG_DISTRIBUTION.md` lists every indexed skill;
 - `AGENTS.md` and `CLAUDE.md` mention every indexed skill.
 
+## Skill compliance checker
+
+```bash
+python tools/check_skill_compliance.py
+python tools/check_skill_compliance.py --json
+python tools/check_skill_compliance.py --warnings-fail
+```
+
+Checks baseline `skill-build` invariants for every `SKILL.md`: frontmatter
+name, explicit load/use trigger text, `skills.json` registration, and visible
+`hmmm` boundary. It reports softer shape guidance as warnings so historical
+skills can be normalized one family at a time.
+
 ## Propagation helper
 
 Dry-run by default:

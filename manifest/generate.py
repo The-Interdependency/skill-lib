@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=209:37 imports_exports=6:5 calls_definitions=81:16
 """manifest — generate the mechanical half of a repo's CLAUDE.md from source.
 
 Living-spec tool (msdmd family). It derives *observable* facts about a repo —
@@ -300,3 +300,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=209:37 imports_exports=6:5 calls_definitions=81:16

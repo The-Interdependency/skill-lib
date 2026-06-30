@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=154:5 imports_exports=10:15 calls_definitions=79:15
 """Editorial drift checker for The-Interdependency/skill-lib.
 
 Checks that the canonical skill directories, skills.json, README.md,
@@ -207,3 +207,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=154:5 imports_exports=10:15 calls_definitions=79:15

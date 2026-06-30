@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=89:5 imports_exports=8:5 calls_definitions=40:5
 """Copy canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -116,3 +116,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=89:5 imports_exports=8:5 calls_definitions=40:5

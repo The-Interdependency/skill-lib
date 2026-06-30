@@ -1,3 +1,4 @@
+# ratios: loc_comments=0:24 imports_exports=0:0 calls_definitions=0:0
 """Self-declared LLMS metadata for skill-lib."""
 
 # === LLMS ===
@@ -23,3 +24,4 @@
 #     - Write unresolved or missing values as hmmm.
 #     - Edit source LLMS blocks before regenerating llms.txt.
 # === END LLMS ===
+# ratios: loc_comments=0:24 imports_exports=0:0 calls_definitions=0:0

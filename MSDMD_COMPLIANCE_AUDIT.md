@@ -34,7 +34,11 @@ CLAUDE.md expectations:
    and last non-blank lines** (`<marker> ratios: loc_comments=N:M
    imports_exports=N:M calls_definitions=N:M`). Measured here with
    `ratios_placement`, which checks first/last placement — not a block parse.
-   Only for repos that adopt the `ratios` skill.
+   **Every executable source file needs this bookend** (per the `ratios` skill:
+   all executable `.py/.ts/.js/…`, but **not** `.json` or `.md`). A file with no
+   `ratios:` line — or with it on only one end — is a gap, not exempt. So the
+   "RATIOS (both ends)" column should be read against each repo's executable
+   file count, where the target is 100%.
 5. **Parser fidelity** — stdlib-only, unforked parsers (verbatim vendor copies).
 
 ## Scorecard
@@ -152,22 +156,34 @@ zfae is a conceptual/spec repo (no runtime code yet); ai-tiw is a content
 archive. Both correctly vendor the skill set for future use; nothing to annotate
 today. Compliant by absence.
 
-### skill-lib — Canonical source (not a consumer)
-27 own source files (parsers, `tools/`, `llms/`). As the editorial source it is
-**not** expected to carry `MODULE_BUILD` on its tools. It does carry `DOCS` (2)
-and `LLMS` (2) blocks and 4 `ratios:` bookends (the reference parsers).
-Compliant in its role.
+### skill-lib — Canonical source (not a consumer), but ratios-incomplete
+27 own source files (parsers, `tools/`, `llms/`, `tests/`). As the editorial
+source it is **not** expected to carry `MODULE_BUILD` on its tools; it does carry
+`DOCS` (2) and `LLMS` (2) blocks. **RATIOS gap:** every executable source file
+needs the single-line `ratios:` bookend, but only **4/27** carry it, both ends —
+`msdmd/parsers/__init__.py`, `msdmd/parsers/universal.py`,
+`msdmd/parsers/universal.ts`, and `ratios/ratios_check.py` (the three parser
+files **plus** `ratios_check.py`, not "the parsers" as an earlier draft said).
+The other 23 executables (`tools/`, `tests/`, `llms/`, `manifest/generate.py`,
+`msdmd/collect.py`, `msdmd/visualize.py`, `collection.ts`) carry none. The test
+suite only enforces the bookend on the parser files ("parser ratio bookends"),
+which is why coverage stops there. So skill-lib ships correct ratios *exemplars*
+but is **not itself ratios-complete**.
 
 ## Systemic findings
 
 1. **Collection points are almost entirely missing.** Only `metapat` has a
    `<reponame>_msdmd.ts`. The msdmd spec marks this SHOULD; 15/16 repos lack the
    aggregation surface, so no repo-level visualizer can render the module graph.
-2. **RATIOS adoption is isolated.** Recall ratios is a single `ratios:` line on
-   first/last non-blank lines, not a block. Only `a0-betatest` (correct
-   single-line `# ratios:` form) and `a0` (own single-line `N:M C:D I:O` form)
-   bookend files; everyone else has zero. Note a0-betatest's CLAUDE.md
-   mis-documents the form as a fenced `=== RATIOS ===` block (it isn't).
+2. **RATIOS is a near-org-wide gap.** Recall ratios is a single `ratios:` line on
+   first/last non-blank lines (not a block) and **every executable source file
+   needs it**. Measured against that bar, only `a0-betatest` (correct single-line
+   `# ratios:` form, 125/170) and `a0` (its own single-line `N:M C:D I:O` form)
+   carry bookends at scale; **skill-lib itself is only 4/27**, and every other
+   repo is at zero. This is the largest systemic gap after collection points:
+   the overwhelming majority of executable files across the org are missing the
+   required bookend. (Aside: a0-betatest's CLAUDE.md mis-documents the form as a
+   fenced `=== RATIOS ===` block — it isn't.)
 3. **Vendored ≠ used.** `aimmh` (0%), `ptca`/`pcta` (~1 file), and `edcmbone`
    (5%) vendor the skills but barely apply them. The skill being present is not
    compliance; declared blocks are.
@@ -183,7 +199,13 @@ Compliant in its role.
 
 Ranked by leverage; none touch `a0-betatest`:
 
-1. **aimmh** — onboard `MODULE_BUILD` + `CONTRACTS` across `routes/` and
+1. **Ratios bookends on every executable.** Every executable `.py/.ts/.js/…`
+   file (not `.json`/`.md`) needs the single-line `ratios:` bookend on its first
+   and last non-blank lines. Use the `ratios` skill's `ratios_check.py` to
+   recompute and stamp values, then gate it in CI like a0/a0-betatest do.
+   **skill-lib should fix its own gap first (4/27)** to be the exemplar it
+   claims; then the consuming repos.
+2. **aimmh** — onboard `MODULE_BUILD` + `CONTRACTS` across `routes/` and
    `services/`; it has the skills but 0 usage on 188 files.
 2. **Collection points** — run the prototype generator
    `python -m msdmd.collect --root . --repo <name> --out <name>_msdmd.ts` in

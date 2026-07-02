@@ -1,4 +1,4 @@
-// ratios: loc_comments=64:0 imports_exports=0:0 calls_definitions=1:0
+// ratios: loc_comments=66:0 imports_exports=0:0 calls_definitions=1:0
 /**
  * Shared TypeScript shapes for repo-level msdmd collection points.
  *
@@ -15,7 +15,9 @@ export type MsdmdBlockName =
   | "CONTRACTS"
   | "MODULE_BUILD"
   | "BOUNDARIES"
-  | "RATIOS";
+  | "RATIOS"
+  | "LLMS"
+  | "FRONTEND_META";
 
 export type MsdmdFieldMap = Record<string, string>;
 
@@ -69,4 +71,4 @@ export interface MsdmdCollection {
 export function defineMsdmdCollection(collection: MsdmdCollection): MsdmdCollection {
   return collection;
 }
-// ratios: loc_comments=64:0 imports_exports=0:0 calls_definitions=1:0
+// ratios: loc_comments=66:0 imports_exports=0:0 calls_definitions=1:0

@@ -56,6 +56,28 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `The-Interdependency/a0ucns`
 * `The-Interdependency/eml_ucns`
 
+## Collection points
+
+Every consuming repo should eventually carry a root collection point:
+
+```text
+<reponame>_msdmd.ts
+```
+
+Use `python -m msdmd.collect --root . --repo <repo> --out <reponame>_msdmd.ts`
+when the repo can run the collector locally. A provisional hand-seeded collection
+point is allowed only when it records a `hmmm` gap explaining what local
+generation still needs.
+
+`skill-lib_msdmd.ts` is the root collection point for this canonical repo.
+
+## Propagation checklist
+
+Use `docs/propagation-checklist.md` for the concrete source-change →
+target-repo PR sequence. Use `docs/runner-config-guidance.md` before judging
+large or artifact-heavy repos; frozen research artifacts, archives, generated
+trees, and vendored `.agents/skills/` copies should not pollute the denominator.
+
 ## Rule
 
 Before creating a new module, route, service, adapter, schema, worker,
@@ -79,3 +101,9 @@ with the llms-build runner, not hand-maintained as separate doctrine.
 
 Existing files are not retroactively noncompliant merely because they predate
 this skill.
+
+## hmmm
+
+Target-repo propagation is not complete just because `skill-lib` is updated.
+Each target repo still needs a repo-local propagation PR, source commit SHA,
+collection point, and local verification record.

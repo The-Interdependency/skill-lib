@@ -227,9 +227,10 @@ Ranked by leverage; none touch `a0-betatest`:
 5. **a0 ratios canon — RESOLVED.** a0's `N:M C:D I:O` annotation is the
    canonical ratios seal; the named `ratios:` form is documented as the portable
    per-file adaptation in `ratios/SKILL.md`. a0 is not converted; already-stamped
-   libraries keep the named form (grandfathered). Open follow-up: porting a0's
-   repo-wide `C:D`/`I:O` index into a shared checker so the canonical metrics are
-   verifiable outside a0 (today only `N:M`/`loc_comments` is per-file checkable).
+   libraries keep the named form (grandfathered). The portable computer for the
+   canonical seal now ships as `ratios/annotate_index.py` (stdlib port of a0's
+   index; `--root/--write/--check`), so `N:M C:D I:O` is recomputable in any
+   repo — the only a0-specific input (consumer dirs for `C`) is a parameter.
 6. **edcm** — decide whether it vendors the skill set at all (currently none).
 7. **Runner configs** — give ucns/edcmbone artifact/stub skip lists so coverage
    gap lists are honest.

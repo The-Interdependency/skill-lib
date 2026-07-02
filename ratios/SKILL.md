@@ -38,8 +38,28 @@ file, written and verified by its own `scripts/annotate.py`:
 | `I:O` | fan-in : fan-out (graph position — `I` = files importing this one; `O` = project-internal modules it imports) | repo-wide index |
 
 `C:D` and `I:O` are **not single-file computable**: they need the inverted
-import/usage index `annotate.py` builds across the whole repo. a0's annotator is
-therefore the canonical computer — there is no per-file shortcut for them.
+import/usage index built across the whole repo. a0's `scripts/annotate.py` is
+the in-repo canonical computer.
+
+### Portable computer: `ratios/annotate_index.py`
+
+A shared, stdlib port of that index ships here as `ratios/annotate_index.py`, so
+the canonical seal can be recomputed or stamped in **any** repo, not just a0:
+
+```bash
+python ratios/annotate_index.py --root .            # report drift/misplacement
+python ratios/annotate_index.py --root . --write    # stamp the N:M C:D I:O seal
+python ratios/annotate_index.py --root . --check    # CI gate (non-zero on drift)
+```
+
+It reproduces a0's metric definitions exactly (`build_index` → per-file
+`{code, comment, consumed, declared, fan_in, fan_out}`; `seal_line` renders the
+compact line). The one a0-specific input — the consumer dirs scanned for `C`
+(default `client/src`, `server`) — is a `consumer_dirs=` parameter. Honest
+caveat carried in the module docstring: `C:D` is route/surface-oriented, so a
+pure library with no `# DOC endpoint:` routes and no TS exports reads
+`C:D = 0:0` (correct, not a gap), and fan-in/out follow a0's relative-import
+stem graph (absolute-only imports are not counted).
 
 ## The portable named form (per-file adaptation)
 

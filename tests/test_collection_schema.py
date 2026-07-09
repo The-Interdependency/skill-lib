@@ -15,6 +15,8 @@ EXPECTED_BLOCKS = {
     "MODULE_BUILD",
     "BOUNDARIES",
     "RATIOS",
+    "LLMS",
+    "FRONTEND_META",
 }
 
 

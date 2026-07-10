@@ -12,6 +12,7 @@ EXPECTED_BLOCKS = {
     "DEPENDENCIES",
     "OWNERS",
     "CONTRACTS",
+    "CHECKS",
     "MODULE_BUILD",
     "BOUNDARIES",
     "RATIOS",

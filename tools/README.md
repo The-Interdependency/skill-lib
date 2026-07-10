@@ -105,8 +105,13 @@ This is not a full natural-language compressor. It is a guardrail runner for
 minimum preservation claims: negation, quantifier, order, values, statuses,
 secrets, `hmmm`, and no UCNS-A / edcmbone status leakage.
 
+## CI
+
+`.github/workflows/ci.yml` runs the repo verification stack on pull requests and
+pushes to `main`: unit tests, skill drift, skill compliance, ratios strict gate,
+llms-build drift, RepoLOTO audit, and RepoLOTO checks.
+
 ## hmmm
 
-- no CI currently runs these tools automatically
 - propagation still requires a human or agent to review, commit, and open PRs in target repos
 - `char_compress_check.py` verifies preservation fixtures but is not yet a complete codec

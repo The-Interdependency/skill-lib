@@ -53,7 +53,7 @@
       "depends_on": [
         "msdmd"
       ],
-      "description": "Self-declaring contract tests built on msdmd. Each module owns the tests that protect its contracts via a CONTRACTS block; a runner discovers and executes them and reports per-contract status plus visible coverage gaps."
+      "description": "Self-declaring contract evidence built on msdmd. Source modules declare behavior obligations in CONTRACTS blocks; test modules declare executable witnesses in CHECKS blocks; audit reconciles the witness list against the obligation list."
     },
     {
       "name": "meta-module-build",

@@ -69,9 +69,9 @@
 # === END CHECKS ===
 """
 Evidence for repo_loto. Contracts live in the source; this file only
-claims to prove them. Field set is deliberately minimal (id, proves,
-call, mutates, cleanup): fields enter the schema when a runner mode
-consumes them, not before.
+claims to prove them. CHECKS fields enter the schema when a runner mode
+consumes them; this module consumes requires and per-check timeout at
+runtime, and mutates/cleanup are visible danger documentation.
 
 Run:  python3 test_repo_loto.py            all checks, tempdir-isolated
       python3 test_repo_loto.py --audit    reconcile CONTRACTS<->CHECKS, no execution
@@ -332,6 +332,11 @@ def _resolve_call(spec):
     return fn
 
 
+def _proves_targets(check):
+    return [target.strip() for target in check.get("proves", "").split(",")
+            if target.strip()]
+
+
 def audit():
     contracts = {c["id"] for c in _parse_block(LOTO, "CONTRACTS")}
     checks = _parse_block(__file__, "CHECKS")
@@ -339,16 +344,21 @@ def audit():
     ok = True
     resolved_fns = set()
     for c in sorted(contracts):
-        by = [ch["id"] for ch in checks if ch.get("proves") == c]
+        by = [ch["id"] for ch in checks if c in _proves_targets(ch)]
         if by:
             print(f"OK   {c}  <-  {', '.join(by)}")
         else:
             ok = False
             print(f"GAP  {c}  has no CHECKS entry claiming to prove it")
     for ch in checks:
-        if ch.get("proves") not in contracts:
+        targets = _proves_targets(ch)
+        if not targets:
             ok = False
-            print(f"GAP  {ch['id']} claims unknown contract: {ch.get('proves')}")
+            print(f"GAP  {ch['id']} has no proves target")
+        for target in targets:
+            if target not in contracts:
+                ok = False
+                print(f"GAP  {ch['id']} claims unknown contract: {target}")
         try:
             fn = _resolve_call(ch.get("call", ""))
             resolved_fns.add(fn.__name__)

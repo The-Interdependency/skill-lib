@@ -1,0 +1,29 @@
+name: skill-lib-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Unit tests
+        run: python -m unittest discover -s tests
+      - name: Skill library drift
+        run: python tools/check_skill_lib_drift.py
+      - name: Skill compliance
+        run: python tools/check_skill_compliance.py
+      - name: Ratios strict gate
+        run: python ratios/ratios_check.py --strict
+      - name: llms-build drift
+        run: python -m llms.build --root . --out llms.txt --check
+      - name: RepoLOTO audit
+        run: python tests/test_repo_loto.py --audit
+      - name: RepoLOTO checks
+        run: python tests/test_repo_loto.py

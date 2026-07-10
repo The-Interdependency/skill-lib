@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=300:82 imports_exports=9:10 calls_definitions=161:29
 # === MODULE_BUILD ===
 # id: repo_mutation_gate
 #   module_name: repo_loto
@@ -15,7 +15,7 @@
 #   tests: tests/test_repo_loto.py (CHECKS-declared, reconciled via --audit)
 #   rollout: manual invocation; pre-push hook calls `loto guard`
 #   rollback: rm -rf .loto/ and remove hook line
-#   unresolved: credential-gate integration, RATIOS block
+#   unresolved: credential-gate integration, ratios bookends
 # === END MODULE_BUILD ===
 # === CONTRACTS ===
 # id: loto_open_never_dirties
@@ -453,3 +453,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+# ratios: loc_comments=300:82 imports_exports=9:10 calls_definitions=161:29

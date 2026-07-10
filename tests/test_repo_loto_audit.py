@@ -109,6 +109,18 @@ class RepoLotoAuditNegativeTest(unittest.TestCase):
         self.assertEqual(1, code)
         self.assertIn("GAP  check_phantom claims unknown contract: missing_contract", out)
 
+    def test_audit_splits_multi_target_proves(self) -> None:
+        code, out = self.run_planted_audit(
+            contract_ids=["first_contract", "second_contract"],
+            checks=[{"id": "check_both", "proves": "first_contract, second_contract", "call": "self::sentinel"}],
+            check_fns=[sentinel],
+        )
+
+        self.assertEqual(0, code)
+        self.assertIn("OK   first_contract  <-  check_both", out)
+        self.assertIn("OK   second_contract  <-  check_both", out)
+        self.assertIn("graph closed", out)
+
     def test_audit_gaps_unresolvable_call(self) -> None:
         code, out = self.run_planted_audit(
             contract_ids=["real_contract"],

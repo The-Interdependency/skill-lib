@@ -9,8 +9,8 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Edit skills here first; propagate later with the source commit SHA.
 - License: MPL-2.0 (relicensed from MIT; weak/file-level copyleft — embed anywhere, changes to these files must be published).
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
-- No package manifest, Makefile, package.json, or pyproject.toml is declared here. The only CI is `.github/workflows/hygiene.yml`, a narrow guard that fails any push/PR carrying tracked Python bytecode (`*.pyc`/`__pycache__`); it does not run the editorial helper tools.
-- Validation here is editorial plus optional pure-stdlib helper scripts in `tools/`.
+- CI workflows: `.github/workflows/hygiene.yml` guards against tracked Python bytecode, and `.github/workflows/ci.yml` runs the editorial/helper verification stack.
+- Validation here is editorial plus pure-stdlib helper scripts in `tools/`, `ratios/`, `llms/`, and the RepoLOTO check module.
 - The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
 
 ## Layout
@@ -39,7 +39,7 @@ llms/                  # python -m llms.build reference runner
 | `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
 | `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Self-declaring module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
-| `test-build/` | metadata-block | `msdmd` | Self-declaring contract tests. Each module declares a `# === CONTRACTS ===` block; a runner discovers and executes the referenced test functions and reports per-contract status plus modules with no CONTRACTS as coverage gaps. |
+| `test-build/` | metadata-block | `msdmd` | Self-declaring contract evidence. Source modules declare behavior obligations in `# === CONTRACTS ===`; test modules declare executable witnesses in `# === CHECKS ===`; audit reconciles the witness list against the obligation list. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
 | `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
 | `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios for executable source files. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in a single `ratios:` line on the file's first and last line (not a fenced block); this is not for `json` or `.md` files. The reference `ratios_check.py` recomputes values, fails on drift or misplacement, and reports visible gaps. |
@@ -82,7 +82,7 @@ The `description` is the loading contract. Keep it specific. List triggers. Do n
 Two kinds:
 
 - **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
-  `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, `FRONTEND_META`, …). They define a field schema, a thin executor that consumes parsed
+  `CHECKS`, `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, `FRONTEND_META`, …). They define a field schema, a thin executor that consumes parsed
   entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
@@ -170,19 +170,22 @@ blocks first; do not hand-edit `llms.txt` as independent doctrine.
 ## Maintenance tools
 
 ```bash
+python -m unittest discover -s tests
 python tools/check_skill_lib_drift.py
+python tools/check_skill_compliance.py
+python ratios/ratios_check.py --strict
+python -m llms.build --root . --out llms.txt --check
+python tests/test_repo_loto.py --audit
+python tests/test_repo_loto.py
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # local copy
-python -m llms.build --root . --out llms.txt --check
 ```
 
 Tool boundaries:
 
 There is a small stdlib Python editorial test suite. There is still no `package.json`,
-`pyproject.toml`, or `Makefile`. The only CI workflow is `hygiene.yml` (tracked-bytecode
-guard); it does not run the editorial helper tools. Do not invent commands beyond the
-checks that exist here.
+`pyproject.toml`, or `Makefile`. Do not invent commands beyond the checks that exist here.
 
 - Run `python -m unittest discover -s tests` to validate skill registration,
   skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
@@ -191,6 +194,9 @@ checks that exist here.
 - The parsers are reference implementations; the test suite covers core parser
   behavior and library integration, not every consuming-runner contract.
 - `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt`.
+- `check_skill_compliance.py` checks baseline `skill-build` invariants for each `SKILL.md`.
+- `ratios_check.py --strict` verifies first/last ratios seals for covered executable source files.
+- `tests/test_repo_loto.py --audit` reconciles RepoLOTO source `CONTRACTS` against test `CHECKS`; `tests/test_repo_loto.py` executes those checks.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
@@ -216,7 +222,7 @@ checks that exist here.
 3. Preserve load-bearing descriptions.
 4. Mark unknowns as `hmmm`; do not guess.
 5. New module work in consuming repos should start with `MODULE_BUILD`.
-6. Contracts belong in source modules, not test files.
+6. Source modules own `CONTRACTS`; test modules own `CHECKS`; do not put test `call:` topology in source contracts.
 7. Do not fork parser dialects; propose an `msdmd` extension instead.
 8. Do not invent undeclared package/build commands for this repo.
 9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
@@ -225,6 +231,5 @@ checks that exist here.
 
 ## hmmm
 
-- no CI currently runs the helper tools automatically
 - propagation still requires review, commit, and pull request work in target repos
 - `char_compress_check.py` is deterministic fixture support, not the full Unit Circle Number System compression engine

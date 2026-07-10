@@ -84,7 +84,13 @@ class CollectTest(unittest.TestCase):
                 ],
                 collection["declarations"],
             )
-            self.assertEqual([{"file": "gap.py", "missing": ["DOCS"]}], collection["gaps"])
+            self.assertEqual(
+                [
+                    {"file": "gap.py", "missing": ["DOCS"]},
+                    {"file": "test_module.py", "missing": ["DOCS"]},
+                ],
+                collection["gaps"],
+            )
             self.assertEqual(
                 [
                     {

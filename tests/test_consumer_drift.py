@@ -120,6 +120,14 @@ class ConsumerDriftTest(unittest.TestCase):
         manifest = next(s for s in report.skills if s.name == "manifest")
         self.assertTrue(manifest.ok)
 
+    def test_manifest_pin_double_marker_is_drift(self) -> None:
+        # '**generate.py' names the file '*generate.py' to sha256sum -c, not generate.py
+        digest = hashlib.sha256(b"GEN\n").hexdigest()
+        self._manifest_with_pin(f"{digest} **generate.py\n")
+        report = self._report()
+        manifest = next(s for s in report.skills if s.name == "manifest")
+        self.assertTrue(any("malformed pin" in r for r in manifest.drift))
+
     def test_manifest_pin_current_is_clean(self) -> None:
         _write(self.canon / "manifest" / "SKILL.md", "m\n")
         _write(self.canon / "manifest" / "generate.py", "GEN\n")

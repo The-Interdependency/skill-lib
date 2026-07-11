@@ -1,4 +1,4 @@
-# ratios: loc_comments=183:34 imports_exports=8:9 calls_definitions=63:13
+# ratios: loc_comments=183:37 imports_exports=8:9 calls_definitions=62:13
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -125,7 +125,10 @@ def check_manifest_pin(vend_dir: Path) -> List[str]:
     if len(parts) != 2:
         return ["malformed pin: generate.py.sha256 line is not '<sha256>  generate.py'"]
     recorded_digest, recorded_name = parts
-    if recorded_name.lstrip("*") != "generate.py":  # '*' is sha256sum's binary marker
+    # sha256sum -c reads exactly one mode marker before the name ('*' binary,
+    # space text), so accept 'generate.py' or '*generate.py' -- but not
+    # '**generate.py', which actually names the file '*generate.py'.
+    if recorded_name not in ("generate.py", "*generate.py"):
         return [f"malformed pin: generate.py.sha256 targets '{recorded_name}', not generate.py"]
     if recorded_digest != sha256_of(gen):
         return ["stale pin: generate.py.sha256 does not match generate.py"]
@@ -254,4 +257,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=183:34 imports_exports=8:9 calls_definitions=63:13
+# ratios: loc_comments=183:37 imports_exports=8:9 calls_definitions=62:13

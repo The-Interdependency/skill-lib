@@ -1,0 +1,72 @@
+# Scheduled detector: does any consumer repo's vendored .agents/skills/ subset
+# still match this canonical skill-lib? Catches "canonical moved ahead" drift --
+# the failure mode that otherwise accumulates silently between manual propagation
+# PRs. Read-only: it reports drift, it does not push or open PRs.
+#
+# Cross-repo checkout of the (private) consumer repos needs a token with read
+# access to them. Provide it as the repo/org secret SKILL_LIB_RO_TOKEN (a
+# fine-grained PAT or GitHub App installation token, Contents: read on the
+# target repos). Without it the consumer-checkout step fails with a clear error;
+# the default GITHUB_TOKEN cannot read sibling private repos.
+name: consumer skill drift
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 04:00 UTC — one hour after interdependent-lib's lib sync.
+    - cron: "0 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        consumer:
+          - interdependent-lib
+          - ucns
+          - edcmbone
+          - zfae
+          - eml_ucns
+          - ai-tiw
+          - a0-betatest
+          - metapat
+          - a0
+          - aimmh
+          - pcea
+    steps:
+      - name: Check out canonical skill-lib
+        uses: actions/checkout@v4
+        with:
+          path: skill-lib
+
+      - name: Check out consumer ${{ matrix.consumer }}
+        uses: actions/checkout@v4
+        with:
+          repository: The-Interdependency/${{ matrix.consumer }}
+          token: ${{ secrets.SKILL_LIB_RO_TOKEN }}
+          path: consumer
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Detect vendored-skill drift
+        run: |
+          cd skill-lib
+          SHA="$(git rev-parse HEAD)"
+          echo "### ${{ matrix.consumer }} vs skill-lib@${SHA:0:7}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          set +e
+          python tools/check_consumer_drift.py ../consumer --sha "$SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          status=$?
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          if [ "$status" -ne 0 ]; then
+            echo "Drift detected — re-propagate with: python tools/propagate_skills.py <path-to-${{ matrix.consumer }}> --apply" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          exit "$status"

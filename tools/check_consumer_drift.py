@@ -1,0 +1,228 @@
+# ratios: loc_comments=164:25 imports_exports=8:9 calls_definitions=57:13
+"""Detect drift between a consumer repo's vendored skills and canonical skill-lib.
+
+Given a checked-out consumer repository, for every skill directory it vendors
+under ``.agents/skills/`` that also exists in this canonical ``skill-lib``, verify
+the canonical files match verbatim. The vendored subset is auto-detected as the
+intersection of the consumer's skill directories with the canonical ones, so no
+per-repo configuration is required.
+
+Rules (matching org propagation doctrine):
+
+* A canonical file that is missing from, or differs in, the vendored copy is
+  ``drift`` (an error). Repo-local additions -- files or directories present in
+  the vendored copy but absent from canonical -- are allowed and ignored, so a
+  repo may keep local runners, extra skills, or its own README beside the
+  canonical assets.
+* Bytecode (``__pycache__`` / ``*.pyc``) is ignored on both sides.
+* When a vendored ``manifest/generate.py.sha256`` companion is present it must
+  pin the vendored ``generate.py`` (``sha256sum -c`` semantics); a stale pin is
+  drift.
+* With ``--sha`` given, the consumer ``.agents/skills/README.md`` should cite that
+  canonical source commit; a missing/mismatched citation is a warning (an error
+  under ``--strict-sha``).
+
+Pure stdlib. No network. Read-only -- it never writes to the consumer repo.
+Exit status is ``0`` when clean, ``1`` on drift (or a SHA warning under
+``--strict-sha``), ``2`` on a usage error.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Iterable, List
+
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SKILLS_REL = Path(".agents/skills")
+IGNORE_PARTS = {"__pycache__"}
+
+
+@dataclass
+class SkillReport:
+    name: str
+    drift: List[str] = field(default_factory=list)  # human-readable per-file reasons
+
+    @property
+    def ok(self) -> bool:
+        return not self.drift
+
+
+@dataclass
+class ConsumerReport:
+    consumer: str
+    skills: List[SkillReport] = field(default_factory=list)
+    sha_warning: str | None = None
+
+    @property
+    def drifted(self) -> List[SkillReport]:
+        return [s for s in self.skills if not s.ok]
+
+
+def _ignored(path: Path) -> bool:
+    return any(part in IGNORE_PARTS or part.endswith(".pyc") for part in path.parts)
+
+
+def canon_skill_names(canon_root: Path) -> set[str]:
+    return {
+        child.name
+        for child in canon_root.iterdir()
+        if child.is_dir() and (child / "SKILL.md").is_file()
+    }
+
+
+def _canon_files(skill_dir: Path) -> Iterable[Path]:
+    for path in sorted(skill_dir.rglob("*")):
+        if path.is_file() and not _ignored(path.relative_to(skill_dir)):
+            yield path
+
+
+def sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def diff_skill(canon_dir: Path, vend_dir: Path) -> List[str]:
+    """Canonical files that are missing from or differ in the vendored copy."""
+    reasons: List[str] = []
+    for canon_file in _canon_files(canon_dir):
+        rel = canon_file.relative_to(canon_dir)
+        vend_file = vend_dir / rel
+        if not vend_file.is_file():
+            reasons.append(f"missing: {rel}")
+        elif vend_file.read_bytes() != canon_file.read_bytes():
+            reasons.append(f"differs: {rel}")
+    return reasons
+
+
+def check_manifest_pin(vend_dir: Path) -> List[str]:
+    """A vendored generate.py.sha256, if present, must pin generate.py."""
+    pin = vend_dir / "generate.py.sha256"
+    gen = vend_dir / "generate.py"
+    if not pin.is_file():
+        return []
+    if not gen.is_file():
+        return ["stale pin: generate.py.sha256 present but generate.py missing"]
+    recorded = pin.read_text(encoding="utf-8").split()
+    actual = sha256_of(gen)
+    if not recorded or recorded[0] != actual:
+        return ["stale pin: generate.py.sha256 does not match generate.py"]
+    return []
+
+
+def check_consumer(
+    consumer_root: Path,
+    canon_root: Path = ROOT,
+    skills_rel: Path = DEFAULT_SKILLS_REL,
+    sha: str | None = None,
+) -> ConsumerReport:
+    report = ConsumerReport(consumer=str(consumer_root))
+    skills_root = consumer_root / skills_rel
+    if not skills_root.is_dir():
+        report.sha_warning = f"no {skills_rel} directory (nothing vendored)"
+        return report
+
+    canon = canon_skill_names(canon_root)
+    vendored = sorted(
+        child.name for child in skills_root.iterdir() if child.is_dir()
+    )
+    for name in vendored:
+        if name not in canon:
+            continue  # repo-local skill, not part of the canonical set
+        skill = SkillReport(name=name)
+        skill.drift.extend(diff_skill(canon_root / name, skills_root / name))
+        if name == "manifest":
+            skill.drift.extend(check_manifest_pin(skills_root / name))
+        report.skills.append(skill)
+
+    if sha:
+        readme = skills_root / "README.md"
+        text = readme.read_text(encoding="utf-8") if readme.is_file() else ""
+        short = sha[:7]
+        if short not in text and sha not in text:
+            report.sha_warning = f"README does not cite source commit {short}"
+    return report
+
+
+def format_report(report: ConsumerReport, strict_sha: bool) -> tuple[str, bool]:
+    lines: List[str] = []
+    checked = len(report.skills)
+    drifted = report.drifted
+    for skill in report.skills:
+        if skill.ok:
+            lines.append(f"  OK    {skill.name}")
+        else:
+            lines.append(f"  DRIFT {skill.name}")
+            lines.extend(f"          - {reason}" for reason in skill.drift)
+    if report.sha_warning:
+        lines.append(f"  SHA   {report.sha_warning}")
+    failed = bool(drifted) or (strict_sha and report.sha_warning is not None)
+    status = "DRIFT" if failed else "clean"
+    header = (
+        f"{report.consumer}: {status} "
+        f"({checked} canonical skills checked, {len(drifted)} drifted)"
+    )
+    return "\n".join([header, *lines]), failed
+
+
+def main(argv: List[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Detect drift between a consumer repo's vendored skills and canonical skill-lib."
+    )
+    parser.add_argument(
+        "consumer", type=Path, help="Path to a checked-out consumer repository."
+    )
+    parser.add_argument(
+        "--canon-root",
+        type=Path,
+        default=ROOT,
+        help="Path to canonical skill-lib (default: this repo).",
+    )
+    parser.add_argument(
+        "--skills-rel",
+        type=Path,
+        default=DEFAULT_SKILLS_REL,
+        help="Vendored skills root relative to the consumer (default: .agents/skills).",
+    )
+    parser.add_argument(
+        "--sha", help="Canonical source commit the vendored copies should cite."
+    )
+    parser.add_argument(
+        "--strict-sha",
+        action="store_true",
+        help="Treat a missing/mismatched README source-commit citation as drift.",
+    )
+    parser.add_argument("--json", action="store_true", help="Emit a JSON report.")
+    args = parser.parse_args(argv)
+
+    consumer = args.consumer.resolve()
+    if not consumer.is_dir():
+        print(f"consumer repo does not exist or is not a directory: {consumer}", file=sys.stderr)
+        return 2
+
+    report = check_consumer(
+        consumer, canon_root=args.canon_root.resolve(), skills_rel=args.skills_rel, sha=args.sha
+    )
+    text, failed = format_report(report, strict_sha=args.strict_sha)
+    if args.json:
+        payload = {
+            "consumer": report.consumer,
+            "drift": {s.name: s.drift for s in report.skills if not s.ok},
+            "checked": [s.name for s in report.skills],
+            "sha_warning": report.sha_warning,
+            "failed": failed,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+    else:
+        print(text)
+    return 1 if failed else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+# ratios: loc_comments=164:25 imports_exports=8:9 calls_definitions=57:13

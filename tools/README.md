@@ -64,6 +64,38 @@ The helper copies canonical skill directories into:
 It also writes `.agents/skills/README.md` in the target repo with the source
 commit SHA. It does not commit, push, open pull requests, or contact GitHub.
 
+## Consumer drift checker
+
+The read-only counterpart to `propagate_skills.py`: given a checked-out consumer
+repo, it reports whether that repo's vendored `.agents/skills/` subset still
+matches this canonical skill-lib. This is what catches "canonical moved ahead"
+drift before it accumulates between manual propagation PRs.
+
+```bash
+python tools/check_consumer_drift.py ../target-repo
+python tools/check_consumer_drift.py ../target-repo --sha <skill-lib-commit>
+python tools/check_consumer_drift.py ../target-repo --sha <commit> --strict-sha --json
+```
+
+The vendored subset is auto-detected (the intersection of the consumer's skill
+directories with the canonical ones), so no per-repo config is needed. It:
+
+- flags any canonical file missing from or differing in the vendored copy as
+  drift (exit `1`);
+- ignores repo-local additions — extra files, local runners, or repo-only
+  skills beside the canonical assets;
+- verifies a vendored `manifest/generate.py.sha256` still pins its `generate.py`;
+- with `--sha`, warns when `.agents/skills/README.md` does not cite that source
+  commit (an error under `--strict-sha`);
+- with `--require-vendored`, fails when the repo vendors no canonical skills at
+  all — used by the scheduled workflow, whose matrix is repos that must carry a
+  subset, so an empty vendored set is itself a regression.
+
+Read-only: it never writes to the consumer repo. The scheduled workflow
+`.github/workflows/consumer-drift.yml` runs it against every consumer repo
+weekly (and on demand); it needs the `SKILL_LIB_RO_TOKEN` secret to check out
+the private consumer repos.
+
 ## llms-build runner
 
 Dry-run generated root instructions:
@@ -111,7 +143,15 @@ secrets, `hmmm`, and no UCNS-A / edcmbone status leakage.
 pushes to `main`: unit tests, skill drift, skill compliance, ratios strict gate,
 llms-build drift, RepoLOTO audit, and RepoLOTO checks.
 
+`.github/workflows/consumer-drift.yml` runs `check_consumer_drift.py` against
+every consumer repo on a weekly schedule (and on demand) to detect vendored-copy
+drift. It needs the `SKILL_LIB_RO_TOKEN` secret to read the private consumer
+repos.
+
 ## hmmm
 
-- propagation still requires a human or agent to review, commit, and open PRs in target repos
+- `consumer-drift.yml` only *detects* drift; re-propagation still requires a
+  human or agent to run `propagate_skills.py --apply`, review, commit, and open PRs
+- `consumer-drift.yml` needs the `SKILL_LIB_RO_TOKEN` secret; without it the
+  consumer-checkout step fails
 - `char_compress_check.py` verifies preservation fixtures but is not yet a complete codec

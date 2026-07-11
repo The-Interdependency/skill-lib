@@ -86,7 +86,10 @@ directories with the canonical ones), so no per-repo config is needed. It:
   skills beside the canonical assets;
 - verifies a vendored `manifest/generate.py.sha256` still pins its `generate.py`;
 - with `--sha`, warns when `.agents/skills/README.md` does not cite that source
-  commit (an error under `--strict-sha`).
+  commit (an error under `--strict-sha`);
+- with `--require-vendored`, fails when the repo vendors no canonical skills at
+  all — used by the scheduled workflow, whose matrix is repos that must carry a
+  subset, so an empty vendored set is itself a regression.
 
 Read-only: it never writes to the consumer repo. The scheduled workflow
 `.github/workflows/consumer-drift.yml` runs it against every consumer repo

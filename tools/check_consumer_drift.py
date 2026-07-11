@@ -1,4 +1,4 @@
-# ratios: loc_comments=171:31 imports_exports=8:9 calls_definitions=61:13
+# ratios: loc_comments=183:34 imports_exports=8:9 calls_definitions=63:13
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -24,7 +24,10 @@ Rules (matching org propagation doctrine):
 
 Pure stdlib. No network. Read-only -- it never writes to the consumer repo.
 Exit status is ``0`` when clean, ``1`` on drift (or a SHA warning under
-``--strict-sha``), ``2`` on a usage error.
+``--strict-sha``, or zero vendored canonical skills under ``--require-vendored``),
+``2`` on a usage error. ``--require-vendored`` is for callers -- like the
+scheduled workflow -- whose targets are known to carry a subset, so an empty
+vendored set is itself a regression.
 """
 
 from __future__ import annotations
@@ -163,7 +166,9 @@ def check_consumer(
     return report
 
 
-def format_report(report: ConsumerReport, strict_sha: bool) -> tuple[str, bool]:
+def format_report(
+    report: ConsumerReport, strict_sha: bool, require_vendored: bool = False
+) -> tuple[str, bool]:
     lines: List[str] = []
     checked = len(report.skills)
     drifted = report.drifted
@@ -175,7 +180,10 @@ def format_report(report: ConsumerReport, strict_sha: bool) -> tuple[str, bool]:
             lines.extend(f"          - {reason}" for reason in skill.drift)
     if report.sha_warning:
         lines.append(f"  SHA   {report.sha_warning}")
-    failed = bool(drifted) or (strict_sha and report.sha_warning is not None)
+    empty = require_vendored and checked == 0
+    if empty:
+        lines.append("  NONE  no canonical skills vendored (a subset was expected)")
+    failed = bool(drifted) or empty or (strict_sha and report.sha_warning is not None)
     status = "DRIFT" if failed else "clean"
     header = (
         f"{report.consumer}: {status} "
@@ -211,6 +219,11 @@ def main(argv: List[str] | None = None) -> int:
         action="store_true",
         help="Treat a missing/mismatched README source-commit citation as drift.",
     )
+    parser.add_argument(
+        "--require-vendored",
+        action="store_true",
+        help="Fail when the consumer vendors no canonical skills (for repos that must carry a subset).",
+    )
     parser.add_argument("--json", action="store_true", help="Emit a JSON report.")
     args = parser.parse_args(argv)
 
@@ -222,7 +235,9 @@ def main(argv: List[str] | None = None) -> int:
     report = check_consumer(
         consumer, canon_root=args.canon_root.resolve(), skills_rel=args.skills_rel, sha=args.sha
     )
-    text, failed = format_report(report, strict_sha=args.strict_sha)
+    text, failed = format_report(
+        report, strict_sha=args.strict_sha, require_vendored=args.require_vendored
+    )
     if args.json:
         payload = {
             "consumer": report.consumer,
@@ -239,4 +254,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=171:31 imports_exports=8:9 calls_definitions=61:13
+# ratios: loc_comments=183:34 imports_exports=8:9 calls_definitions=63:13

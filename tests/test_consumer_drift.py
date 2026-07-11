@@ -151,6 +151,25 @@ class ConsumerDriftTest(unittest.TestCase):
         self.assertEqual(report.skills, [])
         self.assertIn("nothing vendored", report.sha_warning or "")
 
+    def test_require_vendored_empty_fails(self) -> None:
+        empty = Path(self._tmp.name) / "empty2"
+        empty.mkdir()
+        report = ccd.check_consumer(empty, canon_root=self.canon)
+        _text, failed = ccd.format_report(report, strict_sha=False, require_vendored=True)
+        self.assertTrue(failed)
+
+    def test_require_vendored_with_subset_is_clean(self) -> None:
+        report = self._report()  # vendors msdmd
+        _text, failed = ccd.format_report(report, strict_sha=False, require_vendored=True)
+        self.assertFalse(failed)
+
+    def test_no_require_vendored_empty_is_clean(self) -> None:
+        empty = Path(self._tmp.name) / "empty3"
+        empty.mkdir()
+        report = ccd.check_consumer(empty, canon_root=self.canon)
+        _text, failed = ccd.format_report(report, strict_sha=False, require_vendored=False)
+        self.assertFalse(failed)
+
     def test_format_and_exit_code(self) -> None:
         _write(self.consumer / ".agents/skills" / "msdmd" / "SKILL.md", "tampered\n")
         report = self._report()

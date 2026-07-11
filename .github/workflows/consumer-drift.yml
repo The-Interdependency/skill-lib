@@ -71,7 +71,7 @@ jobs:
           echo "### ${{ matrix.consumer }} vs skill-lib@${SHA:0:7}" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           set +e
-          python tools/check_consumer_drift.py ../consumer --sha "$SHA" | tee -a "$GITHUB_STEP_SUMMARY"
+          python tools/check_consumer_drift.py ../consumer --sha "$SHA" --require-vendored | tee -a "$GITHUB_STEP_SUMMARY"
           status=${PIPESTATUS[0]}  # checker's exit code, not tee's
           set -e
           echo '```' >> "$GITHUB_STEP_SUMMARY"

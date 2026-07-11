@@ -25,14 +25,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Every active consumer repo that vendors a canonical skill subset.
-        # Deliberately excluded from ORG_DISTRIBUTION.md's target list:
-        #   * PTCA / pcna -- superseded by the consolidated `ptcna`; slated for
-        #     archival (see The-Interdependency/ptcna docs/architecture.md). `ptcna`
-        #     itself vendors nothing yet, so there is no subset to check.
-        #   * a0ucns -- an aggregator that embeds whole copies of other repos
-        #     rather than vendoring a top-level `.agents/skills/` subset.
-        # Add a repo here once it carries a canonical `.agents/skills/` subset.
+        # ORG_DISTRIBUTION.md "Active vendoring consumers" -- the repos that
+        # carry a top-level `.agents/skills/<skill>/` subset. Keep this list and
+        # that section in sync; the targets excluded there (a0ucns aggregator,
+        # ptcna not-yet-vendoring, superseded PTCA/pcna) are deliberately absent
+        # because `--require-vendored` would fail a repo with no subset.
         consumer:
           - interdependent-lib
           - ucns

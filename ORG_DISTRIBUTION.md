@@ -43,18 +43,37 @@ Propagation PRs should cite this repository and the source commit SHA.
 
 ## Target repos
 
+**Active vendoring consumers** — carry a top-level `.agents/skills/<skill>/`
+subset copied from here. These are exactly the repos the scheduled drift
+detector (`.github/workflows/consumer-drift.yml`) checks:
+
 * `The-Interdependency/a0`
 * `The-Interdependency/ucns`
 * `The-Interdependency/edcmbone`
 * `The-Interdependency/interdependent-lib`
-* `The-Interdependency/PTCA`
-* `The-Interdependency/PCEA`
 * `The-Interdependency/aimmh`
-* `The-Interdependency/pcna`
-* `The-Interdependency/ZFAE`
 * `The-Interdependency/ai-tiw`
-* `The-Interdependency/a0ucns`
 * `The-Interdependency/eml_ucns`
+* `The-Interdependency/zfae`
+* `The-Interdependency/pcea`
+* `The-Interdependency/a0-betatest`
+* `The-Interdependency/metapat`
+
+**Targets not in the drift matrix** (do not vendor a top-level subset yet, so
+`--require-vendored` would fail them):
+
+* `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
+  repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
+  embeds carry their own copies; re-sync those from their source repos.
+* `The-Interdependency/ptcna` — the consolidated prime-tensor repo; carries no
+  vendored skill subset yet. Add it above once it does.
+
+**Superseded** — folded into `ptcna` and pending archival; not tracked:
+
+* `The-Interdependency/PTCA`, `The-Interdependency/pcna` (→ `ptcna`)
+
+Add a repo to the active list — and the drift matrix — once it carries a
+canonical `.agents/skills/` subset.
 
 ## Collection points
 

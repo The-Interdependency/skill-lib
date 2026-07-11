@@ -93,8 +93,8 @@ directories with the canonical ones), so no per-repo config is needed. It:
 
 Read-only: it never writes to the consumer repo. The scheduled workflow
 `.github/workflows/consumer-drift.yml` runs it against every consumer repo
-weekly (and on demand); it needs the `SKILL_LIB_RO_TOKEN` secret to check out
-the private consumer repos.
+weekly (and on demand); the consumer repos are public, so it checks them out
+with the default `GITHUB_TOKEN` — no extra secret required.
 
 ## llms-build runner
 
@@ -145,13 +145,11 @@ llms-build drift, RepoLOTO audit, and RepoLOTO checks.
 
 `.github/workflows/consumer-drift.yml` runs `check_consumer_drift.py` against
 every consumer repo on a weekly schedule (and on demand) to detect vendored-copy
-drift. It needs the `SKILL_LIB_RO_TOKEN` secret to read the private consumer
-repos.
+drift. The consumer repos are public, so it uses the default `GITHUB_TOKEN` — no
+extra secret required.
 
 ## hmmm
 
 - `consumer-drift.yml` only *detects* drift; re-propagation still requires a
   human or agent to run `propagate_skills.py --apply`, review, commit, and open PRs
-- `consumer-drift.yml` needs the `SKILL_LIB_RO_TOKEN` secret; without it the
-  consumer-checkout step fails
 - `char_compress_check.py` verifies preservation fixtures but is not yet a complete codec

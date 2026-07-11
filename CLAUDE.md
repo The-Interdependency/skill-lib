@@ -9,7 +9,7 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Edit skills here first; propagate later with the source commit SHA.
 - License: MPL-2.0 (relicensed from MIT; weak/file-level copyleft — embed anywhere, changes to these files must be published).
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
-- CI workflows: `.github/workflows/hygiene.yml` guards against tracked Python bytecode, `.github/workflows/ci.yml` runs the editorial/helper verification stack, and `.github/workflows/consumer-drift.yml` is a scheduled/dispatch detector that runs `tools/check_consumer_drift.py` against each consumer repo (needs the `SKILL_LIB_RO_TOKEN` secret).
+- CI workflows: `.github/workflows/hygiene.yml` guards against tracked Python bytecode, `.github/workflows/ci.yml` runs the editorial/helper verification stack, and `.github/workflows/consumer-drift.yml` is a scheduled/dispatch detector that runs `tools/check_consumer_drift.py` against each consumer repo (the consumer repos are public, so it uses the default `GITHUB_TOKEN`).
 - Validation here is editorial plus pure-stdlib helper scripts in `tools/`, `ratios/`, `llms/`, and the RepoLOTO check module.
 - The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
 
@@ -200,7 +200,7 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 - `tests/test_repo_loto.py --audit` reconciles RepoLOTO source `CONTRACTS` against test `CHECKS`; `tests/test_repo_loto.py` executes those checks.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
-- `check_consumer_drift.py` is the read-only counterpart: given a checked-out consumer repo it auto-detects the vendored skill subset and reports canonical-file drift, stale `manifest/generate.py.sha256` pins, and (with `--sha`) a missing README source-commit citation. The scheduled `consumer-drift.yml` workflow runs it against every consumer repo; it needs the `SKILL_LIB_RO_TOKEN` secret to read the private consumer repos.
+- `check_consumer_drift.py` is the read-only counterpart: given a checked-out consumer repo it auto-detects the vendored skill subset and reports canonical-file drift, stale `manifest/generate.py.sha256` pins, and (with `--sha`) a missing README source-commit citation. The scheduled `consumer-drift.yml` workflow runs it against every consumer repo; the consumer repos are public, so it uses the default `GITHUB_TOKEN`.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
   implement against their own source trees, not scripts that live or run here unless the skill
   directory includes a helper file or package module.

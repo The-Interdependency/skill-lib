@@ -84,9 +84,10 @@ class ConsumerDriftTest(unittest.TestCase):
         _write(self.canon / "manifest" / "generate.py", "GEN\n")
         _write(self.consumer / ".agents/skills" / "manifest" / "SKILL.md", "m\n")
         _write(self.consumer / ".agents/skills" / "manifest" / "generate.py", "GEN\n")
+        wrong = hashlib.sha256(b"NOT-GEN\n").hexdigest()  # valid format, wrong digest
         _write(
             self.consumer / ".agents/skills" / "manifest" / "generate.py.sha256",
-            "deadbeef  generate.py\n",
+            f"{wrong}  generate.py\n",
         )
         report = self._report()
         manifest = next(s for s in report.skills if s.name == "manifest")
@@ -124,6 +125,25 @@ class ConsumerDriftTest(unittest.TestCase):
         # '**generate.py' names the file '*generate.py' to sha256sum -c, not generate.py
         digest = hashlib.sha256(b"GEN\n").hexdigest()
         self._manifest_with_pin(f"{digest} **generate.py\n")
+        report = self._report()
+        manifest = next(s for s in report.skills if s.name == "manifest")
+        self.assertTrue(any("malformed pin" in r for r in manifest.drift))
+
+    def test_manifest_pin_extra_separator_is_drift(self) -> None:
+        # sha256sum -c allows exactly one space + one mode char; surplus spacing
+        # becomes part of the filename, so these must not read clean.
+        digest = hashlib.sha256(b"GEN\n").hexdigest()
+        for bad in (f"{digest}   generate.py\n", f"{digest}  *generate.py\n"):
+            with self.subTest(pin=bad):
+                self._manifest_with_pin(bad)
+                report = self._report()
+                manifest = next(s for s in report.skills if s.name == "manifest")
+                self.assertTrue(any("malformed pin" in r for r in manifest.drift))
+
+    def test_manifest_pin_uppercase_digest_is_drift(self) -> None:
+        # GNU sha256sum emits lowercase hex; an uppercased digest is not its format.
+        digest = hashlib.sha256(b"GEN\n").hexdigest().upper()
+        self._manifest_with_pin(f"{digest}  generate.py\n")
         report = self._report()
         manifest = next(s for s in report.skills if s.name == "manifest")
         self.assertTrue(any("malformed pin" in r for r in manifest.drift))

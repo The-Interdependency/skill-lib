@@ -1,4 +1,4 @@
-# ratios: loc_comments=183:37 imports_exports=8:9 calls_definitions=62:13
+# ratios: loc_comments=182:39 imports_exports=9:9 calls_definitions=62:13
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -43,6 +44,9 @@ from typing import Iterable, List
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SKILLS_REL = Path(".agents/skills")
 IGNORE_PARTS = {"__pycache__"}
+# GNU sha256sum output line: 64 lowercase hex, one space, one mode char
+# (' ' text / '*' binary), then the filename immediately -- no other spacing.
+PIN_LINE_RE = re.compile(r"^(?P<digest>[0-9a-f]{64}) [ *]generate\.py$")
 
 
 @dataclass
@@ -106,11 +110,14 @@ def diff_skill(canon_dir: Path, vend_dir: Path) -> List[str]:
 def check_manifest_pin(vend_dir: Path) -> List[str]:
     """A vendored generate.py.sha256, if present, must pin generate.py.
 
-    Mirrors ``sha256sum -c`` semantics: the pin must be a single, well-formed
-    ``<sha256>  generate.py`` line whose digest matches the vendored file. A pin
-    that carries the right digest but names the wrong file (or has extra lines)
-    would pass a naive digest-only check yet fail -- or silently check the wrong
-    path in -- the consumer's ``sha256sum -c`` CI, so those are drift too.
+    Mirrors ``sha256sum -c`` exactly: the pin must be a single line of the form
+    ``<64-hex-lowercase> <mode>generate.py`` -- checksum, one space, one mode
+    character (``' '`` text / ``'*'`` binary), then the filename immediately,
+    with no extra separators, markers, or lines. A pin with the right digest but
+    any deviation (wrong name, extra spaces, doubled marker, extra line) would
+    make the consumer's ``sha256sum -c`` CI fail or check the wrong path, so
+    ``PIN_LINE_RE`` rejects all of them as drift rather than trusting a loose
+    token split.
     """
     pin = vend_dir / "generate.py.sha256"
     gen = vend_dir / "generate.py"
@@ -121,16 +128,10 @@ def check_manifest_pin(vend_dir: Path) -> List[str]:
     lines = [line for line in pin.read_text(encoding="utf-8").splitlines() if line.strip()]
     if len(lines) != 1:
         return ["malformed pin: generate.py.sha256 must hold exactly one checksum line"]
-    parts = lines[0].split()
-    if len(parts) != 2:
-        return ["malformed pin: generate.py.sha256 line is not '<sha256>  generate.py'"]
-    recorded_digest, recorded_name = parts
-    # sha256sum -c reads exactly one mode marker before the name ('*' binary,
-    # space text), so accept 'generate.py' or '*generate.py' -- but not
-    # '**generate.py', which actually names the file '*generate.py'.
-    if recorded_name not in ("generate.py", "*generate.py"):
-        return [f"malformed pin: generate.py.sha256 targets '{recorded_name}', not generate.py"]
-    if recorded_digest != sha256_of(gen):
+    match = PIN_LINE_RE.match(lines[0])
+    if not match:
+        return ["malformed pin: generate.py.sha256 is not a '<sha256>  generate.py' line"]
+    if match.group("digest") != sha256_of(gen):
         return ["stale pin: generate.py.sha256 does not match generate.py"]
     return []
 
@@ -257,4 +258,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=183:37 imports_exports=8:9 calls_definitions=62:13
+# ratios: loc_comments=182:39 imports_exports=9:9 calls_definitions=62:13

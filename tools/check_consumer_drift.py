@@ -1,4 +1,4 @@
-# ratios: loc_comments=164:25 imports_exports=8:9 calls_definitions=57:13
+# ratios: loc_comments=171:31 imports_exports=8:9 calls_definitions=61:13
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -101,16 +101,30 @@ def diff_skill(canon_dir: Path, vend_dir: Path) -> List[str]:
 
 
 def check_manifest_pin(vend_dir: Path) -> List[str]:
-    """A vendored generate.py.sha256, if present, must pin generate.py."""
+    """A vendored generate.py.sha256, if present, must pin generate.py.
+
+    Mirrors ``sha256sum -c`` semantics: the pin must be a single, well-formed
+    ``<sha256>  generate.py`` line whose digest matches the vendored file. A pin
+    that carries the right digest but names the wrong file (or has extra lines)
+    would pass a naive digest-only check yet fail -- or silently check the wrong
+    path in -- the consumer's ``sha256sum -c`` CI, so those are drift too.
+    """
     pin = vend_dir / "generate.py.sha256"
     gen = vend_dir / "generate.py"
     if not pin.is_file():
         return []
     if not gen.is_file():
         return ["stale pin: generate.py.sha256 present but generate.py missing"]
-    recorded = pin.read_text(encoding="utf-8").split()
-    actual = sha256_of(gen)
-    if not recorded or recorded[0] != actual:
+    lines = [line for line in pin.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if len(lines) != 1:
+        return ["malformed pin: generate.py.sha256 must hold exactly one checksum line"]
+    parts = lines[0].split()
+    if len(parts) != 2:
+        return ["malformed pin: generate.py.sha256 line is not '<sha256>  generate.py'"]
+    recorded_digest, recorded_name = parts
+    if recorded_name.lstrip("*") != "generate.py":  # '*' is sha256sum's binary marker
+        return [f"malformed pin: generate.py.sha256 targets '{recorded_name}', not generate.py"]
+    if recorded_digest != sha256_of(gen):
         return ["stale pin: generate.py.sha256 does not match generate.py"]
     return []
 
@@ -225,4 +239,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=164:25 imports_exports=8:9 calls_definitions=57:13
+# ratios: loc_comments=171:31 imports_exports=8:9 calls_definitions=61:13

@@ -1,5 +1,5 @@
-# Scheduled detector: does any consumer repo's vendored .agents/skills/ subset
-# still match this canonical skill-lib? Catches "canonical moved ahead" drift --
+# Scheduled detector: does each active consumer repo's vendored .agents/skills/
+# subset still match this canonical skill-lib? Catches "canonical moved ahead" --
 # the failure mode that otherwise accumulates silently between manual propagation
 # PRs. Read-only: it reports drift, it does not push or open PRs.
 #
@@ -25,6 +25,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Every active consumer repo that vendors a canonical skill subset.
+        # Deliberately excluded from ORG_DISTRIBUTION.md's target list:
+        #   * PTCA / pcna -- superseded by the consolidated `ptcna`; slated for
+        #     archival (see The-Interdependency/ptcna docs/architecture.md). `ptcna`
+        #     itself vendors nothing yet, so there is no subset to check.
+        #   * a0ucns -- an aggregator that embeds whole copies of other repos
+        #     rather than vendoring a top-level `.agents/skills/` subset.
+        # Add a repo here once it carries a canonical `.agents/skills/` subset.
         consumer:
           - interdependent-lib
           - ucns
@@ -56,6 +64,7 @@ jobs:
           python-version: "3.11"
 
       - name: Detect vendored-skill drift
+        shell: bash
         run: |
           cd skill-lib
           SHA="$(git rev-parse HEAD)"
@@ -63,7 +72,7 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           set +e
           python tools/check_consumer_drift.py ../consumer --sha "$SHA" | tee -a "$GITHUB_STEP_SUMMARY"
-          status=$?
+          status=${PIPESTATUS[0]}  # checker's exit code, not tee's
           set -e
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           if [ "$status" -ne 0 ]; then

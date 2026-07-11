@@ -92,6 +92,34 @@ class ConsumerDriftTest(unittest.TestCase):
         manifest = next(s for s in report.skills if s.name == "manifest")
         self.assertTrue(any("stale pin" in r for r in manifest.drift))
 
+    def _manifest_with_pin(self, pin_text: str) -> None:
+        _write(self.canon / "manifest" / "SKILL.md", "m\n")
+        _write(self.canon / "manifest" / "generate.py", "GEN\n")
+        _write(self.consumer / ".agents/skills" / "manifest" / "SKILL.md", "m\n")
+        _write(self.consumer / ".agents/skills" / "manifest" / "generate.py", "GEN\n")
+        _write(self.consumer / ".agents/skills" / "manifest" / "generate.py.sha256", pin_text)
+
+    def test_manifest_pin_wrong_filename_is_drift(self) -> None:
+        digest = hashlib.sha256(b"GEN\n").hexdigest()
+        self._manifest_with_pin(f"{digest}  wrong.py\n")  # correct digest, wrong name
+        report = self._report()
+        manifest = next(s for s in report.skills if s.name == "manifest")
+        self.assertTrue(any("malformed pin" in r for r in manifest.drift))
+
+    def test_manifest_pin_extra_line_is_drift(self) -> None:
+        digest = hashlib.sha256(b"GEN\n").hexdigest()
+        self._manifest_with_pin(f"{digest}  generate.py\n{digest}  other.py\n")
+        report = self._report()
+        manifest = next(s for s in report.skills if s.name == "manifest")
+        self.assertTrue(any("malformed pin" in r for r in manifest.drift))
+
+    def test_manifest_pin_binary_marker_is_clean(self) -> None:
+        digest = hashlib.sha256(b"GEN\n").hexdigest()
+        self._manifest_with_pin(f"{digest} *generate.py\n")  # sha256sum binary mode
+        report = self._report()
+        manifest = next(s for s in report.skills if s.name == "manifest")
+        self.assertTrue(manifest.ok)
+
     def test_manifest_pin_current_is_clean(self) -> None:
         _write(self.canon / "manifest" / "SKILL.md", "m\n")
         _write(self.canon / "manifest" / "generate.py", "GEN\n")

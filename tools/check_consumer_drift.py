@@ -1,4 +1,4 @@
-# ratios: loc_comments=182:39 imports_exports=9:9 calls_definitions=62:13
+# ratios: loc_comments=218:48 imports_exports=9:11 calls_definitions=80:15
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -18,6 +18,10 @@ Rules (matching org propagation doctrine):
 * When a vendored ``manifest/generate.py.sha256`` companion is present it must
   pin the vendored ``generate.py`` (``sha256sum -c`` semantics); a stale pin is
   drift.
+* Any shared ``doctrine/<file>`` doc a vendored skill links to (e.g.
+  ``../doctrine/msdmd-checks.md``) must be vendored at
+  ``.agents/skills/doctrine/<file>`` and match canonical; a missing or stale
+  referenced doctrine doc is drift too.
 * With ``--sha`` given, the consumer ``.agents/skills/README.md`` should cite that
   canonical source commit; a missing/mismatched citation is a warning (an error
   under ``--strict-sha``).
@@ -47,6 +51,11 @@ IGNORE_PARTS = {"__pycache__"}
 # GNU sha256sum output line: 64 lowercase hex, one space, one mode char
 # (' ' text / '*' binary), then the filename immediately -- no other spacing.
 PIN_LINE_RE = re.compile(r"^(?P<digest>[0-9a-f]{64}) [ *]generate\.py$")
+# A skill file linking to a shared doctrine doc, e.g. `../doctrine/msdmd-checks.md`.
+# Skills live at `.agents/skills/<skill>/`, so `../doctrine/<f>` resolves to the
+# sibling `.agents/skills/doctrine/<f>` -- which must be vendored alongside them.
+DOCTRINE_REF_RE = re.compile(r"(?:\.\./)?doctrine/([A-Za-z0-9][\w./-]*\.md)")
+_TEXT_SUFFIXES = {".md", ".py", ".ts", ".txt"}
 
 
 @dataclass
@@ -63,6 +72,7 @@ class SkillReport:
 class ConsumerReport:
     consumer: str
     skills: List[SkillReport] = field(default_factory=list)
+    doctrine: List[str] = field(default_factory=list)  # referenced-doctrine drift reasons
     sha_warning: str | None = None
 
     @property
@@ -92,6 +102,34 @@ def sha256_of(path: Path) -> str:
     digest = hashlib.sha256()
     digest.update(path.read_bytes())
     return digest.hexdigest()
+
+
+def referenced_doctrine(skill_dir: Path) -> set[str]:
+    """Shared `doctrine/<file>` docs a skill's text files link to."""
+    refs: set[str] = set()
+    for path in _canon_files(skill_dir):
+        if path.suffix.lower() not in _TEXT_SUFFIXES:
+            continue
+        refs.update(DOCTRINE_REF_RE.findall(path.read_text(encoding="utf-8", errors="ignore")))
+    return refs
+
+
+def check_doctrine(canon_root: Path, skills_root: Path, vendored_canon: List[str]) -> List[str]:
+    """Every doctrine doc referenced by a vendored skill must be present + verbatim."""
+    refs: set[str] = set()
+    for name in vendored_canon:
+        refs.update(referenced_doctrine(canon_root / name))
+    reasons: List[str] = []
+    for ref in sorted(refs):
+        canon_doc = canon_root / "doctrine" / ref
+        if not canon_doc.is_file():
+            continue  # dangling reference in canonical itself -- skill-lib's problem, not the vendor's
+        vend_doc = skills_root / "doctrine" / ref
+        if not vend_doc.is_file():
+            reasons.append(f"missing: doctrine/{ref}")
+        elif vend_doc.read_bytes() != canon_doc.read_bytes():
+            reasons.append(f"differs: doctrine/{ref}")
+    return reasons
 
 
 def diff_skill(canon_dir: Path, vend_dir: Path) -> List[str]:
@@ -152,14 +190,18 @@ def check_consumer(
     vendored = sorted(
         child.name for child in skills_root.iterdir() if child.is_dir()
     )
+    vendored_canon: List[str] = []
     for name in vendored:
         if name not in canon:
             continue  # repo-local skill, not part of the canonical set
+        vendored_canon.append(name)
         skill = SkillReport(name=name)
         skill.drift.extend(diff_skill(canon_root / name, skills_root / name))
         if name == "manifest":
             skill.drift.extend(check_manifest_pin(skills_root / name))
         report.skills.append(skill)
+
+    report.doctrine.extend(check_doctrine(canon_root, skills_root, vendored_canon))
 
     if sha:
         readme = skills_root / "README.md"
@@ -182,12 +224,19 @@ def format_report(
         else:
             lines.append(f"  DRIFT {skill.name}")
             lines.extend(f"          - {reason}" for reason in skill.drift)
+    for reason in report.doctrine:
+        lines.append(f"  DOC   {reason}")
     if report.sha_warning:
         lines.append(f"  SHA   {report.sha_warning}")
     empty = require_vendored and checked == 0
     if empty:
         lines.append("  NONE  no canonical skills vendored (a subset was expected)")
-    failed = bool(drifted) or empty or (strict_sha and report.sha_warning is not None)
+    failed = (
+        bool(drifted)
+        or bool(report.doctrine)
+        or empty
+        or (strict_sha and report.sha_warning is not None)
+    )
     status = "DRIFT" if failed else "clean"
     header = (
         f"{report.consumer}: {status} "
@@ -246,6 +295,7 @@ def main(argv: List[str] | None = None) -> int:
         payload = {
             "consumer": report.consumer,
             "drift": {s.name: s.drift for s in report.skills if not s.ok},
+            "doctrine": report.doctrine,
             "checked": [s.name for s in report.skills],
             "sha_warning": report.sha_warning,
             "failed": failed,
@@ -258,4 +308,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=182:39 imports_exports=9:9 calls_definitions=62:13
+# ratios: loc_comments=218:48 imports_exports=9:11 calls_definitions=80:15

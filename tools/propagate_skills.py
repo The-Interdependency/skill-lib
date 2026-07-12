@@ -1,4 +1,4 @@
-# ratios: loc_comments=89:5 imports_exports=8:5 calls_definitions=40:5
+# ratios: loc_comments=109:9 imports_exports=9:6 calls_definitions=50:6
 """Copy canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -19,6 +20,10 @@ from typing import Iterable, List, Mapping, Sequence
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
 DEFAULT_INSTALL_ROOT = Path(".agents/skills")
+# Skills may link to shared docs under `doctrine/` (e.g. `../doctrine/msdmd-checks.md`);
+# those must be carried alongside the skills or the vendored links go dead.
+DOCTRINE_REF_RE = re.compile(r"(?:\.\./)?doctrine/([A-Za-z0-9][\w./-]*\.md)")
+_TEXT_SUFFIXES = {".md", ".py", ".ts", ".txt"}
 
 
 def load_skill_names() -> List[str]:
@@ -41,6 +46,17 @@ def copytree(src: Path, dst: Path) -> None:
     if dst.exists():
         shutil.rmtree(dst)
     shutil.copytree(src, dst)
+
+
+def referenced_doctrine(skill_srcs: Iterable[Path]) -> List[str]:
+    """Shared `doctrine/<file>` docs the given skill directories link to."""
+    refs: set[str] = set()
+    for src in skill_srcs:
+        for path in src.rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in _TEXT_SUFFIXES:
+                continue
+            refs.update(DOCTRINE_REF_RE.findall(path.read_text(encoding="utf-8", errors="ignore")))
+    return sorted(ref for ref in refs if (ROOT / "doctrine" / ref).is_file())
 
 
 def write_readme(target_install_root: Path, sha: str, skills: Sequence[str]) -> None:
@@ -96,10 +112,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 2
         actions.append((src, dst))
 
+    # Carry any shared doctrine docs the propagated skills link to.
+    doc_actions = [
+        (ROOT / "doctrine" / ref, install_root / "doctrine" / ref)
+        for ref in referenced_doctrine(src for src, _ in actions)
+    ]
+
     mode = "APPLY" if args.apply else "DRY-RUN"
-    print(f"{mode}: propagate {len(actions)} skills to {install_root}")
+    print(f"{mode}: propagate {len(actions)} skills + {len(doc_actions)} doctrine docs to {install_root}")
     print(f"source commit: {sha}")
     for src, dst in actions:
+        print(f"- {src.relative_to(ROOT)} -> {dst}")
+    for src, dst in doc_actions:
         print(f"- {src.relative_to(ROOT)} -> {dst}")
 
     if not args.apply:
@@ -109,6 +133,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     install_root.mkdir(parents=True, exist_ok=True)
     for src, dst in actions:
         copytree(src, dst)
+    for src, dst in doc_actions:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
     write_readme(install_root, sha, requested)
     print("Propagation complete.")
     return 0
@@ -116,4 +143,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=89:5 imports_exports=8:5 calls_definitions=40:5
+# ratios: loc_comments=109:9 imports_exports=9:6 calls_definitions=50:6

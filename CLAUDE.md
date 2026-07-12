@@ -199,8 +199,8 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 - `ratios_check.py --strict` verifies first/last ratios seals for covered executable source files.
 - `tests/test_repo_loto.py --audit` reconciles RepoLOTO source `CONTRACTS` against test `CHECKS`; `tests/test_repo_loto.py` executes those checks.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
-- `propagate_skills.py` copies canonical skill directories into a checked-out target repo; it does not commit, push, open pull requests, or contact GitHub.
-- `check_consumer_drift.py` is the read-only counterpart: given a checked-out consumer repo it auto-detects the vendored skill subset and reports canonical-file drift, stale `manifest/generate.py.sha256` pins, and (with `--sha`) a missing README source-commit citation. The scheduled `consumer-drift.yml` workflow runs it against every consumer repo; the consumer repos are public, so it uses the default `GITHUB_TOKEN`.
+- `propagate_skills.py` copies canonical skill directories into a checked-out target repo, and carries any shared `doctrine/<file>` docs the propagated skills link to into `.agents/skills/doctrine/`; it does not commit, push, open pull requests, or contact GitHub.
+- `check_consumer_drift.py` is the read-only counterpart: given a checked-out consumer repo it auto-detects the vendored skill subset and reports canonical-file drift, stale `manifest/generate.py.sha256` pins, missing/stale referenced `doctrine/<file>` docs, and (with `--sha`) a missing README source-commit citation. The scheduled `consumer-drift.yml` workflow runs it against every consumer repo; the consumer repos are public, so it uses the default `GITHUB_TOKEN`.
 - Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
   implement against their own source trees, not scripts that live or run here unless the skill
   directory includes a helper file or package module.

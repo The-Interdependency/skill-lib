@@ -50,6 +50,7 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0`
 * `The-Interdependency/ucns`
 * `The-Interdependency/edcmbone`
+* `The-Interdependency/edcm`
 * `The-Interdependency/interdependent-lib`
 * `The-Interdependency/aimmh`
 * `The-Interdependency/ai-tiw`

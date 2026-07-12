@@ -198,6 +198,39 @@ class ConsumerDriftTest(unittest.TestCase):
         _text, failed = ccd.format_report(report, strict_sha=False, require_vendored=False)
         self.assertFalse(failed)
 
+    def _reference_doctrine(self, in_consumer: bool = True, consumer_body: str = "DOCTRINE\n") -> None:
+        # canonical msdmd links to a shared doctrine doc; keep the vendored SKILL.md
+        # identical so only doctrine state varies.
+        body = "canonical spec\nSee [checks](../doctrine/msdmd-checks.md)\n"
+        _write(self.canon / "msdmd" / "SKILL.md", body)
+        _write(self.consumer / ".agents/skills" / "msdmd" / "SKILL.md", body)
+        _write(self.canon / "doctrine" / "msdmd-checks.md", "DOCTRINE\n")
+        if in_consumer:
+            _write(self.consumer / ".agents/skills" / "doctrine" / "msdmd-checks.md", consumer_body)
+
+    def test_referenced_doctrine_present_is_clean(self) -> None:
+        self._reference_doctrine()
+        report = self._report()
+        self.assertEqual(report.doctrine, [])
+
+    def test_missing_referenced_doctrine_is_drift(self) -> None:
+        self._reference_doctrine(in_consumer=False)
+        report = self._report()
+        self.assertTrue(any("missing: doctrine/msdmd-checks.md" in r for r in report.doctrine))
+        _text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertTrue(failed)
+
+    def test_stale_referenced_doctrine_is_drift(self) -> None:
+        self._reference_doctrine(consumer_body="STALE DOCTRINE\n")
+        report = self._report()
+        self.assertTrue(any("differs: doctrine/msdmd-checks.md" in r for r in report.doctrine))
+
+    def test_unreferenced_doctrine_not_required(self) -> None:
+        # a doctrine file no vendored skill links to is not required in the consumer
+        _write(self.canon / "doctrine" / "unused.md", "x\n")
+        report = self._report()
+        self.assertEqual(report.doctrine, [])
+
     def test_format_and_exit_code(self) -> None:
         _write(self.consumer / ".agents/skills" / "msdmd" / "SKILL.md", "tampered\n")
         report = self._report()

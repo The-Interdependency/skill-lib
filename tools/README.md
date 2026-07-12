@@ -61,8 +61,11 @@ The helper copies canonical skill directories into:
 .agents/skills/<skill-name>/
 ```
 
-It also writes `.agents/skills/README.md` in the target repo with the source
-commit SHA. It does not commit, push, open pull requests, or contact GitHub.
+It also carries any shared `doctrine/<file>` docs the propagated skills link to
+(e.g. `msdmd`/`test-build` → `doctrine/msdmd-checks.md`) into
+`.agents/skills/doctrine/`, so those relative links resolve in the vendored tree,
+and writes `.agents/skills/README.md` in the target repo with the source commit
+SHA. It does not commit, push, open pull requests, or contact GitHub.
 
 ## Consumer drift checker
 
@@ -85,6 +88,9 @@ directories with the canonical ones), so no per-repo config is needed. It:
 - ignores repo-local additions — extra files, local runners, or repo-only
   skills beside the canonical assets;
 - verifies a vendored `manifest/generate.py.sha256` still pins its `generate.py`;
+- verifies any shared `doctrine/<file>` doc a vendored skill links to is present
+  at `.agents/skills/doctrine/<file>` and matches canonical (a missing or stale
+  referenced doctrine doc is drift);
 - with `--sha`, warns when `.agents/skills/README.md` does not cite that source
   commit (an error under `--strict-sha`);
 - with `--require-vendored`, fails when the repo vendors no canonical skills at

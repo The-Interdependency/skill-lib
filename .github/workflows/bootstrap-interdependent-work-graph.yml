@@ -23,7 +23,21 @@ jobs:
       - name: Synchronize skill entry points
         run: |
           python - <<'PY'
+          import json
           from pathlib import Path
+
+          index_path = Path("skills.json")
+          index = json.loads(index_path.read_text(encoding="utf-8"))
+          for skill in index["skills"]:
+              if skill["name"] == "interdependent-work-graph":
+                  skill.pop("depends_on", None)
+                  break
+          else:
+              raise SystemExit("interdependent-work-graph is missing from skills.json")
+          index_path.write_text(
+              json.dumps(index, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8",
+          )
 
           def replace_once(path_name: str, old: str, new: str) -> None:
               path = Path(path_name)
@@ -78,7 +92,7 @@ jobs:
               "CLAUDE.md",
               claude_row,
               claude_row
-              + "| `interdependent-work-graph/` | procedural | `the-interdependency`, `canon` | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. |\n",
+              + "| `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |\n",
           )
           replace_once(
               "CLAUDE.md",
@@ -100,7 +114,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md AGENTS.md ORG_DISTRIBUTION.md CLAUDE.md
+          git add skills.json README.md AGENTS.md ORG_DISTRIBUTION.md CLAUDE.md
           git diff --cached --stat
           git commit -m "docs(skill): synchronize work-graph doctrine"
           git pull --rebase origin "$BRANCH"

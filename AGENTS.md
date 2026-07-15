@@ -43,7 +43,7 @@ the skill. Treat it as the public contract.
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
-   `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`,
+   `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `loop-eng`, and `skill-build`) are procedural and
    define no block.
 
@@ -86,6 +86,11 @@ propagate from here.
   `python -m llms.build --root . --out llms.txt --apply`.
 - If you are deciding whether repo-local practice should become org doctrine,
   load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
+- If a word or phrase is being promoted into canon, a theorem term, ontology
+  primitive, schema field, encoding label, cross-domain mapping, or other
+  meaning-bearing control surface, load `domain-claims/SKILL.md` before
+  attaching provenance. Establish the domain-qualified sense, scope, exclusions,
+  and collision result first; then use `canon` to evaluate authority.
 - If you are compressing a thread, document, repo audit, canon handoff, or
   working-memory state, load `char-compress/SKILL.md`; carry flesh, frozen
   bones, transforms, and `hmmm`; drop only safely regenerable scaffold.
@@ -107,7 +112,7 @@ propagate from here.
 
 - `README.md` — human-facing overview, what's-inside table, msdmd
   block syntax.
-- `ORG_DISTRIBUTION.md` — canonical-source rule, target-repo list,
+- `ORG_DISTRIBUTION.md` — canonical-source rule, target repos,
   propagation contract.
 - `skills.json` — machine-readable skill index.
 - `llms.txt` — generated LLM-facing root instructions.

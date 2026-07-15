@@ -39,6 +39,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `meta/` — Meta Energy Theory Axioms canon skill
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
+* `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 
@@ -100,6 +101,14 @@ large or artifact-heavy repos; frozen research artifacts, archives, generated
 trees, and vendored `.agents/skills/` copies should not pollute the denominator.
 
 ## Rule
+
+Before assigning a stack-level task to one repository, agents should read:
+
+```text
+.agents/skills/interdependent-work-graph/SKILL.md
+```
+
+Resolve the exact participating repository and evidence-source identities first. Repository boundaries remain authority and provenance boundaries, not agent-attention boundaries.
 
 Before creating a new module, route, service, adapter, schema, worker,
 engine, UI panel, migration, or experiment, agents should read:

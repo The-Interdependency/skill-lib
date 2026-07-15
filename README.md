@@ -43,6 +43,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`meta/`](meta/SKILL.md) | Meta Energy Theory Axioms. Extracts and preserves Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keeps Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. Independent of msdmd. |
 | [`gonal-morphology/`](gonal-morphology/SKILL.md) | Canonical three-core gonal morphology: text as UCNS objects across a char→root/bone/word→phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS `multiplyFuel`). omega=bones, phi=roots, psi=words=`phi⊠omega`; adj/adv are flesh. Reuse the UCNS operator. Recomposition runs; decomposition is domain-confirmed (`AlignedComplete`) but proof-pending. Independent of msdmd. |
 | [`the-interdependency/`](the-interdependency/SKILL.md) | Workflow and protocol for code building, researching, GitHub maintenance and updates, EDCMBONE transcript assembly for analysis, and anything that touches The Interdependency organization or The Interdependent Way projects. Enforces structure preservation (neurodivergence-compatible), mandatory usage guidance in all artifacts, framework-aligned EDCMBONE analysis, and org-standard GitHub hygiene. Independent of msdmd. |
+| [`interdependent-work-graph/`](interdependent-work-graph/SKILL.md) | Cross-repository coordination doctrine. Resolves exact participating commits, authority roles, work relations, non-transfer boundaries, shared stack manifests, and validation/materialization order before a stack-level task is reduced to one repository. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 | [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
 
@@ -132,7 +133,7 @@ example for a metadata-block skill that also ships a stdlib command module.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
 block (`canon`, `domain-claims`, `visitor-intro`, `char-compress`, `agent-instantiation`,
-`a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `loop-eng`, and `skill-build` are the existing examples). To add one:
+`a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `interdependent-work-graph`, `loop-eng`, and `skill-build` are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML
    frontmatter is what your harness will read).

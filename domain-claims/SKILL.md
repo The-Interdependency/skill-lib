@@ -137,8 +137,8 @@ or repository proximity.
 ## Workflow
 
 1. **Detect promotion.** Determine whether the word will control canon, structure,
-   theorem language, implementation, measurement, or encoding. If not, stop; ordinary
-   language remains fluid.
+   theorem language, implementation, measurement, or encoding. If not, stop;
+   ordinary language remains fluid.
 2. **Enumerate candidate domains.** Name every domain whose claim could reasonably
    apply in the current scope.
 3. **Declare the claim.** Create or retrieve the domain-claim record before drafting

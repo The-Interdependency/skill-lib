@@ -56,6 +56,7 @@ llms/                  # python -m llms.build reference runner
 | `gonal-morphology/` | procedural | — | Three-core gonal morphology canon. omega=bones (closed-class+affixes, weight 0.8), phi=roots (open-class, 0.4), psi=words=`phi⊠omega` (1.0); leaf=157 chars, seed=phrase/clause (equivalent under LCM). One operator ⊠ = UCNS `multiplyFuel` at every depth — reuse, don't reimplement. Recomposition runs; decomposition domain-confirmed (`AlignedComplete`) but proof-pending (no theorem-status transfer). |
 | `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. |
 | `the-interdependency/` | procedural | — | Workflow protocol for The Interdependency org: code/research/GitHub maintenance, EDCMBONE transcript assembly and analysis, and mandatory usage-guidance + structure-preservation doctrine across artifacts. |
+| `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
 | `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
 
@@ -88,7 +89,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `loop-eng/`, and `skill-build/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, and `skill-build/` are the examples.
 
 ## msdmd block syntax
 

@@ -44,7 +44,7 @@ the skill. Treat it as the public contract.
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
    `canon`, `char-compress`, `visitor-intro`, `agent-instantiation`,
-   `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `loop-eng`, and `skill-build`) are procedural and
+   `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `interdependent-work-graph`, `loop-eng`, and `skill-build`) are procedural and
    define no block.
 
 A machine-readable index is also available at `skills.json` if you
@@ -100,6 +100,7 @@ propagate from here.
   page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
   paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
 - If you are building code, researching, performing GitHub maintenance or updates, assembling EDCMBONE transcripts for analysis, or any work that touches The Interdependency organization, The Interdependent Way projects, or related assets (edcmbone, ucns, pcea, skill-lib, a0, aimmh, etc.), load `the-interdependency/SKILL.md` and follow its structure-preservation, EDCMBONE framework, mandatory usage-guidance, and org-workflow rules.
+- If the task spans, consumes, compares, publishes to, or changes the contract between multiple repositories, load `interdependent-work-graph/SKILL.md` before choosing an edit workspace. Resolve exact commits, authority roles, relations, non-transfer boundaries, and one shared graph record.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
 - If you are creating a new skill, revising an existing skill, bringing skills into compliance, or designing a skill-specific test suite, load `skill-build/SKILL.md` and answer its trigger, source-of-truth, workflow, validation, and `hmmm` question sets before patching.
 

@@ -47,6 +47,7 @@ llms/                  # python -m llms.build reference runner
 | `llms-build/` | metadata-block | `msdmd` | Root LLM instruction generation. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them into canonical root `llms.txt` and reports drift. |
 | `typed-meta-frontend/` | metadata-block | `msdmd`, `meta-module-build`, `doc-build` | TypeScript self-building frontend generation from backend-owned module metadata. Modules declare `# === FRONTEND_META ===` blocks or equivalent backend metadata; the UI renders every module living spec, exposes every editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
 | `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
+| `domain-claims/` | procedural | — | Domain-first lexical and semantic governance. Establishes the domain-qualified sense, scope, exclusions, collision result, and standing that must precede a canonical definition, conversational provenance, or structural encoding. No metadata block. |
 | `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
 | `char-compress/` | procedural | — | Unit Circle Number System-derived bone/flesh context compression. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or edcmbone metric status. |
 | `agent-instantiation/` | procedural | — | a0/a0ucns agent lifecycle methodology. Spawn sub-agents via the `sub_agent_spawn` tool → spawn executor; fork/merge `PCNAEngine` instances via `InstanceMerge` (fork/absorb/converge); compose identities per the canonical `username(a0(energy)auditor)` grammar; honor spawn caps + write-route gating. Canonical source is `a0`; `a0-betatest` diverged (per-user native-ZFAE) and is out of scope. Repo-specific runtime doctrine (no theorem transfer). |
@@ -87,7 +88,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `loop-eng/`, and `skill-build/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `loop-eng/`, and `skill-build/` are the examples.
 
 ## msdmd block syntax
 
@@ -229,7 +230,8 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 8. Do not invent undeclared package/build commands for this repo.
 9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
 10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
-11. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
+11. Before promoting a word into canon, a theorem term, ontology primitive, schema field, encoding label, or cross-domain mapping, apply `domain-claims`: establish the domain-qualified sense and resolve collisions before attaching provenance; then apply `canon` to assess authority.
+12. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
 
 ## hmmm
 

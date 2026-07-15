@@ -42,7 +42,7 @@ website    publication and presentation consumer
 
 These are examples, not a universal fixed list. Read the participating repositories before assigning roles.
 
-## Ordered workflow
+## Workflow
 
 1. **Discover the graph.** Identify every repository, package, corpus, schema, workflow, or publication surface whose exact state can change the answer.
 2. **Resolve identity.** Pin an exact commit, immutable artifact digest, versioned schema, or explicit `hmmm` for each participant. Moving branch names are navigation aids, not evidence identities.
@@ -134,7 +134,7 @@ A successful application demonstrates:
 - at least one cross-repository fixture, import, adapter, artifact, or workflow proves the connected path;
 - later agents can resume from the graph record without guessing which commits were used.
 
-## Failure modes blocked
+## Anti-patterns
 
 - Assigning one AI to one repository when the task's truth conditions span several.
 - Treating the currently open repository as the source of every term it imports.

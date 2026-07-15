@@ -83,7 +83,9 @@ The first executable reference shape is:
 }
 ```
 
-The digest is SHA-256 over canonical JSON containing exactly `repositories` and `boundaries`, sorted by key with compact separators. Consuming implementations may add versioned fields only through an explicit schema revision.
+The digest is SHA-256 over canonical JSON containing exactly `repositories` and `boundaries`, sorted by key with compact separators. In version 1.0.0 the order of the `repositories` array is itself part of the hashed identity: an emitter lists participants in a declared, stable order, and the same participants in a different order produce a different digest. Key sorting does not reorder arrays, so two agents rebuilding the same graph must consume the emitter's declared order rather than re-discovering it. Consuming implementations may add versioned fields only through an explicit schema revision.
+
+The 1.0.0 `boundaries` block is the minimal machine-carried set. Certification-status and empirical-validity non-transfer are binding obligations of this skill (workflow step 5) even where a 1.0.0 manifest carries no explicit fields for them; explicit `certification_status_transfer` and `empirical_status_transfer` fields arrive through the next schema revision, not through ad-hoc emitter extensions. Non-repository participants (corpus, package, schema, workflow, or publication surfaces) are encoded in 1.0.0 as `repositories` entries whose `authority` and `relation` describe the evidence source; typed participant records are likewise deferred to a schema revision.
 
 A manifest is identity and coordination evidence. It is not cryptographic producer authentication unless a separate signature contract exists.
 
@@ -164,4 +166,5 @@ One agent can follow the complete path. Separate agents can work on different pa
 - The organization-wide persistent service or user interface for live work graphs is not yet selected.
 - Content identities do not yet provide cryptographic producer or transport authentication.
 - Whether the stack-manifest schema remains a procedural-skill reference contract or later becomes its own metadata-block/schema skill.
+- The next stack-manifest schema revision is expected to add explicit `certification_status_transfer` and `empirical_status_transfer` boundary fields, a canonical `repositories` ordering (for example by `repository` then `commit`) in place of declared-order identity, typed non-repository participants with digest/version/schema identities, and an explicit hashed edge list (`from`, `to`, `relation_type`) so distinct work graphs over the same participants cannot share one digest. Version 1.0.0 stays as sealed by the EDCM OEWN 2025 run.
 - Cross-repository merge orchestration remains repository-host dependent; the skill defines order and evidence, not a universal transaction mechanism.

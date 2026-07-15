@@ -156,6 +156,16 @@
       "description": "Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates."
     },
     {
+      "name": "interdependent-work-graph",
+      "path": "interdependent-work-graph/SKILL.md",
+      "kind": "procedural",
+      "depends_on": [
+        "the-interdependency",
+        "canon"
+      ],
+      "description": "Cross-repository coordination for The Interdependency. Load when a task spans, consumes, compares, publishes to, or can change the contract between two or more repositories; when an agent is about to choose one repo as its workspace for a stack-level problem; when exact producer, evidence-source, skill, semantic, mathematical, or measurement identities must travel together; or when creating a shared stack manifest, multi-repo handoff, coordinated release, or cross-repo validation plan."
+    },
+    {
       "name": "loop-eng",
       "path": "loop-eng/SKILL.md",
       "kind": "procedural",

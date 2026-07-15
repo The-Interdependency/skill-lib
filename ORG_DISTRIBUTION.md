@@ -27,6 +27,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `risk-boundary-build/` — runtime risk and permission boundary metadata blocks
 * `ratios/` — module composition ratio verification
 * `canon/` — canonical-source and doctrine maintenance
+* `domain-claims/` — domain-first lexical standing, collision checks, and semantic provenance gating
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
 * `char-compress/` — bone/flesh context compression for handoffs and skill writing
 * `agent-instantiation/` — a0/a0ucns agent spawn/fork/merge lifecycle methodology
@@ -127,6 +128,16 @@ Before creating or maintaining a root `llms.txt`, agents should read:
 
 Root LLM instructions should be declared in source `LLMS` blocks and generated
 with the llms-build runner, not hand-maintained as separate doctrine.
+
+Before promoting a word or phrase into canon, a theorem, schema, ontology, encoding,
+or other semantic control surface, agents should read:
+
+```text
+.agents/skills/domain-claims/SKILL.md
+```
+
+Establish the applicable domain-qualified sense and resolve collisions before
+attaching provenance or authorizing structure.
 
 Existing files are not retroactively noncompliant merely because they predate
 this skill.

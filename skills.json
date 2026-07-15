@@ -90,6 +90,12 @@
       "description": "Canonical-source and doctrine maintenance for The Interdependency skill library. Load when deciding whether a claim, pattern, workflow, or repo-local practice should become canon, or when preserving unresolved doctrine as hmmm."
     },
     {
+      "name": "domain-claims",
+      "path": "domain-claims/SKILL.md",
+      "kind": "procedural",
+      "description": "Domain-first lexical and semantic governance for canonical terms. Load when a word or phrase is being promoted into a theorem term, ontology primitive, schema field, encoding label, skill doctrine, cross-domain mapping, or other meaning-bearing control surface; when multiple domains use the same word differently; or before attaching provenance to a definition."
+    },
+    {
       "name": "manifest",
       "path": "manifest/SKILL.md",
       "kind": "metadata-block",

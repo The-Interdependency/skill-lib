@@ -34,6 +34,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`llms-build/`](llms-build/SKILL.md) | Applies msdmd → canonical root `llms.txt`. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them, writes `llms.txt`, and reports drift. |
 | [`typed-meta-frontend/`](typed-meta-frontend/SKILL.md) | Applies msdmd-aligned backend metadata → TypeScript self-building frontend. The UI discovers every module, displays its living spec, exposes every declared editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
 | [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
+| [`domain-claims/`](domain-claims/SKILL.md) | Domain-first lexical and semantic governance. Before a word becomes a theorem term, ontology primitive, schema field, encoding label, or other control surface, establish the domain-qualified sense, scope, exclusions, collision status, and standing that later provenance may attach to. Independent of msdmd. |
 | [`visitor-intro/`](visitor-intro/SKILL.md) | Onboarding tour skill. Lets any agent give a coherent, repo-aware orientation to newcomers landing at any The-Interdependency repo, without inventing org-level facts. Independent of msdmd. |
 | [`char-compress/`](char-compress/SKILL.md) | Unit Circle Number System-derived bone/flesh context compression for agent handoff and skill writing. Preserves irreducible flesh, frozen bones, transforms, and `hmmm`; drops only safely regenerable scaffold. Independent of msdmd. |
 | [`agent-instantiation/`](agent-instantiation/SKILL.md) | Methodology for instantiating, forking, running, merging, and retiring agents in `a0` and its mirror `a0ucns`. Spawn via the `sub_agent_spawn` tool → executor; fork/merge `PCNAEngine` instances via `InstanceMerge`; compose identities; honor spawn caps and write-route gating. `a0-betatest` diverges (per-user native-ZFAE) and is out of scope. Independent of msdmd. |
@@ -131,7 +132,7 @@ To add one:
 example for a metadata-block skill that also ships a stdlib command module.
 
 **Procedural skills** define an agent behaviour without an `msdmd`
-block (`canon`, `visitor-intro`, `char-compress`, `agent-instantiation`,
+block (`canon`, `domain-claims`, `visitor-intro`, `char-compress`, `agent-instantiation`,
 `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `interdependent-work-graph`, `loop-eng`, and `skill-build` are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML
@@ -165,11 +166,11 @@ behavior, and parser ratio bookends.
   may evolve independently.
 - The universal parsers (`msdmd/parsers/universal.{py,ts}`) commit to
   pure-stdlib dependencies; you can copy them anywhere.
-- The repo-level collection point shape lives in `msdmd/collection.ts`;
+- The repo-level collection point shape lives at `msdmd/collection.ts`;
   consuming repos can import or copy it for `<reponame>_msdmd.ts`.
-- A stdlib collection generator prototype lives at `msdmd/collect.py` and can
-  emit `<reponame>_msdmd.ts` from parsed module-local blocks.
-- A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and can
-  render collection edges and gaps.
+- A stdlib collection generator prototype lives at `msdmd/collect.py` and
+  can emit `<reponame>_msdmd.ts` from parsed module-local blocks.
+- A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and
+  can render collection edges and gaps.
 - The `llms-build` runner lives at `llms/build.py` and can generate or check
   root `llms.txt` from `LLMS` blocks.

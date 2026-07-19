@@ -1,0 +1,4 @@
+# Renders the Sponsor button on GitHub.
+# hmmm: cashtag placeholder — replace $YOURCASHTAG with the real Cash App tag
+# before merge; button is broken-by-design until then so the gap stays visible.
+custom: ["https://cash.app/$YOURCASHTAG"]

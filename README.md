@@ -52,6 +52,17 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`validate-data/`](validate-data/SKILL.md) | Pre-share QA of analyses: methodology, accuracy, and bias checks; reproduce key numbers independently; attack conclusions before sign-off. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
 | [`data-visualization/`](data-visualization/SKILL.md) | Effective chart-building doctrine with Python (matplotlib, seaborn, plotly): chart-type selection, honest encoding, accessibility. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
 
+## Support this work
+
+skill-lib is MPL-2.0 and free to embed. If msdmd or these skills saved you
+time, effort, or energy, you can route some of it back:
+**[Cash App](https://cash.app/$YOURCASHTAG)**.
+
+The work asks no faith — run the checkers and watch them pass. What support
+funds is continuation: the checkers stay maintained, the skill families keep
+growing, and the conventions stay free for the next person who needs them
+early enough to matter.
+
 ## Install as a Claude Code plugin marketplace
 
 This repo doubles as a Claude Code plugin marketplace

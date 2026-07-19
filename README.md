@@ -56,7 +56,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 skill-lib is MPL-2.0 and free to embed. If msdmd or these skills saved you
 time, effort, or energy, you can route some of it back:
-**[Cash App](https://cash.app/$YOURCASHTAG)**.
+**[Cash App](https://cash.app/$wayseer00)**.
 
 The work asks no faith — run the checkers and watch them pass. What support
 funds is continuation: the checkers stay maintained, the skill families keep

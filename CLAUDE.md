@@ -59,6 +59,11 @@ llms/                  # python -m llms.build reference runner
 | `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
 | `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
+| `sql-queries/` | procedural | — | Correct, performant SQL across major warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL): dialect reference, CTE/window patterns, optimization, debugging checklist. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
+| `statistical-analysis/` | procedural | — | Statistical methods for analyses: descriptive stats, assumption checks, hypothesis testing, outlier detection, effect sizes, and plain-language interpretation. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
+| `explore-data/` | procedural | — | Dataset profiling: shape, grain, null/duplicate/quality checks, distributions, and which dimensions and metrics merit analysis. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
+| `validate-data/` | procedural | — | Pre-share QA of analyses: methodology, accuracy, and bias checks; reproduce key numbers independently; attack conclusions before sign-off. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
+| `data-visualization/` | procedural | — | Effective chart-building doctrine with Python (matplotlib, seaborn, plotly): chart-type selection, honest encoding, accessibility. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
 
 ---
 
@@ -89,7 +94,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, and `skill-build/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `skill-build/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 

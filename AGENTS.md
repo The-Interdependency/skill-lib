@@ -44,7 +44,7 @@ the skill. Treat it as the public contract.
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
-   `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `interdependent-work-graph`, `loop-eng`, and `skill-build`) are procedural and
+   `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`, `interdependent-work-graph`, `loop-eng`, `skill-build`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
 A machine-readable index is also available at `skills.json` if you

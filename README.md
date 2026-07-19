@@ -46,6 +46,25 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`interdependent-work-graph/`](interdependent-work-graph/SKILL.md) | Cross-repository coordination doctrine. Resolves exact participating commits, authority roles, work relations, non-transfer boundaries, shared stack manifests, and validation/materialization order before a stack-level task is reduced to one repository. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 | [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
+| [`sql-queries/`](sql-queries/SKILL.md) | Correct, performant SQL across major warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL): dialect reference, CTE/window patterns, optimization, debugging checklist. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
+| [`statistical-analysis/`](statistical-analysis/SKILL.md) | Statistical methods for analyses: descriptive stats, assumption checks, hypothesis testing, outlier detection, effect sizes, and plain-language interpretation. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
+| [`explore-data/`](explore-data/SKILL.md) | Dataset profiling: shape, grain, null/duplicate/quality checks, distributions, and which dimensions and metrics merit analysis. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
+| [`validate-data/`](validate-data/SKILL.md) | Pre-share QA of analyses: methodology, accuracy, and bias checks; reproduce key numbers independently; attack conclusions before sign-off. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
+| [`data-visualization/`](data-visualization/SKILL.md) | Effective chart-building doctrine with Python (matplotlib, seaborn, plotly): chart-type selection, honest encoding, accessibility. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
+
+## Install as a Claude Code plugin marketplace
+
+This repo doubles as a Claude Code plugin marketplace
+(`.claude-plugin/marketplace.json`). From any Claude Code session:
+
+```shell
+/plugin marketplace add The-Interdependency/skill-lib
+/plugin install skill-lib@skill-lib
+```
+
+Skills load namespaced (e.g. `/skill-lib:msdmd`). The vendored-copy install
+path (`.agents/skills/<skill-name>/`) remains the canonical convention for
+org repos; the marketplace route is for direct use and outside adopters.
 
 ## Maintenance tools
 

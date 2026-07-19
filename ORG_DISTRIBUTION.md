@@ -42,6 +42,11 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
+* `sql-queries/` — warehouse SQL authoring doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
+* `statistical-analysis/` — statistical methods doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
+* `explore-data/` — dataset profiling doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
+* `validate-data/` — analysis QA doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
+* `data-visualization/` — chart-building doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 
 ## Target repos
 

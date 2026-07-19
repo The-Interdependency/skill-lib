@@ -189,6 +189,41 @@
         "doc-build"
       ],
       "description": "TypeScript frontend generation from backend-owned module metadata and living specs. Load this when building, reviewing, or refactoring a self-building UI that reads backend metadata, exposes every editable field per module, renders each module's living spec, generates TypeScript types/forms/routes from metadata, or keeps admin/editor frontends synchronized with msdmd-style source declarations."
+    },
+    {
+      "name": "sql-queries",
+      "path": "sql-queries/SKILL.md",
+      "kind": "procedural",
+      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
+      "description": "Write correct, performant SQL across all major data warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL, etc.). Use this when writing queries, optimizing slow SQL, translating between dialects, or building complex analytical queries with CTEs, window functions, or aggregations."
+    },
+    {
+      "name": "statistical-analysis",
+      "path": "statistical-analysis/SKILL.md",
+      "kind": "procedural",
+      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
+      "description": "Apply statistical methods including descriptive stats, trend analysis, outlier detection, and hypothesis testing. Use this when analyzing distributions, testing for significance, detecting anomalies, computing correlations, or interpreting statistical results."
+    },
+    {
+      "name": "explore-data",
+      "path": "explore-data/SKILL.md",
+      "kind": "procedural",
+      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
+      "description": "Profile and explore a dataset to understand its shape, quality, and patterns. Use this when encountering a new table or file, checking null rates and column distributions, spotting data quality issues like duplicates or suspicious values, or deciding which dimensions and metrics to analyze."
+    },
+    {
+      "name": "validate-data",
+      "path": "validate-data/SKILL.md",
+      "kind": "procedural",
+      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
+      "description": "QA an analysis before sharing -- methodology, accuracy, and bias checks. Use this when reviewing an analysis before a stakeholder presentation, spot-checking calculations and aggregation logic, verifying a SQL query's results look right, or assessing whether conclusions are actually supported by the data."
+    },
+    {
+      "name": "data-visualization",
+      "path": "data-visualization/SKILL.md",
+      "kind": "procedural",
+      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
+      "description": "Create effective data visualizations with Python (matplotlib, seaborn, plotly). Use this when building charts, choosing the right chart type for a dataset, creating publication-quality figures, or applying design principles like accessibility and color theory."
     }
   ]
 }

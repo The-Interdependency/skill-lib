@@ -27,11 +27,12 @@ class DistributedPublicationSkillTest(unittest.TestCase):
         self.assertIn("Do not load", description)
         self.assertIn("single-repository documentation", description)
 
-    def test_skill_is_registered_as_procedural_and_composed(self) -> None:
+    def test_skill_is_registered_as_procedural_and_composed_by_doctrine(self) -> None:
         record = next(skill for skill in self.index["skills"] if skill["name"] == "distributed-publication")
         self.assertEqual(record["path"], "distributed-publication/SKILL.md")
         self.assertEqual(record["kind"], "procedural")
-        self.assertEqual(record["depends_on"], ["interdependent-work-graph"])
+        self.assertNotIn("depends_on", record)
+        self.assertIn("Load `interdependent-work-graph/SKILL.md` first or alongside this skill", self.text)
 
     def test_authority_and_status_do_not_transfer(self) -> None:
         for required in (

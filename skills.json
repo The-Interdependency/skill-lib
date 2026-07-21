@@ -3,227 +3,36 @@
   "repo": "The-Interdependency/skill-lib",
   "install_path": ".agents/skills/<skill-name>/",
   "skills": [
-    {
-      "name": "msdmd",
-      "path": "msdmd/SKILL.md",
-      "kind": "metadata-block",
-      "description": "Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."
-    },
-    {
-      "name": "doc-build",
-      "path": "doc-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible coverage gaps."
-    },
-    {
-      "name": "cap-build",
-      "path": "cap-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring capability inventory built on msdmd. Modules declare CAPABILITIES blocks; a runner builds a capability map, verifies exposed surfaces, reports duplicates, and surfaces visible gaps."
-    },
-    {
-      "name": "deps-build",
-      "path": "deps-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring dependency topology built on msdmd. Modules declare DEPENDENCIES blocks; a runner builds import/call/capability graphs, detects unresolved edges and cycles, and surfaces visible gaps."
-    },
-    {
-      "name": "owner-build",
-      "path": "owner-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd",
-        "risk-boundary-build"
-      ],
-      "description": "Self-declaring module stewardship built on msdmd. Modules declare OWNERS blocks; a runner reports unowned modules, unresolved hmmm owners, and review coverage gaps."
-    },
-    {
-      "name": "test-build",
-      "path": "test-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring contract evidence built on msdmd. Source modules declare behavior obligations in CONTRACTS blocks; test modules declare executable witnesses in CHECKS blocks; audit reconciles the witness list against the obligation list."
-    },
-    {
-      "name": "meta-module-build",
-      "path": "meta-module-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Metadata-first module build skill built on msdmd. Use when turning a capability idea into a bounded module manifest, file plan, public/internal surface, permission boundary, tests, docs, rollout, and rollback notes before implementation."
-    },
-    {
-      "name": "risk-boundary-build",
-      "path": "risk-boundary-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd",
-        "meta-module-build"
-      ],
-      "description": "Self-declaring runtime risk and permission boundaries built on msdmd. Modules declare BOUNDARIES blocks for auth, storage, network, user-data, admin, and operational effects."
-    },
-    {
-      "name": "ratios",
-      "path": "ratios/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring executable/source module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on covered source files' first and last line (not a fenced block; JSON/Markdown are out of scope); a runner recomputes values, fails on drift or misplacement, and reports visible source coverage gaps."
-    },
-    {
-      "name": "canon",
-      "path": "canon/SKILL.md",
-      "kind": "procedural",
-      "description": "Canonical-source and doctrine maintenance for The Interdependency skill library. Load when deciding whether a claim, pattern, workflow, or repo-local practice should become canon, or when preserving unresolved doctrine as hmmm."
-    },
-    {
-      "name": "domain-claims",
-      "path": "domain-claims/SKILL.md",
-      "kind": "procedural",
-      "description": "Domain-first lexical and semantic governance for canonical terms. Load when a word or phrase is being promoted into a theorem term, ontology primitive, schema field, encoding label, skill doctrine, cross-domain mapping, or other meaning-bearing control surface; when multiple domains use the same word differently; or before attaching provenance to a definition."
-    },
-    {
-      "name": "manifest",
-      "path": "manifest/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Living-spec generator. Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from pyproject.toml + the file tree and splices them into a machine-owned marked block in CLAUDE.md, with a CI --check drift gate. Use to keep the factual half of a doc generated rather than hand-typed."
-    },
-    {
-      "name": "llms-build",
-      "path": "llms-build/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd"
-      ],
-      "description": "Self-declaring LLM instructions file built on msdmd. Modules or central files declare LLMS blocks; the python -m llms.build runner aggregates them into a standardized root llms.txt and surfaces drift/gaps."
-    },
-    {
-      "name": "char-compress",
-      "path": "char-compress/SKILL.md",
-      "kind": "procedural",
-      "description": "Character-based context compression for agent handoff and skill writing, derived from Unit Circle Number System compression mathematics. Load when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when writing flesh-dense SKILL.md files; or when checking whether compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm."
-    },
-    {
-      "name": "visitor-intro",
-      "path": "visitor-intro/SKILL.md",
-      "kind": "procedural",
-      "description": "Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."
-    },
-    {
-      "name": "agent-instantiation",
-      "path": "agent-instantiation/SKILL.md",
-      "kind": "procedural",
-      "description": "Methodology for instantiating, forking, running, merging, and retiring agents in the a0 platform and its near-identical mirror a0ucns. Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. a0-betatest (a0p) has diverged to a per-user CRUD + native-ZFAE model and is out of scope. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."
-    },
-    {
-      "name": "a0p-instancing",
-      "path": "a0p-instancing/SKILL.md",
-      "kind": "procedural",
-      "description": "Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its teacher-distillation training, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory under a0-betatest backend/. a0p has no sub_agent_spawn, spawn executor, or InstanceMerge; for canonical a0/a0ucns use agent-instantiation instead. Repo-specific runtime doctrine; canonical source is a0-betatest. Independent of msdmd."
-    },
-    {
-      "name": "plain-lens",
-      "path": "plain-lens/SKILL.md",
-      "kind": "procedural",
-      "description": "Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."
-    },
-    {
-      "name": "meta",
-      "path": "meta/SKILL.md",
-      "kind": "procedural",
-      "description": "Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."
-    },
-    {
-      "name": "gonal-morphology",
-      "path": "gonal-morphology/SKILL.md",
-      "kind": "procedural",
-      "description": "Canonical three-core gonal morphology: text as UCNS objects across a char->root/bone/word->phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS multiplyFuel). omega=bones (closed-class+affixes), phi=roots (open-class stems), psi=words=phi⊠omega; adjectives/adverbs are flesh, not bones. Reuse the UCNS operator, do not reimplement. Load for gonal morphology, inscription, or bone/flesh classification. Recomposition RUNS; decomposition is domain-confirmed (UCNS AlignedComplete) but proof-pending — not machine-verified. Independent of msdmd."
-    },
-    {
-      "name": "the-interdependency",
-      "path": "the-interdependency/SKILL.md",
-      "kind": "procedural",
-      "description": "Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates."
-    },
-    {
-      "name": "interdependent-work-graph",
-      "path": "interdependent-work-graph/SKILL.md",
-      "kind": "procedural",
-      "description": "Cross-repository coordination for The Interdependency. Load when a task spans, consumes, compares, publishes to, or can change the contract between two or more repositories; when an agent is about to choose one repo as its workspace for a stack-level problem; when exact producer, evidence-source, skill, semantic, mathematical, or measurement identities must travel together; or when creating a shared stack manifest, multi-repo handoff, coordinated release, or cross-repo validation plan."
-    },
-    {
-      "name": "loop-eng",
-      "path": "loop-eng/SKILL.md",
-      "kind": "procedural",
-      "description": "Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows."
-    },
-    {
-      "name": "skill-build",
-      "path": "skill-build/SKILL.md",
-      "kind": "procedural",
-      "description": "Skill authoring and skill compliance workflow for The Interdependency skill-lib. Load this when creating a new SKILL.md, revising an existing skill, bringing repo skills into a shared compliance shape, designing a skill-specific test suite, deciding whether a skill is metadata-block or procedural, or asking the question set required before a skill can be accepted."
-    },
-    {
-      "name": "typed-meta-frontend",
-      "path": "typed-meta-frontend/SKILL.md",
-      "kind": "metadata-block",
-      "depends_on": [
-        "msdmd",
-        "meta-module-build",
-        "doc-build"
-      ],
-      "description": "TypeScript frontend generation from backend-owned module metadata and living specs. Load this when building, reviewing, or refactoring a self-building UI that reads backend metadata, exposes every editable field per module, renders each module's living spec, generates TypeScript types/forms/routes from metadata, or keeps admin/editor frontends synchronized with msdmd-style source declarations."
-    },
-    {
-      "name": "sql-queries",
-      "path": "sql-queries/SKILL.md",
-      "kind": "procedural",
-      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
-      "description": "Write correct, performant SQL across all major data warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL, etc.). Use this when writing queries, optimizing slow SQL, translating between dialects, or building complex analytical queries with CTEs, window functions, or aggregations."
-    },
-    {
-      "name": "statistical-analysis",
-      "path": "statistical-analysis/SKILL.md",
-      "kind": "procedural",
-      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
-      "description": "Apply statistical methods including descriptive stats, trend analysis, outlier detection, and hypothesis testing. Use this when analyzing distributions, testing for significance, detecting anomalies, computing correlations, or interpreting statistical results."
-    },
-    {
-      "name": "explore-data",
-      "path": "explore-data/SKILL.md",
-      "kind": "procedural",
-      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
-      "description": "Profile and explore a dataset to understand its shape, quality, and patterns. Use this when encountering a new table or file, checking null rates and column distributions, spotting data quality issues like duplicates or suspicious values, or deciding which dimensions and metrics to analyze."
-    },
-    {
-      "name": "validate-data",
-      "path": "validate-data/SKILL.md",
-      "kind": "procedural",
-      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
-      "description": "QA an analysis before sharing -- methodology, accuracy, and bias checks. Use this when reviewing an analysis before a stakeholder presentation, spot-checking calculations and aggregation logic, verifying a SQL query's results look right, or assessing whether conclusions are actually supported by the data."
-    },
-    {
-      "name": "data-visualization",
-      "path": "data-visualization/SKILL.md",
-      "kind": "procedural",
-      "provenance": "anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)",
-      "description": "Create effective data visualizations with Python (matplotlib, seaborn, plotly). Use this when building charts, choosing the right chart type for a dataset, creating publication-quality figures, or applying design principles like accessibility and color theory."
-    }
+    {"name":"msdmd","path":"msdmd/SKILL.md","kind":"metadata-block","description":"Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block. Foundation for doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, manifest, llms-build, and future msdmd applications."},
+    {"name":"doc-build","path":"doc-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring documentation coverage built on msdmd. Modules declare DOCS blocks; a runner verifies documentation paths and anchors, reports stale or missing docs, and surfaces visible coverage gaps."},
+    {"name":"cap-build","path":"cap-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring capability inventory built on msdmd. Modules declare CAPABILITIES blocks; a runner builds a capability map, verifies exposed surfaces, reports duplicates, and surfaces visible gaps."},
+    {"name":"deps-build","path":"deps-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring dependency topology built on msdmd. Modules declare DEPENDENCIES blocks; a runner builds import/call/capability graphs, detects unresolved edges and cycles, and surfaces visible gaps."},
+    {"name":"owner-build","path":"owner-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd","risk-boundary-build"],"description":"Self-declaring module stewardship built on msdmd. Modules declare OWNERS blocks; a runner reports unowned modules, unresolved hmmm owners, and review coverage gaps."},
+    {"name":"test-build","path":"test-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring contract evidence built on msdmd. Source modules declare behavior obligations in CONTRACTS blocks; test modules declare executable witnesses in CHECKS blocks; audit reconciles the witness list against the obligation list."},
+    {"name":"meta-module-build","path":"meta-module-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Metadata-first module build skill built on msdmd. Use when turning a capability idea into a bounded module manifest, file plan, public/internal surface, permission boundary, tests, docs, rollout, and rollback notes before implementation."},
+    {"name":"risk-boundary-build","path":"risk-boundary-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd","meta-module-build"],"description":"Self-declaring runtime risk and permission boundaries built on msdmd. Modules declare BOUNDARIES blocks for auth, storage, network, user-data, admin, and operational effects."},
+    {"name":"ratios","path":"ratios/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring executable/source module composition ratios built on msdmd. Records lines of code to lines commented, imports to exports, and calls to definitions in a single `ratios:` comment line on covered source files' first and last line (not a fenced block; JSON/Markdown are out of scope); a runner recomputes values, fails on drift or misplacement, and reports visible source coverage gaps."},
+    {"name":"canon","path":"canon/SKILL.md","kind":"procedural","description":"Canonical-source and doctrine maintenance for The Interdependency skill library. Load when deciding whether a claim, pattern, workflow, or repo-local practice should become canon, or when preserving unresolved doctrine as hmmm."},
+    {"name":"domain-claims","path":"domain-claims/SKILL.md","kind":"procedural","description":"Domain-first lexical and semantic governance for canonical terms. Load when a word or phrase is being promoted into a theorem term, ontology primitive, schema field, encoding label, skill doctrine, cross-domain mapping, or other meaning-bearing control surface; when multiple domains use the same word differently; or before attaching provenance to a definition."},
+    {"name":"manifest","path":"manifest/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Living-spec generator. Derives observable repo facts (name/version, Python floor, runtime deps, license, top-level layout) from pyproject.toml + the file tree and splices them into a machine-owned marked block in CLAUDE.md, with a CI --check drift gate. Use to keep the factual half of a doc generated rather than hand-typed."},
+    {"name":"llms-build","path":"llms-build/SKILL.md","kind":"metadata-block","depends_on":["msdmd"],"description":"Self-declaring LLM instructions file built on msdmd. Modules or central files declare LLMS blocks; the python -m llms.build runner aggregates them into a standardized root llms.txt and surfaces drift/gaps."},
+    {"name":"char-compress","path":"char-compress/SKILL.md","kind":"procedural","description":"Character-based context compression for agent handoff and skill writing, derived from Unit Circle Number System compression mathematics. Load when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when writing flesh-dense SKILL.md files; or when checking whether compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm."},
+    {"name":"visitor-intro","path":"visitor-intro/SKILL.md","kind":"procedural","description":"Onboarding tour for visitors arriving at any The-Interdependency repo. Load when an unfamiliar user asks 'what is this?', 'where do I start?', or otherwise signals they are new to the org."},
+    {"name":"agent-instantiation","path":"agent-instantiation/SKILL.md","kind":"procedural","description":"Methodology for instantiating, forking, running, merging, and retiring agents in the a0 platform and its near-identical mirror a0ucns. Load when adding or changing a sub-agent spawn path, a PCNA instance fork/merge, an agent definition or naming scheme, spawn caps or approval gating, an agent run/log table, a heartbeat agent task, or an agent-state checkpoint. a0-betatest (a0p) has diverged to a per-user CRUD + native-ZFAE model and is out of scope. Repo-specific runtime doctrine; canonical source is a0. Independent of msdmd."},
+    {"name":"a0p-instancing","path":"a0p-instancing/SKILL.md","kind":"procedural","description":"Methodology for instancing agents in a0-betatest (the a0p research instrument), whose model diverges from canonical a0. Load when adding or changing an AgentInstance / CharacterSheet CRUD path, a per-instance native ZFAE weight bank or its teacher-distillation training, a ZFAE inference mode, a sentinel evaluation or pending-override gate, a per-agent safetensors checkpoint, or volatile sub-context memory under a0-betatest backend/. a0p has no sub_agent_spawn, spawn executor, or InstanceMerge; for canonical a0/a0ucns use agent-instantiation instead. Repo-specific runtime doctrine; canonical source is a0-betatest. Independent of msdmd."},
+    {"name":"plain-lens","path":"plain-lens/SKILL.md","kind":"procedural","description":"Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Load when making dense documents approachable, building a domain/audience/role lens selector, designing progressive-disclosure reading UX, keeping a static page as fallback for a dynamic one, or producing an EDCM-style two-speaker tension reading between a body text and its footnotes."},
+    {"name":"meta","path":"meta/SKILL.md","kind":"procedural","description":"Meta Energy Theory Axioms. Load when extracting, preserving, extending, or applying Energy Theory axioms and cross-domain resonances without flattening Energy Theory into EDCMBONE or FLAR implementation detail."},
+    {"name":"gonal-morphology","path":"gonal-morphology/SKILL.md","kind":"procedural","description":"Canonical three-core gonal morphology: text as UCNS objects across a char->root/bone/word->phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS multiplyFuel). omega=bones (closed-class+affixes), phi=roots (open-class stems), psi=words=phi⊠omega; adjectives/adverbs are flesh, not bones. Reuse the UCNS operator, do not reimplement. Load for gonal morphology, inscription, or bone/flesh classification. Recomposition RUNS; decomposition is domain-confirmed (UCNS AlignedComplete) but proof-pending — not machine-verified. Independent of msdmd."},
+    {"name":"the-interdependency","path":"the-interdependency/SKILL.md","kind":"procedural","description":"Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates."},
+    {"name":"interdependent-work-graph","path":"interdependent-work-graph/SKILL.md","kind":"procedural","description":"Cross-repository coordination for The Interdependency. Load when a task spans, consumes, compares, publishes to, or can change the contract between two or more repositories; when an agent is about to choose one repo as its workspace for a stack-level problem; when exact producer, evidence-source, skill, semantic, mathematical, or measurement identities must travel together; or when creating a shared stack manifest, multi-repo handoff, coordinated release, or cross-repo validation plan."},
+    {"name":"distributed-publication","path":"distributed-publication/SKILL.md","kind":"procedural","description":"Provenance-bearing publication from distributed source owners. Load this when assembling, displaying, or maintaining one ordered textbook, report, standard, corpus, archive, knowledge surface, or public reading sequence whose authoritative units live in multiple repositories or independently owned files; when a publication consumer must retrieve exact commits, blobs, and content digests; when source order, source-local license or status, explicit fallback, correction routing, or public build identity must remain intact. Load interdependent-work-graph with it. Do not load for ordinary single-repository documentation, a link index that does not reproduce source content, or cross-repository code coordination with no publication artifact."},
+    {"name":"loop-eng","path":"loop-eng/SKILL.md","kind":"procedural","description":"Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows."},
+    {"name":"skill-build","path":"skill-build/SKILL.md","kind":"procedural","description":"Skill authoring and skill compliance workflow for The Interdependency skill-lib. Load this when creating a new SKILL.md, revising an existing skill, bringing repo skills into a shared compliance shape, designing a skill-specific test suite, deciding whether a skill is metadata-block or procedural, or asking the question set required before a skill can be accepted."},
+    {"name":"typed-meta-frontend","path":"typed-meta-frontend/SKILL.md","kind":"metadata-block","depends_on":["msdmd","meta-module-build","doc-build"],"description":"TypeScript frontend generation from backend-owned module metadata and living specs. Load this when building, reviewing, or refactoring a self-building UI that reads backend metadata, exposes every editable field per module, renders each module's living spec, generates TypeScript types/forms/routes from metadata, or keeps admin/editor frontends synchronized with msdmd-style source declarations."},
+    {"name":"sql-queries","path":"sql-queries/SKILL.md","kind":"procedural","provenance":"anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)","description":"Write correct, performant SQL across all major data warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL, etc.). Use this when writing queries, optimizing slow SQL, translating between dialects, or building complex analytical queries with CTEs, window functions, or aggregations."},
+    {"name":"statistical-analysis","path":"statistical-analysis/SKILL.md","kind":"procedural","provenance":"anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)","description":"Apply statistical methods including descriptive stats, trend analysis, outlier detection, and hypothesis testing. Use this when analyzing distributions, testing for significance, detecting anomalies, computing correlations, or interpreting statistical results."},
+    {"name":"explore-data","path":"explore-data/SKILL.md","kind":"procedural","provenance":"anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)","description":"Profile and explore a dataset to understand its shape, quality, and patterns. Use this when encountering a new table or file, checking null rates and column distributions, spotting data quality issues like duplicates or suspicious values, or deciding which dimensions and metrics to analyze."},
+    {"name":"validate-data","path":"validate-data/SKILL.md","kind":"procedural","provenance":"anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)","description":"QA an analysis before sharing -- methodology, accuracy, and bias checks. Use this when reviewing an analysis before a stakeholder presentation, spot-checking calculations and aggregation logic, verifying a SQL query's results look right, or assessing whether conclusions are actually supported by the data."},
+    {"name":"data-visualization","path":"data-visualization/SKILL.md","kind":"procedural","provenance":"anthropics/knowledge-work-plugins@94e1a08 (Apache-2.0)","description":"Create effective data visualizations with Python (matplotlib, seaborn, plotly). Use this when building charts, choosing the right chart type for a dataset, creating publication-quality figures, or applying design principles like accessibility and color theory."}
   ]
 }

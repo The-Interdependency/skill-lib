@@ -1,0 +1,55 @@
+{
+  "schema": "the-interdependency.distributed-publication",
+  "version": "1.0.0",
+  "publication_id": "fixture-publication",
+  "title": "Fixture publication",
+  "order_is_load_bearing": true,
+  "sources": [
+    {
+      "position": 0,
+      "source_id": "first",
+      "repository": "example/first",
+      "path": "FIRST.md",
+      "commit": "1111111111111111111111111111111111111111",
+      "blob": "2222222222222222222222222222222222222222",
+      "content_sha256": "3333333333333333333333333333333333333333333333333333333333333333",
+      "authority": "first source",
+      "status": "declared",
+      "correction_target": "example/first:FIRST.md",
+      "fallback": false
+    },
+    {
+      "position": 1,
+      "source_id": "second",
+      "repository": "example/second",
+      "path": "SECOND.md",
+      "commit": "4444444444444444444444444444444444444444",
+      "blob": "5555555555555555555555555555555555555555",
+      "content_sha256": "6666666666666666666666666666666666666666666666666666666666666666",
+      "authority": "second source",
+      "status": "frontier",
+      "correction_target": "example/second:SECOND.md",
+      "fallback": false
+    }
+  ],
+  "consumer": {
+    "repository": "example/publication",
+    "commit": "7777777777777777777777777777777777777777",
+    "route_prefix": "/publication/",
+    "renderer": "exact-markdown-static",
+    "fallback_policy": "fail-closed-production|explicit-retained-snapshot"
+  },
+  "boundaries": {
+    "authorship_transfer": false,
+    "ownership_transfer": false,
+    "license_transfer": false,
+    "canonical_status_transfer": false,
+    "proof_status_transfer": false,
+    "certification_status_transfer": false,
+    "measurement_status_transfer": false,
+    "empirical_status_transfer": false,
+    "digest_is_authentication": false,
+    "hmmm": []
+  },
+  "publication_sha256": "hmmm"
+}

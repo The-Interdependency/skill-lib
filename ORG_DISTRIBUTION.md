@@ -40,6 +40,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
+* `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `sql-queries/` — warehouse SQL authoring doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
@@ -114,6 +115,14 @@ Before assigning a stack-level task to one repository, agents should read:
 ```
 
 Resolve the exact participating repository and evidence-source identities first. Repository boundaries remain authority and provenance boundaries, not agent-attention boundaries.
+
+Before assembling one textbook, report, standard, corpus, archive, or public reading sequence from source-owned units distributed across repositories or independently owned files, agents should read:
+
+```text
+.agents/skills/distributed-publication/SKILL.md
+```
+
+Load `interdependent-work-graph` with it. Preserve ordered source identity, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, static reading access, and provenance in the published build artifact.
 
 Before creating a new module, route, service, adapter, schema, worker,
 engine, UI panel, migration, or experiment, agents should read:

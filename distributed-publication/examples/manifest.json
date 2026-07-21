@@ -10,10 +10,13 @@
       "source_id": "chapter-zero",
       "repository": "The-Interdependency/metapat",
       "path": "CHAPTER_ZERO.md",
+      "expected_title": "Chapter Zero",
       "commit": "hmmm",
       "blob": "hmmm",
       "content_sha256": "hmmm",
       "authority": "Chapter Zero content, license, and source-local status",
+      "license": "hmmm",
+      "license_status": "human-review-required",
       "status": "root ontology and theory",
       "correction_target": "The-Interdependency/metapat:CHAPTER_ZERO.md",
       "fallback": false
@@ -37,7 +40,7 @@
     "empirical_status_transfer": false,
     "digest_is_authentication": false,
     "hmmm": [
-      "Example identities are intentionally unresolved; a real publication manifest pins exact values."
+      "Example identities and source license are intentionally unresolved; a real publication manifest pins exact values and matching rules."
     ]
   },
   "publication_sha256": "hmmm"

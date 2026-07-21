@@ -10,6 +10,7 @@ from frontmatter import frontmatter_for
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "distributed-publication" / "SKILL.md"
 INDEX = ROOT / "skills.json"
+FIXTURE = ROOT / "tests" / "fixtures" / "distributed_publication_manifest.json"
 
 
 class DistributedPublicationSkillTest(unittest.TestCase):
@@ -17,6 +18,7 @@ class DistributedPublicationSkillTest(unittest.TestCase):
         self.text = SKILL.read_text(encoding="utf-8")
         self.frontmatter = frontmatter_for(SKILL)
         self.index = json.loads(INDEX.read_text(encoding="utf-8"))
+        self.fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
 
     def test_activation_and_non_trigger_are_explicit(self) -> None:
         description = self.frontmatter["description"]
@@ -51,7 +53,7 @@ class DistributedPublicationSkillTest(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, self.text)
 
-    def test_reference_contract_binds_order_and_exact_source_identity(self) -> None:
+    def test_reference_contract_binds_order_identity_and_license(self) -> None:
         for required in (
             '"schema": "the-interdependency.distributed-publication"',
             '"order_is_load_bearing": true',
@@ -59,18 +61,29 @@ class DistributedPublicationSkillTest(unittest.TestCase):
             '"source_id"',
             '"repository"',
             '"path"',
+            '"expected_title"',
             '"commit"',
             '"blob"',
             '"content_sha256"',
+            '"license"',
+            '"license_status"',
             '"correction_target"',
             '"publication_sha256"',
             "Array order is preserved and therefore part of identity",
+            "neither field authorizes the consumer to relicense the source",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, self.text)
 
+        for source in self.fixture["sources"]:
+            self.assertTrue(source["expected_title"])
+            self.assertTrue(source["license"])
+            self.assertIn(source["license_status"], {"declared", "unknown", "human-review-required"})
+
     def test_production_fails_closed_and_degraded_mode_stays_visible(self) -> None:
         self.assertIn("Required current sources fail closed in production", self.text)
+        self.assertIn("source title or identity marker no longer matches", self.text)
+        self.assertIn("source-local license declaration or license-review state is absent", self.text)
         self.assertIn("retained snapshot", self.text)
         self.assertIn("no retained copy is called current", self.text)
         self.assertIn("missing content becomes `hmmm`, not invented prose", self.text)

@@ -19,7 +19,7 @@ content identity != producer authentication
 
 - Declare the complete ordered source spine before implementing routes or rendering.
 - Resolve every displayed source to an exact commit or immutable artifact identity.
-- Bind content to repository, path, commit, blob or object identity, and content digest.
+- Bind content to repository, path, expected title or identity marker, commit, blob or object identity, and content digest.
 - Preserve source-local license, canon, theorem, proof, certification, measurement, empirical, and frontier status.
 - Render source text exactly unless a separately labeled transformation is explicitly requested.
 - Route corrections to the source owner; refresh the publication after the source changes.
@@ -56,6 +56,7 @@ The publication consumer may say:
 - which source was displayed;
 - which immutable identity and digest were used;
 - where it appears in the reading order;
+- which license declaration and license-review state the source supplied;
 - whether retrieval was current or fallback;
 - which rendering and accessibility checks passed.
 
@@ -72,14 +73,14 @@ The publication consumer may not say, merely by displaying the source:
 
 1. **Load the work graph.** Resolve every source owner, publication consumer, renderer, deployment surface, and other participant that can change the published result.
 2. **Declare the publication object.** Name the textbook, report, standard, corpus, archive, or other combined reading surface. State whether order is load-bearing.
-3. **Define the ordered source spine.** For every unit declare position, stable source identifier, repository or artifact owner, path or object locator, expected title or identity marker, source-local status, and correction destination.
+3. **Define the ordered source spine.** For every unit declare position, stable source identifier, repository or artifact owner, path or object locator, expected title or identity marker, source-local license and license-review state, source-local status, and correction destination.
 4. **Resolve immutable identity.** Pin commit and blob/object identity where available, plus a content digest over the exact bytes displayed. Branch names remain navigation aids only.
 5. **Declare non-transfer boundaries.** At minimum cover authorship, ownership, license, canon status, proof status, certification status, measurement validity, empirical validity, and frontier status.
 6. **Choose rendering mode.** Prefer exact, static-first rendering. Disable source HTML unless it is explicitly trusted and sanitized. If content is transformed, label the output as interpretation and preserve a path to exact source.
 7. **Define failure and fallback policy.** Required current sources fail closed in production. Offline or degraded builds may use a retained snapshot only when visibly marked with its retained identity and retrieval failure.
 8. **Build navigable publication surfaces.** Provide an ordered index, stable unit routes, source evidence, previous/next navigation where sequence matters, search where useful, and a static/no-JavaScript reading path.
 9. **Publish build identity.** Emit a machine-readable artifact binding the publication build to every displayed source identity and fallback state.
-10. **Validate locally and across sources.** Check order, completeness, expected titles, digests, exact source links, status labels, routes, accessibility, and the public build manifest.
+10. **Validate locally and across sources.** Check order, completeness, expected titles or identity markers, license fields, digests, exact source links, status labels, routes, accessibility, and the public build manifest.
 11. **Route corrections upstream.** Patch source content only in its owning repository. Patch ordering, rendering, or provenance defects only in the publication consumer.
 12. **Carry hmmm forward.** Preserve unresolved signatures, source conflicts, license ambiguity, inaccessible formats, renderer gaps, or deployment freshness as explicit boundaries.
 
@@ -100,10 +101,13 @@ A machine-consumed publication manifest may use this reference shape:
       "source_id": "<stable-source-id>",
       "repository": "owner/name",
       "path": "path/to/source.md",
+      "expected_title": "<expected source heading or identity marker>",
       "commit": "<40-hex commit>",
       "blob": "<immutable object identity>",
       "content_sha256": "<64-hex digest>",
       "authority": "what this source owns",
+      "license": "SPDX expression|source-declared text|hmmm",
+      "license_status": "declared|unknown|human-review-required",
       "status": "source-local status",
       "correction_target": "owner/name:path/to/source.md",
       "fallback": false
@@ -134,6 +138,8 @@ A machine-consumed publication manifest may use this reference shape:
 
 For version `1.0.0`, `publication_sha256` is SHA-256 over canonical JSON containing exactly `publication_id`, `title`, `order_is_load_bearing`, `sources`, `consumer`, and `boundaries`, sorted by object key with compact separators. Array order is preserved and therefore part of identity. A schema revision is required to add or reinterpret hashed fields.
 
+`expected_title` may contain a complete title, heading prefix, or other declared identity marker, but its matching rule must be explicit in the consumer. `license` records the source's own declaration rather than a publication-wide inference. `license_status` keeps unknown or human-review-required compatibility visible; neither field authorizes the consumer to relicense the source.
+
 This reference contract complements, rather than replaces, `the-interdependency.stack-manifest`. The stack manifest identifies the complete work graph. The distributed-publication manifest identifies the exact ordered reading artifact produced from that graph.
 
 ## Exact source and transformed views
@@ -152,8 +158,9 @@ A production publication must not silently omit, reorder, or replace required un
 Fail production when:
 
 - a required source cannot resolve to its declared path or object;
-- a source title or identity marker no longer matches the manifest;
+- a source title or identity marker no longer matches `expected_title` under the declared matching rule;
 - an exact commit, object identity, or digest is missing;
+- a source-local license declaration or license-review state is absent rather than explicitly `hmmm` or `unknown`;
 - the ordered spine contains duplicates, gaps, or unexpected reordering;
 - current retrieval falls back while the release claims current source coverage;
 - rendered output loses a required status or provenance boundary.
@@ -175,7 +182,7 @@ When this skill is active, produce or maintain:
 - title, stable ID, ordered/unordered status
 
 ## Ordered source spine
-- position: source identity — authority — status — correction target
+- position: source identity — expected title/marker — authority — license/status — correction target
 
 ## Publication consumer
 - repository, routes, renderer, search/navigation, fallback policy
@@ -190,6 +197,7 @@ When this skill is active, produce or maintain:
 
 ## Validation
 - source completeness and order
+- expected identity markers and source-local license fields
 - exact rendering and routes
 - browser/accessibility/static fallback
 - public build-manifest check
@@ -206,6 +214,8 @@ A successful application demonstrates:
 
 - every required source appears exactly once in the declared order;
 - every source has an exact or visibly unresolved identity;
+- every source carries an expected title or identity marker with a declared matching rule;
+- every source carries its own license declaration and license-review state, including explicit `hmmm` or `unknown` where unresolved;
 - content digests recompute from the bytes displayed;
 - the publication consumer does not shadow or rewrite source-owned content in exact mode;
 - source-local licenses and statuses remain visible and do not transfer;
@@ -223,6 +233,7 @@ A successful application demonstrates:
 - Copying distributed source files into the publication repository and treating the copies as new authority.
 - Fetching `main`, `latest`, package availability, or an unpinned URL during an evidence-producing build without recording the resolved immutable identity.
 - Treating a digest as a signature or author authentication.
+- Omitting per-source license declarations and then implying one publication-wide license.
 - Combining licenses into one implied publication license without explicit permission.
 - Letting a theory chapter inherit implementation or test status from neighboring chapters.
 - Silently dropping a source that failed retrieval.

@@ -1,4 +1,4 @@
-# ratios: loc_comments=144:11 imports_exports=8:12 calls_definitions=54:12
+# ratios: loc_comments=150:11 imports_exports=8:12 calls_definitions=57:12
 #!/usr/bin/env python3
 """Record skill-lib exposure and derive evidence-qualified maturity.
 
@@ -144,15 +144,17 @@ def resolve_critical(state: dict[str, Any], name: str) -> dict[str, Any]:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
+    state_options = {
+        "type": Path,
+        "help": "Writable usage-state path (default: .skill-lib/usage.json).",
+    }
     result.add_argument(
-        "--state",
-        type=Path,
-        default=Path(".skill-lib/usage.json"),
-        help="Writable usage-state path (default: .skill-lib/usage.json).",
+        "--state", default=Path(".skill-lib/usage.json"), **state_options
     )
     commands = result.add_subparsers(dest="command", required=True)
 
     record = commands.add_parser("record", help="Record one material skill use.")
+    record.add_argument("--state", default=argparse.SUPPRESS, **state_options)
     record.add_argument("skill")
     record.add_argument("--outcome", choices=OUTCOMES, default="hmmm")
     record.add_argument("--critical", action="store_true")
@@ -160,9 +162,11 @@ def parser() -> argparse.ArgumentParser:
     resolve = commands.add_parser(
         "resolve-critical", help="Resolve one recorded critical failure."
     )
+    resolve.add_argument("--state", default=argparse.SUPPRESS, **state_options)
     resolve.add_argument("skill")
 
     status = commands.add_parser("status", help="Report one or every skill.")
+    status.add_argument("--state", default=argparse.SUPPRESS, **state_options)
     status.add_argument("skill", nargs="?")
     return result
 
@@ -191,4 +195,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=144:11 imports_exports=8:12 calls_definitions=54:12
+# ratios: loc_comments=150:11 imports_exports=8:12 calls_definitions=57:12

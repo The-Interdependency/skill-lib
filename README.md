@@ -47,6 +47,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`distributed-publication/`](distributed-publication/SKILL.md) | Provenance-bearing publication from distributed source owners. Builds ordered textbooks, reports, standards, corpora, archives, and public reading surfaces from exact source identities while preserving source-local licenses and statuses, fail-closed production retrieval, explicit fallback, correction routing, and public build provenance. Loads with `interdependent-work-graph`. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 | [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
+| [`skill-usage/`](skill-usage/SKILL.md) | Evidence-bearing local usage maturity. Counts material skill invocations, preserves unknown outcomes as `hmmm`, and separates nominal exposure from effective maturity across experimental, field-test, operational, reliable, and daily-use designations. Independent of msdmd. |
 | [`sql-queries/`](sql-queries/SKILL.md) | Correct, performant SQL across major warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL): dialect reference, CTE/window patterns, optimization, debugging checklist. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
 | [`statistical-analysis/`](statistical-analysis/SKILL.md) | Statistical methods for analyses: descriptive stats, assumption checks, hypothesis testing, outlier detection, effect sizes, and plain-language interpretation. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
 | [`explore-data/`](explore-data/SKILL.md) | Dataset profiling: shape, grain, null/duplicate/quality checks, distributions, and which dimensions and metrics merit analysis. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. Independent of msdmd. |
@@ -77,6 +78,43 @@ This repo doubles as a Claude Code plugin marketplace
 Skills load namespaced (e.g. `/skill-lib:msdmd`). The vendored-copy install
 path (`.agents/skills/<skill-name>/`) remains the canonical convention for
 org repos; the marketplace route is for direct use and outside adopters.
+
+## Install as a Codex plugin
+
+The repository root is a Codex plugin. Its
+`.codex-plugin/plugin.json` exposes generated adapters under `skills/`.
+Each adapter loads its canonical root `*/SKILL.md`, keeping the existing root
+skill as the sole doctrine source while making every registered skill
+installable through Codex.
+
+During local plugin testing, place this repository behind a Codex local
+marketplace entry, install `skill-lib`, then begin a new conversation. The
+installed plugin exposes every skill in `skills.json`.
+
+Usage maturity is local and contains no prompt text. Each material skill use
+loads `skill-usage`, which records into `$PLUGIN_DATA/usage.json`:
+
+```bash
+python "$PLUGIN_ROOT/tools/skill_usage.py" record canon \
+  --state "$PLUGIN_DATA/usage.json" \
+  --outcome hmmm
+
+python "$PLUGIN_ROOT/tools/skill_usage.py" status \
+  --state "$PLUGIN_DATA/usage.json"
+```
+
+Outside a plugin installation, omit `--state` to use
+`.skill-lib/usage.json`. See `skill-usage/SKILL.md` for the
+designation thresholds, quality caps, critical-failure handling, and the
+documented automation boundary.
+
+After changing `skills.json` or canonical skill metadata, rebuild and check the
+Codex adapters:
+
+```bash
+python tools/build_codex_plugin_skills.py --apply
+python tools/build_codex_plugin_skills.py --check
+```
 
 ## Maintenance tools
 
@@ -165,7 +203,8 @@ example for a metadata-block skill that also ships a stdlib command module.
 **Procedural skills** define an agent behaviour without an `msdmd`
 block (`canon`, `domain-claims`, `visitor-intro`, `char-compress`, `agent-instantiation`,
 `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`,
-`interdependent-work-graph`, `distributed-publication`, `loop-eng`, and `skill-build`
+`interdependent-work-graph`, `distributed-publication`, `loop-eng`, `skill-build`,
+and `skill-usage`
 are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML

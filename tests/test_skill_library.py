@@ -40,6 +40,18 @@ class SkillLibraryTest(unittest.TestCase):
             self.assertIn("name", keys, path)
             self.assertIn("description", keys, path)
 
+    def test_codex_plugin_adapters_match_every_canonical_skill(self) -> None:
+        data = json.loads(SKILLS_JSON.read_text(encoding="utf-8"))
+        canonical_names = {skill["name"] for skill in data["skills"]}
+        adapter_names = {
+            path.parent.name for path in (ROOT / "skills").glob("*/SKILL.md")
+        }
+        self.assertEqual(canonical_names, adapter_names)
+        for skill in data["skills"]:
+            path = ROOT / "skills" / skill["name"] / "SKILL.md"
+            text = path.read_text(encoding="utf-8")
+            self.assertIn(f"../../{skill['path']}", text)
+
     def test_readme_lists_every_skill_once(self) -> None:
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         data = json.loads(SKILLS_JSON.read_text(encoding="utf-8"))

@@ -1,0 +1,31 @@
+{
+  "name": "skill-lib",
+  "version": "0.1.0",
+  "description": "The Interdependency skill library with evidence-bearing usage maturity.",
+  "author": {
+    "name": "The Interdependency",
+    "url": "https://github.com/The-Interdependency"
+  },
+  "repository": "https://github.com/The-Interdependency/skill-lib",
+  "homepage": "https://github.com/The-Interdependency/skill-lib",
+  "license": "MPL-2.0",
+  "keywords": [
+    "agent-skills",
+    "skill-library",
+    "provenance",
+    "maturity"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "The Interdependency Skill Library",
+    "shortDescription": "All skill-lib workflows with auditable maturity.",
+    "longDescription": "Installs every skill in The Interdependency skill-lib and supplies a local, evidence-bearing usage counter from experimental through daily use.",
+    "developerName": "The Interdependency",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": "Show the skill-lib maturity spectrum."
+  }
+}

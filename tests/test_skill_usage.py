@@ -9,6 +9,7 @@ from tools.skill_usage import (
     effective_designation,
     empty_state,
     load_state,
+    parser,
     record_use,
     resolve_critical,
 )
@@ -43,6 +44,13 @@ class SkillUsageTest(unittest.TestCase):
             record_use(state, "canon", "success", False)
             atomic_write(path, state)
             self.assertEqual(state, load_state(path))
+
+    def test_state_option_works_before_or_after_subcommand(self) -> None:
+        path = Path("/tmp/skill-lib-usage-test.json")
+        before = parser().parse_args(["--state", str(path), "record", "canon"])
+        after = parser().parse_args(["record", "canon", "--state", str(path)])
+        self.assertEqual(path, before.state)
+        self.assertEqual(path, after.state)
 
 
 if __name__ == "__main__":

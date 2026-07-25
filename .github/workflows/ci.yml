@@ -22,6 +22,8 @@ jobs:
         run: python tools/check_skill_lib_drift.py
       - name: Skill compliance
         run: python tools/check_skill_compliance.py
+      - name: Codex plugin adapter drift
+        run: python tools/build_codex_plugin_skills.py --check
       - name: Ratios strict gate
         run: python ratios/ratios_check.py --strict
       - name: llms-build drift

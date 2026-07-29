@@ -24,8 +24,8 @@ jobs:
       matrix:
         # ORG_DISTRIBUTION.md "Active vendoring consumers" -- the repos that
         # carry a top-level `.agents/skills/<skill>/` subset. Keep this list and
-        # that section in sync; the targets excluded there (a0ucns aggregator,
-        # ptcna not-yet-vendoring, superseded PTCA/pcna) are deliberately absent
+        # that section in sync; the targets excluded there (a0ucns aggregator
+        # and superseded PTCA/pcna) are deliberately absent
         # because `--require-vendored` would fail a repo with no subset.
         consumer:
           - interdependent-lib
@@ -40,6 +40,7 @@ jobs:
           - a0
           - aimmh
           - pcea
+          - ptcna
     steps:
       - name: Check out canonical skill-lib
         uses: actions/checkout@v4

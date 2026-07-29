@@ -68,6 +68,7 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/pcea`
 * `The-Interdependency/a0-betatest`
 * `The-Interdependency/metapat`
+* `The-Interdependency/ptcna`
 
 **Targets not in the drift matrix** (do not vendor a top-level subset yet, so
 `--require-vendored` would fail them):
@@ -75,9 +76,6 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
   repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
   embeds carry their own copies; re-sync those from their source repos.
-* `The-Interdependency/ptcna` — the consolidated prime-tensor repo; carries no
-  vendored skill subset yet. Add it above once it does.
-
 **Superseded** — folded into `ptcna` and pending archival; not tracked:
 
 * `The-Interdependency/PTCA`, `The-Interdependency/pcna` (→ `ptcna`)

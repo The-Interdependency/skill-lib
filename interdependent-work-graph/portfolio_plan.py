@@ -47,7 +47,6 @@ def _string_list(value: Any, field: str) -> list[str]:
 def validate_report(report: dict[str, Any], source_path: Path) -> None:
     _require(report.get("schema") == REPORT_SCHEMA, f"{source_path}: unsupported schema")
     _require(report.get("version") == REPORT_VERSION, f"{source_path}: unsupported version")
-
     repository = report.get("repository")
     _require(isinstance(repository, str) and repository.count("/") == 1, f"{source_path}: invalid repository")
 
@@ -61,15 +60,14 @@ def validate_report(report: dict[str, Any], source_path: Path) -> None:
     source = report.get("source")
     _require(isinstance(source, dict), f"{source_path}: source must be an object")
     _require(COMMIT_RE.fullmatch(str(source.get("commit", ""))) is not None, f"{source_path}: source.commit must be 40 lowercase hex characters")
-    _require(isinstance(source.get("branch"), str) and source["branch"], f"{source_path}: source.branch is required")
-    _require(isinstance(source.get("generated_at"), str) and source["generated_at"], f"{source_path}: source.generated_at is required")
-    _require(isinstance(source.get("note"), str) and source["note"], f"{source_path}: source.note is required")
+    for field in ("branch", "generated_at", "note"):
+        _require(isinstance(source.get(field), str) and source[field], f"{source_path}: source.{field} is required")
 
     authority = report.get("authority")
     _require(isinstance(authority, dict), f"{source_path}: authority must be an object")
-    _require(_string_list(authority.get("owns"), "authority.owns"), f"{source_path}: authority.owns may not be empty")
+    _require(bool(_string_list(authority.get("owns"), "authority.owns")), f"{source_path}: authority.owns may not be empty")
     _string_list(authority.get("does_not_own"), "authority.does_not_own")
-    _require(_string_list(authority.get("non_transfer"), "authority.non_transfer"), f"{source_path}: authority.non_transfer may not be empty")
+    _require(bool(_string_list(authority.get("non_transfer"), "authority.non_transfer")), f"{source_path}: authority.non_transfer may not be empty")
 
     portfolio_role = report.get("portfolio_role")
     _require(isinstance(portfolio_role, dict), f"{source_path}: portfolio_role must be an object")
@@ -82,15 +80,15 @@ def validate_report(report: dict[str, Any], source_path: Path) -> None:
 
     status = report.get("status")
     _require(isinstance(status, dict), f"{source_path}: status must be an object")
-    _require(isinstance(status.get("state"), str) and status["state"], f"{source_path}: status.state is required")
-    _require(isinstance(status.get("current_claim"), str) and status["current_claim"], f"{source_path}: status.current_claim is required")
+    for field in ("state", "current_claim"):
+        _require(isinstance(status.get(field), str) and status[field], f"{source_path}: status.{field} is required")
 
     delivered = report.get("delivered")
     _require(isinstance(delivered, list), f"{source_path}: delivered must be an array")
     for index, item in enumerate(delivered):
         _require(isinstance(item, dict), f"{source_path}: delivered[{index}] must be an object")
-        for key in ("surface", "status", "boundary"):
-            _require(isinstance(item.get(key), str) and item[key], f"{source_path}: delivered[{index}].{key} is required")
+        for field in ("surface", "status", "boundary"):
+            _require(isinstance(item.get(field), str) and item[field], f"{source_path}: delivered[{index}].{field} is required")
 
     _string_list(report.get("active_frontier"), "active_frontier")
     _string_list(report.get("blocked"), "blocked")
@@ -100,8 +98,8 @@ def validate_report(report: dict[str, Any], source_path: Path) -> None:
     _require(isinstance(actions, list), f"{source_path}: next_actions must be an array")
     for index, action in enumerate(actions):
         _require(isinstance(action, dict), f"{source_path}: next_actions[{index}] must be an object")
-        for key in ("action", "owner", "dependency"):
-            _require(isinstance(action.get(key), str), f"{source_path}: next_actions[{index}].{key} must be a string")
+        for field in ("action", "owner", "dependency"):
+            _require(isinstance(action.get(field), str), f"{source_path}: next_actions[{index}].{field} must be a string")
         _require(bool(action["action"] and action["owner"]), f"{source_path}: next_actions[{index}] requires action and owner")
 
     relations = report.get("cross_repository_relations")
@@ -126,24 +124,23 @@ def load_report(path: Path) -> dict[str, Any]:
 
 def build_portfolio(reports_with_paths: list[tuple[Path, dict[str, Any]]]) -> dict[str, Any]:
     ordered = sorted(reports_with_paths, key=lambda item: item[1]["repository"])
-    repositories = [report["repository"] for _, report in ordered]
-    _require(len(repositories) == len(set(repositories)), "duplicate repository reports are not allowed")
+    repository_names = [report["repository"] for _, report in ordered]
+    _require(len(repository_names) == len(set(repository_names)), "duplicate repository reports are not allowed")
 
-    generated_from = []
-    repository_views = []
-    relations = []
-    active_frontier = []
-    next_actions = []
-    blocked = []
-    hmmm = []
+    generated_from: list[dict[str, Any]] = []
+    repository_views: list[dict[str, Any]] = []
+    relations: list[dict[str, Any]] = []
+    active_frontier: list[dict[str, str]] = []
+    next_actions: list[dict[str, Any]] = []
+    blocked: list[dict[str, str]] = []
+    hmmm: list[dict[str, str]] = []
 
-    for path, report in ordered:
+    for _, report in ordered:
         repository = report["repository"]
         generated_from.append({
             "repository": repository,
             "source_commit": report["source"]["commit"],
             "report_sha256": digest(report),
-            "input_path": path.as_posix(),
         })
         repository_views.append({
             "repository": repository,
@@ -171,7 +168,7 @@ def build_portfolio(reports_with_paths: list[tuple[Path, dict[str, Any]]]) -> di
         },
         "generated_from": generated_from,
         "repositories": repository_views,
-        "cross_repository_dependencies": sorted(relations, key=lambda x: (x["from"], x["to"], x["relation"])),
+        "cross_repository_dependencies": sorted(relations, key=lambda item: (item["from"], item["to"], item["relation"])),
         "active_frontier": active_frontier,
         "next_actions": next_actions,
         "blocked": blocked,

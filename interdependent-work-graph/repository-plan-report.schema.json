@@ -28,12 +28,12 @@
     "contract": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "path", "version", "commit"],
+      "required": ["repository", "path", "version", "blob_sha"],
       "properties": {
         "repository": {"const": "The-Interdependency/skill-lib"},
         "path": {"const": "interdependent-work-graph/repository-plan-report.schema.json"},
         "version": {"const": "1.0.0"},
-        "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
+        "blob_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"}
       }
     },
     "source": {

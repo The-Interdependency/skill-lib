@@ -14,12 +14,12 @@ The report validates against:
 
 ```text
 interdependent-work-graph/repository-plan-report.schema.json
-schema:  the-interdependency.repository-plan-report
-version: 1.0.0
-contract commit: 4be3a145b2754893039bb2c1893e060d15a6616b
+schema:   the-interdependency.repository-plan-report
+version:  1.0.0
+blob SHA: 9b347b2dff7692054b571602f30ee6d00c2e7265
 ```
 
-The report's cited `source.commit` identifies the repository state being described. The commit which adds or refreshes the report is coordination metadata and does not silently become mathematical, semantic, empirical, measurement, runtime, or theorem evidence.
+The Git blob SHA pins the exact schema bytes independently of branch names or eventual PR merge strategy. The report's cited `source.commit` separately identifies the repository state being described. The commit which adds or refreshes a report is coordination metadata and does not silently become mathematical, semantic, empirical, measurement, runtime, or theorem evidence.
 
 ## Authority rule
 
@@ -44,6 +44,14 @@ python interdependent-work-graph/portfolio_plan.py \
   ../zfae/docs/work-graphs/repository-plan-report.json \
   docs/work-graphs/repository-plan-report.json \
   --output portfolio-plan.json
+```
+
+The derived output shape is declared at:
+
+```text
+interdependent-work-graph/portfolio-plan.schema.json
+schema:  the-interdependency.portfolio-plan
+version: 1.0.0
 ```
 
 The aggregator uses only the Python standard library. It validates the frozen contract identity, rejects duplicate repositories and authority transfer, sorts reports by repository identity, content-addresses every input report, and emits:

@@ -33,10 +33,36 @@ class InformationDesignAuditTests(unittest.TestCase):
         self.assertEqual(report["status"], "fail")
         self.assertIn("color_only_state", {item["code"] for item in report["errors"]})
 
+    def test_blank_redundancy_does_not_pass(self):
+        manifest = {
+            "message": "state distinction",
+            "semantic_dimensions": {"state": "shape"},
+            "text_pairs": [],
+            "nontext_pairs": [],
+            "states": [{"name": "bad", "color": "#D55E00", "redundancy": ["", "color"]}],
+            "manual_gates": {"grayscale": "hmmm", "cvd": "hmmm", "semantic": "hmmm"},
+        }
+        report = audit.audit_manifest(manifest)
+        self.assertEqual(report["status"], "fail")
+        self.assertIn("color_only_state", {item["code"] for item in report["errors"]})
+
     def test_hue_cannot_encode_two_independent_dimensions(self):
         manifest = {
             "message": "overloaded hue",
             "semantic_dimensions": {"component": "hue", "status": "hue"},
+            "text_pairs": [],
+            "nontext_pairs": [],
+            "states": [],
+            "manual_gates": {"grayscale": "hmmm", "cvd": "hmmm", "semantic": "hmmm"},
+        }
+        report = audit.audit_manifest(manifest)
+        self.assertEqual(report["status"], "fail")
+        self.assertIn("hue_overloaded", {item["code"] for item in report["errors"]})
+
+    def test_compound_hue_channels_still_count_as_hue(self):
+        manifest = {
+            "message": "overloaded compound hue",
+            "semantic_dimensions": {"component": "hue+label", "status": "hue+shape"},
             "text_pairs": [],
             "nontext_pairs": [],
             "states": [],

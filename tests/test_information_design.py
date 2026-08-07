@@ -4,8 +4,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-AUDIT_PATH = ROOT / "information-design" / "audit.py"
-EXAMPLE_PATH = ROOT / "information-design" / "examples" / "design-manifest.json"
+AUDIT_PATH = ROOT / "data-visualization" / "information_design_audit.py"
+EXAMPLE_PATH = ROOT / "data-visualization" / "examples" / "information-design-manifest.json"
 
 spec = importlib.util.spec_from_file_location("information_design_audit", AUDIT_PATH)
 audit = importlib.util.module_from_spec(spec)

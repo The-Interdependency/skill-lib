@@ -1,10 +1,39 @@
-#!/usr/bin/env python3
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 """Validate repo-owned plan reports and derive one deterministic portfolio plan.
 
 No network access and no third-party packages are required. Repository reports
 remain authoritative for their own claims; this program only validates,
 orders, hashes, and projects them into a cross-repository view.
+
+Usage guidance:
+    python interdependent-work-graph/portfolio_plan.py \
+      ../a0/docs/work-graphs/repository-plan-report.json \
+      ../edcm/docs/work-graphs/repository-plan-report.json \
+      --output portfolio-plan.json
+
+Supply only the repositories intentionally included in the portfolio view.
+Missing repositories are not auto-discovered or synthesized. A report must pin
+the exact frozen report-schema blob and the source commit it describes.
 """
+
+# === MODULE_BUILD ===
+# id: interdependent_work_graph_portfolio_plan
+#   module_name: portfolio_plan
+#   module_kind: instrument
+#   summary: validates repo-owned plan reports and derives a deterministic cross-repository portfolio projection without transferring authority
+#   owner: The-Interdependency/skill-lib maintainers
+#   public_surface: load_report, build_portfolio, main
+#   internal_surface: validate_report, canonical_bytes, digest
+#   auth_boundary: none
+#   storage_boundary: none
+#   network_boundary: none
+#   user_data_boundary: none
+#   admin_only: false
+#   tests: tests/test_interdependent_work_graph_portfolio_plan.py
+#   rollout: explicit CLI or library invocation after repo reports are supplied
+#   rollback: remove the aggregator, schemas, companion docs, and portfolio projection section without changing repo-owned source claims
+#   unresolved: automatic portfolio membership discovery, persistent live service, cryptographic producer authentication
+# === END MODULE_BUILD ===
 
 from __future__ import annotations
 
@@ -196,3 +225,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm

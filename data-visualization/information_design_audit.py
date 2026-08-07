@@ -1,4 +1,4 @@
-# ratios: loc_comments=111:4 imports_exports=7:4 calls_definitions=59:6
+# ratios: loc_comments=117:4 imports_exports=7:4 calls_definitions=61:6
 """Pure-stdlib information-design manifest audit.
 
 Checks declared WCAG contrast pairs and verifies that information-bearing states
@@ -73,7 +73,10 @@ def audit_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(dimensions, dict) or not dimensions:
         findings.append({"severity": "error", "code": "missing_semantic_dimensions", "message": "declare semantic dimensions and their visual channels"})
     else:
-        hue_dimensions = [name for name, channel in dimensions.items() if str(channel).strip().lower() == "hue"]
+        hue_dimensions = [
+            name for name, channel in dimensions.items()
+            if "hue" in re.split(r"[^a-z]+", str(channel).strip().lower())
+        ]
         if len(hue_dimensions) > 1:
             findings.append({"severity": "error", "code": "hue_overloaded", "dimensions": hue_dimensions, "message": "hue carries more than one independent semantic dimension"})
 
@@ -98,7 +101,10 @@ def audit_manifest(manifest: dict[str, Any]) -> dict[str, Any]:
         if not HEX_RE.match(color):
             findings.append({"severity": "error", "code": "invalid_state_color", "state": name, "color": color})
         redundancy = state.get("redundancy", [])
-        noncolor = [item for item in redundancy if str(item).strip().lower() not in {"color", "hue"}] if isinstance(redundancy, list) else []
+        noncolor = [
+            item for item in redundancy
+            if str(item).strip() and str(item).strip().lower() not in {"color", "hue"}
+        ] if isinstance(redundancy, list) else []
         if not noncolor:
             findings.append({"severity": "error", "code": "color_only_state", "state": name, "message": "state requires a non-color cue such as label, shape, pattern, or line style"})
 
@@ -140,4 +146,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=111:4 imports_exports=7:4 calls_definitions=59:6
+# ratios: loc_comments=117:4 imports_exports=7:4 calls_definitions=61:6

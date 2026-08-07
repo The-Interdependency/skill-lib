@@ -23,12 +23,12 @@
     "contract": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "report_schema_path", "report_schema_version", "report_schema_commit"],
+      "required": ["repository", "report_schema_path", "report_schema_version", "report_schema_blob_sha"],
       "properties": {
         "repository": {"const": "The-Interdependency/skill-lib"},
         "report_schema_path": {"const": "interdependent-work-graph/repository-plan-report.schema.json"},
         "report_schema_version": {"const": "1.0.0"},
-        "report_schema_commit": {"const": "4be3a145b2754893039bb2c1893e060d15a6616b"}
+        "report_schema_blob_sha": {"const": "9b347b2dff7692054b571602f30ee6d00c2e7265"}
       }
     },
     "generated_from": {

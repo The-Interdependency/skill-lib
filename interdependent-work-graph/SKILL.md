@@ -1,6 +1,6 @@
 ---
 name: interdependent-work-graph
-description: Cross-repository coordination for The Interdependency. Load this when a task spans, consumes, compares, publishes to, or can change the contract between two or more repositories; when an agent is about to choose one repo as its workspace for a stack-level problem; when exact producer, evidence-source, skill, semantic, mathematical, or measurement identities must travel together; when creating a shared stack manifest, multi-repo handoff, coordinated release, cross-repo validation plan; or when deriving the machine-readable overall portfolio plan from repo-owned reports.
+description: Cross-repository coordination for The Interdependency. Load this when a task spans, consumes, compares, publishes to, or can change the contract between two or more repositories; when an agent is about to choose one repo as its workspace for a stack-level problem; when exact producer, evidence-source, skill, semantic, mathematical, or measurement identities must travel together; or when creating a shared stack manifest, multi-repo handoff, coordinated release, or cross-repo validation plan.
 ---
 
 # interdependent-work-graph — coordinate the problem, not the folder

@@ -21,7 +21,7 @@ PLAN_SCHEMA = "the-interdependency.portfolio-plan"
 PLAN_VERSION = "1.0.0"
 CONTRACT_REPOSITORY = "The-Interdependency/skill-lib"
 CONTRACT_PATH = "interdependent-work-graph/repository-plan-report.schema.json"
-CONTRACT_COMMIT = "4be3a145b2754893039bb2c1893e060d15a6616b"
+CONTRACT_BLOB_SHA = "9b347b2dff7692054b571602f30ee6d00c2e7265"
 COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -55,7 +55,7 @@ def validate_report(report: dict[str, Any], source_path: Path) -> None:
     _require(contract.get("repository") == CONTRACT_REPOSITORY, f"{source_path}: wrong contract repository")
     _require(contract.get("path") == CONTRACT_PATH, f"{source_path}: wrong contract path")
     _require(contract.get("version") == REPORT_VERSION, f"{source_path}: wrong contract version")
-    _require(contract.get("commit") == CONTRACT_COMMIT, f"{source_path}: report is not pinned to the frozen contract commit")
+    _require(contract.get("blob_sha") == CONTRACT_BLOB_SHA, f"{source_path}: report is not pinned to the frozen contract blob")
 
     source = report.get("source")
     _require(isinstance(source, dict), f"{source_path}: source must be an object")
@@ -164,7 +164,7 @@ def build_portfolio(reports_with_paths: list[tuple[Path, dict[str, Any]]]) -> di
             "repository": CONTRACT_REPOSITORY,
             "report_schema_path": CONTRACT_PATH,
             "report_schema_version": REPORT_VERSION,
-            "report_schema_commit": CONTRACT_COMMIT,
+            "report_schema_blob_sha": CONTRACT_BLOB_SHA,
         },
         "generated_from": generated_from,
         "repositories": repository_views,

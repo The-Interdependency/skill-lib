@@ -1,0 +1,158 @@
+{
+  "schema": "the-interdependency.repository-plan-report",
+  "version": "1.0.0",
+  "repository": "The-Interdependency/skill-lib",
+  "contract": {
+    "repository": "The-Interdependency/skill-lib",
+    "path": "interdependent-work-graph/repository-plan-report.schema.json",
+    "version": "1.0.0",
+    "blob_sha": "9b347b2dff7692054b571602f30ee6d00c2e7265"
+  },
+  "source": {
+    "branch": "agent/portfolio-plan-projection",
+    "commit": "5f16b5617cec7474acb14de951bb24786e3a0441",
+    "generated_at": "2026-08-07",
+    "note": "This report describes the exact portfolio-plan implementation commit immediately beneath this report refresh. The refresh commit is coordination metadata and does not acquire semantic, mathematical, measurement, runtime, or empirical authority from consuming repositories."
+  },
+  "authority": {
+    "owns": [
+      "canonical reusable agent-skill doctrine and skill distribution conventions for The Interdependency",
+      "msdmd metadata conventions and the skill-lib machine-readable skill index",
+      "cross-repository coordination doctrine in interdependent-work-graph",
+      "build, evidence, boundary, publication, skill-compliance, and propagation helper contracts implemented or specified in this repository",
+      "the repository-plan-report contract and deterministic portfolio projection mechanism"
+    ],
+    "does_not_own": [
+      "METAPAT semantic canon",
+      "UCNS mathematical representation or proof status",
+      "EDCM measurement validity or empirical results",
+      "a0 runtime, agent memory, privacy, deployment, or user-data authority",
+      "ZFAE conceptual theory or empirical hypothesis status"
+    ],
+    "non_transfer": [
+      "skill conformance does not establish scientific, semantic, mathematical, measurement, or empirical validity",
+      "vendoring a skill does not transfer the producer repository's substantive authority into skill-lib",
+      "portfolio aggregation does not centralize repo canon",
+      "a machine-readable digest is identity evidence and not producer authentication",
+      "missing repo reports remain visible incompletion rather than guessed status"
+    ]
+  },
+  "portfolio_role": {
+    "summary": "Provide the shared procedural and machine-readable coordination layer that lets self-contained repositories report their exact roles, evidence boundaries, status, and unresolved work into one deterministic cross-repository plan without centralizing their canon.",
+    "upstream_contract": "Each repository owns the report claims it emits and pins the exact source commit being described.",
+    "downstream_contract": "skill-lib validates and projects reports, preserves non-transfer boundaries, and emits deterministic identities that agents can consume without reconstructing repo state from memory.",
+    "reports_to": {
+      "repository": "The-Interdependency/skill-lib",
+      "skill": "interdependent-work-graph",
+      "relation": "control-plane self-report for the same portfolio projection contract"
+    }
+  },
+  "status": {
+    "state": "active skill library and cross-repository coordination infrastructure",
+    "current_claim": "skill-lib provides canonical skill doctrine, generated agent adapters, distribution tooling, and machine-readable indexes; the portfolio-plan branch adds a deterministic extension of interdependent-work-graph with a frozen repo-report contract, output schema, aggregator, documentation, and focused tests.",
+    "latest_main_milestone": {
+      "commit": "868de866b0248aff6d35759ad9fdcc363a0d1406",
+      "description": "added evidence-grounded information-design checks and integrated them into the existing visualization skill surface"
+    }
+  },
+  "delivered": [
+    {
+      "surface": "msdmd and metadata-block skill family",
+      "status": "canonical skill doctrine with reference parsers and selected helper tools",
+      "boundary": "metadata completeness and conformance do not establish domain truth"
+    },
+    {
+      "surface": "machine-readable skill registry and generated Codex adapters",
+      "status": "implemented distribution surface",
+      "boundary": "generated adapters point to canonical skill doctrine rather than becoming second sources of truth"
+    },
+    {
+      "surface": "interdependent-work-graph",
+      "status": "canonical cross-repository coordination doctrine",
+      "boundary": "repository boundaries remain authority and provenance boundaries"
+    },
+    {
+      "surface": "organization skill propagation and drift/compliance tooling",
+      "status": "pure-stdlib helpers and documented distribution convention",
+      "boundary": "propagation copies doctrine; it does not prove consuming-repo behavior"
+    },
+    {
+      "surface": "repository-plan-report v1 contract and deterministic portfolio projection",
+      "status": "implemented on the portfolio-plan branch and pinned by immutable schema blob identity",
+      "boundary": "the reporting schema constrains representation of status but does not decide repo status or transfer repo authority"
+    }
+  ],
+  "active_frontier": [
+    "land and validate the deterministic portfolio-plan projection as an extension of interdependent-work-graph",
+    "propagate the repo-report convention to participating repositories without copying their canon into skill-lib",
+    "keep generated plugin adapters and skill indexes synchronized with canonical root skills",
+    "expand evidence-bearing skill usage and maturity without treating invocation counts as correctness",
+    "preserve visible hmmm and gap reporting as skills and repositories evolve"
+  ],
+  "next_actions": [
+    {
+      "action": "execute the repository-plan-report tests and first coordinated aggregate fixture when a runner is available",
+      "owner": "The-Interdependency/skill-lib",
+      "dependency": "GitHub Actions or another execution environment must actually start jobs; current Actions runs fail before steps begin"
+    },
+    {
+      "action": "merge the skill-lib contract before companion repo-report PRs once validation is available",
+      "owner": "The-Interdependency/skill-lib",
+      "dependency": "portfolio-plan control-plane review and executable gate evidence"
+    },
+    {
+      "action": "add future repository reports only through explicit portfolio membership decisions rather than organization-wide auto-discovery",
+      "owner": "The-Interdependency/skill-lib",
+      "dependency": "maintainer-selected portfolio scope"
+    }
+  ],
+  "blocked": [
+    "executed CI validation is currently blocked because GitHub Actions jobs for this PR terminate with zero steps and empty logs"
+  ],
+  "cross_repository_relations": [
+    {
+      "repository": "The-Interdependency/a0",
+      "relation": "consumer of build, boundary, agent, and cross-repository skills; repo-owned runtime authority",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/edcm",
+      "relation": "consumer of build/evidence and cross-repository doctrine; repo-owned measurement authority",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/metapat",
+      "relation": "consumer of build/evidence doctrine; repo-owned semantic authority",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/ucns",
+      "relation": "consumer of build/evidence and cross-repository doctrine; repo-owned mathematical authority",
+      "authority_transfer": false
+    },
+    {
+      "repository": "The-Interdependency/zfae",
+      "relation": "consumer of module-build and coordination doctrine; repo-owned conceptual authority",
+      "authority_transfer": false
+    }
+  ],
+  "machine_entrypoints": {
+    "repo_report": "docs/work-graphs/repository-plan-report.json",
+    "skills_index": "skills.json",
+    "agent_entrypoint": "AGENTS.md",
+    "system_overview": "README.md",
+    "work_graph_skill": "interdependent-work-graph/SKILL.md",
+    "portfolio_contract": "interdependent-work-graph/repository-plan-report.schema.json",
+    "portfolio_aggregator": "interdependent-work-graph/portfolio_plan.py",
+    "portfolio_output_schema": "interdependent-work-graph/portfolio-plan.schema.json",
+    "portfolio_docs": "interdependent-work-graph/PORTFOLIO_PLAN.md"
+  },
+  "hmmm": [
+    "organization-wide automatic portfolio membership discovery is intentionally not selected",
+    "persistent live service or user interface for work graphs remains unselected",
+    "cryptographic producer or transport authentication remains separate from content identities",
+    "future stack-manifest schema revision for typed participants and explicit hashed edges",
+    "cross-repository merge orchestration remains repository-host dependent",
+    "execution environment for the first full coordinated aggregate fixture while GitHub Actions runners fail before job steps"
+  ]
+}

@@ -9,10 +9,10 @@
     "blob_sha": "9b347b2dff7692054b571602f30ee6d00c2e7265"
   },
   "source": {
-    "branch": "main",
-    "commit": "868de866b0248aff6d35759ad9fdcc363a0d1406",
+    "branch": "agent/portfolio-plan-projection",
+    "commit": "5f16b5617cec7474acb14de951bb24786e3a0441",
     "generated_at": "2026-08-07",
-    "note": "This report describes the cited skill-lib main commit plus identifies the portfolio-plan work being proposed on this branch. The report does not acquire semantic, mathematical, measurement, runtime, or empirical authority from consuming repositories."
+    "note": "This report describes the exact portfolio-plan implementation commit immediately beneath this report refresh. The refresh commit is coordination metadata and does not acquire semantic, mathematical, measurement, runtime, or empirical authority from consuming repositories."
   },
   "authority": {
     "owns": [
@@ -49,7 +49,7 @@
   },
   "status": {
     "state": "active skill library and cross-repository coordination infrastructure",
-    "current_claim": "skill-lib provides canonical skill doctrine, generated agent adapters, distribution tooling, and machine-readable indexes; the portfolio-plan projection is being added as a deterministic extension of interdependent-work-graph.",
+    "current_claim": "skill-lib provides canonical skill doctrine, generated agent adapters, distribution tooling, and machine-readable indexes; the portfolio-plan branch adds a deterministic extension of interdependent-work-graph with a frozen repo-report contract, output schema, aggregator, documentation, and focused tests.",
     "latest_main_milestone": {
       "commit": "868de866b0248aff6d35759ad9fdcc363a0d1406",
       "description": "added evidence-grounded information-design checks and integrated them into the existing visualization skill surface"
@@ -77,9 +77,9 @@
       "boundary": "propagation copies doctrine; it does not prove consuming-repo behavior"
     },
     {
-      "surface": "repository-plan-report v1 contract",
-      "status": "frozen on the portfolio-plan branch",
-      "boundary": "the reporting schema constrains representation of status but does not decide repo status"
+      "surface": "repository-plan-report v1 contract and deterministic portfolio projection",
+      "status": "implemented on the portfolio-plan branch and pinned by immutable schema blob identity",
+      "boundary": "the reporting schema constrains representation of status but does not decide repo status or transfer repo authority"
     }
   ],
   "active_frontier": [
@@ -91,14 +91,14 @@
   ],
   "next_actions": [
     {
-      "action": "validate the repository-plan-report schema and portfolio aggregator against the first coordinated repo reports",
+      "action": "execute the repository-plan-report tests and first coordinated aggregate fixture when a runner is available",
       "owner": "The-Interdependency/skill-lib",
-      "dependency": "repo reports from a0, EDCM, METAPAT, UCNS, and ZFAE"
+      "dependency": "GitHub Actions or another execution environment must actually start jobs; current Actions runs fail before steps begin"
     },
     {
-      "action": "document the portfolio projection in interdependent-work-graph and expose its stable machine entrypoints",
+      "action": "merge the skill-lib contract before companion repo-report PRs once validation is available",
       "owner": "The-Interdependency/skill-lib",
-      "dependency": "frozen v1 schema and deterministic aggregator behavior"
+      "dependency": "portfolio-plan control-plane review and executable gate evidence"
     },
     {
       "action": "add future repository reports only through explicit portfolio membership decisions rather than organization-wide auto-discovery",
@@ -106,7 +106,9 @@
       "dependency": "maintainer-selected portfolio scope"
     }
   ],
-  "blocked": [],
+  "blocked": [
+    "executed CI validation is currently blocked because GitHub Actions jobs for this PR terminate with zero steps and empty logs"
+  ],
   "cross_repository_relations": [
     {
       "repository": "The-Interdependency/a0",
@@ -142,6 +144,7 @@
     "work_graph_skill": "interdependent-work-graph/SKILL.md",
     "portfolio_contract": "interdependent-work-graph/repository-plan-report.schema.json",
     "portfolio_aggregator": "interdependent-work-graph/portfolio_plan.py",
+    "portfolio_output_schema": "interdependent-work-graph/portfolio-plan.schema.json",
     "portfolio_docs": "interdependent-work-graph/PORTFOLIO_PLAN.md"
   },
   "hmmm": [
@@ -149,6 +152,7 @@
     "persistent live service or user interface for work graphs remains unselected",
     "cryptographic producer or transport authentication remains separate from content identities",
     "future stack-manifest schema revision for typed participants and explicit hashed edges",
-    "cross-repository merge orchestration remains repository-host dependent"
+    "cross-repository merge orchestration remains repository-host dependent",
+    "execution environment for the first full coordinated aggregate fixture while GitHub Actions runners fail before job steps"
   ]
 }

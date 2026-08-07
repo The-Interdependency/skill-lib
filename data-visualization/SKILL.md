@@ -82,7 +82,9 @@ ax.legend(loc='upper left', frameon=True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
+# Format dates on x-axis
 fig.autofmt_xdate()
+
 plt.tight_layout()
 plt.savefig('trend_chart.png', dpi=150, bbox_inches='tight')
 ```
@@ -92,9 +94,12 @@ plt.savefig('trend_chart.png', dpi=150, bbox_inches='tight')
 ```python
 fig, ax = plt.subplots(figsize=(10, 6))
 
+# Sort by value for easy reading
 df_sorted = df.sort_values('metric', ascending=True)
+
 bars = ax.barh(df_sorted['category'], df_sorted['metric'], color=PALETTE_CATEGORICAL[0])
 
+# Add value labels
 for bar in bars:
     width = bar.get_width()
     ax.text(width + 0.5, bar.get_y() + bar.get_height()/2,
@@ -116,6 +121,7 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 ax.hist(df['value'], bins=30, color=PALETTE_CATEGORICAL[0], edgecolor='white', alpha=0.8)
 
+# Add mean and median lines
 mean_val = df['value'].mean()
 median_val = df['value'].median()
 ax.axvline(mean_val, color='red', linestyle='--', linewidth=1.5, label=f'Mean: {mean_val:,.1f}')
@@ -137,6 +143,7 @@ plt.savefig('histogram.png', dpi=150, bbox_inches='tight')
 ```python
 fig, ax = plt.subplots(figsize=(10, 8))
 
+# Pivot data for heatmap format
 pivot = df.pivot_table(index='row_dim', columns='col_dim', values='metric', aggfunc='sum')
 
 sns.heatmap(pivot, annot=True, fmt=',.0f', cmap='YlOrRd',
@@ -169,6 +176,7 @@ for i, cat in enumerate(categories):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
+# Hide empty subplots
 for j in range(i+1, len(axes)):
     axes[j].set_visible(False)
 
@@ -204,6 +212,7 @@ def format_number(val, format_type='number'):
             return f'{val:,.0f}'
     return str(val)
 
+# Usage with axis formatter
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: format_number(x, 'currency')))
 ```
 
@@ -213,6 +222,7 @@ ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: format_number(x,
 import plotly.express as px
 import plotly.graph_objects as go
 
+# Simple interactive line chart
 fig = px.line(df, x='date', y='value', color='category',
               title='Interactive Metric Trend',
               labels={'value': 'Metric Value', 'date': 'Date'})
@@ -220,6 +230,7 @@ fig.update_layout(hovermode='x unified')
 fig.write_html('interactive_chart.html')
 fig.show()
 
+# Interactive scatter with hover data
 fig = px.scatter(df, x='metric_a', y='metric_b', color='category',
                  size='size_metric', hover_data=['name', 'detail_field'],
                  title='Correlation Analysis')

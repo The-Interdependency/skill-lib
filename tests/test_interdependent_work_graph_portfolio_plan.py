@@ -29,7 +29,7 @@ def report(repository: str, commit: str, relation_to: str | None = None):
             "repository": "The-Interdependency/skill-lib",
             "path": "interdependent-work-graph/repository-plan-report.schema.json",
             "version": "1.0.0",
-            "commit": portfolio_plan.CONTRACT_COMMIT,
+            "blob_sha": portfolio_plan.CONTRACT_BLOB_SHA,
         },
         "source": {
             "branch": "main",
@@ -88,6 +88,15 @@ class PortfolioPlanTests(unittest.TestCase):
             path = Path(tmp) / "bad.json"
             path.write_text(json.dumps(bad), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "authority transfer must be false"):
+                portfolio_plan.load_report(path)
+
+    def test_wrong_contract_blob_is_rejected(self):
+        bad = report("The-Interdependency/a", "c" * 40)
+        bad["contract"]["blob_sha"] = "0" * 40
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad-contract.json"
+            path.write_text(json.dumps(bad), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "frozen contract blob"):
                 portfolio_plan.load_report(path)
 
     def test_duplicate_repository_reports_are_rejected(self):

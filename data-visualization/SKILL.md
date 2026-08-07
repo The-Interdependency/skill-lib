@@ -82,9 +82,7 @@ ax.legend(loc='upper left', frameon=True)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 
-# Format dates on x-axis
 fig.autofmt_xdate()
-
 plt.tight_layout()
 plt.savefig('trend_chart.png', dpi=150, bbox_inches='tight')
 ```
@@ -94,12 +92,9 @@ plt.savefig('trend_chart.png', dpi=150, bbox_inches='tight')
 ```python
 fig, ax = plt.subplots(figsize=(10, 6))
 
-# Sort by value for easy reading
 df_sorted = df.sort_values('metric', ascending=True)
-
 bars = ax.barh(df_sorted['category'], df_sorted['metric'], color=PALETTE_CATEGORICAL[0])
 
-# Add value labels
 for bar in bars:
     width = bar.get_width()
     ax.text(width + 0.5, bar.get_y() + bar.get_height()/2,
@@ -121,7 +116,6 @@ fig, ax = plt.subplots(figsize=(10, 6))
 
 ax.hist(df['value'], bins=30, color=PALETTE_CATEGORICAL[0], edgecolor='white', alpha=0.8)
 
-# Add mean and median lines
 mean_val = df['value'].mean()
 median_val = df['value'].median()
 ax.axvline(mean_val, color='red', linestyle='--', linewidth=1.5, label=f'Mean: {mean_val:,.1f}')
@@ -143,7 +137,6 @@ plt.savefig('histogram.png', dpi=150, bbox_inches='tight')
 ```python
 fig, ax = plt.subplots(figsize=(10, 8))
 
-# Pivot data for heatmap format
 pivot = df.pivot_table(index='row_dim', columns='col_dim', values='metric', aggfunc='sum')
 
 sns.heatmap(pivot, annot=True, fmt=',.0f', cmap='YlOrRd',
@@ -176,7 +169,6 @@ for i, cat in enumerate(categories):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
 
-# Hide empty subplots
 for j in range(i+1, len(axes)):
     axes[j].set_visible(False)
 
@@ -212,7 +204,6 @@ def format_number(val, format_type='number'):
             return f'{val:,.0f}'
     return str(val)
 
-# Usage with axis formatter
 ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: format_number(x, 'currency')))
 ```
 
@@ -222,7 +213,6 @@ ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, p: format_number(x,
 import plotly.express as px
 import plotly.graph_objects as go
 
-# Simple interactive line chart
 fig = px.line(df, x='date', y='value', color='category',
               title='Interactive Metric Trend',
               labels={'value': 'Metric Value', 'date': 'Date'})
@@ -230,7 +220,6 @@ fig.update_layout(hovermode='x unified')
 fig.write_html('interactive_chart.html')
 fig.show()
 
-# Interactive scatter with hover data
 fig = px.scatter(df, x='metric_a', y='metric_b', color='category',
                  size='size_metric', hover_data=['name', 'detail_field'],
                  title='Correlation Analysis')
@@ -318,14 +307,92 @@ Before sharing a visualization:
 - Dual y-axes implying correlation the data does not establish.
 - Meaning carried by color alone, invisible to colorblind readers and grayscale prints.
 
+## The Interdependency information-design extension
+
+Use this extension for information-bearing color and visual signaling in charts, explanatory diagrams, infographics, study materials, dashboards, knowledge maps, and related visual surfaces. The evidence summary is in `references/information-design-evidence.md`; machine-readable defaults are in `visual-grammar.json`.
+
+### Evidence boundary
+
+The strongest practical evidence supports **signaling**: selective, meaningful visual cues can improve attention, organization, retention, and transfer when they clarify what belongs together or where the reader should look. This does not establish universal hue psychology. Do not claim that red inherently impairs reasoning, blue creates creativity, green improves learning, or similar fixed effects.
+
+### Core grammar
+
+- **Color encodes structure; it does not substitute for structure.**
+- **Salience is relational.** A hue attracts attention because of contrast with its surround and competing signals, not because it is intrinsically dominant.
+- **Hue gets one independent semantic dimension per local visual field.** If hue means component family, evidence state must use another channel such as shape + label.
+- **Critical meaning is redundant.** Repeat information-bearing color with a label, shape, line style, pattern, icon, enclosure, or position.
+- **Luminance and contrast are load-bearing.** Critical boundaries need adequate lightness contrast and line weight, not hue alone.
+- **Stable mappings support learning.** Reuse the same mapping for the same meaning across an artifact family.
+- **Exact claims remain explicit.** Labels, numbers, provenance, uncertainty, and status carry exact meaning.
+
+Recommended visual-channel allocation:
+
+| Channel | Preferred meaning |
+|---|---|
+| Hue | one categorical family or one semantic dimension |
+| Lightness | emphasis or ordered magnitude |
+| Shape | state class or category redundancy |
+| Position | structural layer or reading order |
+| Line direction | processing, dependency, causal, or temporal flow |
+| Line style | current, provisional, historical, or unavailable |
+| Border | authority, selection, or scope boundary |
+| Text | exact semantic meaning |
+| Pattern | color-independent redundancy |
+
+### Default semantic states
+
+These are communication defaults, not transfers of epistemic authority or project canon:
+
+| State | Color | Required non-color redundancy |
+|---|---|---|
+| supported | `#009E73` | solid circle/line + `SUPPORTED` |
+| falsified | `#D55E00` | octagon/cross + `FALSIFIED` |
+| errored | `#CC79A7` | diamond/zigzag + `ERROR` |
+| unavailable / NA | `#F0E442` | hollow square/dotted line + `NA` |
+| historical provenance | `#6B7280` | dashed enclosure + `HISTORICAL` |
+| current maintained authority | `#0072B2` | double border + `CURRENT` |
+
+Project branding may override hues, but not contrast, redundancy, or semantic-audit requirements.
+
+### Information-design workflow
+
+1. **Declare the message.** Write one sentence describing what the reader should understand or decide.
+2. **Declare semantic dimensions.** List component family, evidence state, modality, recursion depth, authority/provenance, uncertainty, temporal status, magnitude, or other variables and assign each to a visual channel.
+3. **Establish the neutral substrate.** Most content should be neutral or low-chroma so accents retain signaling power.
+4. **Allocate a salience budget.** Reserve the strongest saturation/contrast for the information deserving first attention; decoration must never outrank evidence/status distinctions.
+5. **Add redundant state markers.** No critical state is color-only.
+6. **Check contrast.** Minimum targets: normal text `4.5:1`; large text `3:1`; essential graphical objects and state boundaries `3:1`.
+7. **Run four publication gates:** grayscale, color-vision-deficiency review, contrast, and semantic audit.
+8. **Preserve a nonvisual representation.** Alt text or structured metadata states the message, entities, relations, flow, statuses, uncertainty, and necessary quantitative values.
+
+A deterministic manifest can be checked with:
+
+```bash
+python data-visualization/information_design_audit.py \
+  data-visualization/examples/information-design-manifest.json
+```
+
+The checker verifies declared WCAG contrast and color-independent state redundancy. It does **not** claim to simulate human perception or prove comprehension.
+
+### Extension anti-patterns
+
+- Rainbow decoration where every node competes for attention.
+- Reusing one hue for both component identity and evidence status.
+- White or light text on yellow/orange fills without a contrast check.
+- Thin isoluminant colored lines as the only critical boundary.
+- Treating `NA` as zero or implying neutrality when data is unavailable.
+- Coloring recursion depth progressively redder unless severity is actually being encoded.
+- Letting risk-matrix color bands replace the underlying number or threshold definition.
+- Calling a palette "colorblind-safe" and assuming its text contrast therefore passes WCAG.
+- Claiming an automated contrast check proves accessibility, memory, comprehension, or emotional effect.
+
 ## Provenance
 
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/data-visualization/`), Apache-2.0.
-Local modifications: trigger phrasing normalized to skill-lib convention; this
-Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified. See `ATTRIBUTION.md` at repo root.
+Local modifications: trigger phrasing normalized to skill-lib convention; the Workflow/Anti-patterns/Provenance bookend and the clearly marked The Interdependency information-design extension were appended. The imported upstream body remains otherwise unmodified. The extension is evidence-grounded in `references/information-design-evidence.md`. See `ATTRIBUTION.md` at repo root.
 
 hmmm
-- Palette doctrine overlaps with the account-level dataviz skill; reconciliation pending.
-- Whether org charts must pass an automated contrast/palette validator is open.
+- Image-level protan/deutan/tritan simulation is intentionally not claimed by the stdlib audit; rendered-artifact perceptual review remains a separate tool/human gate.
+- Exact project brand palettes may override default hues while preserving the shared grammar and publication gates.
+- Whether image-generation workflows should emit a sidecar design manifest automatically is unresolved.
 - Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible.

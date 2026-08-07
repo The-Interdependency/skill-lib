@@ -42,6 +42,7 @@ python interdependent-work-graph/portfolio_plan.py \
   ../metapat/docs/work-graphs/repository-plan-report.json \
   ../ucns/docs/work-graphs/repository-plan-report.json \
   ../zfae/docs/work-graphs/repository-plan-report.json \
+  docs/work-graphs/repository-plan-report.json \
   --output portfolio-plan.json
 ```
 
@@ -57,7 +58,7 @@ The aggregator uses only the Python standard library. It validates the frozen co
 - `hmmm`;
 - `portfolio_plan_sha256` over the deterministic projected body.
 
-The input file path is included for local auditability. Consumers comparing plans across machines should compare the source commit, report digest, and portfolio digest rather than assuming checkout paths are portable provenance.
+Local checkout paths are deliberately excluded from the projected body and its digest. Identical report content therefore produces identical portfolio identity regardless of where repositories are checked out.
 
 ## Staleness
 

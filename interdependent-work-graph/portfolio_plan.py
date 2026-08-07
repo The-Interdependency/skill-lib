@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""Validate repo-owned plan reports and derive one deterministic portfolio plan.
+
+No network access and no third-party packages are required. Repository reports
+remain authoritative for their own claims; this program only validates,
+orders, hashes, and projects them into a cross-repository view.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import re
+from pathlib import Path
+from typing import Any
+
+REPORT_SCHEMA = "the-interdependency.repository-plan-report"
+REPORT_VERSION = "1.0.0"
+PLAN_SCHEMA = "the-interdependency.portfolio-plan"
+PLAN_VERSION = "1.0.0"
+CONTRACT_REPOSITORY = "The-Interdependency/skill-lib"
+CONTRACT_PATH = "interdependent-work-graph/repository-plan-report.schema.json"
+CONTRACT_COMMIT = "4be3a145b2754893039bb2c1893e060d15a6616b"
+COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
+
+
+def canonical_bytes(value: Any) -> bytes:
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+
+
+def digest(value: Any) -> str:
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def _require(condition: bool, message: str) -> None:
+    if not condition:
+        raise ValueError(message)
+
+
+def _string_list(value: Any, field: str) -> list[str]:
+    _require(isinstance(value, list), f"{field} must be an array")
+    _require(all(isinstance(item, str) and item for item in value), f"{field} must contain non-empty strings")
+    return value
+
+
+def validate_report(report: dict[str, Any], source_path: Path) -> None:
+    _require(report.get("schema") == REPORT_SCHEMA, f"{source_path}: unsupported schema")
+    _require(report.get("version") == REPORT_VERSION, f"{source_path}: unsupported version")
+
+    repository = report.get("repository")
+    _require(isinstance(repository, str) and repository.count("/") == 1, f"{source_path}: invalid repository")
+
+    contract = report.get("contract")
+    _require(isinstance(contract, dict), f"{source_path}: contract must be an object")
+    _require(contract.get("repository") == CONTRACT_REPOSITORY, f"{source_path}: wrong contract repository")
+    _require(contract.get("path") == CONTRACT_PATH, f"{source_path}: wrong contract path")
+    _require(contract.get("version") == REPORT_VERSION, f"{source_path}: wrong contract version")
+    _require(contract.get("commit") == CONTRACT_COMMIT, f"{source_path}: report is not pinned to the frozen contract commit")
+
+    source = report.get("source")
+    _require(isinstance(source, dict), f"{source_path}: source must be an object")
+    _require(COMMIT_RE.fullmatch(str(source.get("commit", ""))) is not None, f"{source_path}: source.commit must be 40 lowercase hex characters")
+    _require(isinstance(source.get("branch"), str) and source["branch"], f"{source_path}: source.branch is required")
+    _require(isinstance(source.get("generated_at"), str) and source["generated_at"], f"{source_path}: source.generated_at is required")
+    _require(isinstance(source.get("note"), str) and source["note"], f"{source_path}: source.note is required")
+
+    authority = report.get("authority")
+    _require(isinstance(authority, dict), f"{source_path}: authority must be an object")
+    _require(_string_list(authority.get("owns"), "authority.owns"), f"{source_path}: authority.owns may not be empty")
+    _string_list(authority.get("does_not_own"), "authority.does_not_own")
+    _require(_string_list(authority.get("non_transfer"), "authority.non_transfer"), f"{source_path}: authority.non_transfer may not be empty")
+
+    portfolio_role = report.get("portfolio_role")
+    _require(isinstance(portfolio_role, dict), f"{source_path}: portfolio_role must be an object")
+    _require(isinstance(portfolio_role.get("summary"), str) and portfolio_role["summary"], f"{source_path}: portfolio_role.summary is required")
+    reports_to = portfolio_role.get("reports_to")
+    _require(isinstance(reports_to, dict), f"{source_path}: portfolio_role.reports_to must be an object")
+    _require(reports_to.get("repository") == CONTRACT_REPOSITORY, f"{source_path}: reports_to.repository must be skill-lib")
+    _require(reports_to.get("skill") == "interdependent-work-graph", f"{source_path}: reports_to.skill must be interdependent-work-graph")
+    _require(isinstance(reports_to.get("relation"), str) and reports_to["relation"], f"{source_path}: reports_to.relation is required")
+
+    status = report.get("status")
+    _require(isinstance(status, dict), f"{source_path}: status must be an object")
+    _require(isinstance(status.get("state"), str) and status["state"], f"{source_path}: status.state is required")
+    _require(isinstance(status.get("current_claim"), str) and status["current_claim"], f"{source_path}: status.current_claim is required")
+
+    delivered = report.get("delivered")
+    _require(isinstance(delivered, list), f"{source_path}: delivered must be an array")
+    for index, item in enumerate(delivered):
+        _require(isinstance(item, dict), f"{source_path}: delivered[{index}] must be an object")
+        for key in ("surface", "status", "boundary"):
+            _require(isinstance(item.get(key), str) and item[key], f"{source_path}: delivered[{index}].{key} is required")
+
+    _string_list(report.get("active_frontier"), "active_frontier")
+    _string_list(report.get("blocked"), "blocked")
+    _string_list(report.get("hmmm"), "hmmm")
+
+    actions = report.get("next_actions")
+    _require(isinstance(actions, list), f"{source_path}: next_actions must be an array")
+    for index, action in enumerate(actions):
+        _require(isinstance(action, dict), f"{source_path}: next_actions[{index}] must be an object")
+        for key in ("action", "owner", "dependency"):
+            _require(isinstance(action.get(key), str), f"{source_path}: next_actions[{index}].{key} must be a string")
+        _require(bool(action["action"] and action["owner"]), f"{source_path}: next_actions[{index}] requires action and owner")
+
+    relations = report.get("cross_repository_relations")
+    _require(isinstance(relations, list), f"{source_path}: cross_repository_relations must be an array")
+    for index, relation in enumerate(relations):
+        _require(isinstance(relation, dict), f"{source_path}: cross_repository_relations[{index}] must be an object")
+        _require(isinstance(relation.get("repository"), str) and relation["repository"].count("/") == 1, f"{source_path}: invalid relation repository")
+        _require(isinstance(relation.get("relation"), str) and relation["relation"], f"{source_path}: relation text is required")
+        _require(relation.get("authority_transfer") is False, f"{source_path}: authority transfer must be false")
+
+    entrypoints = report.get("machine_entrypoints")
+    _require(isinstance(entrypoints, dict) and entrypoints, f"{source_path}: machine_entrypoints must be a non-empty object")
+    _require(all(isinstance(k, str) and k and isinstance(v, str) and v for k, v in entrypoints.items()), f"{source_path}: machine_entrypoints keys and values must be non-empty strings")
+
+
+def load_report(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    _require(isinstance(value, dict), f"{path}: report root must be an object")
+    validate_report(value, path)
+    return value
+
+
+def build_portfolio(reports_with_paths: list[tuple[Path, dict[str, Any]]]) -> dict[str, Any]:
+    ordered = sorted(reports_with_paths, key=lambda item: item[1]["repository"])
+    repositories = [report["repository"] for _, report in ordered]
+    _require(len(repositories) == len(set(repositories)), "duplicate repository reports are not allowed")
+
+    generated_from = []
+    repository_views = []
+    relations = []
+    active_frontier = []
+    next_actions = []
+    blocked = []
+    hmmm = []
+
+    for path, report in ordered:
+        repository = report["repository"]
+        generated_from.append({
+            "repository": repository,
+            "source_commit": report["source"]["commit"],
+            "report_sha256": digest(report),
+            "input_path": path.as_posix(),
+        })
+        repository_views.append({
+            "repository": repository,
+            "authority": report["authority"],
+            "portfolio_role": report["portfolio_role"],
+            "status": report["status"],
+            "delivered": report["delivered"],
+            "machine_entrypoints": report["machine_entrypoints"],
+        })
+        for relation in report["cross_repository_relations"]:
+            relations.append({"from": repository, "to": relation["repository"], **{k: v for k, v in relation.items() if k != "repository"}})
+        active_frontier.extend({"repository": repository, "item": item} for item in report["active_frontier"])
+        next_actions.extend({"repository": repository, **action} for action in report["next_actions"])
+        blocked.extend({"repository": repository, "item": item} for item in report["blocked"])
+        hmmm.extend({"repository": repository, "item": item} for item in report["hmmm"])
+
+    body = {
+        "schema": PLAN_SCHEMA,
+        "version": PLAN_VERSION,
+        "contract": {
+            "repository": CONTRACT_REPOSITORY,
+            "report_schema_path": CONTRACT_PATH,
+            "report_schema_version": REPORT_VERSION,
+            "report_schema_commit": CONTRACT_COMMIT,
+        },
+        "generated_from": generated_from,
+        "repositories": repository_views,
+        "cross_repository_dependencies": sorted(relations, key=lambda x: (x["from"], x["to"], x["relation"])),
+        "active_frontier": active_frontier,
+        "next_actions": next_actions,
+        "blocked": blocked,
+        "hmmm": hmmm,
+    }
+    return {**body, "portfolio_plan_sha256": digest(body)}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("reports", nargs="+", type=Path, help="repo-owned repository-plan-report.json files")
+    parser.add_argument("--output", type=Path, help="write JSON to this path instead of stdout")
+    args = parser.parse_args()
+
+    reports = [(path, load_report(path)) for path in args.reports]
+    portfolio = build_portfolio(reports)
+    rendered = json.dumps(portfolio, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(rendered, encoding="utf-8")
+    else:
+        print(rendered, end="")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

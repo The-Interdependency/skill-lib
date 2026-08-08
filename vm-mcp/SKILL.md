@@ -222,7 +222,7 @@ The shipped checks cover:
 - loopback-only server configuration;
 - systemd host-write/capability confinement;
 - cloud metadata-address denial;
-- production SDK pin excluding prerelease v2.
+- current stable v2 `MCPServer` surface with removed v1 `FastMCP` excluded.
 
 The test suite does **not** prove the remote client's tunnel, auth, approval UI, or account plan works. Those require end-to-end contact with the actual client.
 
@@ -243,5 +243,5 @@ The test suite does **not** prove the remote client's tunnel, auth, approval UI,
 - Exact Secure MCP Tunnel provisioning commands are client/product infrastructure and must be taken from current official OpenAI documentation or the actual connected product surface; do not invent them.
 - Application-layer OAuth is intentionally not implemented in the loopback runtime because the default architecture assumes a private authenticated tunnel. A public-edge deployment would require a separate reviewed auth layer.
 - Root-level VM maintenance is deliberately not a generic tool. Named administration brokers should be added only when concrete operations are known.
-- The current stable MCP Python SDK observed on 2026-08-07 is v1.28.1 while v2.0.0b2 remains a prerelease; this skill pins the stable production line until official GA evidence changes that boundary.
+- The current stable MCP Python SDK observed on 2026-08-07 is v2; v1 is maintenance-only and its `FastMCP` import is removed from the current surface. Re-check the current major before future upgrades.
 - A private control plane is a door; the useful engineering question is not whether it opens, but exactly which room the hinges belong to.

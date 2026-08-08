@@ -25,9 +25,9 @@ ROOT = Path(__file__).resolve().parents[1]
 #   mutates: none
 #   cleanup: none
 #
-# id: check_vm_mcp_stable_sdk_pin
-#   proves: vm_mcp_production_sdk_not_prerelease
-#   call: self::test_requirements_exclude_prerelease_v2
+# id: check_vm_mcp_current_sdk_surface
+#   proves: vm_mcp_current_sdk_surface
+#   call: self::test_runtime_uses_current_v2_sdk
 #   mutates: none
 #   cleanup: none
 # === END CHECKS ===
@@ -57,11 +57,12 @@ class VmMcpAssetTests(unittest.TestCase):
         text = (ROOT / "systemd" / "vm-mcp.service").read_text(encoding="utf-8")
         self.assertIn("IPAddressDeny=169.254.169.254", text)
 
-    def test_requirements_exclude_prerelease_v2(self) -> None:
-        text = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-        self.assertIn("mcp>=1.28.1,<2", text)
-        self.assertNotIn("2.0.0b", text)
-        self.assertNotIn("2.0.0a", text)
+    def test_runtime_uses_current_v2_sdk(self) -> None:
+        requirements = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+        server = (ROOT / "server.py").read_text(encoding="utf-8")
+        self.assertIn("mcp>=2,<3", requirements)
+        self.assertIn("from mcp.server import MCPServer", server)
+        self.assertNotIn("from mcp.server.fastmcp", server)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ the skill. Treat it as the public contract.
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`,
    `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `skill-build`, `skill-usage`,
-   `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
+   `ssh-automation`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
 A machine-readable index is also available at `skills.json` if you
@@ -111,6 +111,7 @@ propagate from here.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
 - If you are creating a new skill, revising an existing skill, bringing skills into compliance, or designing a skill-specific test suite, load `skill-build/SKILL.md` and answer its trigger, source-of-truth, workflow, validation, and `hmmm` question sets before patching.
+- If you are writing, reviewing, or troubleshooting SSH automation, non-interactive remote commands, deployment scripts over SSH, or Cloud Shell copy-paste SSH blocks, load `ssh-automation/SKILL.md`; fail closed on host trust and identity, preserve stdin and PTY boundaries, quote remote scripts, and keep bulk pastes inside a child shell.
 - If any skill-lib skill materially shapes a task, also load `skill-usage/SKILL.md` and record exactly one use after its contribution is observable. Record unknown outcomes as `hmmm`; do not infer success from silence.
 
 ## Pointers

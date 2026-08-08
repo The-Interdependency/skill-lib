@@ -1,4 +1,4 @@
-# ratios: loc_comments=59:52 imports_exports=5:5 calls_definitions=18:7
+# ratios: loc_comments=57:52 imports_exports=6:5 calls_definitions=20:7
 """MCP server for bounded agent access to a private Linux VM.
 
 Usage guidance:
@@ -14,7 +14,8 @@ from __future__ import annotations
 import os
 from typing import Any, Callable
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server import MCPServer
+from mcp.types import ToolAnnotations
 
 from policy import (
     VmMcpConfig,
@@ -60,19 +61,17 @@ from policy import (
 #   then: the systemd network policy denies 169.254.169.254
 #   class: security
 #
-# id: vm_mcp_production_sdk_not_prerelease
+# id: vm_mcp_current_sdk_surface
 #   given: the runtime requirements are installed for production use
-#   then: the MCP Python SDK is constrained to the verified stable release line and excludes prerelease v2 until GA is verified
+#   then: the runtime uses the current stable v2 MCPServer surface and excludes the removed v1 FastMCP import
 #   class: dependency
 # === END CONTRACTS ===
 
-mcp = FastMCP(
-    "vm-mcp",
-    host="127.0.0.1",
-    port=int(os.environ.get("VM_MCP_PORT", "8765")),
-    streamable_http_path="/mcp",
-    stateless_http=True,
-    json_response=True,
+mcp = MCPServer("vm-mcp")
+
+READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
+WRITE_SHELL = ToolAnnotations(
+    readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True
 )
 
 
@@ -87,13 +86,13 @@ def _result(call: Callable[[], dict[str, Any]]) -> dict[str, Any]:
         return {"ok": False, "error_type": type(exc).__name__, "error": str(exc)}
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
+@mcp.tool(annotations=READ_ONLY)
 def vm_info() -> dict[str, Any]:
     """Return service identity, workspace root, shell state, and configured limits."""
     return _result(lambda: policy_vm_info(_config()))
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
+@mcp.tool(annotations=READ_ONLY)
 def list_directory(path: str = ".", max_entries: int = 200) -> dict[str, Any]:
     """List one directory under VM_MCP_ROOT without following outside symlinks."""
     return _result(
@@ -101,20 +100,13 @@ def list_directory(path: str = ".", max_entries: int = 200) -> dict[str, Any]:
     )
 
 
-@mcp.tool(annotations={"readOnlyHint": True, "openWorldHint": False})
+@mcp.tool(annotations=READ_ONLY)
 def read_text(path: str, max_bytes: int = 65536) -> dict[str, Any]:
     """Read bounded UTF-8-compatible text from a file under VM_MCP_ROOT."""
     return _result(lambda: policy_read_text(_config(), path, max_bytes=max_bytes))
 
 
-@mcp.tool(
-    annotations={
-        "readOnlyHint": False,
-        "destructiveHint": True,
-        "idempotentHint": False,
-        "openWorldHint": True,
-    }
-)
+@mcp.tool(annotations=WRITE_SHELL)
 def shell_exec(
     command: str,
     cwd: str = ".",
@@ -129,9 +121,16 @@ def shell_exec(
 
 
 def main() -> None:
-    mcp.run(transport="streamable-http")
+    mcp.run(
+        transport="streamable-http",
+        host="127.0.0.1",
+        port=int(os.environ.get("VM_MCP_PORT", "8765")),
+        streamable_http_path="/mcp",
+        stateless_http=True,
+        json_response=True,
+    )
 
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=59:52 imports_exports=5:5 calls_definitions=18:7
+# ratios: loc_comments=57:52 imports_exports=6:5 calls_definitions=20:7

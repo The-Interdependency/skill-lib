@@ -1,4 +1,3 @@
-# Current production-stable MCP Python SDK line as verified 2026-08-07.
-# Re-check the official SDK/PyPI release before production installation; migrate
-# to v2 once it is a stable PyPI release rather than a pre-release.
-mcp>=1.28.1,<2
+# Current stable MCP Python SDK major line as verified 2026-08-07.
+# Keep the upper bound so a future major cannot silently replace the runtime API.
+mcp>=2,<3

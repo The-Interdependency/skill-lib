@@ -61,6 +61,7 @@ llms/                  # python -m llms.build reference runner
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
 | `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
 | `skill-usage/` | procedural | — | Evidence-bearing local usage maturity. Counts material invocations, preserves unobserved outcomes as `hmmm`, and separates nominal exposure thresholds from quality-capped effective maturity. |
+| `ssh-automation/` | procedural | — | Fail-closed SSH automation and copy-paste delivery. Preserves verified endpoint identity, explicit authentication, local/remote shell and stdin boundaries, bounded retries, idempotent activation and rollback, and child-shell containment for bulk terminal pastes. |
 | `sql-queries/` | procedural | — | Correct, performant SQL across major warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL): dialect reference, CTE/window patterns, optimization, debugging checklist. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
 | `statistical-analysis/` | procedural | — | Statistical methods for analyses: descriptive stats, assumption checks, hypothesis testing, outlier detection, effect sizes, and plain-language interpretation. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
 | `explore-data/` | procedural | — | Dataset profiling: shape, grain, null/duplicate/quality checks, distributions, and which dimensions and metrics merit analysis. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
@@ -96,7 +97,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `skill-build/`, `skill-usage/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonal-morphology/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 
@@ -110,8 +111,8 @@ Two kinds:
 
 - The comment marker (`#`, `//`, `--`) is whatever is idiomatic for the file's language; the
   fence text and field structure are identical across languages.
-- `BLOCK_NAME` is uppercase snake case. Every entry begins with `id:` (unique within the block,
-  stable across refactors). Field lines are indented one level beneath the id.
+- `BLOCK_NAME` is uppercase snake case. Every entry begins with stable `id:`;
+  field lines are indented beneath the id.
 - A file may contain multiple blocks of the same or different types; parsers concatenate entries.
 - See `msdmd/SKILL.md` for the authoritative spec, reserved field names, and runner protocol.
 
@@ -240,8 +241,10 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
 11. Before promoting a word into canon, a theorem term, ontology primitive, schema field, encoding label, or cross-domain mapping, apply `domain-claims`: establish the domain-qualified sense and resolve collisions before attaching provenance; then apply `canon` to assess authority.
 12. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
+13. For SSH automation and large terminal pastes containing SSH, apply `ssh-automation`: verify endpoint identity and host trust, preserve local and remote interpreter boundaries, make retries and rollback explicit, and contain option/trap/exit effects inside a child shell.
 
 ## hmmm
 
 - propagation still requires review, commit, and pull request work in target repos
 - `char_compress_check.py` is deterministic fixture support, not the full Unit Circle Number System compression engine
+- provider-specific SSH wrappers must be rechecked against their current evaluated configuration rather than assumed to preserve OpenSSH defaults

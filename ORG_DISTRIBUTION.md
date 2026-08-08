@@ -44,6 +44,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations
+* `ssh-automation/` — fail-closed SSH scripting and copy-paste automation doctrine
 * `sql-queries/` — warehouse SQL authoring doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `statistical-analysis/` — statistical methods doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `explore-data/` — dataset profiling doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
@@ -151,6 +152,16 @@ or other semantic control surface, agents should read:
 
 Establish the applicable domain-qualified sense and resolve collisions before
 attaching provenance or authorizing structure.
+
+Before writing, reviewing, or troubleshooting repeatable SSH automation or a
+large terminal paste that contains SSH, agents should read:
+
+```text
+.agents/skills/ssh-automation/SKILL.md
+```
+
+Fail closed on endpoint identity and host-key trust, preserve local/remote shell
+boundaries, and keep bulk pasted error handling inside a child shell.
 
 Existing files are not retroactively noncompliant merely because they predate
 this skill.

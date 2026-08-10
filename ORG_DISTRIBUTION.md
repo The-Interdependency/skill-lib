@@ -45,6 +45,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations
 * `ssh-automation/` — fail-closed SSH scripting and copy-paste automation doctrine
+* `vm-mcp/` — private VM MCP control plane with loopback-only runtime, non-root shell, systemd host-write confinement, and private-tunnel deployment
 * `sql-queries/` — warehouse SQL authoring doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `statistical-analysis/` — statistical methods doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `explore-data/` — dataset profiling doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
@@ -162,6 +163,14 @@ large terminal paste that contains SSH, agents should read:
 
 Fail closed on endpoint identity and host-key trust, preserve local/remote shell
 boundaries, and keep bulk pasted error handling inside a child shell.
+
+Before giving an MCP-capable agent operational contact with a private VM, agents should read:
+
+```text
+.agents/skills/vm-mcp/SKILL.md
+```
+
+Keep SSH/OS Login credentials outside the model path, install the service loopback-only and non-root, establish private authenticated transport, prove read-only contact before enabling shell execution, and add privileged administration only as named bounded capabilities rather than a generic root shell.
 
 Existing files are not retroactively noncompliant merely because they predate
 this skill.

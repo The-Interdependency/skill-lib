@@ -42,6 +42,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations
 * `ssh-automation/` — fail-closed SSH scripting and copy-paste automation doctrine
@@ -153,6 +154,19 @@ or other semantic control surface, agents should read:
 
 Establish the applicable domain-qualified sense and resolve collisions before
 attaching provenance or authorizing structure.
+
+Before choosing between the smallest decisive action and a maximal coherent program,
+selecting the highest-leverage next step under constrained time, attention, money,
+compute, or coordination, or deciding whether a bounded falsifier should precede a
+full build, agents should read:
+
+```text
+.agents/skills/action-calibration/SKILL.md
+```
+
+Name the decision, preserve load-bearing invariants, compare complete cost vectors,
+freeze outcome-conditioned escalation rules, and let `loop-eng` execute the selected
+bounded loop.
 
 Before writing, reviewing, or troubleshooting repeatable SSH automation or a
 large terminal paste that contains SSH, agents should read:

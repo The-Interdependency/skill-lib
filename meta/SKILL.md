@@ -1,221 +1,105 @@
 ---
 name: meta
-description: Meta Energy Theory Axioms — the agent skill for extracting, preserving, and applying Energy Theory root axioms, derived law families, and cross-domain resonances without flattening them into EDCMBONE flesh/bone or FLAR implementation detail. Load this when asked to define or extend Energy Theory; when comparing Ohm, Fick, Green, chemistry, electronics, linguistics, computation, cognition, or social-system resonances; when documenting gradients, flow, coupling, threshold, phase, resonance, closure, fiqs, Ficks Law, or small network architectures; or when a repo needs an Energy Theory narrative that keeps axiom, law, resonance, postulate, and interface doctrine distinct.
+description: METAPAT consultation router for The Interdependency. Load this when deciding which distinctions, relations, boundaries, transformations, scales, or cross-domain correspondences should organize downstream work; when the-interdependency skill's METAPAT consultation gate triggers; when an unresolved conceptual choice would constrain architecture, semantics, measurement, ontology, or later claims; or when explicitly asked to consult, apply, or interpret current METAPAT. Do not load merely for routine implementation under already-fixed conceptual contracts.
 ---
 
-# meta — Meta Energy Theory Axioms
+# meta — consult current METAPAT
 
-`meta` means **Meta Energy Theory Axioms**.
+This skill does not contain METAPAT doctrine.
 
-This skill exists because Energy Theory is being extracted through resonances among
-small network architectures, and those resonances are easy to flatten into the
-wrong native vocabulary or the wrong status category.
+Its purpose is to recognize when METAPAT is required, retrieve the current source, and return the relevant conceptual boundary without creating a competing frozen copy inside `skill-lib`.
 
-## Native scope
+## Source of truth
 
-Energy Theory is intended as a theory of all energy. Its current extraction method
-is the study of **emergent conceptual properties of constrained relational
-architectures**, especially small network architectures whose behavior cannot be
-recovered from isolated parts alone.
+Current `The-Interdependency/metapat` outranks this skill on every METAPAT claim.
 
-Use Energy Theory's native terms first:
+When this skill loads, inspect the current repository state before reasoning from METAPAT. Start with the files relevant to the question, normally including:
 
-```text
-energy
-distinction
-relation
-architecture
-gradient
-flow
-medium / geometry
-coupling
-rate
-phase
-threshold
-capacity
-impedance
-resonance
-closure
-boundary
-persistence
-recursion
-emergence
-```
+- `AXIOMS.md` for root commitments;
+- `POSTULATES.md` for revisable working commitments;
+- `DOMAIN_RESTRAINT.md` for cross-domain transfer boundaries;
+- `THEORIES.md`, `THEOREMS.md`, `CHAPTER_ZERO.md`, or implementation documents when directly relevant.
 
-Do **not** replace those terms with `flesh` / `bone` as root Energy Theory
-vocabulary. Flesh/bone belongs natively to `edcmbone`. It may be used as a
-resonance example or translation layer, not as the parent ontology.
+Do not substitute historical wording from this repository, memory, another repo, or an older METAPAT commit when current METAPAT is available.
 
-## Status doctrine
+## Consultation gate
 
-1. **Axioms are rare.** A root axiom must be self-evident once terms are defined.
-   If it needs a formula, an empirical domain, or FLAR implementation to make it
-   plausible, it is probably not a root axiom.
-2. **Relation is broader than permission.** A relation can connect, oppose,
-   exclude, constrain, block, or enable. Traversability, permission, and
-   availability are derived properties of relations inside constraint-sets, not
-   requirements for relation to exist.
-3. **Resonance is not identity.** Ohm's law, Fick's law, Green response,
-   Arrhenius kinetics, phonemic contrast, semantic context, and fiq-mediated
-   PCNA flow may rhyme. They do not become the same equation merely because they
-   rhyme.
-4. **Formulae are bridges, not thefts.** When importing a formula from physics,
-   chemistry, electronics, information theory, linguistics, or another domain,
-   name the source domain and state what transfers.
-5. **Small architecture is the microscope, not the boundary.** Atomic structure,
-   circuits, molecules, social triads, linguistic contexts, and PCTA heptagrams
-   are small architectures through which more general energy behavior becomes
-   legible.
-6. **Keep EDCMBONE separate.** EDCM/EDCMBONE measure semantic fidelity and
-   meaning-operator behavior. Energy Theory studies energy behavior across
-   architectures. They resonate; they are not identical.
-7. **Mark status.** Use `axiom`, `definition`, `derived law-family`, `resonance`,
-   `FLAR postulate`, `FLAR implementation law`, or `interface doctrine` before
-   extending canon. Unproven transfer claims remain `hmmm`.
+Consult METAPAT when the work must decide **what relation, distinction, boundary, transformation, scale, or cross-domain correspondence should exist or matter** before downstream implementation can proceed.
 
-## Required companion files
+Strong triggers:
 
-When this skill loads, read these files before applying it:
+- choosing or revising an architecture-level distinction;
+- deciding whether a boundary deserves independent status;
+- relating similarly shaped transformations across different domains;
+- importing a domain term, formula, metaphor, ontology, or explanatory structure into another layer;
+- deciding what remains invariant across scale or representation change;
+- separating design choice, aesthetic choice, discovery heuristic, empirical claim, mathematical claim, and implementation dependency when that classification changes architecture;
+- an unexplained but productive discovery path is being removed only because its mechanism is not yet known;
+- two repositories disagree because they encode different conceptions of the same relation rather than because of an implementation defect;
+- deciding whether a simpler independent recovery invalidates, merely verifies, or should replace a richer discovery path.
 
-- [`AXIOMS.md`](AXIOMS.md) — the strict root axiom core. Currently: Distinction,
-  Relation, Coupled Emergence, and Ordered Transformation.
-- [`LAW_FAMILIES.md`](LAW_FAMILIES.md) — derived operational law families,
-  resonance formulae, and FLAR postulates that are useful but not root axioms.
-- [`OVERLAP_GRID.md`](OVERLAP_GRID.md) — cross-domain overlap grid showing status,
-  examples, informing resonance, transfer, and limits.
-- [`LOAD_BEARING_LINES.md`](LOAD_BEARING_LINES.md) — interface doctrine: the
-  load-bearing seams where Energy Theory, FLAR, EDCM, EDCMBONE, and The
-  Interdependent Way touch without becoming each other.
+Do not consult METAPAT merely for:
 
-## Core extraction
+- routine refactors under fixed contracts;
+- dependency or runtime-version updates;
+- deterministic ingestion or serialization;
+- tests whose expected relation is already declared;
+- formatting, packaging, CI, deployment, or syntax repair;
+- independent recovery after the discovery result and comparison criterion are already frozen, unless the recovery exposes a new conceptual boundary.
 
-The first extraction came from the homonym chain:
+## Workflow
+
+1. State the conceptual question that triggered consultation in one sentence.
+2. Read current METAPAT source relevant to that question.
+3. Distinguish root axiom, postulate, theory, theorem, implementation, example, and `hmmm`; do not transfer status between them.
+4. If crossing domains, state what relation or question-form transfers and what does not.
+5. Apply only enough METAPAT to resolve the downstream choice. Do not turn consultation into compulsory theory expansion.
+6. Return the decision boundary to the calling task, including any unresolved constraint that still matters.
+7. Continue implementation locally once the conceptual relation is fixed.
+
+## Discovery boundary
+
+METAPAT consultation must not become a requirement that every exploratory architecture justify itself before discovery.
+
+Interest may select exploration. Discovery may precede explanation. Freeze discoveries before independent recovery. A simpler recovery path tests a result; it does not automatically invalidate the richer path that discovered it.
+
+Consultation is required when a conceptual commitment would constrain downstream work, not merely because an unusual or complex choice exists.
+
+## Output
+
+Keep consultation compact:
 
 ```text
-fix → fiq → fiqs → ficks → Fick's
+question: <conceptual boundary>
+METAPAT standing: <axiom | postulate | theory | theorem | implementation | hmmm>
+relevant relation: <what current METAPAT contributes>
+transfers: <what may guide this task>
+does not transfer: <what remains domain/local>
+downstream consequence: <what can now proceed>
+hmmm: <remaining unresolved constraint>
 ```
 
-The accidental collision with Fick's law led to comparison with Ohm's law. The
-shared skeleton was:
+## Validation
 
-```text
-difference across architecture
-→ possible flow
-→ actual flow governed by medium / geometry
-```
+A valid consultation:
 
-Canonical first law-family extraction:
-
-```text
-Gradient permits flow; architecture determines flow.
-```
-
-Sharper form:
-
-```text
-Difference does not move by itself.
-Difference moves only through available geometry.
-```
-
-This is not the root axiom core. It derives from Distinction plus Relation plus
-a traversability condition inside domain architecture.
-
-## Root axiom core
-
-```text
-0. Distinction
-    Without distinction, nothing is legible.
-
-1. Relation
-    Relation does not require permission.
-
-2. Coupled Emergence
-    Relations can possess properties not possessed by isolated terms.
-
-3. Ordered Transformation
-    Order can change what a transformation is.
-```
-
-## FLAR relation
-
-This skill does not implement FLAR. It supplies Energy Theory axioms, law-family
-language, and resonance boundaries for FLAR repo narratives and agent reasoning.
-
-Current FLAR mapping:
-
-```text
-PCNA
-    tensor/state substrate; all tensors belong here
-
-PCTA
-    heptagram transformation geometry; PCNA-agnostic and PTCA-agnostic
-
-PTCA
-    core assignment and rate ordering; PCNA-agnostic
-
-fiqs
-    ticks per tock; temporal continuity events
-
-Ficks Law
-    fiq-mediated flow rule through PCNA using PCTA geometry under PTCA assignment
-```
-
-Inference condition:
-
-```text
-inference occurs when all three cores fiq simultaneously
-```
-
-These are FLAR postulates / implementation laws, not root Energy Theory axioms.
-
-## EDCMBONE relation
-
-EDCMBONE may translate some Energy Theory behavior into semantic-fidelity terms:
-
-```text
-therefore      transfer / licensed movement
-nonetheless    constraint preservation
-hmmm           unresolved boundary object
-valid          second-order rule-conformity marker
-```
-
-This is a resonance and translation, not an Energy Theory root.
-
-## Workflow: load-bearing lines
-
-When applying Meta Energy Theory, preserve interface distinctions.
-
-Do not collapse:
-
-- Energy Theory into EDCMBONE.
-- EDCMBONE into linguistics.
-- PCTA geometry into PCNA tensors.
-- Fiq traversal into energy.
-- PTCA assignment into PCTA geometry.
-- Resonance into identity.
-- Provenance into fluency.
-- hmmm into decoration.
-
-A load-bearing line is a distinction whose collapse changes system behavior.
+- cites or identifies current METAPAT source rather than remembered doctrine;
+- does not promote domain-specific language into METAPAT root authority;
+- does not transfer theorem/proof/empirical status across repositories or domains;
+- resolves or isolates the conceptual choice that blocked downstream work;
+- leaves routine implementation outside METAPAT once the boundary is fixed;
+- preserves `hmmm` rather than inventing closure.
 
 ## Anti-patterns
 
-- Treating resonance as identity between systems.
-- Promoting a FLAR implementation law into an Energy Theory root axiom.
-- Collapsing EDCMBONE semantics into Energy Theory or Energy Theory into
-  EDCMBONE.
-- Removing `hmmm` from unproven equivalence or unresolved formalization.
+- Duplicating METAPAT doctrine inside skill-lib.
+- Consulting METAPAT for every implementation detail.
+- Treating elegance, interest, similarity, or explanatory reach as evidence.
+- Treating lack of explanation as evidence that an exploratory choice is invalid.
+- Treating independent recovery as proof that the discovery architecture was unnecessary.
+- Using a domain's vocabulary to redefine METAPAT because the analogy is convenient.
+- Resolving a live conceptual disagreement by silently choosing the more familiar interpretation.
 
-## Output shape when applying this skill
+hmmm
 
-When asked to extend or apply Energy Theory, produce:
-
-1. status classification: axiom, definition, derived law-family, resonance, FLAR
-   postulate, FLAR implementation law, or interface doctrine;
-2. the candidate statement in Energy Theory native terminology;
-3. at least three resonance examples from existing conceptual understandings for
-   law-families or resonance claims;
-4. full domain formulae for those examples where formulae exist;
-5. a statement of what transfers and what does not;
-6. an overlap note: which example informs the other two;
-7. `hmmm` for unproven equivalence or unresolved formalization.
+The calling harness may not support automatic cross-repository retrieval. When current METAPAT cannot be read, report that consultation is required and preserve the unresolved boundary rather than falling back to this skill as theory authority.

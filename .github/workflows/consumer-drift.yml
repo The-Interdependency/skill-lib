@@ -30,7 +30,6 @@ jobs:
         consumer:
           - interdependent-lib
           - ucns
-          - edcmbone
           - edcm
           - zfae
           - eml_ucns

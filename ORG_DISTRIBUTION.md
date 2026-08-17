@@ -61,7 +61,6 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 
 * `The-Interdependency/a0`
 * `The-Interdependency/ucns`
-* `The-Interdependency/edcmbone`
 * `The-Interdependency/edcm`
 * `The-Interdependency/interdependent-lib`
 * `The-Interdependency/aimmh`
@@ -79,8 +78,9 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
   repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
   embeds carry their own copies; re-sync those from their source repos.
-**Superseded** — folded into `ptcna` and pending archival; not tracked:
+**Archived or superseded** — not active drift consumers:
 
+* `The-Interdependency/edcmbone` — archived; maintained EDCM work lives in `edcm`
 * `The-Interdependency/PTCA`, `The-Interdependency/pcna` (→ `ptcna`)
 
 Add a repo to the active list — and the drift matrix — once it carries a

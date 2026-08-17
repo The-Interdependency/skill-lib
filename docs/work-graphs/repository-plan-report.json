@@ -10,7 +10,7 @@
   },
   "source": {
     "branch": "agent/portfolio-plan-projection",
-    "commit": "5f16b5617cec7474acb14de951bb24786e3a0441",
+    "commit": "b9fe10ca0326d3ff8ad191d0922278143420bc14",
     "generated_at": "2026-08-07",
     "note": "This report describes the exact portfolio-plan implementation commit immediately beneath this report refresh. The refresh commit is coordination metadata and does not acquire semantic, mathematical, measurement, runtime, or empirical authority from consuming repositories."
   },

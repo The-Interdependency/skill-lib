@@ -65,11 +65,21 @@ layer without importing unrelated ambitions.
 7. **Preserve optionality.** Avoid irreversible commitments before evidence requires
    them.
 8. **Freeze criteria before evaluation.** Do not select targets, metrics, controls, or
-   stopping rules after seeing the result.
-9. **Escalate by rule, not momentum.** The result determines whether the next action is
+   scientifically meaningful stopping rules after seeing the result.
+9. **Preflight scarce resources before execution.** Resource scarcity requires
+   contemplation before a compute run begins. Decide whether the available compute,
+   memory, disk, power, network, quotas, usage limits, and durable execution time are
+   sufficient for the selected action to reach its natural terminal condition. If
+   there is material doubt, do not start the run; resize, stage/checkpoint, relocate,
+   acquire resources, or leave it `hmmm`. Once a healthy run begins, let it finish.
+   Do not invent a wall-clock ceiling merely because the action is described as
+   bounded or falsifiable. Runtime/resource ceilings are stopping criteria only when
+   they are load-bearing to the claim or acceptance criterion, an authorized safety
+   boundary, or a real externally imposed hard limit fixed before launch.
+10. **Escalate by rule, not momentum.** The result determines whether the next action is
    stop, redirect, repair a prerequisite, or enter the maximal program.
-10. **Carry `hmmm`.** Unknown cost, coupling, interpretation, and authority boundaries
-    remain visible.
+11. **Carry `hmmm`.** Unknown cost, coupling, interpretation, authority, and completion
+    feasibility boundaries remain visible.
 
 ## The action record
 
@@ -89,7 +99,7 @@ minimal_decisive_action:
   unresolved_outcome: <failed prerequisite or ambiguity and next action>
   prerequisites:
     - <must already be true>
-  stop_condition: <when this action is complete>
+  stop_condition: <semantic/computational completion condition; not an arbitrary timeout>
   reusable_outputs:
     - <artifact reused by later work>
 
@@ -108,6 +118,13 @@ cost_vector:
   compute: low | medium | high | hmmm
   coordination: low | medium | high | hmmm
   operational_risk: low | medium | high | hmmm
+
+resource_preflight:
+  completion_feasible: yes | no | hmmm
+  externally_imposed_hard_limits:
+    - <actual limit or none>
+  scientific_resource_stop_rule: <justified load-bearing criterion or none>
+  execution_durability: <why the run can reach its natural terminal condition>
 
 choice: minimal | maximal | prerequisite_repair | immediate_containment
 rationale: <why this size is appropriate>
@@ -178,6 +195,19 @@ Match evidence strength to the claim. A mesh can guide a search; it cannot silen
 become an exact theorem. A focused test can validate one contract; it cannot silently
 become production readiness.
 
+### 9. Completion-feasibility test
+
+Before starting a compute run, ask:
+
+> Given the actual scarce resources and execution environment, do I have sufficient
+> reason to expect this run can reach its natural terminal condition?
+
+If `no`, do not start it. If `hmmm`, resolve the resource uncertainty first or redesign
+for safe staging/checkpointing. Do not compensate for uncertainty by starting anyway
+and attaching an arbitrary wall-clock timeout. Once started, a healthy run continues
+to completion or deterministic computational failure unless an explicit user
+cancellation or unforeseen real resource/safety emergency requires interruption.
+
 ## Default choice
 
 Choose the **minimal decisive action first** when it:
@@ -187,7 +217,8 @@ Choose the **minimal decisive action first** when it:
 - changes the branch under at least two outcomes;
 - preserves all load-bearing invariants;
 - emits reusable evidence;
-- has a clear stop condition;
+- has a clear semantic/computational stop condition;
+- has passed the completion-feasibility preflight;
 - does not create disproportionate safety or irreversibility risk.
 
 Choose the **maximal coherent action directly** when one or more are true:
@@ -214,7 +245,7 @@ Use qualitative values; do not invent false precision.
 |---|---|---|
 | Decision changed by result | required | required |
 | Scope | one load-bearing unknown | one complete decision layer |
-| Stop condition | exact and near-term | exact and layer-closing |
+| Stop condition | exact and claim-relevant | exact and layer-closing |
 | Cost | lowest burden that remains decisive | highest burden justified by closure |
 | Reuse | should feed later work | should consolidate prior work |
 | Failure surface | narrow and diagnosable | broader, with explicit sub-gates |
@@ -245,17 +276,24 @@ This is a comparison aid, not a universal numerical formula.
 6. **Run the decisiveness tests.**
 7. **Compare the complete cost vectors.**
 8. **Choose minimal, maximal, prerequisite repair, or containment.**
-9. **Freeze target, metrics, controls, and escalation rules before execution.**
-10. **Execute with a closed loop.** Cross-load `loop-eng` for repeated
-    execute→verify→iterate work.
-11. **Record the result and re-calibrate.** Do not continue merely because the tools
+9. **Preflight resource sufficiency.** If the chosen run cannot reasonably be expected
+   to finish with available scarce resources, do not launch it. Resize, stage,
+   checkpoint, relocate, acquire resources, or leave it `hmmm`.
+10. **Freeze target, metrics, controls, and only genuinely load-bearing stopping rules
+    before execution.** Do not manufacture a wall-clock limit merely because a
+    protocol is preregistered.
+11. **Execute with a closed loop.** Cross-load `loop-eng` for repeated
+    execute→verify→iterate work. Once a healthy compute run starts, let it reach its
+    natural terminal condition.
+12. **Record the result and re-calibrate.** Do not continue merely because the tools
     and branch are already open.
-12. **Promote repeated patterns through `canon`, not by accidental repetition.**
+13. **Promote repeated patterns through `canon`, not by accidental repetition.**
 
 ## Relationship to other skills
 
 - **`loop-eng`** executes the chosen bounded loop and enforces success and stop
-  conditions. `action-calibration` decides how large that loop should be.
+  conditions. `action-calibration` decides how large that loop should be. “Bounded”
+  scopes the decision/work; it does not imply an arbitrary elapsed-time cutoff.
 - **`interdependent-work-graph`** resolves cross-repository participants and authority.
   `action-calibration` decides which bounded slice of the graph to execute now.
 - **`meta-module-build`** scopes one implementation module after the action size is
@@ -294,6 +332,12 @@ When this skill is active, return:
 - Excluded:
 - Completion condition:
 
+## Resource preflight
+- Completion feasible:
+- Hard external limits:
+- Claim-relevant resource stop rule:
+- Execution durability:
+
 ## Comparison
 | criterion | minimal | maximal |
 
@@ -315,9 +359,13 @@ A successful application demonstrates that:
 - the maximal program is coherent and bounded rather than merely large;
 - prerequisites capable of invalidating interpretation are explicit;
 - all important cost dimensions are considered;
+- resource sufficiency is contemplated before any compute run begins;
+- a run with material doubt about completion is not started;
 - target and escalation rules are frozen before evaluation;
+- only scientifically or externally load-bearing resource limits become stopping rules;
+- once started, a healthy compute run is allowed to reach its natural terminal condition;
 - the minimum preserves a path into the maximal program;
-- a stop condition prevents momentum-driven continuation;
+- a stop condition prevents momentum-driven continuation without becoming an arbitrary runtime cutoff;
 - existing skills are cross-loaded rather than duplicated;
 - unresolved boundaries remain `hmmm`.
 
@@ -333,8 +381,12 @@ A successful application demonstrates that:
 - Solving a cross-repository or semantic problem inside the convenient open folder.
 - Retrying an unavailable tool surface instead of preserving a bounded artifact and
   declaring the capability boundary.
+- Starting a compute run when completion feasibility is still materially uncertain.
+- Inventing a wall-clock timeout merely because a test or protocol should be “bounded.”
+- Stopping a healthy compute run after launch because a non-load-bearing arbitrary
+  resource ceiling was chosen instead of doing adequate preflight.
 - Continuing because work has already begun rather than because the escalation rule
-  was met.
+  was met after the current run reaches its terminal condition.
 - Downscoping away a load-bearing part of the user's request.
 - Using “resource saving” to justify unsafe, incomplete, or misleading evidence.
 

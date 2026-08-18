@@ -11,6 +11,12 @@ agent skills. Every other repo in the org carries a repo-local copy of
 this lib under `.agents/skills/`; this is the source of truth those
 copies are propagated from.
 
+## Resource-run invariant — binding
+
+Read [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) before any compute run whose completion depends materially on scarce resources.
+
+**Resource scarcity requires contemplation BEFORE a compute run begins. Once begun, let it finish. If there is doubt you can finish it, do not start it.** Do not invent a wall-clock cutoff merely to make a healthy computation bounded or falsifiable; runtime is a stopping criterion only when it is actually load-bearing to the claim, safety boundary, or an externally imposed hard limit.
+
 ## What lives here
 
 ```text
@@ -119,6 +125,7 @@ propagate from here.
 
 - `README.md` — human-facing overview, what's-inside table, msdmd
   block syntax.
+- `RESOURCE_RUN_INVARIANT.md` — binding preflight-and-finish execution doctrine for scarce compute/resources.
 - `ORG_DISTRIBUTION.md` — canonical-source rule, target repos,
   propagation contract.
 - `skills.json` — machine-readable skill index.

@@ -1,144 +1,192 @@
 ---
 name: gonal-morphology
-description: Canonical three-core gonal morphology for The Interdependency — how text decomposes/recomposes as UCNS objects across a character→root/bone/word→phrase/clause ladder under one carrier-LCM operator (⊠ = UCNS multiplyFuel). Load this when working on gonal morphology, inscription, the omega/phi/psi cores, bone-vs-flesh (closed-class vs open-class) classification, or composing/decomposing text via the UCNS product. Recomposition (building wider carriers from narrower ones) RUNS today; decomposition (factoring them back) is domain-confirmed (UCNS `AlignedComplete`) but proof-pending — never represent decomposition as machine-verified.
+description: Current UCNS affixiation and morphology boundary. Load when working on gonol composition across scale, lexical morphology, recursive closure, atomic gonols, or direct interscale coupling. Affixiation is scale-invariant: gonols couple, the relationship enters the resulting gonol, closure produces a new gonol, and the result becomes atomic at the next scale. Morphological prefixes/suffixes are one linguistic instance, not the definition of affixiation. The final English root/stem/affix/transformation law is unresolved; do not import the historical omega/phi/psi three-core model as current canon.
 ---
 
-# gonal-morphology — three cores, three grains, one operator
+# gonal-morphology — affixiation across scale
 
-The gonal morphology models language as **UCNS objects** built and taken apart
-by a single operator. Three cores carry three grains of structure; the operator
-is the UCNS carrier-LCM product (`⊠ = multiplyFuel`), applied at every rung of a
-depth ladder. **Recomposition** (narrow → wide) runs on the existing UCNS engine
-today; **decomposition** (wide → narrow) rests on UCNS left-cancellativity, whose
-domain is settled but whose proof is still `sorry`. This skill is canon
-documentation, not new math.
+This skill records the current operational doctrine needed by Codex when UCNS work crosses character, morphology, definition, and deeper recursive scales.
 
-Canonical system name (recorded verbatim): `ucns~|a0((zfae) PTCA)|gpt`.
+The earlier three-core `omega / phi / psi` morphology, fixed bone/flesh classification, and claim that one carrier-LCM product already supplies the full language decomposition are **historical candidate material, not current morphology canon**. Do not use those assumptions to fill unresolved gaps.
 
-<!-- The block below honours the handoff's "manifest-first" requirement
-     (meta-module-build). RATIOS (the other requested discipline) is omitted:
-     RATIOS bookends are for executable/source files, not Markdown SKILL.md
-     documentation files. -->
+## Core invariant
 
+Affixiation is the scale-invariant composition pattern:
+
+```text
+atomic gonol(s)
+    ↓ couple / affixiate
+relationship enters the resulting gonol
+    ↓ closure
+new gonol
+    ↓
+atomic at its scale
 ```
-# === MODULE_BUILD ===
-# id: gonal_morphology_skill
-#   module_name: gonal-morphology
-#   module_kind: skill
-#   summary: Canon for the three-core (omega/phi/psi) gonal morphology and the carrier-LCM operator over the char→word→clause depth ladder.
-#   owner: Erin Patrick Spencer
-#   public_surface: the three-core/three-grain table, the depth ladder, the ⊠=carrier-LCM operator, the bone/flesh sourcing rule
-#   internal_surface: none (procedural doctrine; no executable code shipped here)
-#   auth_boundary: none
-#   storage_boundary: none
-#   network_boundary: none
-#   user_data_boundary: none
-#   admin_only: false
-#   tests: none shipped; the operator's backing is UCNS carrier_lcm_law + multiply_left_cancellative (sorry-backed in formal/Ucns/Core.lean)
-#   rollout: docs-only; canon recorded, awaiting Erin's ratification before any publish
-#   rollback: remove gonal-morphology/ and its index rows (skills.json, README, AGENTS, ORG_DISTRIBUTION, CLAUDE)
-#   unresolved: decomposition proof still sorry (domain AlignedComplete confirmed); "seed = phrase or clause" collapsed by ruling; canonical-name notation not yet expanded
-# === END MODULE_BUILD ===
-```
+
+A completed gonol may retain arbitrarily rich internal construction, but the next scale consumes it as one atomic object unless the task explicitly reopens it.
+
+`atomic` therefore means **indivisible for participation at the current higher scale**, not internally structureless and not provenance-free.
 
 ## Load this when
 
-- Decomposing or recomposing text through the gonal cores or the UCNS product.
-- Classifying tokens as **bone** (operator/structural) vs **flesh** (content).
-- Reasoning about the omega/phi/psi cores, their weights, or the depth ladder.
-- Building inscription / morphology tooling that should **reuse** the UCNS
-  operator rather than reimplement it.
+- constructing words from character gonols;
+- investigating roots, stems, affixes, inflections, derivations, transformations, compounds, or irregular morphology;
+- composing definition gonols from already-atomic word gonols;
+- designing recursion where completed definition gonols participate as atomic objects;
+- reasoning about compression created by recursive closure;
+- implementing or reviewing direct coupling between gonols at different recursive scales;
+- deciding whether an implementation has incorrectly externalized a relationship that should be intrinsic to a gonol.
 
-## Three cores, three grains
+## Scale is not one-way
 
-| core | weight | carries | layer |
-|---|---|---|---|
-| **omega** | 0.8 | **bones** — characters + affixes + closed-class words | operator / structural |
-| **phi** | 0.4 | **roots** — open-class stems | content primitive |
-| **psi** | 1.0 | **words** — `phi ⊠ omega` (carrier-LCM) | composed surface |
+A larger-scale gonol may couple a smaller-scale gonol and a smaller-scale gonol may couple a larger-scale gonol.
 
-## The depth ladder (one object kind at every rung)
+Direct coupling across non-adjacent recursive scales is allowed by the current UCNS architecture. Do not require a relation to reopen and traverse every intermediate closure merely because that is easier to implement.
 
-| depth | rung | omega | phi | psi |
-|---|---|---|---|---|
-| 0 | **leaf** | 157 characters | 157 characters | 157 characters (uniform across all three cores) |
-| 1 | **circle** | bones | roots | **words = `lcm(phi, omega)`** |
-| 2 | **seed** | — | — | **phrase _or_ clause** |
+```text
+high-scale gonol
+       ↘
+         direct coupling
+       ↗
+low-scale gonol
+```
 
-- **Leaf (depth-0)** is uniform: the same 157-character alphabet under all three
-  cores.
-- **Circle (depth-1)** is where the cores differ: omega holds bones, phi holds
-  roots, psi is their carrier-LCM (the word).
-- **Seed (depth-2)** is a phrase **or** a clause — and **the distinction is
-  immaterial under the LCM**: both are the same object, a wider carrier composed
-  from narrower ones. (Erin ruled: same thing for our purposes.)
+Both participants remain atomic at their own scales.
 
-## The operator: ⊠ = carrier-LCM = UCNS `multiplyFuel`
+The executable geometry for distant interscale coupling remains to be demonstrated once corresponding gonols exist. Permission to couple directly is architectural; proof of a particular implementation is separate evidence.
 
-- **One operator, every rung.** `⊠` is **depth-invariant**: the same carrier-LCM
-  product composes char→word, word→phrase, phrase/clause→utterance. There is no
-  separate per-rung operator.
-- **Reuse, do not reimplement.** `⊠` **is** UCNS `multiplyFuel`
-  (`formal/Ucns/Core.lean`; runtime `ucns.canonical.multiply`). Call the UCNS
-  engine; do not write a parallel product.
-- **Remarry, not lift-once.** `multiplyFuel` recurses on fuel, **recomputing `⊠`
-  at each depth** rather than lifting a single composition. This is the engine's
-  existing default — keep it.
+## Relationships enter gonols
 
-## Sourcing: bones vs flesh
+Do not model the authoritative semantic or structural state as:
 
-- **Bones (omega)** come from `closed_tokens.py` — the closed-class tokens:
-  pronoun, determiner, preposition, conjunction, auxiliary, particle,
-  interjection — **plus affixes**.
-- **Flesh** is open-class content. **Adjectives and adverbs are flesh, not
-  bones** — they live with psi-content, not omega. Do not file them under the
-  operator core.
+```text
+gonol + external relationship graph
+```
 
-## Workflow: recomposition vs decomposition (status — read before claiming results)
+when the relation is part of the gonol's construction.
 
-- **Recomposition (narrow → wide): RUNS.** Building words/phrases/clauses by
-  `⊠` is the forward direction of `multiplyFuel`; it works on the existing engine.
-- **Decomposition (wide → narrow): DOMAIN-CONFIRMED, PROOF-PENDING.** Factoring a
-  composed object back into its parts relies on UCNS **left-cancellativity**. Its
-  domain is settled — **`AlignedComplete`**: per-object `Complete` (nonempty +
-  recursive host-normalized + uniform-depth + canonical carrier) **and**
-  cross-operand common depth `depth A = depth B = depth C`, with `depth B,C ≤ d`
-  (see `The-Interdependency/ucns : formal/cancellativity-step1-findings.md`). But
-  the Lean theorem `multiply_left_cancellative` is still `sorry`. **Do not
-  represent decomposition as machine-verified or lossless** until that discharges.
+The intended pattern is:
 
-## Formal backing (cross-repo; no status transfer)
+```text
+relation among gonols
+    ↓
+relation becomes intrinsic
+    ↓
+closure
+    ↓
+new atomic gonol
+```
 
-The operator and its inverse are backed by UCNS:
+Sidecar records may preserve provenance, receipts, indexes, caches, or measurement projections. They do not substitute for the relationship entering the gonol.
 
-- `carrier_lcm_law` — the carrier of a product is the lcm of operand carriers
-  (host-normalized operands).
-- `multiply_left_cancellative` — left-cancellativity on the `AlignedComplete`
-  domain (the decomposition guarantee).
+## Lexical manifestation
 
-Both live in `The-Interdependency/ucns : formal/Ucns/Core.lean` and are
-**`sorry`-backed**. Per the org's cross-repo non-continuity rule, naming them
-here transfers **no** theorem / proof / empirical status to this skill or to the
-morphology stack: a `sorry`-backed statement confers no DEFENDED status.
+For the current UCNS lexical program, read `The-Interdependency/ucns:docs/LEXICAL_RECURSION_ARCHITECTURE.md` before acting.
 
-## Anti-patterns (refuse these)
+The active sequence is:
 
-- Reimplementing the product instead of calling UCNS `multiplyFuel` / `multiply`.
-- Treating phrase and clause as different object kinds at the seed rung (ruled
-  equivalent under the LCM).
-- Filing adjectives/adverbs as bones (they are flesh).
-- Claiming decomposition is proven, lossless, or machine-verified while
-  `multiply_left_cancellative` is `sorry`.
-- Lifting a single composition once instead of remarrying `⊠` at each depth.
+```text
+characters
+    ↓
+morphology
+    ↓
+definitions
+    ↓
+recursive gonol relations
+```
+
+Character relations construct word gonols. Once word gonols exist they become atomic. Morphological relations then act on atomic gonols. Definition relationships enter definition gonols, which close and become atomic for the next recursion.
+
+## Morphology is intentionally unresolved
+
+The place of morphology is established; the complete English morphology law is not.
+
+Known boundaries:
+
+- affixes may themselves be gonols;
+- affixiation and transformation must be representable;
+- relationships discovered in morphology enter the resulting gonol;
+- a completed morphological gonol becomes atomic at its scale;
+- source evidence and provenance must be retained.
+
+Do **not** assume:
+
+- every word is `root + affix`;
+- an OEWN lemma is necessarily a final linguistic root;
+- one stemmer or lemmatizer is morphology canon;
+- the historical omega/phi/psi three-core split is current authority;
+- adjectives/adverbs/closed-class categories must be assigned to historical `bone` / `flesh` roles;
+- `multiplyFuel`, carrier-LCM, or any other existing UCNS operation is automatically the complete morphology law merely because it can compose objects.
+
+Inventory source morphology and current UCNS mechanisms first. Preserve unresolved decomposition as `hmmm`.
+
+## Character-scale relation reminder
+
+The current UCNS lexical architecture declares a shared Möbius glyph-axis traversal: glyph spaces are axes, glyphs are tics, accumulated traversal history is intrinsic, and the available future narrows with each realized step.
+
+A completed word gonol closes that lower-scale traversal and then participates atomically. Do not repeatedly expand its character sequence at every higher-scale use.
+
+## Materialization discipline
+
+Do not pre-materialize every possible pairwise relation among all gonols.
+
+Materialize unique completed gonols and their intrinsic construction identities. Reuse the same atomic identity when the same gonol recurs. Compute or expose cross-gonol relations from the gonol construction when needed rather than duplicating an authoritative all-pairs edge table.
+
+This is an implementation discipline, not a claim that every cache or index is forbidden.
+
+## Compression hypothesis
+
+Recursive atomic closure is expected to provide structural compression:
+
+```text
+many lower-scale relations
+    ↓
+one reusable atomic gonol
+    ↓
+many higher-scale relations
+    ↓
+one reusable higher gonol
+```
+
+Direct interscale coupling is expected to preserve the utility of that compression by avoiding mandatory reopening of every intermediate scale.
+
+Compression ratio, lossless reconstruction, and performance remain empirical questions. Do not claim them before measurement.
+
+## Cognitive-origin boundary
+
+The construction is informed by Erin Spencer's report of their own cognitive experience: many relations close into one mentally atomic object, atomic objects can couple across apparently distant scales, and internal structure may be reopened when needed.
+
+Treat that as design provenance, not evidence that all human cognition works this way.
+
+## Historical three-core material
+
+The previous skill revision described:
+
+- omega = bones;
+- phi = roots;
+- psi = words;
+- fixed weights;
+- a char -> circle -> seed ladder;
+- carrier-LCM / `multiplyFuel` as the one language operator;
+- bone/flesh category assignments.
+
+Those claims are retained in Git history. They must not be read forward as current morphology canon unless independently re-authorized by current source evidence.
+
+Existing UCNS multiplication/cancellativity work remains valid within its own declared scope. This correction does not falsify those mathematical experiments; it removes an unjustified semantic promotion from them into the current morphology architecture.
+
+## Anti-patterns
+
+- Treating affixiation as merely prefix/suffix concatenation.
+- Re-expanding every lower-order constituent whenever an atomic gonol is reused.
+- Building an external semantic graph and calling it the semantic content of the gonols.
+- Requiring adjacent-scale traversal for every distant interscale relation.
+- Reinstating omega/phi/psi, bone/flesh, or fixed morphology weights because an older skill contains them.
+- Inventing a root/stem decomposition to make the pipeline look complete.
+- Treating implementation convenience as architectural authority.
 
 ## hmmm
 
-- Decomposition proof is still `sorry` (domain `AlignedComplete` confirmed, not
-  discharged) — this skill is a living-continuation marker until it lands.
-- The canonical system name `ucns~|a0((zfae) PTCA)|gpt` is recorded verbatim;
-  its full expansion against the `username(a0(energy)auditor)` identity grammar
-  is not yet ratified.
-- The handoff requested a `ratios` bookend; it is omitted because RATIOS
-  bookends apply to executable/source files, not Markdown SKILL.md docs.
-- Whether gonal-morphology should eventually ship an executable runner (vs stay
-  procedural canon) is open.
+- the source-supported English root/stem/affix/transformation law;
+- the exact executable geometry for direct coupling between gonols separated by several recursive scales;
+- quantitative compression and reconstruction behavior after recursive gonols are materialized;
+- which existing UCNS composition primitives survive as mechanisms inside the corrected architecture without semantic overpromotion.

@@ -24,6 +24,14 @@ Before acting:
 4. If the governing sources disagree, stop at the conflict. Do not choose the
    most convenient or most recent-looking sentence.
 
+An unresolved constructor is permission to construct a named, bounded,
+falsifiable candidate; it is not permission to promote that candidate and not
+a reason to refuse the work. `hmmm` blocks unqualified certainty and silent
+canonization. It does not block declared experimentation, implementation, or
+comparison. When the user asks to begin recursive gonol construction, build the
+smallest dependency-complete candidate under explicit options and receipts
+rather than waiting for a constructor to become canonical before it exists.
+
 Repo-local UCNS authority may evolve without a skill-lib release. This routing
 rule is deliberate.
 
@@ -153,6 +161,8 @@ canonical.
 - Treating a source word list as a semantic dictionary.
 - Inventing morphology, a lexical family map, geometry, or measurement
   authority to fill an absent constructor.
+- Treating an unresolved constructor as a prohibition on constructing and
+  testing explicit candidates.
 - Promoting a sidecar relationship graph into intrinsic gonol semantics.
 - Treating a partial corpus run as complete evidence.
 - Adding arbitrary wall-clock limits to a healthy admitted computation.

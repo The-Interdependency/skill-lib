@@ -24,13 +24,15 @@ Before acting:
 4. If the governing sources disagree, stop at the conflict. Do not choose the
    most convenient or most recent-looking sentence.
 
-An unresolved constructor is permission to construct a named, bounded,
-falsifiable candidate; it is not permission to promote that candidate and not
-a reason to refuse the work. `hmmm` blocks unqualified certainty and silent
-canonization. It does not block declared experimentation, implementation, or
-comparison. When the user asks to begin recursive gonol construction, build the
-smallest dependency-complete candidate under explicit options and receipts
-rather than waiting for a constructor to become canonical before it exists.
+Treat `hmmm` and an unresolved constructor as a ban on unqualified promotion,
+not as a ban on declared candidate construction. An unresolved constructor is
+permission to construct a named, bounded, falsifiable candidate; it is not
+permission to promote that candidate and not a reason to refuse the work.
+`hmmm` blocks unqualified certainty and silent canonization. It does not block
+declared experimentation, implementation, or comparison. When the user asks to
+begin recursive gonol construction, build the smallest dependency-complete
+candidate under explicit options and receipts rather than waiting for a
+constructor to become canonical before it exists.
 
 Repo-local UCNS authority may evolve without a skill-lib release. This routing
 rule is deliberate.
@@ -111,6 +113,20 @@ Never invent a decomposition to complete a pipeline. Do not assume every word
 is `root + affix`, that a lemma is a final root, or that one stemmer supplies
 semantic authority.
 
+## Candidate construction
+
+`Constructor unresolved` means no constructor is yet canonical. It does not
+mean construction cannot begin. This skill exists to develop candidate
+constructors without falsely promoting them.
+
+- Inventing hidden canon is prohibited.
+- Constructing a declared, falsifiable candidate is required progress once
+  the governing architecture names the next scale and a source-backed
+  relation set exists.
+- A candidate must name its identity, standing, frozen choices, nonclaims,
+  and selection effect before a completion receipt is minted.
+- Replay of a candidate proves only that candidate. It does not select it.
+
 ## Evidence and replay
 
 For a construction that claims completion:
@@ -159,10 +175,11 @@ canonical.
   punctuation or morphology.
 - Inferring function context, syntax, or precedence from adjacency.
 - Treating a source word list as a semantic dictionary.
+- Treating `hmmm` or an unresolved constructor as permission to refuse a
+  declared candidate construction, complete run, or replay.
 - Inventing morphology, a lexical family map, geometry, or measurement
-  authority to fill an absent constructor.
-- Treating an unresolved constructor as a prohibition on constructing and
-  testing explicit candidates.
+  authority to fill an absent constructor, or silently promoting a candidate
+  into the missing canon.
 - Promoting a sidecar relationship graph into intrinsic gonol semantics.
 - Treating a partial corpus run as complete evidence.
 - Adding arbitrary wall-clock limits to a healthy admitted computation.
@@ -189,16 +206,24 @@ Honest incomplete continuation:
 ```text
 full source unavailable -> BLOCKED or UNRESOLVED under the governing protocol
                          -> no replacement completion receipt
-                         -> hmmm names the absent source or constructor
+                         -> hmmm names the absent source
+
+constructor not yet canonical -> declare a candidate
+                              -> bind relations and choices
+                              -> preregister evaluation
+                              -> run and replay the declared scope
+                              -> selection remains UNRESOLVED
 ```
 
 ## hmmm
+
+`hmmm` blocks unqualified promotion. It does not block experimentation or
+construction of a declared candidate.
 
 - the source-supported complete English morphology law;
 - executable geometry for direct coupling across distant recursive scales;
 - quantitative compression and reconstruction behavior after recursive gonols
   exist;
-- the first complete recursive-gonol relation constructor beyond definition
-  closure;
+- which recursive-gonol candidate, if any, later becomes selected canon;
 - which current UCNS composition mechanisms survive inside later gonol
   construction without semantic overpromotion.

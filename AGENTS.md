@@ -50,7 +50,7 @@ the skill. Treat it as the public contract.
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
-   `a0p-instancing`, `plain-lens`, `gonal-morphology`, `meta`, `the-interdependency`,
+   `a0p-instancing`, `plain-lens`, `gonol-build`, `meta`, `the-interdependency`,
    `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `action-calibration`, `skill-build`, `skill-usage`,
    `ssh-automation`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
@@ -112,6 +112,11 @@ propagate from here.
   multi-lens companion view, a progressive-disclosure reader, or a dynamic
   page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
   paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
+- If you are constructing, reviewing, replaying, or continuing UCNS gonols,
+  including lexical floors, morphology, definitions, punctuation functions,
+  closure, atomic promotion, or recursive relations, load `gonol-build/SKILL.md`.
+  Resolve current UCNS authority first; never restore historical
+  `gonal-morphology` doctrine as current canon.
 - If you are building code, researching, performing GitHub maintenance or updates, assembling EDCMBONE transcripts for analysis, or any work that touches The Interdependency organization, The Interdependent Way projects, or related assets (edcmbone, ucns, pcea, skill-lib, a0, aimmh, etc.), load `the-interdependency/SKILL.md` and follow its structure-preservation, EDCMBONE framework, mandatory usage-guidance, and org-workflow rules.
 - If the task spans, consumes, compares, publishes to, or changes the contract between multiple repositories, load `interdependent-work-graph/SKILL.md` before choosing an edit workspace. Resolve exact commits, authority roles, relations, non-transfer boundaries, and one shared graph record.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.

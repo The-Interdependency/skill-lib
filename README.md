@@ -145,8 +145,10 @@ The drift checker compares skill directories, canonical frontmatter,
 `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The skill compliance
 checker also rejects explicitly superseded vendored skills. The skill compliance
 checker enforces baseline `skill-build` invariants and reports softer
-normalization guidance as warnings. The propagation helper copies canonical
-skill directories into a checked-out target repo. The char-compress runner
+normalization guidance as warnings. The propagation helper updates canonical
+files in a checked-out target repo, preserves repo-local additions, and removes
+retired canonical files only when the target's cited prior source proves their
+identity. The char-compress runner
 executes preservation fixtures for negation, quantifier, order, values,
 statuses, secrets, `hmmm`, and unearned theorem/status leakage. The llms-build
 runner generates the root `llms.txt` from `LLMS` blocks and can fail on drift in

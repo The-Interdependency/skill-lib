@@ -1,4 +1,4 @@
-# LLM Instructions for skill-lib
+# LLM Instructions for skill-lib-current
 
 ## Project Overview
 skill-lib is the canonical organization-wide source for reusable agent skills in The Interdependency.

@@ -37,7 +37,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `typed-meta-frontend/` — TypeScript self-building frontend generation from backend module metadata
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 * `meta/` — Meta Energy Theory Axioms canon skill
-* `gonal-morphology/` — three-core gonal morphology canon (omega/phi/psi; ⊠ = UCNS carrier-LCM)
+* `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
@@ -154,6 +154,16 @@ or other semantic control surface, agents should read:
 
 Establish the applicable domain-qualified sense and resolve collisions before
 attaching provenance or authorizing structure.
+
+Before constructing, reviewing, replaying, or extending UCNS gonols, agents should read:
+
+```text
+.agents/skills/gonol-build/SKILL.md
+```
+
+Resolve the current UCNS source and evidence identities first. Preserve closure and
+atomic promotion, require explicit occurrence-addressed function plans, and do not
+restore the superseded `gonal-morphology` language model.
 
 Before choosing between the smallest decisive action and a maximal coherent program,
 selecting the highest-leverage next step under constrained time, attention, money,

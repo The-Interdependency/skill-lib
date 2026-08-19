@@ -1,4 +1,4 @@
-# ratios: loc_comments=218:48 imports_exports=9:11 calls_definitions=80:15
+# ratios: loc_comments=240:48 imports_exports=9:12 calls_definitions=91:16
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
@@ -73,6 +73,7 @@ class ConsumerReport:
     consumer: str
     skills: List[SkillReport] = field(default_factory=list)
     doctrine: List[str] = field(default_factory=list)  # referenced-doctrine drift reasons
+    superseded: List[str] = field(default_factory=list)  # forbidden active vendored skills
     sha_warning: str | None = None
 
     @property
@@ -90,6 +91,19 @@ def canon_skill_names(canon_root: Path) -> set[str]:
         for child in canon_root.iterdir()
         if child.is_dir() and (child / "SKILL.md").is_file()
     }
+
+
+def superseded_skills(canon_root: Path) -> dict[str, List[str]]:
+    index = canon_root / "skills.json"
+    if not index.is_file():
+        return {}
+    data = json.loads(index.read_text(encoding="utf-8"))
+    out: dict[str, List[str]] = {}
+    for entry in data.get("superseded_skills", []):
+        if not isinstance(entry, dict) or not entry.get("name"):
+            continue
+        out[str(entry["name"])] = [str(value) for value in entry.get("replacements", [])]
+    return out
 
 
 def _canon_files(skill_dir: Path) -> Iterable[Path]:
@@ -187,11 +201,17 @@ def check_consumer(
         return report
 
     canon = canon_skill_names(canon_root)
+    superseded = superseded_skills(canon_root)
     vendored = sorted(
         child.name for child in skills_root.iterdir() if child.is_dir()
     )
     vendored_canon: List[str] = []
     for name in vendored:
+        if name in superseded:
+            replacements = superseded[name]
+            suffix = f"; replace with {', '.join(replacements)}" if replacements else ""
+            report.superseded.append(f"{name} is superseded{suffix}")
+            continue
         if name not in canon:
             continue  # repo-local skill, not part of the canonical set
         vendored_canon.append(name)
@@ -226,6 +246,8 @@ def format_report(
             lines.extend(f"          - {reason}" for reason in skill.drift)
     for reason in report.doctrine:
         lines.append(f"  DOC   {reason}")
+    for reason in report.superseded:
+        lines.append(f"  OLD   {reason}")
     if report.sha_warning:
         lines.append(f"  SHA   {report.sha_warning}")
     empty = require_vendored and checked == 0
@@ -234,6 +256,7 @@ def format_report(
     failed = (
         bool(drifted)
         or bool(report.doctrine)
+        or bool(report.superseded)
         or empty
         or (strict_sha and report.sha_warning is not None)
     )
@@ -296,6 +319,7 @@ def main(argv: List[str] | None = None) -> int:
             "consumer": report.consumer,
             "drift": {s.name: s.drift for s in report.skills if not s.ok},
             "doctrine": report.doctrine,
+            "superseded": report.superseded,
             "checked": [s.name for s in report.skills],
             "sha_warning": report.sha_warning,
             "failed": failed,
@@ -308,4 +332,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=218:48 imports_exports=9:11 calls_definitions=80:15
+# ratios: loc_comments=240:48 imports_exports=9:12 calls_definitions=91:16

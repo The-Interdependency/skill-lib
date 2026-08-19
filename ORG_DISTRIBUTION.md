@@ -36,7 +36,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `llms-build/` — root llms.txt generation from LLMS blocks
 * `typed-meta-frontend/` — TypeScript self-building frontend generation from backend module metadata
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
-* `meta/` — Meta Energy Theory Axioms canon skill
+* `meta/` — consultation router for current METAPAT authority; no frozen doctrine copy
 * `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
 * `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects

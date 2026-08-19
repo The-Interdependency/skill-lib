@@ -1,4 +1,4 @@
-# ratios: loc_comments=154:5 imports_exports=10:15 calls_definitions=79:15
+# ratios: loc_comments=173:5 imports_exports=12:15 calls_definitions=85:15
 """Editorial drift checker for The-Interdependency/skill-lib.
 
 Checks that the canonical skill directories, skills.json, README.md,
@@ -16,6 +16,11 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence, Set
+
+if __package__:
+    from tools.build_codex_plugin_skills import canonical_metadata
+else:
+    from build_codex_plugin_skills import canonical_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
@@ -156,6 +161,21 @@ def check() -> List[Finding]:
             findings.append(Finding("error", "bad_kind", f"{name} has invalid kind {entry.get('kind')!r}"))
         if not str(entry.get("description", "")).strip():
             findings.append(Finding("error", "missing_description", f"{name} has no description"))
+        try:
+            _, canonical_description, _ = canonical_metadata(dict(entry))
+        except Exception as exc:
+            findings.append(
+                Finding("error", "canonical_metadata", f"{name} canonical metadata failed: {exc}")
+            )
+        else:
+            if str(entry.get("description", "")) != canonical_description:
+                findings.append(
+                    Finding(
+                        "error",
+                        "description_mismatch",
+                        f"{name} skills.json description differs from canonical SKILL.md frontmatter",
+                    )
+                )
 
     for name in sorted(index_names - readme_names):
         findings.append(Finding("error", "missing_readme_entry", f"{name} is absent from README.md skill table"))
@@ -207,4 +227,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=154:5 imports_exports=10:15 calls_definitions=79:15
+# ratios: loc_comments=173:5 imports_exports=12:15 calls_definitions=85:15

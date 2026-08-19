@@ -32,6 +32,10 @@ class ConsumerDriftTest(unittest.TestCase):
         _write(self.canon / "msdmd" / "parsers" / "universal.py", "print('x')\n")
         # a second canonical skill the consumer does NOT vendor
         _write(self.canon / "doc-build" / "SKILL.md", "docs\n")
+        _write(
+            self.canon / "skills.json",
+            '{"superseded_skills":[{"name":"old-skill","replacements":["doc-build"]}]}\n',
+        )
         # consumer vendors msdmd verbatim
         _write(self.consumer / ".agents/skills" / "msdmd" / "SKILL.md", "canonical spec\n")
         _write(
@@ -78,6 +82,14 @@ class ConsumerDriftTest(unittest.TestCase):
         _write(self.consumer / ".agents/skills" / "repo-local" / "SKILL.md", "local\n")
         report = self._report()
         self.assertNotIn("repo-local", [s.name for s in report.skills])
+
+    def test_superseded_skill_fails_even_when_no_longer_canonical(self) -> None:
+        _write(self.consumer / ".agents/skills" / "old-skill" / "SKILL.md", "stale\n")
+        report = self._report()
+        self.assertEqual(["old-skill is superseded; replace with doc-build"], report.superseded)
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertTrue(failed)
+        self.assertIn("OLD   old-skill is superseded", text)
 
     def test_manifest_pin_stale_is_drift(self) -> None:
         _write(self.canon / "manifest" / "SKILL.md", "m\n")

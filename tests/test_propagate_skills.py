@@ -37,6 +37,19 @@ class PropagateDoctrineTest(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertFalse((target / ".agents/skills").exists())
 
+    def test_apply_removes_superseded_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            stale = target / ".agents/skills/gonal-morphology/SKILL.md"
+            stale.parent.mkdir(parents=True)
+            stale.write_text("stale doctrine\n", encoding="utf-8")
+
+            rc = ps.main([str(target), "--skills", "gonol-build", "--apply"])
+
+            self.assertEqual(rc, 0)
+            self.assertFalse(stale.parent.exists())
+            self.assertTrue((target / ".agents/skills/gonol-build/SKILL.md").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

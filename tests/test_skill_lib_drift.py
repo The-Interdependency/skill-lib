@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
+from tools.build_codex_plugin_skills import canonical_frontmatter
 from tools.check_skill_lib_drift import (
     duplicate_entry_findings,
     duplicate_names,
@@ -11,6 +14,18 @@ from tools.check_skill_lib_drift import (
 
 
 class SkillLibDriftCheckerTest(unittest.TestCase):
+    def test_canonical_frontmatter_supports_folded_trigger_descriptions(self) -> None:
+        with TemporaryDirectory() as tmp:
+            path = Path(tmp) / "SKILL.md"
+            path.write_text(
+                "---\nname: folded\ndescription: >-\n  Load this when a folded\n  trigger is canonical.\n---\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(
+                "Load this when a folded trigger is canonical.",
+                canonical_frontmatter(path)["description"],
+            )
+
     def test_duplicate_names_reports_each_repeated_name_once(self) -> None:
         self.assertEqual(["manifest", "msdmd"], duplicate_names(["msdmd", "manifest", "msdmd", "manifest", "canon"]))
 

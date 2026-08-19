@@ -38,6 +38,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 * `meta/` — Meta Energy Theory Axioms canon skill
 * `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
+* `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
@@ -164,6 +165,16 @@ Before constructing, reviewing, replaying, or extending UCNS gonols, agents shou
 Resolve the current UCNS source and evidence identities first. Preserve closure and
 atomic promotion, require explicit occurrence-addressed function plans, and do not
 restore the superseded `gonal-morphology` language model.
+
+Before selecting among UCNS options or declaring a scoped winner, agents should read:
+
+```text
+.agents/skills/ucns-option-selection/SKILL.md
+```
+
+Freeze scope, candidates, hard gates, evidence, policies, authority, and
+ratification before outcome comparison. Do not let scores compensate for failed gates
+or transfer a scoped result into universal UCNS canon.
 
 Before choosing between the smallest decisive action and a maximal coherent program,
 selecting the highest-leverage next step under constrained time, attention, money,

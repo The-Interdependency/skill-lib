@@ -54,6 +54,7 @@ llms/                  # python -m llms.build reference runner
 | `a0p-instancing/` | procedural | — | Peer for a0-betatest (a0p): agents are per-user CRUD `AgentInstance` + `CharacterSheet`, each owning a trained native ZFAE weight bank (three 157-seed cores); no `sub_agent_spawn`/executor/`InstanceMerge` — only volatile `MemoryCore.spawn_sub/merge_sub`. Sequence: create→distill-train→readiness gate→mode inference→sentinel/pending-override→safetensors checkpoint. Canonical source is `a0-betatest`. |
 | `plain-lens/` | procedural | — | Plain-language, multi-lens companion views of dense canonical text. Build easier on-ramps (domain/audience/role lens selectors, progressive disclosure) that never replace or talk down to the source, keep a static fallback under any dynamic layer, preserve operators/negations/quantifiers, and report an EDCM-style body-vs-footnote tension reading as an illustrative heuristic (not an edcmbone metric runtime). |
 | `gonol-build/` | procedural | — | UCNS gonol construction discipline. Resolve current UCNS authority; preserve intrinsic relations, closure, atomic promotion, occurrence identity, explicit punctuation-function plans, full-source receipts, and independent replay. Refuses superseded omega/phi/psi, bone/flesh, and carrier-LCM language doctrine. |
+| `ucns-option-selection/` | procedural | — | Fail-closed scoped UCNS option selection. Freezes candidates, authority, gates, evidence, and policies; requires complete evaluation, replay, purpose-relative comparison, explicit ratification, rollback, and non-transfer. Hard-gate failures cannot be compensated by scores. |
 | `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. |
 | `the-interdependency/` | procedural | — | Workflow protocol for The Interdependency org: code/research/GitHub maintenance, EDCMBONE transcript assembly and analysis, and mandatory usage-guidance + structure-preservation doctrine across artifacts. |
 | `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |
@@ -97,7 +98,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 
@@ -241,8 +242,9 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 10. Treat `char-compress` as Unit Circle Number System-derived compression doctrine, but do not claim unearned theorem/status support or edcmbone metric status.
 11. Before promoting a word into canon, a theorem term, ontology primitive, schema field, encoding label, or cross-domain mapping, apply `domain-claims`: establish the domain-qualified sense and resolve collisions before attaching provenance; then apply `canon` to assess authority.
 12. Before constructing, reviewing, replaying, or extending UCNS gonols, apply `gonol-build`: resolve current UCNS authority, preserve closure and atomic promotion, require explicit occurrence-addressed function plans, and keep incomplete constructors visible as `hmmm`.
-13. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
-14. For SSH automation and large terminal pastes containing SSH, apply `ssh-automation`: verify endpoint identity and host trust, preserve local and remote interpreter boundaries, make retries and rollback explicit, and contain option/trap/exit effects inside a child shell.
+13. Before selecting among UCNS options, apply `ucns-option-selection`: freeze the scoped decision boundary, enforce noncompensable eligibility and evidence gates, require explicit ratification, and preserve non-transfer, rollback, negative evidence, and `hmmm`.
+14. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
+15. For SSH automation and large terminal pastes containing SSH, apply `ssh-automation`: verify endpoint identity and host trust, preserve local and remote interpreter boundaries, make retries and rollback explicit, and contain option/trap/exit effects inside a child shell.
 
 ## hmmm
 

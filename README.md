@@ -40,7 +40,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`agent-instantiation/`](agent-instantiation/SKILL.md) | Methodology for instantiating, forking, running, merging, and retiring agents in `a0` and its mirror `a0ucns`. Spawn via the `sub_agent_spawn` tool → executor; fork/merge `PCNAEngine` instances via `InstanceMerge`; compose identities; honor spawn caps and write-route gating. `a0-betatest` diverges (per-user native-ZFAE) and is out of scope. Independent of msdmd. |
 | [`a0p-instancing/`](a0p-instancing/SKILL.md) | Peer of `agent-instantiation` for a0-betatest (a0p), whose model diverges: agents are per-user CRUD `AgentInstance` entities bound to a `CharacterSheet`, each owning a trained native ZFAE weight bank; no spawn/fork/merge — only volatile sub-context memory. Covers create→train→readiness-gate→mode inference→sentinel/override→safetensors checkpoint. Independent of msdmd. |
 | [`plain-lens/`](plain-lens/SKILL.md) | Plain-language, multi-lens companion views of dense canonical text — easier on-ramps that do not replace or talk down to the source. Domain/audience/role lens selectors, progressive-disclosure reading UX, static fallback for dynamic pages, and EDCM-style body-vs-footnote tension readings. Independent of msdmd. |
-| [`meta/`](meta/SKILL.md) | Meta Energy Theory Axioms. Extracts and preserves Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keeps Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. Independent of msdmd. |
+| [`meta/`](meta/SKILL.md) | Consultation router for current METAPAT. Retrieves the authoritative repository when a conceptual relation, distinction, boundary, transformation, scale, or cross-domain correspondence would constrain downstream work; carries no frozen METAPAT doctrine here. Independent of msdmd. |
 | [`gonol-build/`](gonol-build/SKILL.md) | UCNS gonol construction, closure, atomic promotion, function application, replay, and continuation discipline. Routes authority to the current UCNS commit; preserves exact source and occurrence identity; requires explicit function plans and complete replay; refuses historical omega/phi/psi, bone/flesh, and carrier-LCM language doctrine. Independent of msdmd. |
 | [`ucns-option-selection/`](ucns-option-selection/SKILL.md) | Fail-closed UCNS option-selection rubric. Freezes scope, candidates, authority, gates, policies, and evidence boundaries; requires complete execution, falsification, replay, purpose-relative comparison, non-transfer, rollback, and explicit ratification; refuses compensating scores and universal promotion from local evidence. Independent of msdmd. |
 | [`the-interdependency/`](the-interdependency/SKILL.md) | Workflow and protocol for code building, researching, GitHub maintenance and updates, EDCMBONE transcript assembly for analysis, and anything that touches The Interdependency organization or The Interdependent Way projects. Enforces structure preservation (neurodivergence-compatible), mandatory usage guidance in all artifacts, framework-aligned EDCMBONE analysis, and org-standard GitHub hygiene. Independent of msdmd. |
@@ -91,6 +91,10 @@ Each adapter loads its canonical root `*/SKILL.md`, keeping the existing root
 skill as the sole doctrine source while making every registered skill
 installable through Codex.
 
+Canonical `SKILL.md` frontmatter is the trigger authority. `skills.json` repeats
+each description only as a checked index field; the drift gate requires exact
+agreement, and generated adapters read the canonical frontmatter directly.
+
 During local plugin testing, place this repository behind a Codex local
 marketplace entry, install `skill-lib`, then begin a new conversation. The
 installed plugin exposes every skill in `skills.json`.
@@ -136,8 +140,10 @@ python -m llms.build --root . --out llms.txt --apply     # write generated file
 python -m llms.build --root . --out llms.txt --check     # drift gate
 ```
 
-The drift checker compares skill directories, `skills.json`, `README.md`,
+The drift checker compares skill directories, canonical frontmatter,
+`skills.json`, `README.md`,
 `ORG_DISTRIBUTION.md`, `AGENTS.md`, and `CLAUDE.md`. The skill compliance
+checker also rejects explicitly superseded vendored skills. The skill compliance
 checker enforces baseline `skill-build` invariants and reports softer
 normalization guidance as warnings. The propagation helper copies canonical
 skill directories into a checked-out target repo. The char-compress runner

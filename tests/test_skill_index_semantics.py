@@ -37,6 +37,21 @@ class SkillIndexSemanticsTest(unittest.TestCase):
             self.assertGreaterEqual(len(skill["description"].split()), 8, skill["name"])
             self.assertGreaterEqual(len(frontmatter["description"].split()), 8, skill["name"])
 
+    def test_index_descriptions_match_canonical_frontmatter(self) -> None:
+        for skill in self.skills:
+            frontmatter = frontmatter_for(ROOT / skill["path"])
+            self.assertEqual(frontmatter["description"], skill["description"], skill["name"])
+
+    def test_superseded_skills_are_disjoint_and_have_live_replacements(self) -> None:
+        superseded = self.index.get("superseded_skills", [])
+        retired_names = [entry["name"] for entry in superseded]
+        self.assertEqual(len(retired_names), len(set(retired_names)))
+        self.assertTrue(set(retired_names).isdisjoint(self.names))
+        for entry in superseded:
+            self.assertTrue(entry.get("reason", "").strip(), entry["name"])
+            self.assertTrue(entry.get("replacements"), entry["name"])
+            self.assertTrue(set(entry["replacements"]).issubset(self.names), entry["name"])
+
     def test_kind_is_known_and_dependencies_match_kind(self) -> None:
         names = set(self.names)
         for skill in self.skills:

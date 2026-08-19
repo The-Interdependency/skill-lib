@@ -1,4 +1,4 @@
-# ratios: loc_comments=109:9 imports_exports=9:6 calls_definitions=50:6
+# ratios: loc_comments=125:9 imports_exports=9:8 calls_definitions=60:8
 """Copy canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -26,9 +26,21 @@ DOCTRINE_REF_RE = re.compile(r"(?:\.\./)?doctrine/([A-Za-z0-9][\w./-]*\.md)")
 _TEXT_SUFFIXES = {".md", ".py", ".ts", ".txt"}
 
 
+def load_index() -> Mapping[str, object]:
+    return json.loads(SKILLS_JSON.read_text(encoding="utf-8"))
+
+
 def load_skill_names() -> List[str]:
-    data = json.loads(SKILLS_JSON.read_text(encoding="utf-8"))
+    data = load_index()
     return [str(entry["name"]) for entry in data.get("skills", [])]
+
+
+def load_superseded_names() -> List[str]:
+    return sorted(
+        str(entry["name"])
+        for entry in load_index().get("superseded_skills", [])
+        if isinstance(entry, Mapping) and entry.get("name")
+    )
 
 
 def current_sha() -> str:
@@ -102,6 +114,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     install_root = target_repo / args.install_root
     sha = current_sha()
+    removals = [install_root / name for name in load_superseded_names() if (install_root / name).exists()]
 
     actions = []
     for name in requested:
@@ -119,18 +132,25 @@ def main(argv: Sequence[str] | None = None) -> int:
     ]
 
     mode = "APPLY" if args.apply else "DRY-RUN"
-    print(f"{mode}: propagate {len(actions)} skills + {len(doc_actions)} doctrine docs to {install_root}")
+    print(
+        f"{mode}: propagate {len(actions)} skills + {len(doc_actions)} doctrine docs "
+        f"and remove {len(removals)} superseded skills from {install_root}"
+    )
     print(f"source commit: {sha}")
     for src, dst in actions:
         print(f"- {src.relative_to(ROOT)} -> {dst}")
     for src, dst in doc_actions:
         print(f"- {src.relative_to(ROOT)} -> {dst}")
+    for dst in removals:
+        print(f"- remove superseded {dst}")
 
     if not args.apply:
         print("No files changed. Re-run with --apply to copy.")
         return 0
 
     install_root.mkdir(parents=True, exist_ok=True)
+    for dst in removals:
+        shutil.rmtree(dst)
     for src, dst in actions:
         copytree(src, dst)
     for src, dst in doc_actions:
@@ -143,4 +163,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=109:9 imports_exports=9:6 calls_definitions=50:6
+# ratios: loc_comments=125:9 imports_exports=9:8 calls_definitions=60:8

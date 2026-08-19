@@ -1,9 +1,11 @@
-# ratios: loc_comments=125:9 imports_exports=9:8 calls_definitions=60:8
-"""Copy canonical skill-lib skills into a target repo working tree.
+# ratios: loc_comments=162:12 imports_exports=9:10 calls_definitions=80:10
+"""Synchronize canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
 PRs, or contact GitHub. Run it from a checked-out skill-lib repo and point it at
-a checked-out target repo. Dry-run is the default.
+a checked-out target repo. Repo-local additions are preserved. Files retired
+from canonical are removed only when the target's cited prior source commit
+proves they are unchanged canonical files. Dry-run is the default.
 """
 
 from __future__ import annotations
@@ -23,6 +25,7 @@ DEFAULT_INSTALL_ROOT = Path(".agents/skills")
 # Skills may link to shared docs under `doctrine/` (e.g. `../doctrine/msdmd-checks.md`);
 # those must be carried alongside the skills or the vendored links go dead.
 DOCTRINE_REF_RE = re.compile(r"(?:\.\./)?doctrine/([A-Za-z0-9][\w./-]*\.md)")
+SOURCE_SHA_RE = re.compile(r"Source commit:[^\n]*`([0-9a-f]{7,40})`")
 _TEXT_SUFFIXES = {".md", ".py", ".ts", ".txt"}
 
 
@@ -54,10 +57,47 @@ def current_sha() -> str:
         return "hmmm-local-sha-unavailable"
 
 
-def copytree(src: Path, dst: Path) -> None:
-    if dst.exists():
-        shutil.rmtree(dst)
-    shutil.copytree(src, dst)
+def previous_source_sha(target_install_root: Path) -> str | None:
+    readme = target_install_root / "README.md"
+    if not readme.is_file():
+        return None
+    match = SOURCE_SHA_RE.search(readme.read_text(encoding="utf-8"))
+    return match.group(1) if match else None
+
+
+def previous_canonical_blob(sha: str, skill_name: str, relative_path: Path) -> bytes | None:
+    result = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f"{sha}:{skill_name}/{relative_path.as_posix()}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.stdout if result.returncode == 0 else None
+
+
+def sync_tree(src: Path, dst: Path, prior_sha: str | None) -> List[Path]:
+    """Update canonical files without deleting proven repo-local additions."""
+    removed: List[Path] = []
+    if dst.exists() and prior_sha:
+        for existing in sorted(dst.rglob("*")):
+            if not existing.is_file():
+                continue
+            relative = existing.relative_to(dst)
+            if (src / relative).exists():
+                continue
+            prior = previous_canonical_blob(prior_sha, src.name, relative)
+            if prior is not None and existing.read_bytes() == prior:
+                existing.unlink()
+                removed.append(relative)
+        for directory in sorted(
+            (path for path in dst.rglob("*") if path.is_dir()),
+            key=lambda path: len(path.parts),
+            reverse=True,
+        ):
+            if not any(directory.iterdir()):
+                directory.rmdir()
+    shutil.copytree(src, dst, dirs_exist_ok=True)
+    return removed
 
 
 def referenced_doctrine(skill_srcs: Iterable[Path]) -> List[str]:
@@ -114,6 +154,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     install_root = target_repo / args.install_root
     sha = current_sha()
+    prior_sha = previous_source_sha(install_root)
     removals = [install_root / name for name in load_superseded_names() if (install_root / name).exists()]
 
     actions = []
@@ -151,16 +192,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     install_root.mkdir(parents=True, exist_ok=True)
     for dst in removals:
         shutil.rmtree(dst)
+    removed_files: List[tuple[str, Path]] = []
     for src, dst in actions:
-        copytree(src, dst)
+        removed_files.extend((src.name, path) for path in sync_tree(src, dst, prior_sha))
     for src, dst in doc_actions:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
     write_readme(install_root, sha, requested)
+    for skill_name, path in removed_files:
+        print(f"Removed obsolete canonical file: {skill_name}/{path}")
     print("Propagation complete.")
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=125:9 imports_exports=9:8 calls_definitions=60:8
+# ratios: loc_comments=162:12 imports_exports=9:10 calls_definitions=80:10

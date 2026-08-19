@@ -5,6 +5,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 _spec = importlib.util.spec_from_file_location(
@@ -49,6 +50,29 @@ class PropagateDoctrineTest(unittest.TestCase):
             self.assertEqual(rc, 0)
             self.assertFalse(stale.parent.exists())
             self.assertTrue((target / ".agents/skills/gonol-build/SKILL.md").is_file())
+
+    def test_sync_preserves_local_additions_and_removes_proven_obsolete_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            src = root / "canon" / "sample"
+            dst = root / "consumer" / "sample"
+            src.mkdir(parents=True)
+            dst.mkdir(parents=True)
+            (src / "SKILL.md").write_text("current\n", encoding="utf-8")
+            (dst / "SKILL.md").write_text("prior\n", encoding="utf-8")
+            (dst / "runner.py").write_text("local\n", encoding="utf-8")
+            (dst / "obsolete.md").write_text("old canon\n", encoding="utf-8")
+
+            def prior_blob(_sha: str, _skill: str, path: Path) -> bytes | None:
+                return b"old canon\n" if path == Path("obsolete.md") else None
+
+            with patch.object(ps, "previous_canonical_blob", side_effect=prior_blob):
+                removed = ps.sync_tree(src, dst, "abc1234")
+
+            self.assertEqual([Path("obsolete.md")], removed)
+            self.assertEqual("current\n", (dst / "SKILL.md").read_text(encoding="utf-8"))
+            self.assertEqual("local\n", (dst / "runner.py").read_text(encoding="utf-8"))
+            self.assertFalse((dst / "obsolete.md").exists())
 
 
 if __name__ == "__main__":

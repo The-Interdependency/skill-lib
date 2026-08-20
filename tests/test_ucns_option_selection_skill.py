@@ -63,8 +63,9 @@ class UcnsOptionSelectionSkillTest(unittest.TestCase):
         self.assertIn("does not block candidate", self.text)
         self.assertIn("candidate from being built or tested", self.text)
         gonol_text = GONOL_BUILD.read_text(encoding="utf-8")
-        self.assertIn("permission to construct a named, bounded", gonol_text)
-        self.assertIn("does not block declared experimentation", gonol_text)
+        gonol_compact = " ".join(gonol_text.split())
+        self.assertIn("permission to construct a named, bounded", gonol_compact)
+        self.assertIn("does not block declared experimentation", gonol_compact)
 
     def test_codex_adapter_points_to_canonical_skill(self) -> None:
         text = ADAPTER.read_text(encoding="utf-8")

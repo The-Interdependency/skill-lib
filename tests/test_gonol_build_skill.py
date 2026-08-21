@@ -27,26 +27,43 @@ class GonolBuildSkillTest(unittest.TestCase):
         ):
             self.assertIn(phrase, description)
 
-    def test_routes_authority_to_current_ucns(self) -> None:
-        self.assertIn("Resolve the current UCNS commit or PR", self.text)
-        self.assertIn("Repo-local UCNS authority may evolve", self.text)
-        self.assertIn("does not copy a frozen UCNS snapshot", self.text)
+    def test_routes_authority_across_metapat_ucns_edcm(self) -> None:
+        for phrase in (
+            "METAPAT   -> conceptual meaning of affixiation",
+            "UCNS      -> gonol geometry",
+            "EDCM      -> text-domain admission",
+            "skill-lib -> construction, evidence, replay",
+            "Resolve the current commits or PR heads",
+        ):
+            self.assertIn(phrase, self.text)
+
+    def test_every_character_is_edcm_domain_rule(self) -> None:
+        self.assertIn("every admitted character is a gonol", self.text)
+        self.assertIn("EDCM text-domain rule", self.text)
+        self.assertIn("EDCM owns what counts as an admitted character", self.text)
+        self.assertIn("UCNS does not silently decide EDCM's character-admission semantics", self.text)
+
+    def test_affixiation_authority_is_not_redefined_downstream(self) -> None:
+        self.assertIn("METAPAT defines affixiation conceptually", self.text)
+        self.assertIn("UCNS owns any exact geometric realization", self.text)
+        self.assertIn("EDCM applies affixiation to text-domain gonols", self.text)
+        self.assertIn("do not define affixiation", self.text)
 
     def test_closure_and_atomic_promotion_are_preserved(self) -> None:
         for phrase in (
             "relation enters the construction",
             "closure with source identity and receipt",
-            "atomic participant at another scale",
+            "atomic participant at another declared scale",
             "indivisible for participation at the consuming scale",
             "Do not materialize an all-pairs relationship graph",
         ):
             self.assertIn(phrase, self.text)
 
-    def test_function_application_refuses_inference(self) -> None:
+    def test_function_application_refuses_semantic_inference(self) -> None:
         for phrase in (
-            "caller-supplied, occurrence-addressed application context",
+            "UCNS owns the geometric operation of Public Gonol function positions",
+            "Unicode names, dictionary definitions",
             "Never infer adjacency, precedence, grammatical role",
-            "Replay against the same authoritative table",
             "Do not promote structural survival into parsing",
         ):
             self.assertIn(phrase, self.text)
@@ -71,15 +88,7 @@ class GonolBuildSkillTest(unittest.TestCase):
         self.assertIn("hmmm:", self.text)
         self.assertIn("complete English morphology law", self.text)
         self.assertIn("Do not translate `SURVIVED` into proved", self.text)
-
-    def test_hmmm_blocks_promotion_not_candidate_construction(self) -> None:
-        self.assertIn("ban on unqualified", self.text)
-        self.assertIn("not as a ban on declared candidate construction", self.text)
-        self.assertIn("Constructing a declared, falsifiable candidate is required progress", self.text)
-        self.assertIn("`hmmm` blocks unqualified promotion", self.text)
-        self.assertIn("does not block experimentation or", self.text)
-        self.assertIn("which recursive-gonol candidate, if any, later becomes selected canon", self.text)
-        self.assertNotIn("the first complete recursive-gonol relation constructor beyond definition", self.text)
+        self.assertIn("hmmm blocks promotion, not construction", self.text)
 
     def test_codex_adapter_points_to_canonical_skill(self) -> None:
         text = ADAPTER.read_text(encoding="utf-8")

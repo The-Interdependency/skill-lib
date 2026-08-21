@@ -1,72 +1,69 @@
 ---
 name: gonol-build
-description: Cross-repository construction, review, replay, and continuation discipline for gonols. Load this when realizing gonol or affixiation geometry in UCNS; when constructing character, word, morphology, definition, punctuation-function, or recursive gonols in EDCM; when deciding whether a relation belongs inside a gonol; or when promoting a completed gonol to atomic participation at another scale. Do not load for unrelated geometry, ordinary prose editing, or EDCM measurement that consumes already-closed gonols without changing their construction. Resolve METAPAT semantic authority, UCNS geometric authority, and EDCM text-domain authority separately; never restore historical gonal-morphology, omega/phi/psi, bone/flesh, or carrier-LCM language rules.
+description: Cross-repository construction, review, replay, and continuation discipline for gonols. Load this when realizing gonol or affixiation geometry in UCNS; when constructing character, definition, punctuation-function, or recursive textual gonols in EDCM; when deciding whether a relation belongs inside a gonol; when promoting a completed gonol to atomic participation at another scale; or when a request attempts to introduce morphology, roots, stems, affixes, words, tokens, or another conventional linguistic category as a privileged gonol scale. Do not load for unrelated geometry, ordinary prose editing, or EDCM measurement that consumes already-closed gonols without changing their construction. Resolve METAPAT semantic authority, UCNS geometric authority, and EDCM text-domain authority separately; never restore historical gonal-morphology, omega/phi/psi, bone/flesh, or carrier-LCM language rules.
 ---
 
 # gonol-build — construct, close, promote, recurse
 
 Use this procedural skill to preserve gonol construction semantics without
-collapsing repository authority boundaries.
-
-The governing split is:
+collapsing repository authority boundaries or importing conventional linguistic
+pipelines as architecture.
 
 ```text
 METAPAT   -> conceptual meaning of affixiation and relational integration
 UCNS      -> gonol geometry, native Möbius/Public Gonol carrier, geometric operations
-EDCM      -> text-domain admission and linguistic/semantic gonol construction
+EDCM      -> text-domain admission, definitions, functions, and recursive relations
 skill-lib -> construction, evidence, replay, and continuation discipline
 ```
 
 No repository gains another repository's authority merely because a construction
 crosses the boundary.
 
-## Workflow: authority gate
+## Authority gate
 
 Before acting:
 
 1. Resolve the current commits or PR heads of every repository whose authority
    the construction uses.
-2. Read the governing repository instructions and the directly applicable
-   canon/contract source before choosing a construction rule.
-3. For affixiation, resolve current METAPAT semantics before implementing its
-   geometry or text-domain application.
-4. For carrier, topology, orientation, closure geometry, or Public Gonol
-   operations, resolve current UCNS authority.
-5. For character admission, morphology, words, definitions, source corpora, and
-   recursive textual relations, resolve current EDCM authority.
+2. Read the governing repository instructions and directly applicable contract
+   sources before choosing a construction rule.
+3. Resolve current METAPAT semantics when the meaning of affixiation or another
+   relation is itself at issue.
+4. Resolve current UCNS authority for carrier, topology, orientation, closure
+   geometry, or Public Gonol operations.
+5. Resolve current EDCM authority for character admission, definitions, source
+   corpora, punctuation-function application, and recursive textual relations.
 6. Distinguish declared architecture, implemented construction, evidence status,
    proposed continuation, and `hmmm`.
-7. If governing sources disagree, stop at the conflict. Do not choose the most
-   convenient repository or reconstruct authority from historical artifacts.
+7. If governing sources disagree, stop at the conflict. Do not reconstruct
+   authority from historical artifacts or conversational habit.
 
-Treat `hmmm` and an unresolved constructor as a ban on unqualified promotion,
-not as a ban on declared candidate construction. An unresolved constructor is
-permission to construct a named, bounded, falsifiable candidate under the
-contracts that are already fixed; it is not permission to invent the missing
-contract. `hmmm` blocks unqualified certainty and silent canonization. It does
-not block declared experimentation, implementation, comparison, or candidate
-construction.
+`hmmm` and an unresolved constructor block unqualified promotion, not declared
+candidate construction. Never fill an unresolved contract with an invented
+linguistic or geometric rule.
 
-## Domain rule: every character is a gonol
+## EDCM construction skeleton
 
-For active EDCM text construction:
+For active EDCM text construction, preserve:
 
 ```text
-every admitted character is a gonol
+characters -> definitions -> recursive gonol relations
 ```
 
-This is an **EDCM text-domain rule**, not a UCNS linguistic rule and not a
-METAPAT axiom.
+Every admitted character is a gonol. EDCM owns what counts as an admitted
+character for the declared source/profile; UCNS geometrically realizes admitted
+participants but does not decide text-domain admission.
 
-EDCM owns what counts as an admitted character for a declared source/profile.
-If the source boundary has not selected code point, grapheme, exact Public Gonol
-glyph inventory, or another character unit, preserve that question as `hmmm`.
-UCNS may geometrically realize an admitted character on its carrier; UCNS does
-not silently decide EDCM's character-admission semantics.
+This dependency skeleton does **not** create hidden intermediate scales.
+Linguistic morphology is not a privileged construction layer. Neither words,
+roots, stems, affixes, lemmas, tokens, nor conventional NLP categories become
+mandatory gonol scales merely because natural-language tooling commonly uses
+them.
 
-Character occurrences remain separately addressable even when repeated. Their
-source identity, order, multiplicity, and provenance are preserved according to
-the active EDCM construction profile.
+An intermediate closure may exist only when the governing source or declared
+construction actually requires it. Once closed, that gonol is atomic for
+participation at the consuming scale while remaining internally inspectable and
+provenance-bearing.
 
 ## Construction invariant
 
@@ -79,140 +76,81 @@ eligible gonol participants
     -> atomic participant at another declared scale
 ```
 
-`atomic` means indivisible for participation at the consuming scale. It does
-not mean internally structureless, provenance-free, irreversible, or forbidden
-from inspection.
-
-When a relationship helps constitute the result, keep it intrinsic to the
-gonol construction. Sidecars may carry indexes, caches, projections,
-provenance, and receipts; an external edge table does not become the gonol's
-authoritative relational content merely because it is easier to query.
-
-## Dependency-complete construction
-
-Do not optimize for the smallest executable implementation. Optimize for the
-least extraneous construction that is **dependency-complete and
-architecture-preserving** for the declared question.
-
-A bounded candidate may reduce source volume or execution scope only when that
-reduction does not remove or replace a load-bearing mechanism. Every mechanism
-whose presence could materially change whether the intended construction works
-must be present before the construction can answer `does it work?`.
-
-A toy, proxy, MVP, stub, alternate mechanism, or simplified substitute cannot
-falsify the declared architecture unless equivalence to the omitted or replaced
-mechanism was independently established and frozen before outcome inspection.
-Failure of a reduced substitute is evidence about the substitute, not the
-declared construction.
-
-Handle resource scarcity by preflighting and selecting a dependency-complete
-scope that can actually finish, not by silently deleting architecture to obtain
-an executable test.
-
-## Active EDCM text order
-
-Unless current EDCM authority explicitly changes it, preserve:
-
-```text
-characters -> morphology -> definitions -> recursive gonol relations
-```
-
-This is an order of construction dependencies, not permission to flatten every
-higher-scale gonol back into characters. Close each completed construction and
-reuse its atomic identity at the consuming scale.
-
-Words and other intermediate closures may exist where the declared construction
-requires them; do not manufacture a mandatory scale merely because a conventional
-NLP pipeline usually has one.
+When a relationship constitutes the result, keep it intrinsic to the gonol.
+Sidecars may carry indexes, caches, projections, provenance, and receipts; an
+external edge table does not become authoritative relational content merely
+because it is easier to query.
 
 ## Affixiation boundary
 
 METAPAT defines affixiation conceptually: already-bounded participants remain
-individually addressable, their identity and provenance are preserved, the
-declared relation may integrate as a higher-scale object-whole, and the
-integrated whole may later participate recursively without erasing its
-constituents.
+individually addressable, their identities and provenance are preserved, a
+declared relation may integrate as a higher-scale object-whole, and that whole
+may later participate recursively without erasing its constituents.
 
-UCNS owns any exact geometric realization of that operation. Do not invent an
-alternative carrier, topology, scale increment, arity rule, containment rule,
-or coupling law merely to complete an implementation. Implement the native
-carrier under the fixed METAPAT invariants and let unresolved geometric law
-remain `hmmm` until construction exposes it.
+UCNS owns the exact geometric realization. Do not invent an alternate carrier,
+topology, scale increment, arity rule, containment rule, or coupling law merely
+to complete an implementation.
 
-EDCM applies affixiation to text-domain gonols. Linguistic prefixes and suffixes
-are one instance of affixiation; they do not define affixiation.
+EDCM applies affixiation to text-domain gonols. A linguistic affix relation,
+when explicitly source-backed, is one possible relation instance; it does not
+define affixiation and does not create a morphology stage.
 
-The complete English root, stem, affix, irregular-transformation, and family law
-remains unresolved unless current EDCM source/evidence establishes otherwise.
-Never invent a decomposition to complete a pipeline. Do not assume every word is
-`root + affix`, that a lemma is a final root, or that one stemmer supplies
-semantic authority.
+Do not infer root/stem/affix decompositions, lemma hierarchies, lexical families,
+or token boundaries to complete a pipeline. If a governing source explicitly
+asserts such a relation, preserve that assertion as relation evidence under
+EDCM. It remains one sourced relation among gonols, not a privileged layer of
+the architecture.
 
-## Closure rules
+## Dependency-complete construction
+
+Do not optimize for the smallest executable implementation. Use the least
+extraneous construction that is **dependency-complete and architecture-
+preserving** for the declared question.
+
+A bounded candidate may reduce source volume or execution scope only when the
+reduction removes no load-bearing mechanism. A toy, proxy, MVP, stub, alternate
+mechanism, or simplified substitute cannot falsify the declared architecture
+unless equivalence was independently established and frozen before outcome
+inspection.
+
+Handle resource scarcity by preflighting a dependency-complete scope that can
+finish. Once a healthy admitted run begins, let it reach its natural terminal
+condition unless a genuine safety boundary or preregistered load-bearing stop
+condition fires. Do not add arbitrary wall-clock limits.
+
+## Closure and function rules
 
 - Preserve ordered occurrence identity, multiplicity, exact source evidence,
-  source offsets, and provenance required by the governing EDCM profile.
+  source offsets, and required provenance.
 - Apply no normalization, folding, trimming, deduplication, inferred sorting,
-  or silent collapse unless the current profile explicitly authorizes it.
-- Keep completed gonol closure intact inside larger constructions. Do not reopen
-  a closed word or definition merely because a larger relation contains it.
-- A repeated completed gonol may reuse atomic identity when the governing
-  construction says it is the same gonol; repeated occurrences remain
-  separately addressable.
-- Larger and smaller scales may couple directly when the governing construction
-  permits it. Do not invent mandatory adjacent-scale traversal.
+  or silent collapse unless the active profile explicitly authorizes it.
+- Keep completed gonol closure intact inside larger constructions.
+- Repeated occurrences remain separately addressable even when atomic identity
+  may be reused.
+- Larger and smaller scales may couple directly when governing construction
+  permits it; do not invent mandatory adjacent-scale traversal.
 - Do not materialize an all-pairs relationship graph as semantic authority.
-- Do not substitute conventional NLP token IDs, subword IDs, opaque embedding
-  vectors, or whole-string hashes for gonol identity.
+- Do not substitute NLP token IDs, subword IDs, opaque embeddings, or
+  whole-string hashes for gonol identity.
+- EDCM may apply only Public Gonol operations geometrically authorized by UCNS.
+- Never infer syntax, precedence, grammatical role, application scope, or
+  semantic operation from glyph shape, Unicode names, dictionary glosses, or
+  adjacency alone.
 
-## Public Gonol function application
+## Candidate, evidence, and replay
 
-UCNS owns the geometric operation of Public Gonol function positions. EDCM may
-apply only operations geometrically authorized by the current UCNS source and
-evidence.
+A constructor being unresolved means no constructor is canonical. It does not
+mean construction cannot begin.
 
-- An unresolved geometric operation remains `hmmm`; Unicode names, dictionary
-  definitions, neighboring glyphs, or conventional punctuation grammar do not
-  fill it.
-- Require occurrence-addressed application context when the governing EDCM
-  construction requires context.
-- Never infer adjacency, precedence, grammatical role, or application scope from
-  glyph shape alone.
-- Bind function identity, result identity, ordered participants, occurrence
-  addresses, carrier/construction identity, and source profile in the receipt.
-- Replay against the same geometric authority and explicit construction plan.
-- Do not promote structural survival into parsing, grammar, semantic utility, or
-  universal function law.
-
-## Candidate construction
-
-`Constructor unresolved` means no constructor is yet canonical. It does not mean
-construction cannot begin.
-
-- Inventing hidden canon is prohibited.
-- Constructing a declared, falsifiable, dependency-complete candidate is required
-  progress once the governing contracts name the participants and boundary
-  sufficiently to build.
-- Bound a candidate at non-load-bearing edges. Do not remove a load-bearing
-  dependency merely to make the candidate smaller, faster, or executable.
-- Freeze selectable implementation choices before inspecting the candidate's
-  evidentiary outcome when those choices could change the claimed result.
-- A candidate must name its identity, standing, frozen choices, nonclaims, and
-  selection effect before a completion receipt is minted.
-- Replay of a candidate establishes only that candidate's reproducibility. It
-  does not select it or transfer authority across repositories.
-
-## Evidence and replay
-
-For a construction that claims completion:
+For a completion claim:
 
 1. Bind exact METAPAT, UCNS, EDCM, source-artifact, profile, code, and option
    identities that materially determine the construction.
-2. Admit the complete declared source, not an inspected prefix presented as a
+2. Freeze selectable implementation choices before inspecting evidentiary
+   outcomes when those choices could change the claimed result.
+3. Admit the complete declared source, not an inspected prefix presented as a
    finished run.
-3. Preflight required compute and storage before starting. Once an admitted
-   healthy run begins, let it reach its natural terminal condition unless a
-   genuine safety boundary or preregistered load-bearing stop condition fires.
 4. Emit deterministic construction/semantic receipts separately from resource
    observations.
 5. Independently reconstruct or replay the complete declared scope.
@@ -220,13 +158,11 @@ For a construction that claims completion:
 7. Propagate failures and unresolved prerequisites without changing criteria
    after outcome inspection.
 
-Passing fixtures proves only the fixtures. A historical receipt remains
-historical evidence after its constructor or authority split is superseded; it
-is not a receipt for the replacement construction.
+Replay establishes reproducibility of that candidate only. It does not select
+canon, prove semantic utility, establish EDCM measurement validity, or transfer
+a claim across repositories.
 
 ## Required output
-
-Report:
 
 ```text
 authority identities:
@@ -244,89 +180,45 @@ next dependency-complete action:
 ```
 
 Use `SURVIVED`, `FALSIFIED`, `BLOCKED`, `UNRESOLVED`, and `DEPRECATED` only under
-the governing protocol. Do not translate `SURVIVED` into proved or canonical.
+the governing protocol. `SURVIVED` does not mean proved or canonical.
 
 ## Usage guidance
 
-When building text gonols, start in EDCM and consume UCNS geometry rather than
-moving text semantics into UCNS. When building or repairing carrier geometry,
-start in UCNS and use the METAPAT contract only for the relational invariants it
-authorizes. When affixiation semantics themselves are in question, repair or
-resolve them in METAPAT before downstream construction.
-
-A minimal routing example is:
+For text gonols, start in EDCM and consume UCNS geometry. For carrier geometry,
+start in UCNS. Consult METAPAT only for the relational semantics it owns. If a
+linguistic category appears, ask whether the governing source actually declares
+that relation; never promote the category into a scale merely because its name
+is familiar.
 
 ```text
-METAPAT: affixiation preserves bounded participant identity/provenance
-UCNS:    realize that relation on the native Möbius/Public Gonol geometry
-EDCM:    admit characters as gonols and construct text through affixiation
+METAPAT: bounded participants may integrate through a declared relation
+UCNS:    realize that relation on authorized gonol geometry
+EDCM:    admit characters, construct definitions, then construct recursive relations
 ```
 
-## Anti-patterns: refuse these
+## Anti-patterns
 
-- Assigning character, morphology, definition, or lexical-source authority to
-  UCNS merely because UCNS provides their geometry.
-- Assigning affixiation semantics to EDCM or UCNS merely because they implement
-  or apply it.
-- Reopening closed gonols merely because a larger construction contains them.
-- Inferring function context, syntax, precedence, or operation from adjacency,
-  Unicode names, dictionary glosses, or glyph shape.
-- Treating a source word list as a semantic dictionary.
-- Treating `hmmm` or an unresolved constructor as permission to refuse a
-  declared candidate construction, complete run, or replay.
-- Replacing the declared architecture with a toy, proxy, MVP, stub, or simplified
-  mechanism merely because the replacement is easier to execute.
-- Treating failure of a reduced substitute as falsification of the declared
-  architecture without preregistered evidence that the reduction preserves all
-  load-bearing behavior.
-- Inventing morphology, a lexical family map, geometry, measurement authority,
-  alternate carrier, scale rule, or coupling law to fill an absent constructor.
-- Promoting a sidecar relationship graph into intrinsic gonol semantics.
-- Treating a partial corpus run as complete evidence.
-- Adding arbitrary wall-clock limits to a healthy admitted computation.
-- Restoring the deprecated omega/phi/psi cores, bone/flesh categories, fixed
-  morphology weights, or `multiplyFuel`/carrier-LCM as the universal language
-  law.
-- Transferring UCNS construction survival into EDCM measurement validity,
-  PTCNA efficacy, cognition claims, or selected universal canon.
+Refuse:
 
-## Minimal examples
-
-Character admission:
-
-```text
-EDCM source/profile admits "a" -> that character occurrence is a gonol
-UCNS supplies its authorized carrier geometry
-EDCM owns the text-domain construction that consumes it
-```
-
-Recursive closure:
-
-```text
-bounded gonols + declared relation
-    -> affixiate under METAPAT invariants
-    -> UCNS geometric realization
-    -> closed EDCM text-domain gonol
-    -> atomic participation in a later declared relation
-```
-
-Honest incomplete continuation:
-
-```text
-geometric coupling law unresolved
-    -> construct a dependency-complete, architecture-preserving UCNS candidate
-       allowed by fixed contracts
-    -> preserve candidate standing
-    -> hmmm blocks promotion, not construction
-```
+- assigning character, definition, source-corpus, or semantic authority to UCNS;
+- promoting morphology, words, roots, stems, affixes, lemmas, tokens, or another
+  conventional NLP category into a mandatory gonol scale without governing
+  authority;
+- reopening closed gonols because a larger construction contains them;
+- inventing a lexical-family map, geometry, carrier, scale rule, or coupling law
+  to fill an absent constructor;
+- treating a sidecar graph as intrinsic gonol semantics;
+- treating a partial corpus run as complete evidence;
+- replacing the declared architecture with a reduced proxy simply because the
+  proxy is easier to execute;
+- restoring deprecated omega/phi/psi cores, bone/flesh categories, historical
+  fixed morphology weights, or `multiplyFuel`/carrier-LCM language doctrine;
+- transferring UCNS construction survival into EDCM measurement validity,
+  cognition claims, or universal canon.
 
 ## hmmm
 
-`hmmm` blocks unqualified promotion. It does not block experimentation or
-construction of a declared candidate.
-
 - which exact EDCM character-admission unit applies where not already source-pinned;
-- the source-supported complete English morphology law;
 - the exact UCNS Möbius-carrier affixiation/coupling law exposed by implementation;
 - executable geometry for direct coupling across distant recursive scales;
 - quantitative compression and reconstruction behavior after recursive gonols exist;

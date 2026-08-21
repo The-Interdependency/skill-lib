@@ -43,7 +43,9 @@ Treat `hmmm` and an unresolved constructor as a ban on unqualified promotion,
 not as a ban on declared candidate construction. An unresolved constructor is
 permission to construct a named, bounded, falsifiable candidate under the
 contracts that are already fixed; it is not permission to invent the missing
-contract.
+contract. `hmmm` blocks unqualified certainty and silent canonization. It does
+not block declared experimentation, implementation, comparison, or candidate
+construction.
 
 ## Domain rule: every character is a gonol
 

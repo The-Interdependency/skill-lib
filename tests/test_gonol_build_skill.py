@@ -60,6 +60,17 @@ class GonolBuildSkillTest(unittest.TestCase):
         ):
             self.assertIn(phrase, self.compact)
 
+    def test_dependency_complete_construction_rejects_reduced_substitutes(self) -> None:
+        for phrase in (
+            "Do not optimize for the smallest executable implementation",
+            "dependency-complete and architecture-preserving",
+            "Failure of a reduced substitute is evidence about the substitute",
+            "Do not remove a load-bearing dependency",
+            "toy, proxy, MVP, stub",
+        ):
+            self.assertIn(phrase, self.compact)
+        self.assertNotIn("smallest declared UCNS candidate", self.compact)
+
     def test_function_application_refuses_semantic_inference(self) -> None:
         for phrase in (
             "UCNS owns the geometric operation of Public Gonol function positions",

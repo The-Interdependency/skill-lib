@@ -88,6 +88,27 @@ gonol construction. Sidecars may carry indexes, caches, projections,
 provenance, and receipts; an external edge table does not become the gonol's
 authoritative relational content merely because it is easier to query.
 
+## Dependency-complete construction
+
+Do not optimize for the smallest executable implementation. Optimize for the
+least extraneous construction that is **dependency-complete and
+architecture-preserving** for the declared question.
+
+A bounded candidate may reduce source volume or execution scope only when that
+reduction does not remove or replace a load-bearing mechanism. Every mechanism
+whose presence could materially change whether the intended construction works
+must be present before the construction can answer `does it work?`.
+
+A toy, proxy, MVP, stub, alternate mechanism, or simplified substitute cannot
+falsify the declared architecture unless equivalence to the omitted or replaced
+mechanism was independently established and frozen before outcome inspection.
+Failure of a reduced substitute is evidence about the substitute, not the
+declared construction.
+
+Handle resource scarcity by preflighting and selecting a dependency-complete
+scope that can actually finish, not by silently deleting architecture to obtain
+an executable test.
+
 ## Active EDCM text order
 
 Unless current EDCM authority explicitly changes it, preserve:
@@ -169,8 +190,11 @@ evidence.
 construction cannot begin.
 
 - Inventing hidden canon is prohibited.
-- Constructing a declared, falsifiable candidate is required progress once the
-  governing contracts name the participants and boundary sufficiently to build.
+- Constructing a declared, falsifiable, dependency-complete candidate is required
+  progress once the governing contracts name the participants and boundary
+  sufficiently to build.
+- Bound a candidate at non-load-bearing edges. Do not remove a load-bearing
+  dependency merely to make the candidate smaller, faster, or executable.
 - Freeze selectable implementation choices before inspecting the candidate's
   evidentiary outcome when those choices could change the claimed result.
 - A candidate must name its identity, standing, frozen choices, nonclaims, and
@@ -250,6 +274,11 @@ EDCM:    admit characters as gonols and construct text through affixiation
 - Treating a source word list as a semantic dictionary.
 - Treating `hmmm` or an unresolved constructor as permission to refuse a
   declared candidate construction, complete run, or replay.
+- Replacing the declared architecture with a toy, proxy, MVP, stub, or simplified
+  mechanism merely because the replacement is easier to execute.
+- Treating failure of a reduced substitute as falsification of the declared
+  architecture without preregistered evidence that the reduction preserves all
+  load-bearing behavior.
 - Inventing morphology, a lexical family map, geometry, measurement authority,
   alternate carrier, scale rule, or coupling law to fill an absent constructor.
 - Promoting a sidecar relationship graph into intrinsic gonol semantics.
@@ -285,7 +314,8 @@ Honest incomplete continuation:
 
 ```text
 geometric coupling law unresolved
-    -> construct the smallest declared UCNS candidate allowed by fixed contracts
+    -> construct a dependency-complete, architecture-preserving UCNS candidate
+       allowed by fixed contracts
     -> preserve candidate standing
     -> hmmm blocks promotion, not construction
 ```

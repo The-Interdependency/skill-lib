@@ -11,6 +11,34 @@ agent skills. Every other repo in the org carries a repo-local copy of
 this lib under `.agents/skills/`; this is the source of truth those
 copies are propagated from.
 
+## Agent-context invariant — binding
+
+`skill-lib` is standing agent context, not optional reference material.
+
+At **every agent instantiation**, before that agent may reason about or execute
+org work, resolve the available skill-lib entrypoint/index and the governing
+repository instructions. At **the start of every unit of work**, reevaluate the
+current request against skill descriptions and read every applicable `SKILL.md`
+before acting. A child/sub-agent inherits the parent's already-resolved
+repository identities, governing contracts, and applicable skill context, then
+reevaluates triggers for its own assigned work; it does not reconstruct stable
+project semantics from the conversational prompt.
+
+Previously resolved authoritative instructions remain resolved until their
+source changes, conflicts, becomes unavailable, or is explicitly superseded.
+Do not ask the user to restate repository knowledge that an authoritative
+source already resolves. If required authority cannot be resolved, stop that
+work boundary as `hmmm`; do not guess and do not substitute conversational
+repetition for source resolution.
+
+In compact form:
+
+```text
+agent birth -> resolve repo instructions + skill-lib -> inherit authority -> ready
+work start  -> reevaluate triggers -> load applicable contracts -> act
+missing authority -> hmmm, not invention or user repetition
+```
+
 ## Resource-run invariant — binding
 
 Read [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) before any compute run whose completion depends materially on scarce resources.

@@ -55,6 +55,10 @@ Preserve exact source identity, occurrence order, multiplicity, and provenance. 
 
 If required UCNS geometry is unresolved, preserve that boundary as `hmmm`; do not fill it with an invented rule.
 
+## Candidate boundary
+
+An unresolved constructor is permission to construct a named, bounded candidate; it does not block declared experimentation. It blocks promotion beyond the evidence, not construction or testing.
+
 ## Completion and replay
 
 Before a full run, preflight the resources required to finish it. Once a healthy admitted run begins, let it reach its natural terminal condition unless a genuine safety/resource boundary or preregistered load-bearing stop condition fires. Do not add arbitrary wall-clock limits.

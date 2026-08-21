@@ -14,6 +14,7 @@ ADAPTER = ROOT / "skills" / "gonol-build" / "SKILL.md"
 class GonolBuildSkillTest(unittest.TestCase):
     def setUp(self) -> None:
         self.text = SKILL.read_text(encoding="utf-8")
+        self.compact = " ".join(self.text.split())
         self.frontmatter = frontmatter_for(SKILL)
 
     def test_activation_and_nontrigger_are_concrete(self) -> None:
@@ -27,29 +28,46 @@ class GonolBuildSkillTest(unittest.TestCase):
         ):
             self.assertIn(phrase, description)
 
-    def test_routes_authority_to_current_ucns(self) -> None:
-        self.assertIn("Resolve the current UCNS commit or PR", self.text)
-        self.assertIn("Repo-local UCNS authority may evolve", self.text)
-        self.assertIn("does not copy a frozen UCNS snapshot", self.text)
+    def test_routes_authority_across_metapat_ucns_edcm(self) -> None:
+        for phrase in (
+            "METAPAT -> conceptual meaning of affixiation",
+            "UCNS -> gonol geometry",
+            "EDCM -> text-domain admission",
+            "skill-lib -> construction, evidence, replay",
+            "Resolve the current commits or PR heads",
+        ):
+            self.assertIn(phrase, self.compact)
+
+    def test_every_character_is_edcm_domain_rule(self) -> None:
+        self.assertIn("every admitted character is a gonol", self.compact)
+        self.assertIn("EDCM text-domain rule", self.compact)
+        self.assertIn("EDCM owns what counts as an admitted character", self.compact)
+        self.assertIn("UCNS does not silently decide EDCM's character-admission semantics", self.compact)
+
+    def test_affixiation_authority_is_not_redefined_downstream(self) -> None:
+        self.assertIn("METAPAT defines affixiation conceptually", self.compact)
+        self.assertIn("UCNS owns any exact geometric realization", self.compact)
+        self.assertIn("EDCM applies affixiation to text-domain gonols", self.compact)
+        self.assertIn("do not define affixiation", self.compact)
 
     def test_closure_and_atomic_promotion_are_preserved(self) -> None:
         for phrase in (
             "relation enters the construction",
             "closure with source identity and receipt",
-            "atomic participant at another scale",
+            "atomic participant at another declared scale",
             "indivisible for participation at the consuming scale",
             "Do not materialize an all-pairs relationship graph",
         ):
-            self.assertIn(phrase, self.text)
+            self.assertIn(phrase, self.compact)
 
-    def test_function_application_refuses_inference(self) -> None:
+    def test_function_application_refuses_semantic_inference(self) -> None:
         for phrase in (
-            "caller-supplied, occurrence-addressed application context",
+            "UCNS owns the geometric operation of Public Gonol function positions",
+            "Unicode names, dictionary definitions",
             "Never infer adjacency, precedence, grammatical role",
-            "Replay against the same authoritative table",
             "Do not promote structural survival into parsing",
         ):
-            self.assertIn(phrase, self.text)
+            self.assertIn(phrase, self.compact)
 
     def test_completion_requires_full_run_and_replay(self) -> None:
         for phrase in (
@@ -59,27 +77,19 @@ class GonolBuildSkillTest(unittest.TestCase):
             "Compare byte-for-byte",
             "A historical receipt remains",
         ):
-            self.assertIn(phrase, self.text)
+            self.assertIn(phrase, self.compact)
 
     def test_deprecated_morphology_cannot_return(self) -> None:
-        self.assertIn("deprecated omega/phi/psi cores", self.text)
-        self.assertIn("bone/flesh categories", self.text)
-        self.assertIn("carrier-LCM as the universal language", self.text)
+        self.assertIn("deprecated omega/phi/psi cores", self.compact)
+        self.assertIn("bone/flesh categories", self.compact)
+        self.assertIn("carrier-LCM as the universal language", self.compact)
 
     def test_hmmm_and_claim_boundaries_are_required(self) -> None:
         self.assertIn("claims not supported:", self.text)
         self.assertIn("hmmm:", self.text)
-        self.assertIn("complete English morphology law", self.text)
-        self.assertIn("Do not translate `SURVIVED` into proved", self.text)
-
-    def test_hmmm_blocks_promotion_not_candidate_construction(self) -> None:
-        self.assertIn("ban on unqualified", self.text)
-        self.assertIn("not as a ban on declared candidate construction", self.text)
-        self.assertIn("Constructing a declared, falsifiable candidate is required progress", self.text)
-        self.assertIn("`hmmm` blocks unqualified promotion", self.text)
-        self.assertIn("does not block experimentation or", self.text)
-        self.assertIn("which recursive-gonol candidate, if any, later becomes selected canon", self.text)
-        self.assertNotIn("the first complete recursive-gonol relation constructor beyond definition", self.text)
+        self.assertIn("complete English morphology law", self.compact)
+        self.assertIn("Do not translate `SURVIVED` into proved", self.compact)
+        self.assertIn("hmmm blocks promotion, not construction", self.compact)
 
     def test_codex_adapter_points_to_canonical_skill(self) -> None:
         text = ADAPTER.read_text(encoding="utf-8")

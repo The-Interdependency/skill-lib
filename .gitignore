@@ -10,3 +10,6 @@ __pycache__/
 
 # Local skill usage evidence
 .skill-lib/
+
+# Local secrets
+.env

@@ -96,6 +96,12 @@ class GonolBuildSkillTest(unittest.TestCase):
         ):
             self.assertIn(phrase, self.compact)
 
+    def test_workflow_and_anti_patterns_are_named(self) -> None:
+        self.assertIn("## Workflow", self.text)
+        self.assertIn("## Anti-patterns", self.text)
+        self.assertIn("Resolve the current UCNS and EDCM authorities before building", self.compact)
+        self.assertIn("Moving text semantics into UCNS or inventing geometry in EDCM", self.compact)
+
     def test_usage_guidance_repeats_operational_contract(self) -> None:
         self.assertIn("For text construction, start in EDCM and consume current UCNS geometry", self.compact)
         self.assertIn("When a word closes, use that word gonol atomically at the next scale", self.compact)

@@ -7,6 +7,14 @@ description: Construction, closure, and replay contract for gonols across UCNS a
 
 Use this skill to keep gonol construction on the declared architecture and nothing else.
 
+## Workflow
+
+1. Resolve the current UCNS and EDCM authorities before building.
+2. Keep the EDCM order load-bearing: characters -> words -> definitions -> recursive gonol relations.
+3. Close each completed gonol before it participates atomically at the next declared scale.
+4. If required UCNS geometry is unresolved, preserve that boundary as `hmmm`.
+5. Preflight resources before a completion claim, then replay the complete declared scope.
+
 ## Authority
 
 ```text
@@ -82,6 +90,15 @@ EDCM: characters -> words -> definitions -> recursive gonol relations
 ```
 
 When a word closes, use that word gonol atomically at the next scale. Ignore pronunciation unless a future explicit construction says otherwise.
+
+## Anti-patterns
+
+- Moving text semantics into UCNS or inventing geometry in EDCM.
+- Inserting another required EDCM stage without an explicit contract change.
+- Letting pronunciation alter gonol identity, closure, ordering, or relations.
+- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, or hashes for gonol identity.
+- Adding arbitrary wall-clock limits to a healthy admitted run.
+- Treating replay as semantic quality, measurement validity, cognition, or extra-scope canon.
 
 ## hmmm
 

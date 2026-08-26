@@ -61,6 +61,7 @@ llms/                  # python -m llms.build reference runner
 | `distributed-publication/` | procedural | — | Provenance-bearing publication from distributed source owners. Preserves exact source identities, source-local licenses and statuses, correction routing, fail-closed retrieval, explicit fallback, and publication build provenance. Loads with `interdependent-work-graph`. |
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
 | `action-calibration/` | procedural | — | Action sizing and escalation doctrine for choosing a smallest decisive experiment, maximal coherent program, prerequisite repair, or containment after preflighting scarce resources. |
+| `repo-audit-repair/` | procedural | — | Evidence-led repository audit and authorized repair from exact starting identity through applicable checks, classified findings, owning-layer fixes, and authoritative terminal verification. |
 | `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
 | `skill-usage/` | procedural | — | Evidence-bearing local usage maturity. Counts material invocations, preserves unobserved outcomes as `hmmm`, and separates nominal exposure thresholds from quality-capped effective maturity. |
 | `ssh-automation/` | procedural | — | Fail-closed SSH automation and copy-paste delivery. Preserves verified endpoint identity, explicit authentication, local/remote shell and stdin boundaries, bounded retries, idempotent activation and rollback, and child-shell containment for bulk terminal pastes. |
@@ -100,7 +101,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `action-calibration/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `action-calibration/`, `repo-audit-repair/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 

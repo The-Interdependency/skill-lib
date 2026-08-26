@@ -44,6 +44,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
+* `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations
 * `ssh-automation/` — fail-closed SSH scripting and copy-paste automation doctrine
@@ -188,6 +189,17 @@ full build, agents should read:
 Name the decision, preserve load-bearing invariants, compare complete cost vectors,
 freeze outcome-conditioned escalation rules, and let `loop-eng` execute the selected
 bounded loop.
+
+Before auditing or auditing and repairing an existing repository, agents should read:
+
+```text
+.agents/skills/repo-audit-repair/SKILL.md
+```
+
+Resolve exact repository identity and authority first; select checks from actual
+repository claims; classify defects separately from environment, external service,
+policy, and `hmmm`; repair only the owning layer under the user's authorization; and
+verify merge, release, and deployment as distinct terminal states when applicable.
 
 Before writing, reviewing, or troubleshooting repeatable SSH automation or a
 large terminal paste that contains SSH, agents should read:

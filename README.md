@@ -48,6 +48,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`distributed-publication/`](distributed-publication/SKILL.md) | Provenance-bearing publication from distributed source owners. Builds ordered textbooks, reports, standards, corpora, archives, and public reading surfaces from exact source identities while preserving source-local licenses and statuses, fail-closed production retrieval, explicit fallback, correction routing, and public build provenance. Loads with `interdependent-work-graph`. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 | [`action-calibration/`](action-calibration/SKILL.md) | Chooses the smallest decisive action versus the maximal coherent program, with complete cost vectors, three-outcome branching, frozen escalation rules, and explicit prerequisite/containment boundaries. Independent of msdmd. |
+| [`repo-audit-repair/`](repo-audit-repair/SKILL.md) | Evidence-led repository auditing and authorized repair from exact starting identity through classified findings, truthful gates, owning-layer fixes, and authoritative terminal verification. Independent of msdmd. |
 | [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
 | [`skill-usage/`](skill-usage/SKILL.md) | Evidence-bearing local usage maturity. Counts material skill invocations, preserves unknown outcomes as `hmmm`, and separates nominal exposure from effective maturity across experimental, field-test, operational, reliable, and daily-use designations. Independent of msdmd. |
 | [`ssh-automation/`](ssh-automation/SKILL.md) | Fail-closed SSH scripting and terminal-delivery doctrine. Preserves endpoint identity, verified host trust, explicit authentication, local/remote shell boundaries, stdin and PTY semantics, bounded retries, idempotent activation and rollback, and child-shell containment for one-box Cloud Shell pastes. Independent of msdmd. |
@@ -216,7 +217,7 @@ example for a metadata-block skill that also ships a stdlib command module.
 block (`canon`, `domain-claims`, `visitor-intro`, `char-compress`, `agent-instantiation`,
 `a0p-instancing`, `plain-lens`, `gonol-build`, `ucns-option-selection`, `meta`, `the-interdependency`,
 `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `action-calibration`,
-`skill-build`, `skill-usage`, `ssh-automation`, and `vm-mcp`
+`repo-audit-repair`, `skill-build`, `skill-usage`, `ssh-automation`, and `vm-mcp`
 are the existing examples). To add one:
 
 1. Define when the skill loads (the `description` field in the YAML

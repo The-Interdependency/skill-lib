@@ -28,6 +28,7 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("not unrelated cleanup", self.text)
 
     def test_findings_preserve_causal_classification(self) -> None:
+        self.assertIn("Split compound failures into separate findings first", self.normalized)
         for finding_class in ("`DEFECT`", "`ENVIRONMENT`", "`EXTERNAL`", "`POLICY`", "`HMMM`"):
             with self.subTest(finding_class=finding_class):
                 self.assertIn(finding_class, self.text)

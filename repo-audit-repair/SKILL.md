@@ -41,8 +41,8 @@ triggers apply; their domain doctrine remains theirs.
 
 ## Finding classes
 
-Every material finding receives exactly one standing class until new evidence
-changes it:
+Split compound failures into separate findings first. Every material finding
+then receives exactly one standing class until new evidence changes it:
 
 | Class | Meaning | Permitted response |
 |---|---|---|

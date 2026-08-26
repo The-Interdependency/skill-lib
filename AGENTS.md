@@ -79,7 +79,7 @@ the skill. Treat it as the public contract.
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `gonol-build`, `ucns-option-selection`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `action-calibration`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -154,6 +154,7 @@ propagate from here.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
+- If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
 - If you are giving an MCP-capable agent operational contact with a private VM,
   load `vm-mcp/SKILL.md`; keep credentials outside the model path and expose
   only named, bounded capabilities.

@@ -1,6 +1,6 @@
 ---
 name: meta
-description: METAPAT consultation router for The Interdependency. Load this when deciding which distinctions, relations, boundaries, transformations, scales, or cross-domain correspondences should organize downstream work; when the-interdependency skill's METAPAT consultation gate triggers; when an unresolved conceptual choice would constrain architecture, semantics, measurement, ontology, or later claims; or when explicitly asked to consult, apply, or interpret current METAPAT. Do not load merely for routine implementation under already-fixed conceptual contracts.
+description: METAPAT consultation router for The Interdependency. Load this when deciding which distinctions, relations, boundaries, transformations, scales, or cross-domain correspondences should organize downstream work; when examining available observations or metrics to determine which questions and projections are worth measuring; when the-interdependency skill's METAPAT consultation gate triggers; when an unresolved conceptual choice would constrain architecture, semantics, measurement, ontology, or later claims; or when explicitly asked to consult, apply, or interpret current METAPAT. Do not load merely for routine implementation under already-fixed conceptual contracts.
 ---
 
 # meta — consult current METAPAT

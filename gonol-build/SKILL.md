@@ -13,7 +13,8 @@ Use this skill to keep gonol construction on the declared architecture and nothi
 2. Keep the EDCM order load-bearing: characters -> words -> definitions -> recursive gonol relations.
 3. Close each completed gonol before it participates atomically at the next declared scale.
 4. If required UCNS geometry is unresolved, preserve that boundary as `hmmm`.
-5. Preflight resources before a completion claim, then replay the complete declared scope.
+5. Before launching construction or replay whose completion materially depends on scarce resources, preflight the resources required to finish the declared scope.
+6. Replay the complete declared scope only where replay is required by the governing protocol.
 
 ## Authority
 
@@ -69,7 +70,7 @@ An unresolved constructor is permission to construct a named, bounded candidate;
 
 ## Completion and replay
 
-Before a full run, preflight the resources required to finish it. Once a healthy admitted run begins, let it reach its natural terminal condition unless a genuine safety/resource boundary or preregistered load-bearing stop condition fires. Do not add arbitrary wall-clock limits.
+Before launching a construction or replay run whose completion materially depends on scarce resources, preflight the resources required to finish it. If the preflight cannot establish enough resource confidence to finish the declared scope, do not start the compute run; record the unresolved resource boundary as `hmmm` or narrow the declared scope under the governing protocol. Once a healthy admitted run begins, let it reach its natural terminal condition unless a genuine safety/resource boundary or preregistered load-bearing stop condition fires. Do not add arbitrary wall-clock limits.
 
 A completion claim requires:
 

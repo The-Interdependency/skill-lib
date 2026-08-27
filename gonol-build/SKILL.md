@@ -10,10 +10,10 @@ Use this skill to keep gonol construction on the declared architecture and nothi
 ## Workflow
 
 1. Resolve the current UCNS and EDCM authorities before building.
-2. Keep the EDCM order load-bearing: characters -> words -> definitions -> recursive gonol relations.
-3. Close each completed gonol before it participates atomically at the next declared scale.
-4. If required UCNS geometry is unresolved, preserve that boundary as `hmmm`.
-5. Before launching construction or replay whose completion materially depends on scarce resources, preflight the resources required to finish the declared scope.
+2. Before launching construction or replay whose completion materially depends on scarce resources, preflight the resources required to finish the declared scope.
+3. Keep the EDCM order load-bearing: characters -> words -> definitions -> recursive gonol relations.
+4. Close each completed gonol before it participates atomically at the next declared scale.
+5. If required UCNS geometry is unresolved, preserve that boundary as `hmmm`.
 6. Replay the complete declared scope only where replay is required by the governing protocol.
 
 ## Authority

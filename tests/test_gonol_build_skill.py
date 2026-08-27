@@ -121,6 +121,17 @@ class GonolBuildSkillTest(unittest.TestCase):
         self.assertIn("Resolve the current UCNS and EDCM authorities before building", self.compact)
         self.assertIn("Moving text semantics into UCNS or inventing geometry in EDCM", self.compact)
 
+    def test_anti_patterns_preserve_explicit_contract_exceptions(self) -> None:
+        anti_patterns = self.text.split("## Anti-patterns", 1)[1].split("## hmmm", 1)[0]
+        self.assertIn(
+            "unless a later explicitly declared experiment makes phonology part of its construction",
+            anti_patterns,
+        )
+        self.assertIn(
+            "unless the active contract explicitly authorizes it",
+            anti_patterns,
+        )
+
     def test_usage_guidance_repeats_operational_contract(self) -> None:
         self.assertIn("For text construction, start in EDCM and consume current UCNS geometry", self.compact)
         self.assertIn("When a word closes, use that word gonol atomically at the next scale", self.compact)

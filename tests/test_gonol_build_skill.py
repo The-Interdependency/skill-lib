@@ -87,14 +87,39 @@ class GonolBuildSkillTest(unittest.TestCase):
 
     def test_completion_requires_full_scope_and_replay(self) -> None:
         for phrase in (
+            "Before launching a construction or replay run whose completion materially depends on scarce resources",
             "preflight the resources required to finish it",
+            "do not start the compute run",
             "Do not add arbitrary wall-clock limits",
             "the complete declared source scope",
             "deterministic construction receipts",
-            "independent complete replay",
+            "independent complete replay where replay is required by the governing protocol",
             "Replay establishes reproducibility of that construction only",
         ):
             self.assertIn(phrase, self.compact)
+
+    def test_workflow_preflights_before_compute_and_replays_conditionally(self) -> None:
+        workflow = self.text.split("## Workflow", 1)[1].split("## Authority", 1)[0]
+        for phrase in (
+            "Before launching construction or replay whose completion materially depends on scarce resources",
+            "preflight the resources required to finish the declared scope",
+            "Replay the complete declared scope only where replay is required by the governing protocol",
+        ):
+            self.assertIn(phrase, workflow)
+        self.assertLess(
+            workflow.index("Before launching construction or replay"),
+            workflow.index("Keep the EDCM order load-bearing"),
+        )
+        self.assertNotIn(
+            "Preflight resources before a completion claim, then replay the complete declared scope",
+            workflow,
+        )
+
+    def test_workflow_and_anti_patterns_are_named(self) -> None:
+        self.assertIn("## Workflow", self.text)
+        self.assertIn("## Anti-patterns", self.text)
+        self.assertIn("Resolve the current UCNS and EDCM authorities before building", self.compact)
+        self.assertIn("Moving text semantics into UCNS or inventing geometry in EDCM", self.compact)
 
     def test_usage_guidance_repeats_operational_contract(self) -> None:
         self.assertIn("For text construction, start in EDCM and consume current UCNS geometry", self.compact)

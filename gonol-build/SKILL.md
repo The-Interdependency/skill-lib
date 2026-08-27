@@ -7,6 +7,15 @@ description: Construction, closure, and replay contract for gonols across UCNS a
 
 Use this skill to keep gonol construction on the declared architecture and nothing else.
 
+## Workflow
+
+1. Resolve the current UCNS and EDCM authorities before building.
+2. Before launching construction or replay whose completion materially depends on scarce resources, preflight the resources required to finish the declared scope.
+3. Keep the EDCM order load-bearing: characters -> words -> definitions -> recursive gonol relations.
+4. Close each completed gonol before it participates atomically at the next declared scale.
+5. If required UCNS geometry is unresolved, preserve that boundary as `hmmm`.
+6. Replay the complete declared scope only where replay is required by the governing protocol.
+
 ## Authority
 
 ```text
@@ -61,7 +70,7 @@ An unresolved constructor is permission to construct a named, bounded candidate;
 
 ## Completion and replay
 
-Before a full run, preflight the resources required to finish it. Once a healthy admitted run begins, let it reach its natural terminal condition unless a genuine safety/resource boundary or preregistered load-bearing stop condition fires. Do not add arbitrary wall-clock limits.
+Before launching a construction or replay run whose completion materially depends on scarce resources, preflight the resources required to finish it. If the preflight cannot establish enough resource confidence to finish the declared scope, do not start the compute run; record the unresolved resource boundary as `hmmm` or narrow the declared scope under the governing protocol. Once a healthy admitted run begins, let it reach its natural terminal condition unless a genuine safety/resource boundary or preregistered load-bearing stop condition fires. Do not add arbitrary wall-clock limits.
 
 A completion claim requires:
 
@@ -82,6 +91,15 @@ EDCM: characters -> words -> definitions -> recursive gonol relations
 ```
 
 When a word closes, use that word gonol atomically at the next scale. Ignore pronunciation unless a future explicit construction says otherwise.
+
+## Anti-patterns
+
+- Moving text semantics into UCNS or inventing geometry in EDCM.
+- Inserting another required EDCM stage without an explicit contract change.
+- Letting pronunciation alter gonol identity, closure, ordering, or relations.
+- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, or hashes for gonol identity.
+- Adding arbitrary wall-clock limits to a healthy admitted run.
+- Treating replay as semantic quality, measurement validity, cognition, or extra-scope canon.
 
 ## hmmm
 

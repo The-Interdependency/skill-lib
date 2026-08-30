@@ -84,7 +84,7 @@ class ProjectIncubationGraduationSkillTest(unittest.TestCase):
         self.assertIn("Install **that same exact candidate artifact** in the forge", self.text)
         self.assertIn("before stable publication", self.text)
         self.assertIn("do not publish it as a stable public release", self.text)
-        self.assertIn("publish the already-verified candidate bytes", self.text)
+        self.assertIn("Publish the already-verified candidate bytes", self.text)
 
     def test_artifact_identity_is_immutable_not_version_only(self) -> None:
         self.assertIn("A human-readable version is not an immutable artifact identity", self.text)

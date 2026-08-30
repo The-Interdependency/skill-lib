@@ -10,8 +10,9 @@ Group=vmmcp
 WorkingDirectory=/opt/vm-mcp
 EnvironmentFile=-/etc/vm-mcp.env
 Environment=VM_MCP_ROOT=/srv/vm-mcp/workspace
+Environment=VM_MCP_PROFILE=read-only
 Environment=VM_MCP_PORT=8765
-Environment=VM_MCP_SHELL_ENABLED=0
+Environment=VM_MCP_ADMIN_SOCKET=/run/vm-mcp/admin.sock
 Environment=PYTHONDONTWRITEBYTECODE=1
 ExecStart=/opt/vm-mcp/.venv/bin/python /opt/vm-mcp/server.py
 Restart=on-failure

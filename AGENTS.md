@@ -64,7 +64,7 @@ description: <one paragraph; ends with explicit "Load this when …" triggers>
 ```
 
 The `description` is what your harness uses to decide whether to load
-the skill. Treat it as the public contract.
+the rest. Treat it as the public contract.
 
 ## How to load a skill
 
@@ -157,8 +157,10 @@ propagate from here.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
 - If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
 - If you are giving an MCP-capable agent operational contact with a private VM,
-  load `vm-mcp/SKILL.md`; keep credentials outside the model path and expose
-  only named, bounded capabilities.
+  load `vm-mcp/SKILL.md`; keep credentials outside the model path and choose
+  the authority profile explicitly. Shared or first-contact deployments should
+  stay bounded; a single-owner `personal-console` may intentionally expose broad
+  `user_exec` plus visibly separate root `admin_exec`.
 - If you are creating a new skill, revising an existing skill, bringing skills into compliance, or designing a skill-specific test suite, load `skill-build/SKILL.md` and answer its trigger, source-of-truth, workflow, validation, and `hmmm` question sets before patching.
 - If you are writing, reviewing, or troubleshooting SSH automation, non-interactive remote commands, deployment scripts over SSH, or Cloud Shell copy-paste SSH blocks, load `ssh-automation/SKILL.md`; fail closed on host trust and identity, preserve stdin and PTY boundaries, quote remote scripts, and keep bulk pastes inside a child shell.
 - If any skill-lib skill materially shapes a task, also load `skill-usage/SKILL.md` and record exactly one use after its contribution is observable. Record unknown outcomes as `hmmm`; do not infer success from silence.

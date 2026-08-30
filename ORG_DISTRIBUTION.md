@@ -44,6 +44,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `project-incubation-graduation/` — incubation, qualification, extraction, release, reconsumption, and implementation-authority graduation doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow

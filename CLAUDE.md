@@ -58,6 +58,7 @@ llms/                  # python -m llms.build reference runner
 | `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCMBONE flesh/bone and FLAR implementation detail. |
 | `the-interdependency/` | procedural | — | Workflow protocol for The Interdependency org: code/research/GitHub maintenance, EDCMBONE transcript assembly and analysis, and mandatory usage-guidance + structure-preservation doctrine across artifacts. |
 | `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |
+| `project-incubation-graduation/` | procedural | — | Lifecycle doctrine for emergent components born inside a forge/incubator. Requires qualification before extraction, provenance-preserving repository creation, explicit implementation-authority transfer, released distribution, and successful reconsumption by the former forge before graduation is complete. |
 | `distributed-publication/` | procedural | — | Provenance-bearing publication from distributed source owners. Preserves exact source identities, source-local licenses and statuses, correction routing, fail-closed retrieval, explicit fallback, and publication build provenance. Loads with `interdependent-work-graph`. |
 | `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCMBONE Verify stages. |
 | `action-calibration/` | procedural | — | Action sizing and escalation doctrine for choosing a smallest decisive experiment, maximal coherent program, prerequisite repair, or containment after preflighting scarce resources. |
@@ -101,7 +102,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `loop-eng/`, `action-calibration/`, `repo-audit-repair/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `project-incubation-graduation/`, `loop-eng/`, `action-calibration/`, `repo-audit-repair/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 
@@ -248,6 +249,7 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 13. Before selecting among UCNS options, apply `ucns-option-selection`: freeze the scoped decision boundary, enforce noncompensable eligibility and evidence gates, require explicit ratification, and preserve non-transfer, rollback, negative evidence, and `hmmm`.
 14. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
 15. For SSH automation and large terminal pastes containing SSH, apply `ssh-automation`: verify endpoint identity and host trust, preserve local and remote interpreter boundaries, make retries and rollback explicit, and contain option/trap/exit effects inside a child shell.
+16. When an emergent component is incubated inside a forge and may become independently authoritative, apply `project-incubation-graduation`: qualify it before extraction, preserve provenance, publish from the new authority, require downstream reconsumption, then sever the incubated implementation path before declaring graduation.
 
 ## hmmm
 

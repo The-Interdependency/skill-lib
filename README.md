@@ -45,6 +45,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`ucns-option-selection/`](ucns-option-selection/SKILL.md) | Fail-closed UCNS option-selection rubric. Freezes scope, candidates, authority, gates, policies, and evidence boundaries; requires complete execution, falsification, replay, purpose-relative comparison, non-transfer, rollback, and explicit ratification; refuses compensating scores and universal promotion from local evidence. Independent of msdmd. |
 | [`the-interdependency/`](the-interdependency/SKILL.md) | Workflow and protocol for code building, researching, GitHub maintenance and updates, EDCMBONE transcript assembly for analysis, and anything that touches The Interdependency organization or The Interdependent Way projects. Enforces structure preservation (neurodivergence-compatible), mandatory usage guidance in all artifacts, framework-aligned EDCMBONE analysis, and org-standard GitHub hygiene. Independent of msdmd. |
 | [`interdependent-work-graph/`](interdependent-work-graph/SKILL.md) | Cross-repository coordination doctrine. Resolves exact participating commits, authority roles, work relations, non-transfer boundaries, shared stack manifests, and validation/materialization order before a stack-level task is reduced to one repository. Independent of msdmd. |
+| [`project-incubation-graduation/`](project-incubation-graduation/SKILL.md) | Incubation-to-independent-project graduation doctrine. Qualifies emergent candidates, preserves provenance through extraction, creates a new implementation-authority boundary, releases the artifact, and requires the former forge to reconsume the release before graduation is complete. Independent of msdmd. |
 | [`distributed-publication/`](distributed-publication/SKILL.md) | Provenance-bearing publication from distributed source owners. Builds ordered textbooks, reports, standards, corpora, archives, and public reading surfaces from exact source identities while preserving source-local licenses and statuses, fail-closed production retrieval, explicit fallback, correction routing, and public build provenance. Loads with `interdependent-work-graph`. Independent of msdmd. |
 | [`loop-eng/`](loop-eng/SKILL.md) | Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Integrates with a0p/AIMMH orchestration, EDCMBONE Verify stages, skill-lib Skills, and structure-preserving practices. Independent of msdmd. |
 | [`fresh-making/`](fresh-making/SKILL.md) | Deterministic restoration of derived-artifact consistency from exact inputs. Computes minimal affected closure, verifies outputs independently of executors, records replayable receipts, and keeps unknown freshness visible as `hmmm`. Independent of msdmd. |
@@ -113,7 +114,7 @@ python "$PLUGIN_ROOT/tools/skill_usage.py" status \
   --state "$PLUGIN_DATA/usage.json"
 ```
 
-Outside a plugin installation, omit `--state` to use
+Outside an installed plugin, omit `--state` to use
 `.skill-lib/usage.json`. See `skill-usage/SKILL.md` for the
 designation thresholds, quality caps, critical-failure handling, and the
 documented automation boundary.
@@ -217,7 +218,7 @@ example for a metadata-block skill that also ships a stdlib command module.
 **Procedural skills** define an agent behaviour without an `msdmd`
 block (`canon`, `domain-claims`, `visitor-intro`, `char-compress`, `agent-instantiation`,
 `a0p-instancing`, `plain-lens`, `gonol-build`, `ucns-option-selection`, `meta`, `the-interdependency`,
-`interdependent-work-graph`, `distributed-publication`, `loop-eng`, `fresh-making`, `action-calibration`,
+`interdependent-work-graph`, `project-incubation-graduation`, `distributed-publication`, `loop-eng`, `fresh-making`, `action-calibration`,
 `repo-audit-repair`, `skill-build`, `skill-usage`, `ssh-automation`, and `vm-mcp`
 are the existing examples). To add one:
 

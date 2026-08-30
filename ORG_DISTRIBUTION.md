@@ -41,6 +41,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
+* `project-incubation-graduation/` — incubation, qualification, extraction, release, reconsumption, and implementation-authority graduation doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
@@ -121,6 +122,14 @@ Before assigning a stack-level task to one repository, agents should read:
 
 Resolve the exact participating repository and evidence-source identities first. Repository boundaries remain authority and provenance boundaries, not agent-attention boundaries.
 
+Before deciding whether a component born inside a stack, integration, laboratory, or incubator repository should become an independent repository/package, or before extracting, publishing, reconsuming, or declaring such a component graduated, agents should read:
+
+```text
+.agents/skills/project-incubation-graduation/SKILL.md
+```
+
+Load `interdependent-work-graph` once the transition crosses repository boundaries. Graduation transfers implementation/public-contract authority only after qualification, release, and downstream reconsumption; it does not transfer semantic, proof, theorem, measurement, certification, or empirical status.
+
 Before assembling one textbook, report, standard, corpus, archive, or public reading sequence from source-owned units distributed across repositories or independently owned files, agents should read:
 
 ```text
@@ -138,6 +147,7 @@ engine, UI panel, migration, or experiment, agents should read:
 
 New module work should start with a `MODULE_BUILD` block. Unknown fields
 must be marked `hmmm`, not guessed.
+
 Before creating or maintaining a root `llms.txt`, agents should read:
 
 ```text

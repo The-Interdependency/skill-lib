@@ -53,8 +53,9 @@ class ProjectIncubationGraduationSkillTest(unittest.TestCase):
         ):
             with self.subTest(state=state):
                 self.assertIn(state, self.text)
-        self.assertIn("A candidate that cannot be reconsumed", self.text)
-        self.assertIn("sever the local implementation path", self.text.lower())
+        self.assertIn("The forge proves the separation is real", self.text)
+        self.assertIn("Sever the old implementation path", self.text)
+        self.assertIn("graduation is complete only after the forge reconsumes", self.text)
 
     def test_external_mutations_require_explicit_authorization(self) -> None:
         self.assertIn("## Assessment versus execution", self.text)

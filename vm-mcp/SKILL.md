@@ -5,100 +5,208 @@ description: Private VM control-plane skill for giving an AI/MCP client SSH-like
 
 # vm-mcp — private VM control plane
 
-`vm-mcp` makes a VM reachable to an MCP-capable agent without turning SSH credentials into model context. The runtime lives in this canonical `skill-lib` directory; consuming repositories may vendor the skill, but no application repository owns the control plane.
+`vm-mcp` gives an MCP-capable agent operational contact with a private VM while
+keeping SSH keys and cloud login credentials outside model context.
 
-The core distinction is load-bearing:
+The transport invariant remains:
 
 ```text
 human/bootstrap path: SSH / Google OS Login / IAP
-model path:           MCP -> private tunnel -> loopback vm-mcp service
-credential boundary: SSH keys stay outside the model path
+model path:           MCP -> authenticated private tunnel -> loopback vm-mcp
+credential boundary: SSH/cloud credentials stay outside model context
 ```
 
-MCP is not SSH. It provides SSH-like operational contact by executing tools **on the target VM**. SSH remains the bootstrap, rescue, and break-glass path.
+The runtime now supports three explicit authority profiles rather than treating
+minimal capability as the only safe shape.
+
+## Profiles
+
+```text
+read-only
+  vm_info + list/read/stat
+
+workspace
+  read-only
+  + write/mkdir/move/remove under VM_MCP_ROOT
+  + shell_exec as confined non-root vmmcp
+
+personal-console
+  workspace
+  + user_exec as any explicit local non-root account
+  + admin_exec as root
+```
+
+`read-only` is the default and remains appropriate for first contact, shared
+systems, or consumers that do not need mutation. `personal-console` is intended
+for a **single-owner private VM** where broad administration is desired and the
+owner prefers capability breadth over a narrow application API.
+
+The personal-console rule is:
+
+> Broad capability is allowed, but privilege transitions must remain obvious.
+
+`user_exec` and `admin_exec` are therefore separate tools. Named convenience
+tools may be added later for ergonomics, but they are not permission cages and
+do not replace the general execution primitives.
 
 ## Trigger / non-trigger
 
-Load this skill when the requested result is one or more of:
+Load this skill when the requested result includes one or more of:
 
-- let an MCP-capable AI inspect or work in a private Linux VM;
-- give ChatGPT/OpenAI a private VM tool surface;
-- expose shell/file operations without exporting SSH keys or cloud credentials;
-- install, update, audit, or troubleshoot `vm-mcp`;
-- add a controlled admin action above the non-root workspace shell.
+- connect ChatGPT/OpenAI or another MCP client to a private Linux/GCE VM;
+- inspect, write, or administer VM files through MCP;
+- use a VM shell without placing an SSH private key in the model path;
+- expose a broad personal VM console to one owner;
+- install, update, audit, or troubleshoot canonical `vm-mcp`;
+- distinguish ordinary non-root work from explicit root administration;
+- replace repeated SSH pastes with persistent, auditable MCP contact.
 
-Do not load it for:
+Do not load it for ordinary human-only SSH setup or a generic application
+deployment where no MCP/agent VM contact is wanted.
 
-- ordinary human SSH key creation, `gcloud compute ssh`, or OS Login with no agent/MCP requirement;
-- a public web API that does not speak MCP;
-- generic application deployment where the agent does not need VM contact;
-- requests to publish an unrestricted root shell to the internet.
+## Source of truth
 
-## Kind and source of truth
+Priority:
 
-This is a **procedural skill with executable helpers**. It defines no new msdmd block type. Its executable modules use existing `MODULE_BUILD`, `CONTRACTS`, and `CHECKS` declarations.
+1. actual target VM facts: OS, accounts, filesystem, services, network and human recovery path;
+2. this canonical `skill-lib/vm-mcp` runtime and tests;
+3. current official MCP SDK/protocol documentation;
+4. current target MCP client's connection, approval, and private-transport documentation;
+5. `hmmm` for unresolved transport/client/host facts.
 
-Source priority:
+Do not copy the control plane into an application repository and let that copy
+become authority. Application repos may document how they consume the service.
 
-1. the actual target VM's operating system, filesystem layout, users, services, and network boundary;
-2. this skill's runtime and tests;
-3. the current stable official MCP SDK and protocol documentation;
-4. the target MCP client's current official connection and permission documentation.
+## Security / authority model
 
-Client and SDK capabilities are time-sensitive. Verify them from official primary sources before deployment rather than relying on this file's historical snapshot.
+The non-root MCP HTTP service retains its original containment:
 
-## Security model
+```text
+vm-mcp.service
+  user: vmmcp
+  bind: 127.0.0.1 only
+  NoNewPrivileges=true
+  ProtectSystem=strict
+  empty Linux capabilities
+  Docker socket inaccessible
+  cloud metadata address denied
+  direct writes confined to VM_MCP_ROOT
+```
 
-The shipped runtime has four deliberate constraints:
+Personal-console root access does **not** weaken that service. It adds a second
+component:
 
-1. **Loopback-only transport.** `server.py` binds Streamable HTTP to `127.0.0.1` at `/mcp`. Do not create a public firewall rule for port `8765`.
-2. **Non-root execution.** The service runs as `vmmcp`, with no sudo or Linux capabilities.
-3. **Host writes are sandboxed.** `ProtectSystem=strict` plus a generated `ReadWritePaths=` override limits writes to `VM_MCP_ROOT`. The Docker socket is explicitly inaccessible because Docker-socket access is effectively host-root authority.
-4. **Cloud credentials stay outside shell context.** `shell_exec` gets a sanitized environment, and the shipped systemd policy denies `169.254.169.254` so Google/AWS-style metadata credentials cannot be fetched through the standard link-local metadata address.
+```text
+vm-mcp.service (vmmcp)
+       |
+       | AF_UNIX /run/vm-mcp/admin.sock
+       v
+vm-mcp-admin.service (root)
+       |
+       +-- user_exec(user, command, cwd)
+       |      drops uid/gid/groups before exec
+       |
+       `-- admin_exec(command, cwd)
+              remains uid 0 explicitly
+```
 
-The exposed tools are:
+The broker:
 
-| Tool | Default | Boundary |
-|---|---|---|
-| `vm_info` | enabled | service identity, root, limits; read-only |
-| `list_directory` | enabled | resolved paths under `VM_MCP_ROOT`; bounded listing |
-| `read_text` | enabled | resolved files under `VM_MCP_ROOT`; bounded bytes |
-| `shell_exec` | **disabled** | arbitrary shell as `vmmcp`; cwd must resolve under `VM_MCP_ROOT`; systemd supplies the real host-write boundary |
+- accepts only Unix-domain connections;
+- verifies the connecting process with `SO_PEERCRED` against the `vmmcp` uid;
+- creates its socket root-owned and group-accessible only to `vmmcp`;
+- requires itself to be uid 0 before executing requests;
+- rejects `root` through `user_exec`; root must use the visibly privileged `admin_exec` surface;
+- runs commands in dedicated process groups with bounded timeout/output and descendant cleanup;
+- sanitizes the command environment rather than inheriting arbitrary service secrets;
+- records request id, mode, run-as user, cwd, command SHA-256, exit status, and timeout in journald;
+- returns the command/output to the MCP caller but does not print arbitrary environment secrets automatically.
 
-`shell_exec` may read whatever the unprivileged Unix service account can legitimately read and may make outbound network requests. Do not put secrets inside `VM_MCP_ROOT` unless agent access to those secrets is intentional.
+Personal-console is intentionally high authority. Anyone able to invoke
+`admin_exec` effectively controls the host. Therefore it is appropriate only
+when that authority matches the owner's intent and the MCP transport/account is
+private and controlled by that owner.
+
+## Tools
+
+| Tool | read-only | workspace | personal-console | Boundary |
+|---|---:|---:|---:|---|
+| `vm_info` | yes | yes | yes | service/profile/limits |
+| `list_directory` | yes | yes | yes | under `VM_MCP_ROOT` |
+| `read_text` | yes | yes | yes | under `VM_MCP_ROOT`, bounded |
+| `stat_path` | yes | yes | yes | under `VM_MCP_ROOT` |
+| `write_text` | no | yes | yes | atomic UTF-8 write under root |
+| `make_directory` | no | yes | yes | under root |
+| `move_path` | no | yes | yes | source/destination under root |
+| `remove_path` | no | yes | yes | under root; root itself refused |
+| `shell_exec` | no | yes | yes | vmmcp + systemd confinement |
+| `user_exec` | no | no | yes | arbitrary explicit non-root local user via broker |
+| `admin_exec` | no | no | yes | root via explicit broker |
+
+Use `shell_exec` for work that should stay inside the MCP workspace. Use
+`user_exec` when repository/application ownership belongs to another local
+service or human account. Use `admin_exec` for host-level operations such as
+systemd, packages, mounts, ownership, PostgreSQL provisioning, or recovery.
+
+## Installer behavior
+
+Canonical install:
+
+```bash
+sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
+  VM_MCP_PROFILE=read-only \
+  bash vm-mcp/install.sh
+```
+
+Single-owner personal console:
+
+```bash
+sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
+  VM_MCP_PROFILE=personal-console \
+  bash vm-mcp/install.sh
+```
+
+Important ownership rule: if `VM_MCP_ROOT` already exists, the installer leaves
+that directory's ownership unchanged. It creates/chowns the root only when the
+path does not yet exist. This prevents an existing application checkout such as
+`/srv/stack` from accidentally being transferred to `vmmcp` merely because it
+was selected as an MCP root.
+
+The install places immutable runtime code under `/opt/vm-mcp`, configuration in
+`/etc/vm-mcp.env`, and starts `vm-mcp-admin.service` only for
+`personal-console`.
 
 ## Workflow
 
-### 1. Inspect the target before installing
+### 1. Resolve the VM before mutation
 
-Resolve these facts from the VM, not from memory:
+Observe rather than infer:
 
 ```text
-OS/distribution and Python version
+OS/distribution + Python
 systemd availability
-intended writable workspace
-existing application/data directories
-whether Docker/Podman sockets exist
 human SSH/OS Login recovery path
-MCP client and its current write-action support
-private tunnel or authenticated private transport
+MCP private transport
+intended VM_MCP_ROOT
+ownership of application/repository paths
+whether this is truly single-owner
+current client write/destructive-operation support
 ```
 
-Unknowns remain `hmmm`.
+Missing facts remain `hmmm`.
 
-### 2. Pin the canonical skill-lib source
+### 2. Pin canonical skill-lib
 
-Install from an exact reviewed `The-Interdependency/skill-lib` commit or branch. Record the source commit in the VM installation. Do not copy a stale `vm-mcp` implementation out of an application repo.
+Install from an exact reviewed `The-Interdependency/skill-lib` commit. Record the
+commit via `/opt/vm-mcp/SOURCE_COMMIT`.
 
-### 3. Run the tests before host installation
-
-From the `skill-lib` checkout:
+### 3. Run canonical tests before installation
 
 ```bash
 PYTHONPATH=vm-mcp python -m unittest discover -s vm-mcp/tests -p 'test_*.py'
 ```
 
-Also run the repository gates when the full checkout is available:
+When the full repository checkout is available, also run:
 
 ```bash
 python tools/check_skill_compliance.py
@@ -108,140 +216,185 @@ python tools/build_codex_plugin_skills.py --check
 python -m llms.build --root . --out llms.txt --check
 ```
 
-### 4. Install read-only first
+### 4. Choose the profile deliberately
 
-Generic installation:
+Use `read-only` for first contact or shared deployments. Use `workspace` when a
+confined work area and shell are enough. Use `personal-console` when the owner
+explicitly wants a broad personal VM console, including root administration.
 
-```bash
-sudo VM_MCP_ROOT=/srv/vm-mcp/workspace bash vm-mcp/install.sh
-```
+Do not silently upgrade an existing deployment from a lower authority profile.
 
-For the current a0 VM data-disk layout:
-
-```bash
-sudo VM_MCP_ROOT=/srv/a0/workspaces bash vm-mcp/install.sh
-```
-
-The installer keeps immutable runtime code under `/opt/vm-mcp`, writable agent work under the chosen `VM_MCP_ROOT`, and starts `shell_exec` disabled.
-
-### 5. Verify local contact
-
-Check service state and the loopback listener before adding any remote client:
+### 5. Verify local containment
 
 ```bash
 sudo systemctl --no-pager --full status vm-mcp.service
 ss -ltnp | grep ':8765'
 ```
 
-Expected listener address is `127.0.0.1`, not `0.0.0.0` and not the VM's external IP.
+Expected MCP listener: `127.0.0.1:8765`.
 
-### 6. Establish the private MCP transport
+For personal-console also verify:
 
-For ChatGPT/OpenAI, re-check the current official custom-MCP documentation. As of 2026-08-07, OpenAI's published guidance says private-network/local MCP servers should use **Secure MCP Tunnel** rather than public exposure; full write/modify custom MCP is currently a Business/Enterprise/Edu feature, while Pro custom MCP is read/fetch only. This product boundary does not change the server's host permissions.
+```bash
+sudo systemctl --no-pager --full status vm-mcp-admin.service
+sudo stat -c '%U %G %a %n' /run/vm-mcp /run/vm-mcp/admin.sock
+```
 
-For other MCP hosts, use their authenticated private-tunnel/VPN/reverse-proxy mechanism. If the client cannot provide a private authenticated transport, `hmmm` the connection rather than publishing the raw service.
+Expected broker boundary:
 
-### 7. Exercise read-only tools end-to-end
+```text
+broker process: root
+socket transport: AF_UNIX only
+/run/vm-mcp: root:vmmcp 750
+admin.sock: root:vmmcp 660
+```
 
-Call, in order:
+### 6. Establish private MCP transport
+
+Never publish raw port `8765` to the public internet. Use the current client's
+authenticated private-tunnel/private-network mechanism. Client capabilities are
+time-sensitive; verify current official product documentation at connection
+time rather than treating this skill's historical product snapshot as current.
+
+### 7. Exercise progressive authority
+
+For a personal console, verify in this order:
 
 ```text
 vm_info
-list_directory(path=".")
-read_text(path=<known harmless text file>)
+read_text / list_directory
+write_text inside disposable VM_MCP_ROOT fixture
+shell_exec("id -u")
+user_exec(<known non-root user>, "id -u")
+admin_exec("id -u")
 ```
 
-Confirm the reported root and service user before enabling any write tool.
+Expected final result for `admin_exec("id -u")` is `0`. Confirm the corresponding
+journald broker receipt before using root for real administration.
 
-### 8. Enable workspace shell only after the client can govern writes
+### 8. Prefer ordinary authority when sufficient
 
-When the owner explicitly wants model-side command execution and the MCP client supports appropriate write approvals:
-
-```bash
-sudo mkdir -p /etc/systemd/system/vm-mcp.service.d
-printf '[Service]\nEnvironment=VM_MCP_SHELL_ENABLED=1\n' \
-  | sudo tee /etc/systemd/system/vm-mcp.service.d/shell.conf
-sudo systemctl daemon-reload
-sudo systemctl restart vm-mcp.service
-```
-
-Disable it again with:
-
-```bash
-sudo rm -f /etc/systemd/system/vm-mcp.service.d/shell.conf
-sudo systemctl daemon-reload
-sudo systemctl restart vm-mcp.service
-```
-
-### 9. Add administration as named capabilities, not a root shell
-
-If workspace shell is insufficient, do **not** make `vmmcp` passwordless root and do not expose `/run/docker.sock`. Add a root-owned broker for the smallest named operation required, for example:
+Even in personal-console mode, use the least surprising authority that can do
+the job:
 
 ```text
-restart one named application service
-read one service's journal
-activate one reviewed release
-run one reviewed backup/restore command
+workspace file operation -> file tools
+workspace diagnostic      -> shell_exec
+repo/service-account work  -> user_exec
+host administration        -> admin_exec
 ```
 
-Each new admin operation needs its own arguments, permission boundary, contract, checks, rollback, and client write annotation. An unrestricted `sudo bash -c <model text>` broker is outside this skill's safe default.
+This is an observability rule, not a capability prohibition.
 
-## Output shape
+### 9. Keep human recovery independent
 
-When this skill is used for a deployment or audit, report:
+SSH/OS Login/IAP remains bootstrap, rescue, and break-glass access. Do not remove
+it merely because MCP works.
+
+## Personal-console examples
+
+Repository work as its owning service account:
 
 ```text
-source: exact skill-lib commit/ref
-vm: observed OS + relevant layout
-workspace: exact VM_MCP_ROOT
-service: installed/running/not installed
-transport: loopback + private tunnel status
-client: observed current MCP read/write capability
-shell_exec: disabled/enabled
-validation: commands actually executed + results
-admin capabilities: none or exact named brokers
-hmmm: unresolved constraints
+user_exec(
+  user="stackorchestrator",
+  cwd="/srv/stack",
+  command="python -m frontend.cli.stackctl fresh status"
+)
 ```
 
-Never describe a command as executed when it was only derived for the user to run.
+Host service inspection:
+
+```text
+admin_exec(
+  cwd="/",
+  command="systemctl --no-pager --full status stack-orchestrator-worker.service"
+)
+```
+
+Package or host maintenance is also possible through `admin_exec`; the tool is
+not artificially limited to a predefined command vocabulary. That breadth is
+the point of the single-owner profile.
 
 ## Validation
 
-The shipped checks cover:
+The shipped suite must cover at least:
 
-- `..` path escape rejection;
-- symlink escape rejection;
-- symlink listings without following target metadata;
-- bounded text and directory output;
-- shell off-by-default;
-- shell cwd confinement;
-- bounded/drained command output;
-- timeout process-group termination;
-- background-descendant cleanup;
-- non-inheritance of unrelated environment secrets;
-- loopback-only server configuration;
-- systemd host-write/capability confinement;
-- cloud metadata-address denial;
-- current stable v2 `MCPServer` surface with removed v1 `FastMCP` excluded.
+- parent/symlink path escape rejection;
+- bounded file/directory/process output;
+- read-only default and backward compatibility for the historical shell flag;
+- workspace write gating and path confinement;
+- shell cwd confinement, timeout, output bound, and environment sanitization;
+- personal-console gate before broker use;
+- root rejection through `user_exec`;
+- root selection through `admin_exec`;
+- broker root-process requirement;
+- `SO_PEERCRED` caller verification;
+- root:vmmcp socket permissions;
+- non-root MCP systemd hardening remaining intact;
+- loopback-only MCP listener and metadata-address denial;
+- installer preserving ownership of an existing `VM_MCP_ROOT`.
 
-The test suite does **not** prove the remote client's tunnel, auth, approval UI, or account plan works. Those require end-to-end contact with the actual client.
+Actual VM acceptance must additionally exercise a real non-root `user_exec`, a
+real root `admin_exec`, journald evidence, service restart, and rollback on the
+target host.
+
+## Rollback
+
+Return to read-only without deleting human recovery access:
+
+```bash
+sudo sed -i 's/^VM_MCP_PROFILE=.*/VM_MCP_PROFILE=read-only/' /etc/vm-mcp.env
+sudo systemctl disable --now vm-mcp-admin.service
+sudo systemctl restart vm-mcp.service
+```
+
+Full stop:
+
+```bash
+sudo systemctl disable --now vm-mcp.service vm-mcp-admin.service
+```
+
+Disconnect the MCP client/tunnel as a separate control-plane action.
 
 ## Anti-patterns
 
-- Putting an SSH private key, Google service-account key, OAuth refresh token, or OS Login credential into an MCP tool argument or prompt.
-- Listening on `0.0.0.0:8765` because the private tunnel is not yet configured.
-- Calling a public reverse proxy "private" without authentication.
-- Running the MCP service as root.
-- Adding `vmmcp` to the Docker group or exposing the Docker socket.
-- Treating `VM_MCP_ROOT` path checks as the only sandbox; systemd is the host-write authority boundary.
-- Enabling `shell_exec` before read-only end-to-end contact works.
-- Claiming ChatGPT write access when the current plan/client only exposes read/fetch.
-- Keeping an SDK line after it is actually deprecated; verify current stable SDK status at deployment/update time and replace deprecated surfaces immediately.
+- Putting SSH private keys, service-account keys, OAuth refresh tokens, or sudo passwords into MCP arguments or prompts.
+- Opening port `8765` publicly because private transport is inconvenient.
+- Running the MCP HTTP service itself as root merely to obtain admin capability.
+- Hiding root execution behind a tool that looks non-privileged.
+- Letting `user_exec(user="root", ...)` become an alias for root; use `admin_exec` visibly.
+- Using an existing application checkout as `VM_MCP_ROOT` and changing its ownership as an installer side effect.
+- Assuming `read-only` is always preferable when the owner intentionally wants a broad personal console.
+- Assuming `personal-console` is appropriate for multi-user/shared systems merely because it is available.
+- Treating named convenience tools as the only permissible operations in a single-owner console.
+- Removing the independent SSH/OS Login recovery route after MCP contact succeeds.
+
+## Output shape
+
+When deploying or auditing, report:
+
+```text
+source: exact skill-lib commit
+vm: observed OS/layout
+profile: read-only | workspace | personal-console
+workspace: exact VM_MCP_ROOT + ownership
+mcp service: user/bind/hardening/status
+root broker: disabled | socket/status/permissions
+private transport: observed status
+shell_exec: enabled/disabled
+user_exec: enabled/disabled
+admin_exec: enabled/disabled
+validation: commands actually executed + outcomes
+human recovery: observed path
+hmmm: unresolved constraints
+```
+
+Never describe a command as executed when it was only derived for another
+environment.
 
 ## hmmm
 
-- Exact Secure MCP Tunnel provisioning commands are client/product infrastructure and must be taken from current official OpenAI documentation or the actual connected product surface; do not invent them.
-- Application-layer OAuth is intentionally not implemented in the loopback runtime because the default architecture assumes a private authenticated tunnel. A public-edge deployment would require a separate reviewed auth layer.
-- Root-level VM maintenance is deliberately not a generic tool. Named administration brokers should be added only when concrete operations are known.
-- The current stable MCP Python SDK observed on 2026-08-07 is v2; v1 is maintenance-only and its `FastMCP` import is removed from the current surface. Re-check the current major before future upgrades.
-- A private control plane is a door; the useful engineering question is not whether it opens, but exactly which room the hinges belong to.
+- Private tunnel provisioning remains client/product infrastructure and must be resolved from the current official client surface at deployment time.
+- The shipped broker intentionally grants broad root administration in `personal-console`; future shared/multi-owner deployments may need a separate policy/profile rather than weakening this profile into ambiguous partial authority.
+- Named convenience tools for git, systemd, PostgreSQL, fresh-making, backups, and logs are useful ergonomics but are not required for capability because `user_exec` and `admin_exec` already expose the underlying operations.

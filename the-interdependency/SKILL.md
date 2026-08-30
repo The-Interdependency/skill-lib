@@ -27,13 +27,53 @@ description: Protocol and workflow for all tasks involving The Interdependency o
   - **Always include prominent usage guidance**: runnable examples, invocation patterns, integration notes, edge cases, limitations, and how the code participates in larger workflows (e.g. a0p/AIMMH orchestration, EDCMBONE analysis pipelines).
   - Respect ratios, test contracts, dependency declarations, ownership, and risk boundaries per the relevant skills.
   - For new modules, begin with `meta-module-build` patterns.
-- **GitHub maintenance & updates**: 
+- **GitHub maintenance & updates**:
   - Follow org conventions in `ORG_DISTRIBUTION.md` (install paths `.agents/skills/`, propagation rules).
   - Before/after changes, run available drift checkers and update machine-readable indexes (`skills.json`, README tables, AGENTS.md pointers).
   - Use clear commit messages that reference affected skills or the change class.
   - When propagating skill-lib changes, prefer the canonical `tools/propagate_skills.py` (or equivalent) with `--apply` only after dry-run validation.
 - **Usage guidance requirement**: Every code file, SKILL.md update, README change, research summary, or artifact produced under this skill **must contain clear, actionable usage guidance**. This is non-negotiable for accessibility, onboarding, and reducing signal loss.
 - **Research & canon alignment**: Ground all claims in source-backed canon (cross-load `canon` skill). Use `char-compress` for context handoff. Leave genuine uncertainty as `hmmm`.
+
+## Operator workflow contract
+
+These constraints govern how work is selected and executed; they do not override repository-local authority about what a project means.
+
+- **Audit before assent**: Test a proposal against current code, canon, evidence, constraints, and failure modes before agreeing with it. Agreement is a conclusion, not a conversational default.
+- **Preserve concepts; reject bad placement**: When a proposal is useful but architecturally misplaced, preserve the concept and move or re-scope it to the owning layer rather than either accepting the wrong placement or discarding the idea.
+- **Useful, good, true**: Do not generate work merely to create activity. Prefer artifacts and actions that are useful to the stated goal, operationally sound, and truthfully supported by evidence or explicit status.
+- **KISS under reality contact**: Prefer the smallest skilled design that survives actual execution. A clever mechanism that is fragile, opaque, untestable, or needlessly expensive is not simpler than a slightly longer mechanism that works.
+- **Prior planning before execution**: Resolve authority, placement, dependency order, resource needs, validation, rollback, and terminal condition before expensive or destructive work begins. Planning exists to prevent avoidable failure, not to create an approval ceremony.
+- **Complete within granted scope**: When the request, authority, and safety boundary already permit the next action, continue through the coherent workflow instead of repeatedly asking the operator to approve each obvious intermediate step. Ask only when a real unresolved decision cannot be recovered from authoritative sources or safely isolated as `hmmm`.
+- **Usage-limit aware orchestration**: Treat model-plan limits, API quotas, tool-call limits, rate limits, context budgets, and session durability as real resources during preflight. Stage or redistribute work before launch so a workflow does not predictably die midway from exhaustion. Do not silently downgrade evidence quality merely to fit a limit.
+- **No stupid functions**: Every function, script, workflow step, and abstraction must have a defensible purpose, coherent inputs/outputs, failure behavior, and a reason to exist at that layer. Remove dead indirection and mechanisms whose only justification is that they already exist.
+- **Deprecation is removal plus replacement**: Once a mechanism is declared deprecated, stop routing new work through it, identify its supported replacement, migrate active references, and remove obsolete surfaces as soon as the governing compatibility boundary permits. Do not preserve deprecated behavior by default out of inertia.
+- **`hmmm` is mandatory honest incompletion**: `hmmm` is the boundary object for unresolved constraints, missing authority, incomplete evidence, or a living continuation. Never erase an unresolved merely to make an artifact look finished. Where the boundary would otherwise be empty, leave a brief apropos, cogent, or humorous nonsequitur rather than silently dropping it.
+
+## Operational service topology
+
+This section records the standing operator topology. Service reachability, authentication, quota, and exact installed versions are runtime facts and must be discovered before use; never promote a transient login or quota state into canon.
+
+- **Google Cloud `a0` VM — primary persistent development surface**: Treat the `a0` VM as the primary development checkout/runtime for org work unless the governing repository explicitly establishes another authority. Resolve the current branch, worktree, local modifications, and relevant running processes before mutating it. Do not blindly pull, reset, overwrite, or reconstruct work that may already exist there.
+- **Termux — operator control terminal**: Treat Termux primarily as the SSH/control client for `a0`, not as the authoritative development checkout. Commands intended for the VM must make the local/remote shell boundary explicit. Pair nontrivial SSH delivery with `ssh-automation`.
+- **Persistent remote execution**: Work that must survive network loss or client disconnect must run server-side under an appropriate persistent mechanism such as `tmux`, `systemd`, or the repository's own durable process supervisor. Disconnecting Termux/SSH must not be allowed to terminate valuable long-running work merely because the client vanished.
+- **GitHub / GitHub Actions — canonical remote, review, and CI surface**: Preserve exact repository identity under `The-Interdependency/*`. Start repo changes from current `main` unless governing instructions say otherwise; use a named working branch and small reviewable commits; do not force-push, destructive-reset, or wholesale-merge recovery state over unknown work. On `a0`, Git operations use the HTTPS GitHub remote and authenticated PAT/`gh` flow rather than GitHub SSH unless the operator explicitly changes that policy.
+- **VM MCP — bounded agent control plane when configured**: When the private VM MCP surface is available, treat it as a bounded loopback control plane rather than exported shell authority. Resolve read/write/tunnel capability instead of assuming it, start read-only when possible, preserve host-write confinement, and pair with `vm-mcp`.
+- **Model/API services — execution capacity, not authority**: Configured model/provider surfaces may include OpenAI/Codex, xAI/Grok, DeepSeek, and DeepCode tooling. Discover actual availability, model identity, limits, and credentials at runtime. Allocate work so provider or plan limits are unlikely to interrupt a coherent unit; do not substitute a different provider when provider identity is load-bearing to a comparison, calibration, or reproduction. Model output never overrides repository/canon authority merely because a service is available.
+- **Secrets and credentials**: API keys, PATs, SSH credentials, connector tokens, webhook secrets, and equivalent secrets are never documentation content, prompts for public agents, browser-exposed values, logs, receipts, or committed repository data. Record provider names, required environment-variable names, scopes, and setup procedures; never record secret values.
+- **Historical or optional services**: A service mentioned in old handoffs is not automatically part of the standing execution path. Before routing work to any historical, optional, or external build/deploy surface, verify that it is still authorized and operational. If a current replacement exists, use the replacement and remove stale routing rather than maintaining two accidental workflows.
+
+### Service-topology usage guidance
+
+Before service-dependent work, resolve only the facts needed for that unit:
+
+1. identify the authoritative repo/checkout and exact ref;
+2. identify the execution surface (`a0`, GitHub Actions, or another explicitly authorized surface);
+3. verify authentication/capability without exposing credentials;
+4. verify quota, context/tool limits, persistence, and terminal condition;
+5. choose the applicable narrow skill (`ssh-automation`, `vm-mcp`, repo-specific deployment skill, etc.);
+6. execute and validate on the authoritative surface;
+7. record unresolved service capability as `hmmm`, not as an invented fallback.
 
 ## METAPAT consultation test
 
@@ -69,15 +109,18 @@ When consultation triggers, inspect the current METAPAT repository state before 
 
 1. **Agent/work context gate**: On agent birth, resolve skill-lib plus governing repository instructions before org work begins. On every work start, reevaluate skill triggers and load applicable contracts before reasoning or acting. Inherit resolved authority into child/sub-agents; do not make the user restate stable repository knowledge. Missing required authority is `hmmm` and blocks that boundary.
 2. **Trigger detection**: Activate on any The-Interdependency context or the example trigger phrases listed in the description.
-3. **Resource preflight**: Before starting any compute run, decide whether the available resources can sustain it to its natural terminal condition. If not, do not launch it. Do not substitute an arbitrary timeout for preflight judgment.
-4. **METAPAT gate**: Before conceptual or architectural commitment, run the consultation test above. If triggered, inspect current METAPAT before selecting the relation, boundary, transformation, or cross-domain mapping.
-5. **Context assembly**: For transcript work, explicitly structure output using EDCMBONE energy-dissonance mapping, F-metrics, failure-mode tags, and accessibility annotations. Preserve full original relations.
-6. **Artifact production**: Write code/docs with msdmd blocks (if applicable) + dedicated "Usage Guidance" section or equivalent. Include examples that can be copy-pasted.
-7. **GitHub hygiene**: Check drift, update indexes, propagate only after validation. Reference this skill in commit messages where relevant.
-8. **Output packaging**: Structure responses with:
+3. **Operator contract**: Audit the proposal, preserve useful concepts even when rejecting their placement, remove deprecated routing, and continue through already-authorized intermediate work without turning the workflow into repeated approval prompts.
+4. **Service topology resolution**: Resolve the authoritative checkout, execution surface, authentication capability, persistence, provider identity where relevant, and real usage limits. Historical mentions do not prove current availability.
+5. **Resource preflight**: Before starting any compute run, decide whether the available resources can sustain it to its natural terminal condition. If not, do not launch it. Do not substitute an arbitrary timeout for preflight judgment.
+6. **METAPAT gate**: Before conceptual or architectural commitment, run the consultation test above. If triggered, inspect current METAPAT before selecting the relation, boundary, transformation, or cross-domain mapping.
+7. **Context assembly**: For transcript work, explicitly structure output using EDCMBONE energy-dissonance mapping, F-metrics, failure-mode tags, and accessibility annotations. Preserve full original relations.
+8. **Artifact production**: Write code/docs with msdmd blocks (if applicable) + dedicated "Usage Guidance" section or equivalent. Include examples that can be copy-pasted.
+9. **GitHub hygiene**: Check drift, update indexes, propagate only after validation. Reference this skill in commit messages where relevant.
+10. **Output packaging**: Structure responses with:
    - Preserved structure / epistemic layers first.
    - EDCMBONE-mapped analysis where transcripts are involved.
    - Usage guidance and examples.
+   - Service/execution assumptions when they are load-bearing.
    - `hmmm` boundaries clearly marked.
    - Smallest next patch or action.
 
@@ -85,9 +128,18 @@ When consultation triggers, inspect the current METAPAT repository state before 
 
 - Beginning org work or instantiating an org agent without resolving skill-lib, governing repo instructions, and applicable contracts first.
 - Asking the user to restate stable repository knowledge instead of resolving it from its authoritative source.
+- Agreeing with a proposal before auditing its evidence, placement, and failure modes.
+- Discarding a useful concept merely because its proposed architectural placement is wrong.
+- Turning a fully authorized workflow into repeated approval prompts for obvious intermediate actions.
 - Flattening, dropping variables, or losing topology/relations before acting or summarizing (directly conflicts with neurodivergence preservation).
 - Starting a compute run when available resources have not been considered sufficiently to expect completion.
 - Terminating a healthy compute run because of an arbitrary wall-clock limit that was not actually load-bearing to the claim, safety boundary, or external resource limit.
+- Starting a provider/API-heavy workflow without considering plan, quota, rate, context, or tool limits that predictably strand the work midway.
+- Treating Termux as the authoritative org checkout when `a0` owns the active development state, or running valuable long work in a client-bound shell that dies on disconnect.
+- Routing work to a historically mentioned service without verifying that the service remains authorized and operational.
+- Silently substituting model/provider identity when that identity is part of the experiment, calibration, or reproduction contract.
+- Copying, logging, exposing, or committing secrets because a cloud/API workflow needs them at runtime.
+- Keeping deprecated routing alive after its replacement is known and compatibility permits removal.
 - Producing code, docs, or analysis without explicit usage guidance and examples.
 - Assembling or analyzing EDCMBONE transcripts without applying the framework's energy circuit, F-loss, and failure-mode model.
 - Performing GitHub or org maintenance without drift checks or index updates.
@@ -104,6 +156,7 @@ When consultation triggers, inspect the current METAPAT repository state before 
 - Transcript tasks → EDCMBONE-structured output (energy maps, F1–F6 tags, accessibility notes, full topology).
 - Code / docs → msdmd blocks where fitting + prominent, copy-pasteable "Usage Guidance" with examples and integration notes.
 - GitHub / research → Drift status noted, index updates performed, relevant skills cross-referenced.
+- Service-dependent work → State the authoritative execution surface and load-bearing capability assumptions; never expose credentials.
 - If the METAPAT gate triggered, state what conceptual boundary required consultation and preserve any remaining `hmmm`.
 - Always close with actionable next steps and any open `hmmm` items.
 
@@ -112,3 +165,5 @@ hmmm
 - Whether the historical `meta` skill should remain as a compatibility router or be removed after all consumers propagate this gate.
 - Whether a companion metadata-block skill (e.g. `# === TIW_WORKFLOW ===` or `# === INTERDEPENDENCY ===`) should be added for self-declaring modules inside The-Interdependency repos.
 - Exact canonical reference for the full EDCMBONE transcript assembly protocol — should the detailed steps live in this skill or be expanded inside the edcmbone repo's own skill definitions?
+- Provider availability, quota, and authentication remain runtime facts; the service map names standing surfaces but does not freeze a transient login state.
+- A disconnected terminal is not a philosophical objection to computation; it is merely a poor process supervisor.

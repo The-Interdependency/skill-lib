@@ -79,7 +79,7 @@ the skill. Treat it as the public contract.
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `gonol-build`, `ucns-option-selection`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `distributed-publication`, `loop-eng`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `project-incubation-graduation`, `distributed-publication`, `loop-eng`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -151,6 +151,7 @@ propagate from here.
   be compensated by scores; selection requires explicit scoped ratification.
 - If you are building code, researching, performing GitHub maintenance or updates, assembling EDCMBONE transcripts for analysis, or any work that touches The Interdependency organization, The Interdependent Way projects, or related assets (edcmbone, ucns, pcea, skill-lib, a0, aimmh, etc.), load `the-interdependency/SKILL.md` and follow its structure-preservation, EDCMBONE framework, mandatory usage-guidance, and org-workflow rules.
 - If the task spans, consumes, compares, publishes to, or changes the contract between multiple repositories, load `interdependent-work-graph/SKILL.md` before choosing an edit workspace. Resolve exact commits, authority roles, relations, non-transfer boundaries, and one shared graph record.
+- If a new component is born inside a stack, integration, laboratory, or incubator repository and may become an independent repository/package, load `project-incubation-graduation/SKILL.md`. Qualify it before extraction, preserve provenance, create a new implementation-authority boundary explicitly, release it through its declared distribution surface, and require the former forge to reconsume the released artifact before declaring graduation. Load `interdependent-work-graph` once the transition crosses repositories.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.

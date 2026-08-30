@@ -43,6 +43,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
@@ -137,7 +138,6 @@ engine, UI panel, migration, or experiment, agents should read:
 
 New module work should start with a `MODULE_BUILD` block. Unknown fields
 must be marked `hmmm`, not guessed.
-
 Before creating or maintaining a root `llms.txt`, agents should read:
 
 ```text

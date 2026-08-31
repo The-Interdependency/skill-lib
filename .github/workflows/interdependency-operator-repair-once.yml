@@ -1,0 +1,92 @@
+name: interdependency-operator-repair-once
+
+on:
+  push:
+    branches:
+      - repair/interdependency-operator-workflow-current
+    paths:
+      - .github/workflows/interdependency-operator-repair-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Patch canonical workflow doctrine
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("the-interdependency/SKILL.md")
+          text = path.read_text(encoding="utf-8")
+
+          anchor = """## Operator workflow contract
+
+These constraints govern how work is selected and executed; they do not override repository-local authority about what a project means.
+"""
+          replacement = """## Operator workflow contract
+
+These constraints govern how work is selected and executed; they do not override repository-local authority about what a project means. The bold operator labels below are domain-scoped workflow shorthand, not universal definitions of their surface words. Their ratified senses, scopes, exclusions, neighboring terms, and collision notes are recorded in `the-interdependency/operator-domain-claims.json`; that record is required semantic authority when these labels control downstream work.
+"""
+          if anchor not in text:
+              raise SystemExit("operator-contract anchor not found")
+          text = text.replace(anchor, replacement, 1)
+
+          old_deprecation = """- **Deprecation is removal plus replacement**: Once a mechanism is declared deprecated, stop routing new work through it, identify its supported replacement, migrate active references, and remove obsolete surfaces as soon as the governing compatibility boundary permits. Do not preserve deprecated behavior by default out of inertia."""
+          new_deprecation = """- **Deprecation is removal plus replacement when capability remains required**: Once a mechanism is declared deprecated, stop routing new work through it, provide or identify its supported replacement when the retired capability remains required, migrate active references that still need that capability, and remove obsolete surfaces as soon as the governing compatibility boundary permits. If the capability is intentionally retired as unnecessary, complete removal is the replacement outcome; do not invent a purposeless substitute. Do not preserve deprecated behavior by default out of inertia."""
+          if old_deprecation not in text:
+              raise SystemExit("deprecation rule anchor not found")
+          text = text.replace(old_deprecation, new_deprecation, 1)
+
+          topology_anchor = """## Operational authority topology
+
+This section records durable ownership boundaries, not a frozen inventory of the operator's current machines, clients, logins, quotas, or provider sessions.
+"""
+          topology_replacement = """## Operational authority topology
+
+This section records durable ownership boundaries, not a frozen inventory of the operator's current machines, clients, logins, quotas, or provider sessions. The exact establishing cross-repository identities, authority roles, producer/consumer relation, non-transfer boundary, and deterministic graph digest are pinned in `docs/work-graphs/vm-mcp-stack-topology.json`. Consumers must verify that record rather than reconstructing this topology from repository proximity or current branch tips.
+"""
+          if topology_anchor not in text:
+              raise SystemExit("topology anchor not found")
+          text = text.replace(topology_anchor, topology_replacement, 1)
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Focused regression test
+        run: python -m unittest tests.test_the_interdependency_skill
+
+      - name: Repository test suite
+        run: python -m unittest discover -s tests
+
+      - name: Skill drift and compliance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/check_skill_lib_drift.py --warnings-fail
+          python tools/check_skill_compliance.py --warnings-fail
+          python tools/char_compress_check.py
+          python tools/build_codex_plugin_skills.py --check
+          python -m llms.build --root . --out llms.txt --check
+
+      - name: Commit repair and remove this temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/interdependency-operator-repair-once.yml
+          git add the-interdependency/SKILL.md
+          git commit -s -m "the-interdependency: bind operator domains and work graph"
+          git push origin HEAD:repair/interdependency-operator-workflow-current

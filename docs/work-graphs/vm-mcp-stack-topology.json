@@ -1,0 +1,35 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "work_graph_sha256": "00cfc78b85f889afd14cad3765949997222f841cbe97335da3f36b5452e79e66",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "222ba4d4348022d81950c3fad054bae7e528b6a0",
+      "authority": "reusable vm-mcp implementation and doctrine",
+      "relation": "producer"
+    },
+    {
+      "repository": "The-Interdependency/stack",
+      "commit": "22b74340d0c603883193a4ecf53e2ef3f9c3e780",
+      "authority": "stack-specific VM deployment and operational-use guidance",
+      "relation": "consumer"
+    }
+  ],
+  "boundaries": {
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "declared mapping",
+    "agent_scope": "cross-repository-work-graph",
+    "hmmm": [
+      "actual VM state and current client/private-tunnel connection remain deployment evidence"
+    ]
+  },
+  "usage_guidance": "Consumers of the the-interdependency operational topology must verify this digest and exact producer/consumer commits before treating the vm-mcp/stack ownership relation as source-backed. Later implementation or deployment commits do not silently replace these establishing identities.",
+  "non_transfer_notes": {
+    "certification_status_transfer": false,
+    "empirical_status_transfer": false,
+    "repository_visibility_is_not_authority": true
+  }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="512" height="512" role="img" aria-label="skill-lib icon">
+  <title>skill-lib — modules that speak for themselves</title>
+  <rect width="100" height="100" rx="18" fill="#070b16"/>
+  <circle cx="50" cy="50" r="44" fill="none" stroke="#7d89a8" stroke-width="0.55"/>
+  <circle cx="50" cy="50" r="36" fill="none" stroke="#7d89a8" stroke-width="0.35" opacity="0.7"/>
+  <circle cx="50" cy="50" r="28" fill="none" stroke="#7d89a8" stroke-width="0.25" opacity="0.45"/>
+  <g stroke="#7d89a8" stroke-width="0.45" opacity="0.55">
+    <line x1="50" y1="6.5" x2="50" y2="11"/>
+    <line x1="50" y1="89" x2="50" y2="93.5"/>
+    <line x1="6.5" y1="50" x2="11" y2="50"/>
+    <line x1="89" y1="50" x2="93.5" y2="50"/>
+  </g>
+  <rect x="33" y="34" width="34" height="32" rx="3" fill="none" stroke="#6ec8d4" stroke-width="1.5"/>
+  <line x1="39" y1="43" x2="61" y2="43" stroke="#d7deef" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="39" y1="50" x2="57" y2="50" stroke="#9aa4d6" stroke-width="1.3" stroke-linecap="round"/>
+  <line x1="39" y1="57" x2="53" y2="57" stroke="#7d89a8" stroke-width="1.3" stroke-linecap="round"/>
+</svg>

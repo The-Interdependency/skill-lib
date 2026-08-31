@@ -96,8 +96,8 @@ When a word closes, use that word gonol atomically at the next scale. Ignore pro
 
 - Moving text semantics into UCNS or inventing geometry in EDCM.
 - Inserting another required EDCM stage without an explicit contract change.
-- Letting pronunciation alter gonol identity, closure, ordering, or relations.
-- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, or hashes for gonol identity.
+- Letting pronunciation alter gonol identity, closure, ordering, or relations unless a later explicitly declared experiment makes phonology part of its construction.
+- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, or hashes for gonol identity unless the active contract explicitly authorizes it.
 - Adding arbitrary wall-clock limits to a healthy admitted run.
 - Treating replay as semantic quality, measurement validity, cognition, or extra-scope canon.
 

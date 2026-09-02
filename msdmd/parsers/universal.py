@@ -1,4 +1,4 @@
-# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13
+# ratios: loc_comments=150:54 imports_exports=4:10 calls_definitions=63:13
 """Universal msdmd parser — pure stdlib.
 
 Implements the parser contract from ``msdmd/SKILL.md``: extracts every
@@ -42,7 +42,7 @@ _MARKERS: dict[str, str] = {
 }
 
 _DEFAULT_SKIP = (
-    "__pycache__", "node_modules", ".git", ".venv", "venv",
+    "__pycache__", "node_modules", ".git", ".hg", ".svn", ".jj", ".venv", "venv",
     "dist", "build", ".next", ".nuxt", "target", ".pytest_cache",
     ".mypy_cache", ".tox",
 )
@@ -162,6 +162,8 @@ def walk_tree(
         except OSError:
             return
         for child in children:
+            if child.is_symlink():
+                continue
             if child.is_dir():
                 if child.name in skip_set:
                     continue
@@ -242,4 +244,4 @@ def ratios_placement(text: str, marker: str = "#") -> tuple[bool, bool]:
         last_ok = bool(line_re.match(raw.rstrip()))
         break
     return (opening_ok, last_ok)
-# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13
+# ratios: loc_comments=150:54 imports_exports=4:10 calls_definitions=63:13

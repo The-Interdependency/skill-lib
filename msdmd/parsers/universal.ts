@@ -1,4 +1,4 @@
-// ratios: loc_comments=199:0 imports_exports=2:0 calls_definitions=67:0
+// ratios: loc_comments=200:0 imports_exports=2:0 calls_definitions=68:0
 /**
  * Universal msdmd parser — pure Node stdlib (fs, path).
  *
@@ -19,7 +19,7 @@
  * Zero non-stdlib dependencies. Safe to copy verbatim into any
  * Node/Deno/Bun project that wants msdmd support.
  */
-import { readFileSync, statSync, readdirSync } from "node:fs";
+import { readFileSync, lstatSync, readdirSync } from "node:fs";
 import { join, extname } from "node:path";
 
 export type Entry = Record<string, string>;
@@ -33,7 +33,7 @@ const MARKERS: Record<string, string> = {
 };
 
 const DEFAULT_SKIP = new Set([
-  "__pycache__", "node_modules", ".git", ".venv", "venv",
+  "__pycache__", "node_modules", ".git", ".hg", ".svn", ".jj", ".venv", "venv",
   "dist", "build", ".next", ".nuxt", "target", ".pytest_cache",
   ".mypy_cache", ".tox",
 ]);
@@ -144,10 +144,11 @@ export function walkTree(
       const full = join(dir, name);
       let st;
       try {
-        st = statSync(full);
+        st = lstatSync(full);
       } catch {
         continue;
       }
+      if (st.isSymbolicLink()) continue;
       if (st.isDirectory()) {
         visit(full);
       } else if (st.isFile()) {
@@ -219,4 +220,4 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   }
   return [openingOk, lastOk];
 }
-// ratios: loc_comments=199:0 imports_exports=2:0 calls_definitions=67:0
+// ratios: loc_comments=200:0 imports_exports=2:0 calls_definitions=68:0

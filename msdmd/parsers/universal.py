@@ -230,7 +230,7 @@ def ratios_placement(text: str, marker: str = "#") -> tuple[bool, bool]:
     lines = text.splitlines()
     if not lines:
         return (False, False)
-    opening_index = 1 if lines[0].startswith("#!") else 0
+    opening_index = 1 if has_shebang(text) else 0
     opening_ok = (
         len(lines) > opening_index
         and bool(line_re.match(lines[opening_index].rstrip()))

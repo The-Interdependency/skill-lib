@@ -1,4 +1,4 @@
-# ratios: loc_comments=148:55 imports_exports=4:10 calls_definitions=61:13
+# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13
 """Universal msdmd parser — pure stdlib.
 
 Implements the parser contract from ``msdmd/SKILL.md``: extracts every
@@ -242,4 +242,4 @@ def ratios_placement(text: str, marker: str = "#") -> tuple[bool, bool]:
         last_ok = bool(line_re.match(raw.rstrip()))
         break
     return (opening_ok, last_ok)
-# ratios: loc_comments=148:55 imports_exports=4:10 calls_definitions=61:13
+# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13

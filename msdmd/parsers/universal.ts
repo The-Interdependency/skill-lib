@@ -1,4 +1,4 @@
-// ratios: loc_comments=179:0 imports_exports=2:0 calls_definitions=54:0
+// ratios: loc_comments=199:0 imports_exports=2:0 calls_definitions=67:0
 /**
  * Universal msdmd parser — pure Node stdlib (fs, path).
  *
@@ -90,6 +90,29 @@ export function parseFile(path: string, blockName: string): Entry[] {
   } catch {
     return [];
   }
+}
+
+export function hasShebang(text: string): boolean {
+  const lines = text.split("\n");
+  return lines.length > 0 && lines[0].startsWith("#!") && lines[0].slice(2).trim().length > 0;
+}
+
+export function directExecutionDeclaration(text: string, marker: string = "#"): [boolean, boolean] {
+  const entries = [
+    ...parseText(text, "CAPABILITIES", marker),
+    ...parseText(text, "CONTRACTS", marker),
+  ];
+  const values = new Set(entries.map((entry) => (entry.executable ?? "").trim().toLowerCase()));
+  return [values.has("true"), values.has("hmmm")];
+}
+
+export function directExecutionGaps(text: string, marker: string = "#"): string[] {
+  const shebang = hasShebang(text);
+  const [declared] = directExecutionDeclaration(text, marker);
+  const gaps: string[] = [];
+  if (declared && !shebang) gaps.push("declared_direct_execution_missing_shebang");
+  if (shebang && !declared) gaps.push("shebang_missing_direct_execution_declaration");
+  return gaps;
 }
 
 export interface WalkOptions {
@@ -196,4 +219,4 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   }
   return [openingOk, lastOk];
 }
-// ratios: loc_comments=179:0 imports_exports=2:0 calls_definitions=54:0
+// ratios: loc_comments=199:0 imports_exports=2:0 calls_definitions=67:0

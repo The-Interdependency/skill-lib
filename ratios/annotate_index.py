@@ -59,10 +59,15 @@ def _is_seal(line: str, ext: str) -> bool:
     return bool((_ANN_PY if ext == ".py" else _ANN_TS).match(s))
 
 
+def _has_valid_shebang(lines: list[str]) -> bool:
+    return bool(lines and lines[0].startswith("#!") and lines[0][2:].strip())
+
+
 def _strip_seal(lines: list[str], ext: str) -> list[str]:
     w = lines[:]
-    if w and _is_seal(w[0], ext):
-        w = w[1:]
+    opening_index = 1 if _has_valid_shebang(w) else 0
+    if len(w) > opening_index and _is_seal(w[opening_index], ext):
+        del w[opening_index]
     if w and _is_seal(w[-1], ext):
         w = w[:-1]
     return w
@@ -289,11 +294,20 @@ def main(argv: list[str] | None = None) -> int:
             lines = path.read_text(encoding="utf-8").splitlines()
         except OSError:
             continue
-        have = lines[0].strip() if lines else ""
-        placed_ok = bool(lines) and _is_seal(lines[0], ext) and _is_seal(lines[-1], ext)
+        opening_index = 1 if _has_valid_shebang(lines) else 0
+        have = lines[opening_index].strip() if len(lines) > opening_index else ""
+        placed_ok = (
+            len(lines) > opening_index
+            and _is_seal(lines[opening_index], ext)
+            and _is_seal(lines[-1], ext)
+        )
         if write:
             working = _strip_seal(lines, ext)
-            new = "\n".join([want] + working + [want]) + "\n"
+            if _has_valid_shebang(working):
+                new_lines = [working[0], want, *working[1:], want]
+            else:
+                new_lines = [want, *working, want]
+            new = "\n".join(new_lines) + "\n"
             if new != path.read_text(encoding="utf-8"):
                 path.write_text(new, encoding="utf-8")
                 print(f"  stamped {path.relative_to(root)}  [{want}]")

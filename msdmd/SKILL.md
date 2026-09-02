@@ -30,6 +30,38 @@ claims to prove those obligations. See
 [`test-build/SKILL.md`](../test-build/SKILL.md) and
 [`doctrine/msdmd-checks.md`](../doctrine/msdmd-checks.md).
 
+## Repository and forge neutrality
+
+msdmd is a **source-tree convention**, not a GitHub convention and not a Git
+convention. In this skill, `repo` / `repository` means the source tree being
+examined or changed. That tree may be:
+
+- a local workspace with no remote host;
+- versioned with Git, Mercurial, Jujutsu, Subversion, or another VCS;
+- hosted on GitHub, GitLab, Bitbucket, Codeberg, Forgejo, Gitea, a self-hosted
+  forge, or another repository service; or
+- supplied as an extracted source snapshot where no VCS metadata is available.
+
+The msdmd parser and runner MUST operate from files under a supplied root. They
+MUST NOT require a GitHub API, a particular forge, a particular VCS, or network
+access in order to discover and parse module-owned declarations. Forge/VCS
+integrations MAY provide transport, revision identity, diffs, review routing,
+or CI execution, but those are adapters around msdmd rather than part of the
+block semantics.
+
+Where provenance crosses a repository boundary, preserve the strongest source
+identity the environment can actually provide: source-tree/repository
+identifier, revision or snapshot identifier when available, relative path, and
+content digest when exact bytes matter. A forge URL is useful navigation but is
+not itself authority. The `repo` field in `MsdmdCollection` is therefore a
+logical source-tree identifier; it is not required to be a GitHub `owner/name`
+slug.
+
+This distinction is load-bearing for agent use: selecting an msdmd skill tells
+an agent **how to inspect or change a source tree**. Permission to read or write
+that tree comes from the agent's separately authorized filesystem, repository,
+forge, or deployment tools.
+
 ## Block syntax
 
 ```python
@@ -273,8 +305,10 @@ walk(root: Path, block_name: str) -> Iterator[(file: Path, entries: list[Entry])
 Implementation rules every runner MUST follow:
 
 1. **Walk the source tree** under a configurable root, skipping
-   conventional non-source paths (`__pycache__`, `node_modules`,
-   `.git`, build outputs, the runner's own test directory).
+   conventional non-source paths (`__pycache__`, `node_modules`, `.git`, `.hg`,
+   `.svn`, `.jj`, build outputs, the runner's own test directory). A VCS or
+   forge MAY add adapter-specific exclusions; the core runner does not infer a
+   repository host from these directories.
 2. **Detect comment marker by extension**, not by content sniffing.
    `.py / .rb / .ex / .sh → #`. `.ts / .js / .tsx / .jsx / .rs / .go /
    .java / .c / .cpp / .swift → //`. `.sql / .lua / .hs → --`.
@@ -341,6 +375,11 @@ for additional applications over the same parser contract.
   whole point is that the declaration lives next to the module that
   owns that fact. Source obligations belong in source; test evidence
   belongs in the test module that owns the evidence.
+- **Don't bind msdmd semantics to a repository host.** GitHub, GitLab,
+  Bitbucket, Codeberg, Forgejo, Gitea, self-hosted forges, local workspaces,
+  and unhosted source snapshots are transports or environments. A runner that
+  requires one provider's API to parse local msdmd blocks is not a universal
+  msdmd runner.
 - **Don't put `call:` in source `CONTRACTS`.** Source modules own
   obligations, not test topology. Put executable targets in `CHECKS`.
 - **Don't make ids reflect implementation details.** `chat_returns_200`

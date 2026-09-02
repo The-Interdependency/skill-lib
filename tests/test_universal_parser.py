@@ -138,9 +138,29 @@ class UniversalParserTest(unittest.TestCase):
         self.assertEqual({"id": "loc_comments", "value": "120:40"}, entries[0])
         self.assertEqual((True, True), ratios_placement(text, "#"))
 
+    def test_parse_ratios_allows_line_one_shebang(self) -> None:
+        text = (
+            "#!/usr/bin/env bash\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+            "echo ok\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+        )
+        self.assertEqual((True, True), ratios_placement(text, "#"))
+        self.assertEqual(6, len(parse_ratios(text, "#")))
+
+    def test_parse_ratios_rejects_gap_after_shebang(self) -> None:
+        text = (
+            "#!/usr/bin/env bash\n"
+            "\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+            "echo ok\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+        )
+        self.assertEqual((False, True), ratios_placement(text, "#"))
+
     def test_parse_ratios_detects_misplacement(self) -> None:
         text = "x = 1\n# ratios: loc_comments=1:0 imports_exports=0:0 calls_definitions=0:0\ny = 2\n"
-        # present but on neither the first nor the last non-blank line
+        # present but on neither the opening nor the last non-blank line
         self.assertEqual((False, False), ratios_placement(text, "#"))
         self.assertEqual(3, len(parse_ratios(text, "#")))
 

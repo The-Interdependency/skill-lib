@@ -89,6 +89,19 @@ class BuildIndexTest(unittest.TestCase):
                 self.assertTrue(A._is_seal(lines[0], f.suffix))
                 self.assertTrue(A._is_seal(lines[-1], f.suffix))
 
+    def test_write_and_check_preserve_valid_shebang(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            td = Path(tmp)
+            script = td / "tool.py"
+            shebang = "#!/usr/bin/env python3"
+            script.write_text(shebang + "\nprint('ok')\n", encoding="utf-8")
+            self.assertEqual(A.main(["--root", str(td), "--write"]), 0)
+            lines = script.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(lines[0], shebang)
+            self.assertTrue(A._is_seal(lines[1], ".py"))
+            self.assertTrue(A._is_seal(lines[-1], ".py"))
+            self.assertEqual(A.main(["--root", str(td), "--check"]), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

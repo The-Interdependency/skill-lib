@@ -1,4 +1,4 @@
-// ratios: loc_comments=176:0 imports_exports=2:0 calls_definitions=53:0
+// ratios: loc_comments=179:0 imports_exports=2:0 calls_definitions=54:0
 /**
  * Universal msdmd parser — pure Node stdlib (fs, path).
  *
@@ -12,9 +12,9 @@
  * changes.
  *
  * RATIOS is the one msdmd declaration that is not a fenced block — it is a
- * single comment line on a file's first and last non-blank lines. Its reader
- * (parseRatios / parseRatiosFile / ratiosPlacement) lives here too, as a
- * sanctioned extension rather than a fork.
+ * single comment line at the opening source boundary and last non-blank line;
+ * a literal line-1 shebang is the sole sanctioned preamble and moves opening
+ * RATIOS to literal line 2. Its reader lives here as a sanctioned extension.
  *
  * Zero non-stdlib dependencies. Safe to copy verbatim into any
  * Node/Deno/Bun project that wants msdmd support.
@@ -145,8 +145,8 @@ export function walkTree(
 
 // --- RATIOS single-line declaration (msdmd extension) --------------------
 // Unlike every other declaration, RATIOS is not fenced. It is a single
-// comment line carrying the three canonical ratios, placed on the file's
-// first and last non-blank lines:
+// comment line at the opening source boundary and last non-blank line; a
+// literal line-1 shebang moves opening RATIOS to literal line 2:
 //   <marker> ratios: loc_comments=N:M imports_exports=N:M calls_definitions=N:M
 export const RATIO_IDS = ["loc_comments", "imports_exports", "calls_definitions"] as const;
 
@@ -184,13 +184,16 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   const lineRe = ratiosLineRe(marker);
   const lines = text.split("\n");
   if (lines.length === 0) return [false, false];
-  const firstOk = lineRe.test(lines[0].replace(/\s+$/, ""));
+  const openingIndex = lines[0].startsWith("#!") ? 1 : 0;
+  const openingOk =
+    lines.length > openingIndex &&
+    lineRe.test(lines[openingIndex].replace(/\s+$/, ""));
   let lastOk = false;
   for (let i = lines.length - 1; i >= 0; i--) {
     if (lines[i].trim() === "") continue;
     lastOk = lineRe.test(lines[i].replace(/\s+$/, ""));
     break;
   }
-  return [firstOk, lastOk];
+  return [openingOk, lastOk];
 }
-// ratios: loc_comments=176:0 imports_exports=2:0 calls_definitions=53:0
+// ratios: loc_comments=179:0 imports_exports=2:0 calls_definitions=54:0

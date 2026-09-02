@@ -7,8 +7,8 @@ Usage guidance:
 The focused test protects the scoped operator-workflow contract, the exact
 cross-repository authority identities for the vm-mcp/stack topology, and the
 rule that runtime host facts such as ``a0`` cannot become unconditional
-organization authority. It also guards against reintroducing a mutating
-one-shot write-back workflow into the skill.
+organization authority. It also guards the workflow tree against reintroducing
+the removed mutating one-shot write-back workflow.
 """
 
 from __future__ import annotations
@@ -20,6 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "the-interdependency" / "SKILL.md"
+WORKFLOWS = ROOT / ".github" / "workflows"
 
 
 class TheInterdependencySkillTest(unittest.TestCase):
@@ -73,12 +74,15 @@ class TheInterdependencySkillTest(unittest.TestCase):
         )
 
     def test_no_mutating_one_shot_write_back_workflow_is_declared(self) -> None:
-        for forbidden in (
-            "interdependency-operator-repair-once",
-            "one-shot write-back",
-            "write-back workflow",
-        ):
-            self.assertNotIn(forbidden, self.text)
+        workflow_files = [] if not WORKFLOWS.exists() else [
+            path for path in WORKFLOWS.iterdir() if path.suffix in {".yml", ".yaml"}
+        ]
+        names = {path.name for path in workflow_files}
+        self.assertNotIn("interdependency-operator-repair-once.yml", names)
+        self.assertNotIn("interdependency-operator-repair-once.yaml", names)
+        for path in workflow_files:
+            workflow_text = path.read_text(encoding="utf-8")
+            self.assertNotIn("interdependency-operator-repair-once", workflow_text)
 
     def test_deprecation_replacement_is_conditional_on_needed_capability(self) -> None:
         self.assertIn(

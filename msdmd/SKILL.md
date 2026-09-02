@@ -30,38 +30,6 @@ claims to prove those obligations. See
 [`test-build/SKILL.md`](../test-build/SKILL.md) and
 [`doctrine/msdmd-checks.md`](../doctrine/msdmd-checks.md).
 
-## Repository and forge neutrality
-
-msdmd is a **source-tree convention**, not a GitHub convention and not a Git
-convention. In this skill, `repo` / `repository` means the source tree being
-examined or changed. That tree may be:
-
-- a local workspace with no remote host;
-- versioned with Git, Mercurial, Jujutsu, Subversion, or another VCS;
-- hosted on GitHub, GitLab, Bitbucket, Codeberg, Forgejo, Gitea, a self-hosted
-  forge, or another repository service; or
-- supplied as an extracted source snapshot where no VCS metadata is available.
-
-The msdmd parser and runner MUST operate from files under a supplied root. They
-MUST NOT require a GitHub API, a particular forge, a particular VCS, or network
-access in order to discover and parse module-owned declarations. Forge/VCS
-integrations MAY provide transport, revision identity, diffs, review routing,
-or CI execution, but those are adapters around msdmd rather than part of the
-block semantics.
-
-Where provenance crosses a repository boundary, preserve the strongest source
-identity the environment can actually provide: source-tree/repository
-identifier, revision or snapshot identifier when available, relative path, and
-content digest when exact bytes matter. A forge URL is useful navigation but is
-not itself authority. The `repo` field in `MsdmdCollection` is therefore a
-logical source-tree identifier; it is not required to be a GitHub `owner/name`
-slug.
-
-This distinction is load-bearing for agent use: selecting an msdmd skill tells
-an agent **how to inspect or change a source tree**. Permission to read or write
-that tree comes from the agent's separately authorized filesystem, repository,
-forge, or deployment tools.
-
 ## Block syntax
 
 ```python
@@ -96,44 +64,6 @@ forge, or deployment tools.
 - **Multiple block types per file**: a module may declare both
   `CONTRACTS` and `DOCS` (and any others). Each is parsed
   independently by its respective application.
-
-### Direct execution is declared, not inferred
-
-A shebang is executable architecture: it tells the operating system that a
-source file is intended to be run directly and names the interpreter path or
-resolver. It is therefore not a generic header to stamp on every module.
-
-The reciprocal msdmd invariant is:
-
-- a local `CAPABILITIES` or `CONTRACTS` entry with `executable: true` MUST have
-  a valid shebang on literal line 1;
-- a source file with a valid shebang on literal line 1 MUST have at least one
-  local `CAPABILITIES` or `CONTRACTS` entry with `executable: true`;
-- `executable: hmmm` is pending and does not satisfy the positive declaration;
-- absence of the field makes no direct-execution claim.
-
-This preserves a useful distinction: imported/library modules remain ordinary
-modules; supported executable entrypoints say so explicitly. A positive
-execution declaration without a shebang is a broken declaration. A shebang
-without a positive declaration is a visible metadata gap.
-
-RATIOS has one sanctioned placement exception for this operating-system
-preamble: without a shebang, opening RATIOS is literal line 1; with a valid
-line-1 shebang, opening RATIOS is literal line 2. The matching closing RATIOS
-seal remains the last non-blank line. Nothing else may precede opening RATIOS.
-See [`ratios/SKILL.md`](../ratios/SKILL.md).
-
-The universal parsers expose pure source-text helpers for this invariant:
-
-```python
-has_shebang(text)                              # -> bool
-direct_execution_declaration(text, marker)     # -> (declared_true, pending_hmmm)
-direct_execution_gaps(text, marker)            # -> stable gap-code list
-```
-
-These helpers do not execute or import the source. They only parse the local
-text. Application runners remain responsible for deciding whether a visible
-gap is informational or fatal under their strict mode.
 
 ### Example (Python source module)
 
@@ -181,21 +111,6 @@ gap is informational or fatal under their strict mode.
 # === END CAPABILITIES ===
 ```
 
-### Example (directly executable shell module)
-
-```bash
-#!/usr/bin/env bash
-# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
-# === CAPABILITIES ===
-# id: agent_session_launcher
-#   summary: launches the declared agent-session command
-#   exposes: command:ai
-#   executable: true
-# === END CAPABILITIES ===
-...
-# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
-```
-
 The block content is identical across languages — only the comment
 marker changes.
 
@@ -217,9 +132,6 @@ where `Entry` is a flat `dict[str, str]` containing at minimum the
   error in the executor, not in the parser.
 - Does not fail on missing block type — returns empty list if no block
   of that name exists.
-
-The direct-execution helpers above are a sanctioned pure source-text audit
-layer beside the parser; they do not change the generic block parser semantics.
 
 A reference implementation in pure stdlib Python lives at
 `parsers/universal.py`; the TypeScript equivalent at `parsers/universal.ts`.
@@ -305,10 +217,8 @@ walk(root: Path, block_name: str) -> Iterator[(file: Path, entries: list[Entry])
 Implementation rules every runner MUST follow:
 
 1. **Walk the source tree** under a configurable root, skipping
-   conventional non-source paths (`__pycache__`, `node_modules`, `.git`, `.hg`,
-   `.svn`, `.jj`, build outputs, the runner's own test directory). A VCS or
-   forge MAY add adapter-specific exclusions; the core runner does not infer a
-   repository host from these directories.
+   conventional non-source paths (`__pycache__`, `node_modules`,
+   `.git`, build outputs, the runner's own test directory).
 2. **Detect comment marker by extension**, not by content sniffing.
    `.py / .rb / .ex / .sh → #`. `.ts / .js / .tsx / .jsx / .rs / .go /
    .java / .c / .cpp / .swift → //`. `.sql / .lua / .hs → --`.
@@ -322,9 +232,6 @@ Implementation rules every runner MUST follow:
 5. **Exit non-zero** when any entry fails the executor's check. The
    gap list itself is informational unless the application opts in to
    strict mode (in which case missing blocks are also a fail).
-6. **When consuming `CAPABILITIES` or `CONTRACTS` executable intent**, audit
-   the reciprocal line-1 shebang / `executable: true` invariant without
-   importing or executing the source. Report both mismatch directions.
 
 ## Field naming conventions
 
@@ -342,7 +249,6 @@ consistency):
 | `owner` | Who is responsible (person, agent role, team). |
 | `since` | Version or date this declaration was added. |
 | `deprecated` | If present, marks the entry as scheduled for removal. |
-| `executable` | Cross-skill direct-execution intent for source-owned `CAPABILITIES` or `CONTRACTS`. `true` requires a valid literal line-1 shebang; `hmmm` remains pending. |
 
 Application-specific fields (`given`, `then`, `expects`, `inputs`,
 `outputs`, `mutates`, `cleanup`, `timeout`, etc.) are introduced by
@@ -354,12 +260,13 @@ individual SKILLs and documented in their own SKILL.md.
    application. Search the lib README for current names.
 2. **Define the field schema** — which fields are required, which
    optional, what types they carry. Document in your SKILL.md.
-3. **Write the executor** — the function that takes parsed entries and
-   acts on them. Use the universal parser; do not write a new one unless
-   your block needs syntax the universal parser can't express.
+3. **Write the executor** — the function that takes parsed entries
+   and acts on them. Use the universal parser; do not write a new
+   one unless your block needs syntax the universal parser can't
+   express.
 4. **Implement the visibility report** — your runner must list
-   modules without your block type as gaps, and the gap list must be
-   visible in normal output (not buried behind a flag).
+   modules without your block type as gaps, and the gap list must
+   be visible in normal output (not buried behind a flag).
 5. **Author a SKILL.md** in this lib with the convention spec, the
    executor's behavior, and at least one worked example.
 
@@ -375,11 +282,6 @@ for additional applications over the same parser contract.
   whole point is that the declaration lives next to the module that
   owns that fact. Source obligations belong in source; test evidence
   belongs in the test module that owns the evidence.
-- **Don't bind msdmd semantics to a repository host.** GitHub, GitLab,
-  Bitbucket, Codeberg, Forgejo, Gitea, self-hosted forges, local workspaces,
-  and unhosted source snapshots are transports or environments. A runner that
-  requires one provider's API to parse local msdmd blocks is not a universal
-  msdmd runner.
 - **Don't put `call:` in source `CONTRACTS`.** Source modules own
   obligations, not test topology. Put executable targets in `CHECKS`.
 - **Don't make ids reflect implementation details.** `chat_returns_200`
@@ -392,11 +294,6 @@ for additional applications over the same parser contract.
   the universal parser handles, propose an extension to msdmd, not a
   fork. The portability of the convention depends on the parser
   contract being one thing.
-- **Don't stamp shebangs onto every module.** A shebang claims direct
-  executability. Library/import modules should not make that claim unless they
-  are intentionally supported as entrypoints.
-- **Don't leave executable intent one-sided.** A positive declaration needs a
-  line-1 shebang, and a line-1 shebang needs a positive local declaration.
 
 ## Versioning
 
@@ -407,7 +304,3 @@ for additional applications over the same parser contract.
   additive only.
 - **Application SKILLs** version independently in their own SKILL.md
   files.
-
-hmmm
-- direct-execution mismatch detection is now available as a pure universal-parser helper; not every consuming repo runner has yet wired those gap codes into its normal report
-- whether repo collection points should carry a normalized edge or declaration for executable entrypoints in addition to retaining the source block fields

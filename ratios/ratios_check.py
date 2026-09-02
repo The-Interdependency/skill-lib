@@ -3,11 +3,11 @@
 
 Reference runner for the ``ratios`` skill. It reads the single-line RATIOS
 declaration (``<marker> ratios: loc_comments=N:M imports_exports=N:M
-calls_definitions=N:M``) from the opening source boundary and last non-blank line,
-with a line-1 shebang moving opening RATIOS to line 2; it recomputes each ratio and fails on:
+calls_definitions=N:M``) from a file's first and last non-blank lines,
+recomputes each ratio from the source, and fails on:
 
   * drift      — a recorded ratio no longer matches what the source computes;
-  * misplaced  — a RATIOS declaration not on the opening and closing boundaries;
+  * misplaced  — a RATIOS declaration not on both the first and last line;
   * gaps       — (only under ``--strict``) source files with no RATIOS at all.
 
 ``value: hmmm`` is reported as pending, never a failure. A recorded id with no

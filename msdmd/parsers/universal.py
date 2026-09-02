@@ -1,4 +1,4 @@
-# ratios: loc_comments=132:49 imports_exports=4:7 calls_definitions=53:10
+# ratios: loc_comments=148:55 imports_exports=4:10 calls_definitions=61:13
 """Universal msdmd parser — pure stdlib.
 
 Implements the parser contract from ``msdmd/SKILL.md``: extracts every
@@ -22,6 +22,7 @@ when present, opening RATIOS is literal line 2. The reader lives here too:
     parse_ratios(text, marker="#") -> list[dict]
     parse_ratios_file(path) -> list[dict]
     ratios_placement(text, marker="#") -> tuple[opening_ok, last_ok]
+    direct_execution_gaps(text, marker="#") -> list[str]
 
 This module has zero non-stdlib dependencies and is safe to copy
 verbatim into any project that wants msdmd support.
@@ -105,6 +106,31 @@ def parse_file(path: Path, block_name: str) -> list[dict]:
         return parse_text(path.read_text(encoding="utf-8"), block_name, marker)
     except (OSError, UnicodeDecodeError):
         return []
+
+
+def has_shebang(text: str) -> bool:
+    """Return True only for a non-empty interpreter shebang on literal line 1."""
+    lines = text.splitlines()
+    return bool(lines and lines[0].startswith("#!") and lines[0][2:].strip())
+
+
+def direct_execution_declaration(text: str, marker: str = "#") -> tuple[bool, bool]:
+    """Return ``(declared_true, pending_hmmm)`` across CAPABILITIES/CONTRACTS."""
+    entries = parse_text(text, "CAPABILITIES", marker) + parse_text(text, "CONTRACTS", marker)
+    values = {(entry.get("executable") or "").strip().lower() for entry in entries}
+    return ("true" in values, "hmmm" in values)
+
+
+def direct_execution_gaps(text: str, marker: str = "#") -> list[str]:
+    """Return reciprocal shebang/declaration gap codes without executing source."""
+    shebang = has_shebang(text)
+    declared, _pending = direct_execution_declaration(text, marker)
+    gaps: list[str] = []
+    if declared and not shebang:
+        gaps.append("declared_direct_execution_missing_shebang")
+    if shebang and not declared:
+        gaps.append("shebang_missing_direct_execution_declaration")
+    return gaps
 
 
 def walk_tree(
@@ -216,4 +242,4 @@ def ratios_placement(text: str, marker: str = "#") -> tuple[bool, bool]:
         last_ok = bool(line_re.match(raw.rstrip()))
         break
     return (opening_ok, last_ok)
-# ratios: loc_comments=132:49 imports_exports=4:7 calls_definitions=53:10
+# ratios: loc_comments=148:55 imports_exports=4:10 calls_definitions=61:13

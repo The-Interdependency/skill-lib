@@ -50,8 +50,29 @@ Optional:
 | `requires` | Comma-separated capability or module ids this capability depends on. |
 | `class` | Free-text capability class (`runtime`, `ui`, `data`, `agent`, `ops`). |
 | `owner` | Person, role, or team responsible for the capability. |
-| `since` | Version or date the capability was added. |
+| `since` | Version or date this capability was added. |
 | `deprecated` | If present, marks the capability as scheduled for removal. |
+| `executable` | `true` only when this module is intentionally supported as a directly executable program. `hmmm` records unresolved intent. A positive claim requires a literal line-1 shebang. |
+
+## Direct-execution invariant
+
+A shebang is executable architecture, not decoration. A module that declares
+`executable: true` in any local `CAPABILITIES` entry MUST carry a valid shebang
+on literal line 1. Conversely, a source module carrying a line-1 shebang MUST
+have at least one local `CAPABILITIES` or `CONTRACTS` entry declaring
+`executable: true`.
+
+The reciprocal check is deliberate:
+
+- declaration without shebang is a broken executable capability;
+- shebang without declaration is a visible capability/contract gap;
+- `executable: hmmm` is pending and does not satisfy the positive declaration;
+- absence of the field makes no direct-execution claim.
+
+When a shebang is present, RATIOS uses the sanctioned executable preamble rule:
+the shebang occupies literal line 1, the opening RATIOS seal occupies literal
+line 2, and the matching closing RATIOS seal remains the last non-blank line.
+See [ratios](../ratios/SKILL.md).
 
 ## Runner contract
 
@@ -66,16 +87,21 @@ A CAPABILITIES runner MUST:
    pending, not passing.
 6. Report modules with exposed public surfaces but no CAPABILITIES block as
    visible gaps when the runner can detect public surfaces.
-7. Exit non-zero for duplicate ids, malformed required fields, or broken
-   resolvable exposure targets. Coverage gaps fail only in strict mode.
+7. Audit the direct-execution invariant: `executable: true` without a line-1
+   shebang is an error; a line-1 shebang without a local `CAPABILITIES` or
+   `CONTRACTS` `executable: true` declaration is a visible gap.
+8. Exit non-zero for duplicate ids, malformed required fields, broken
+   resolvable exposure targets, or broken positive direct-execution claims.
+   Coverage gaps fail only in strict mode.
 
 ## Reporting shape
 
 - `CAPABILITY`: id, summary, exposing module, owner, and boundaries.
 - `BROKEN_EXPOSES`: declared surface no longer resolves.
+- `BROKEN_EXECUTABLE`: `executable: true` but literal line 1 is not a shebang.
 - `DUPLICATE`: id appears more than once.
 - `PENDING`: unresolved `hmmm` capability fields.
-- `GAP`: public-looking modules or surfaces without capability metadata.
+- `GAP`: public-looking modules or surfaces without capability metadata, including a shebang with no positive local direct-execution declaration.
 
 ## Anti-patterns
 
@@ -83,8 +109,11 @@ A CAPABILITIES runner MUST:
 - Using implementation-shaped ids (`function_runs`) instead of capability-shaped ids (`agent_supervisor_dynamic_spawn`).
 - Hiding boundary uncertainty; write `hmmm` where the effect is unresolved.
 - Treating a module import as a capability without identifying the exposed behavior.
+- Adding a shebang "just in case" to a library module. A shebang claims direct execution and therefore requires a local declaration.
+- Declaring `executable: true` while relying on `python file.py`, `bash file.sh`, or another caller-selected interpreter instead of providing the required line-1 shebang.
 
 hmmm
 - exact resolver syntax for framework-specific route and UI surfaces
 - whether capability ids should be globally unique across a repo or only within a block
 - whether private capabilities deserve a separate block or a `class: internal` tag
+- whether direct-execution audits should be centralized in a shared msdmd runner once CAPABILITIES gains a reference executor

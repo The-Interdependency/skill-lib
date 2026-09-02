@@ -5,6 +5,9 @@ import unittest
 from pathlib import Path
 
 from msdmd.parsers.universal import (
+    direct_execution_declaration,
+    direct_execution_gaps,
+    has_shebang,
     marker_for,
     parse_file,
     parse_ratios,
@@ -163,6 +166,49 @@ class UniversalParserTest(unittest.TestCase):
         # present but on neither the opening nor the last non-blank line
         self.assertEqual((False, False), ratios_placement(text, "#"))
         self.assertEqual(3, len(parse_ratios(text, "#")))
+
+    def test_direct_execution_declaration_and_shebang_close(self) -> None:
+        text = """#!/usr/bin/env bash
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
+# === CAPABILITIES ===
+# id: ai_session_launcher
+#   summary: launches persistent agent sessions
+#   exposes: command:ai
+#   executable: true
+# === END CAPABILITIES ===
+# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
+"""
+        self.assertTrue(has_shebang(text))
+        self.assertEqual((True, False), direct_execution_declaration(text, "#"))
+        self.assertEqual([], direct_execution_gaps(text, "#"))
+
+    def test_direct_execution_claim_without_shebang_fails(self) -> None:
+        text = """# === CONTRACTS ===
+# id: launcher_direct_exec
+#   given: the module is invoked directly
+#   then: the declared interpreter executes it
+#   executable: true
+# === END CONTRACTS ===
+"""
+        self.assertEqual(
+            ["declared_direct_execution_missing_shebang"],
+            direct_execution_gaps(text, "#"),
+        )
+
+    def test_shebang_without_positive_declaration_is_gap(self) -> None:
+        text = """#!/usr/bin/env bash
+# === CAPABILITIES ===
+# id: launcher_intent_pending
+#   summary: direct execution intent is unresolved
+#   exposes: command:ai
+#   executable: hmmm
+# === END CAPABILITIES ===
+"""
+        self.assertEqual((False, True), direct_execution_declaration(text, "#"))
+        self.assertEqual(
+            ["shebang_missing_direct_execution_declaration"],
+            direct_execution_gaps(text, "#"),
+        )
 
 
 if __name__ == "__main__":

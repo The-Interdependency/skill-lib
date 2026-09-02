@@ -207,7 +207,7 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   const lineRe = ratiosLineRe(marker);
   const lines = text.split("\n");
   if (lines.length === 0) return [false, false];
-  const openingIndex = lines[0].startsWith("#!") ? 1 : 0;
+  const openingIndex = hasShebang(text) ? 1 : 0;
   const openingOk =
     lines.length > openingIndex &&
     lineRe.test(lines[openingIndex].replace(/\s+$/, ""));

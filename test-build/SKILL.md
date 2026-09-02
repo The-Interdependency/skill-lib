@@ -66,28 +66,9 @@ Optional:
 | `requires` | Comma-separated list of other contract ids this contract depends on. |
 | `since` | Version or date the contract was added. |
 | `deprecated` | If present, the runner skips and reports the entry as deprecated. |
-| `executable` | `true` only when the source module itself is intentionally supported as a directly executable program. `hmmm` records unresolved intent. A positive claim requires a literal line-1 shebang. |
 
 `call:` is not a CONTRACTS field in skill-lib. The call belongs to the
 CHECKS entry that owns the executable evidence.
-
-### Direct-execution contract
-
-A shebang is a source-level claim that the operating system may execute the
-file directly. That claim must not be implicit.
-
-- Any local `CONTRACTS` or `CAPABILITIES` entry with `executable: true`
-  requires a valid shebang on literal line 1.
-- Any source module with a line-1 shebang requires at least one local
-  `CONTRACTS` or `CAPABILITIES` entry with `executable: true`.
-- `executable: hmmm` is pending and does not satisfy the positive declaration.
-- Absence of `executable` makes no direct-execution claim.
-
-This does not require every importable module to carry a shebang. It preserves
-the distinction between an importable module and a supported executable
-entrypoint. When a shebang is present, the RATIOS opening seal moves to literal
-line 2 under the sanctioned executable-preamble rule; the matching seal remains
-the last non-blank line.
 
 ## Test block: CHECKS
 
@@ -195,19 +176,12 @@ GAP  <contract>  has no CHECKS entry claiming to prove it
 GAP  <check> claims unknown contract: <id>
 GAP  <check> call does not resolve: <reason>
 GAP  executable check <fn> has no resolving CHECKS declaration
-GAP  source shebang has no local CAPABILITIES/CONTRACTS executable:true declaration
-FAIL direct-execution declaration executable:true has no literal line-1 shebang
 ```
-
-The direct-execution audit is source-text inspection only; it must not execute
-the module to discover its interpreter or entrypoint. A runner may implement
-this directly or reuse a shared msdmd helper when one is available.
 
 Exit nonzero on any gap. A reconciler that has only ever said
 "closed" is itself unverified; negative-test it by planting an orphan
-contract, a phantom `proves` target, an unresolvable call, an undeclared
-shebang, and a positive direct-execution declaration without a shebang, then
-observing the expected GAP/FAIL results.
+contract, a phantom `proves` target, and an unresolvable call, then
+observing the GAP.
 
 ## Authoring an executor
 
@@ -215,13 +189,13 @@ A full executor runs after audit or as part of the same command. It
 should:
 
 1. Parse source `CONTRACTS` and test `CHECKS` using the msdmd parser.
-2. Reconcile the graph before execution, including the reciprocal shebang / `executable: true` invariant.
+2. Reconcile the graph before execution.
 3. Refuse execution when consumed `requires` fields are unmet.
 4. Apply consumed `timeout` fields to the actual spawned work.
 5. Report per-check `PASS`, `FAIL`, and `ERROR` without aborting the
    remaining checks on a single harness error.
 6. Surface source contracts with no proving checks, checks proving
-   unknown contracts, executable checks with no declaration, and direct-execution metadata gaps.
+   unknown contracts, and executable checks with no declaration.
 
 The visibility-of-gaps requirement is mandatory per msdmd. Drop it and
 the runner stops being a msdmd application.
@@ -261,10 +235,6 @@ Do not claim one rung above the evidence.
   an explicit non-audit mode.
 - **Catching unexpected exceptions in the check to "make it pass".**
   Let the exception escape so the runner can mark `ERROR` honestly.
-- **Universal shebangs.** A shebang is not a generic module header. It is
-  reserved for modules that explicitly declare direct execution.
-- **Undeclared shebangs.** If line 1 starts with `#!`, the module must say
-  why through a local positive direct-execution declaration.
 
 ## Versioning
 
@@ -278,4 +248,3 @@ hmmm
 - The block type for harness/infrastructure tests that prove no product contract remains unnamed is still unsettled.
 - Mutation-level verification is defined but not yet generalized across skills.
 - Slow/flaky/quarantined states should enter only when a runner consumes them rather than as decorative labels.
-- A shared cross-skill direct-execution audit helper would remove duplicated runner logic once a stable implementation is justified.

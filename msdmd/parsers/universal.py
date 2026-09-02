@@ -1,4 +1,4 @@
-# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13
+# ratios: loc_comments=128:49 imports_exports=4:7 calls_definitions=51:10
 """Universal msdmd parser — pure stdlib.
 
 Implements the parser contract from ``msdmd/SKILL.md``: extracts every
@@ -15,14 +15,12 @@ Public API:
     walk_tree(root, block_name, *, skip=None, extensions=None) -> tuple[annotated, untested]
 
 RATIOS is the one msdmd declaration that is *not* a fenced block — it is a
-single comment line carried on a file's opening source boundary and last
-non-blank line. A literal line-1 shebang is the sole sanctioned preamble;
-when present, opening RATIOS is literal line 2. The reader lives here too:
+single comment line carried on a file's first and last non-blank lines. The
+reader for it lives here too, as a sanctioned extension rather than a fork:
 
     parse_ratios(text, marker="#") -> list[dict]
     parse_ratios_file(path) -> list[dict]
-    ratios_placement(text, marker="#") -> tuple[opening_ok, last_ok]
-    direct_execution_gaps(text, marker="#") -> list[str]
+    ratios_placement(text, marker="#") -> tuple[first_ok, last_ok]
 
 This module has zero non-stdlib dependencies and is safe to copy
 verbatim into any project that wants msdmd support.
@@ -108,31 +106,6 @@ def parse_file(path: Path, block_name: str) -> list[dict]:
         return []
 
 
-def has_shebang(text: str) -> bool:
-    """Return True only for a non-empty interpreter shebang on literal line 1."""
-    lines = text.splitlines()
-    return bool(lines and lines[0].startswith("#!") and lines[0][2:].strip())
-
-
-def direct_execution_declaration(text: str, marker: str = "#") -> tuple[bool, bool]:
-    """Return ``(declared_true, pending_hmmm)`` across CAPABILITIES/CONTRACTS."""
-    entries = parse_text(text, "CAPABILITIES", marker) + parse_text(text, "CONTRACTS", marker)
-    values = {(entry.get("executable") or "").strip().lower() for entry in entries}
-    return ("true" in values, "hmmm" in values)
-
-
-def direct_execution_gaps(text: str, marker: str = "#") -> list[str]:
-    """Return reciprocal shebang/declaration gap codes without executing source."""
-    shebang = has_shebang(text)
-    declared, _pending = direct_execution_declaration(text, marker)
-    gaps: list[str] = []
-    if declared and not shebang:
-        gaps.append("declared_direct_execution_missing_shebang")
-    if shebang and not declared:
-        gaps.append("shebang_missing_direct_execution_declaration")
-    return gaps
-
-
 def walk_tree(
     root: Path,
     block_name: str,
@@ -182,8 +155,8 @@ def walk_tree(
 
 # --- RATIOS single-line declaration (msdmd extension) --------------------
 # Unlike every other declaration, RATIOS is not fenced. It is a single
-# comment line carrying the three canonical ratios at the opening source
-# boundary and last non-blank line; a line-1 shebang moves opening RATIOS to 2:
+# comment line carrying the three canonical ratios, placed on the file's
+# first and last non-blank lines:
 #     <marker> ratios: loc_comments=N:M imports_exports=N:M calls_definitions=N:M
 RATIO_IDS = ("loc_comments", "imports_exports", "calls_definitions")
 _RATIOS_TOKEN_RE = re.compile(r"(?P<key>[a-z_]+)=(?P<val>\S+)")
@@ -198,9 +171,9 @@ def parse_ratios(text: str, marker: str = "#") -> list[dict]:
 
     RATIOS is not a fenced block: it is one comment line of the form
     ``<marker> ratios: loc_comments=N:M imports_exports=N:M calls_definitions=N:M``
-    placed on the opening source boundary and last non-blank line. Returns one
-    flat ``{"id", "value"}`` dict per (declaration line x ratio token) so a
-    drift gate can verify every occurrence.
+    placed on the file's first and last non-blank lines. Returns one flat
+    ``{"id", "value"}`` dict per (declaration line x ratio token) so a drift
+    gate can verify every occurrence.
     """
     line_re = _ratios_line_re(marker)
     out: list[dict] = []
@@ -225,21 +198,17 @@ def parse_ratios_file(path: Path) -> list[dict]:
 
 
 def ratios_placement(text: str, marker: str = "#") -> tuple[bool, bool]:
-    """Return ``(opening_ratios_ok, last_non_blank_ratios_ok)``."""
+    """Return ``(first_line_has_ratios, last_non_blank_line_has_ratios)``."""
     line_re = _ratios_line_re(marker)
     lines = text.splitlines()
     if not lines:
         return (False, False)
-    opening_index = 1 if lines[0].startswith("#!") else 0
-    opening_ok = (
-        len(lines) > opening_index
-        and bool(line_re.match(lines[opening_index].rstrip()))
-    )
+    first_ok = bool(line_re.match(lines[0].rstrip()))
     last_ok = False
     for raw in reversed(lines):
         if raw.strip() == "":
             continue
         last_ok = bool(line_re.match(raw.rstrip()))
         break
-    return (opening_ok, last_ok)
-# ratios: loc_comments=148:54 imports_exports=4:10 calls_definitions=62:13
+    return (first_ok, last_ok)
+# ratios: loc_comments=128:49 imports_exports=4:7 calls_definitions=51:10

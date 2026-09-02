@@ -128,6 +128,50 @@ class UniversalParserTest(unittest.TestCase):
             self.assertEqual([(annotated, [{"id": "module_doc", "path": "docs/module.md"}])], annotated_files)
             self.assertEqual([gap], gap_files)
 
+    def test_walk_tree_skips_common_vcs_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            visible = root / "visible.py"
+            visible.write_text("print('visible')\n", encoding="utf-8")
+            hidden_files = []
+            for dirname in (".git", ".hg", ".svn", ".jj"):
+                metadata = root / dirname
+                metadata.mkdir()
+                hidden = metadata / "metadata.py"
+                hidden.write_text("print('metadata')\n", encoding="utf-8")
+                hidden_files.append(hidden)
+
+            annotated_files, gap_files = walk_tree(root, "DOCS")
+
+            self.assertEqual([], annotated_files)
+            self.assertEqual([visible], gap_files)
+            for hidden in hidden_files:
+                self.assertNotIn(hidden, gap_files)
+
+    def test_walk_tree_does_not_follow_directory_symlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as outside_tmp:
+            root = Path(tmp)
+            outside = Path(outside_tmp)
+            external_source = outside / "outside.py"
+            external_source.write_text("print('outside')\n", encoding="utf-8")
+            link = root / "outside-link"
+            try:
+                link.symlink_to(outside, target_is_directory=True)
+            except (OSError, NotImplementedError):
+                self.skipTest("directory symlinks unavailable on this platform")
+
+            annotated_files, gap_files = walk_tree(root, "DOCS")
+
+            self.assertEqual([], annotated_files)
+            self.assertEqual([], gap_files)
+
+    def test_typescript_walker_declares_same_source_boundary(self) -> None:
+        source = (Path(__file__).resolve().parents[1] / "msdmd" / "parsers" / "universal.ts").read_text(encoding="utf-8")
+        for vcs_dir in (".git", ".hg", ".svn", ".jj"):
+            self.assertIn(f'"{vcs_dir}"', source)
+        self.assertIn("lstatSync", source)
+        self.assertIn("st.isSymbolicLink()", source)
+
     def test_parse_ratios_reads_single_line_declarations(self) -> None:
         text = (
             "# ratios: loc_comments=120:40 imports_exports=4:7 calls_definitions=50:10\n"

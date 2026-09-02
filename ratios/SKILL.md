@@ -1,6 +1,6 @@
 ---
 name: ratios
-description: Self-declaring module composition ratios on msdmd — a single comment line at the opening source boundary and again on the last non-blank line (never a fenced block). The canonical seal is `The-Interdependency/a0`'s compact positional `N:M C:D I:O` annotation (code:comment · consumed:declared · fan-in:fan-out), computed by a0's `scripts/annotate.py`; the named `loc_comments=… imports_exports=… calls_definitions=…` line is a portable, per-file adaptation for standalone libraries, verified by the stdlib `ratios_check.py` (drift/misplacement failures, visible gaps). A valid line-1 shebang is the sole sanctioned preamble: RATIOS then occupies literal line 2. JSON/Markdown are out of scope. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
+description: Self-declaring module composition ratios on msdmd — a single comment line on a file's first and last line (never a fenced block). The canonical seal is `The-Interdependency/a0`'s compact positional `N:M C:D I:O` annotation (code:comment · consumed:declared · fan-in:fan-out), computed by a0's `scripts/annotate.py`; the named `loc_comments=… imports_exports=… calls_definitions=…` line is a portable, per-file adaptation for standalone libraries, verified by the stdlib `ratios_check.py` (drift/misplacement failures, visible gaps). JSON/Markdown are out of scope. Load this when recording a module's composition ratios, when authoring or extending the ratio registry, or when wiring ratio verification into CI.
 ---
 
 # ratios — Module composition ratios on msdmd
@@ -35,7 +35,8 @@ every Python / TypeScript file, written and verified by its own
 For files without a shebang, the opening boundary is literal line 1. A directly
 executable script may reserve literal line 1 for a valid shebang; in that one
 case the opening RATIOS seal is literal line 2. The closing seal remains the
-last non-blank line.
+last non-blank line. For ordinary source without a shebang, this remains the
+first line and its last non-blank line.
 
 | pair | meaning | how computed |
 |---|---|---|

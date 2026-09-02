@@ -1,6 +1,6 @@
 ---
 name: msdmd
-description: Module Self-Declared Metadata in Markdown — the foundational convention where each module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
+description: Module Self-Declared Metadata in Markdown — the foundational convention where each module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when inspecting or collecting existing declarations from a local, unhosted, or extracted source tree; when authoring a new metadata-driven skill; when extending the block schema; or when building a parser/executor for a new application.
 ---
 
 # msdmd — Module Self-Declared Metadata in Markdown
@@ -306,9 +306,11 @@ Implementation rules every runner MUST follow:
 
 1. **Walk the source tree** under a configurable root, skipping
    conventional non-source paths (`__pycache__`, `node_modules`, `.git`, `.hg`,
-   `.svn`, `.jj`, build outputs, the runner's own test directory). A VCS or
-   forge MAY add adapter-specific exclusions; the core runner does not infer a
-   repository host from these directories.
+   `.svn`, `.jj`, build outputs, the runner's own test directory). The universal
+   walkers do not follow symlinked files or directories, so traversal remains
+   inside the supplied source tree and cannot recurse through symlink cycles. A
+   VCS or forge MAY add adapter-specific exclusions; the core runner does not
+   infer a repository host from these directories.
 2. **Detect comment marker by extension**, not by content sniffing.
    `.py / .rb / .ex / .sh → #`. `.ts / .js / .tsx / .jsx / .rs / .go /
    .java / .c / .cpp / .swift → //`. `.sql / .lua / .hs → --`.

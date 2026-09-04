@@ -1,6 +1,6 @@
 ---
 name: epac-selection-display
-description: Evidence-bound EPAC target selection and display for WebMCP handoffs and other human-facing surfaces. Load this when choosing an EPAC element, molecule, construction receipt, comparison result, or available visualization to present; when preparing a receipt-backed EPAC display packet; or when exposing the EPAC workflow as a selectable WebMCP skill. Do not load to select EPAC or a UCNS candidate as canon, invent missing geometry, or make unrelated WebMCP catalogue changes.
+description: Evidence-bound EPAC target selection and display for WebMCP handoffs and other human-facing surfaces. Load this when choosing an EPAC element, molecule, construction receipt, comparison result, or available visualization to present; when preparing a receipt-backed EPAC display packet; when exposing the EPAC workflow as a selectable WebMCP skill; or when a requested EPAC display would require missing or invented geometry so the request can be refused or downgraded to verified source-backed output. Do not load to select EPAC or a UCNS candidate as canon, or for unrelated WebMCP catalogue changes.
 ---
 
 # epac-selection-display — choose what to show without promoting what it means
@@ -22,11 +22,12 @@ The EPAC handle is despecified here. A source repository may use an expansion in
 one provisional research instance, but this skill does not freeze that expansion
 as EPAC's canonical identity.
 
-At the currently observed `The-Interdependency/stack/research/epac` boundary,
-EPAC is a provisional research scaffold with no independent authoritative source
-repository. Treat its code, receipts, standings, nonclaims, and `hmmm` as scoped
-research evidence, not organization canon. Resolve the current source again on
-every use rather than treating this observation as a permanent inventory.
+At source state `The-Interdependency/stack@5b24db9a7fe40df4b2791e1137ade5de01c78942`,
+`research/epac` is a provisional research scaffold with no independent authoritative
+source repository. Treat its code, receipts, standings, nonclaims, and `hmmm` as
+scoped research evidence, not organization canon. This identity records the source
+observed when this workflow was repaired; resolve the current source again on every
+use rather than treating it as a permanent inventory.
 
 ## Selection record
 
@@ -41,7 +42,7 @@ target_kind: element | molecule | receipt | comparison | population | hmmm
 target_id:
 occurrence_or_instance:
 constructor_or_reader:
-display_mode: summary | text | svg | receipt-json | hmmm
+display_mode: summary | text | svg | receipt-json | comparison | hmmm
 audience:
 destination: WebMCP handoff | file | response | other
 ```
@@ -90,7 +91,9 @@ the current stack scaffold, relevant surfaces may include:
 
 Do not assume a local, untracked, proposed, or previously observed visualizer is
 available in a commit-pinned source. If no verified renderer exists, emit the
-receipt-backed summary rather than inventing a visual projection.
+receipt-backed summary rather than inventing a visual projection. A request that
+would require invented geometry is therefore a load-to-refuse case for this skill,
+not a reason to bypass it.
 
 ### 4. Admit and construct the exact target
 
@@ -117,7 +120,7 @@ Use the smallest representation that meets the human request:
 - `svg` — a source-provided deterministic SVG plus equivalent text and accessible
   title/description;
 - `receipt-json` — canonical or source-declared receipt serialization; and
-- comparison — source readouts and terminal standings, visibly labeled as
+- `comparison` — source readouts and terminal standings, visibly labeled as
   post-construction evidence.
 
 A renderer may project only values already carried by the construction, receipt,
@@ -137,6 +140,8 @@ constructor standing and selection_effect
 source_id and receipt digest
 pinned carrier or upstream digest
 display mode and renderer identity
+audience
+destination
 replay/verification result
 structure/readout fields actually projected
 nonclaims
@@ -182,6 +187,8 @@ results, not EPAC research standings.
 - Source identity:
 - Target:
 - Display mode:
+- Audience:
+- Destination:
 - Display status: READY | BLOCKED | INVALID | hmmm
 
 ## Evidence packet
@@ -189,6 +196,8 @@ results, not EPAC research standings.
 - Receipt / upstream identities:
 - Replay / verification:
 - Standing and selection effect:
+- Audience:
+- Destination:
 
 ## Display
 - Human-readable result or artifact link:
@@ -229,6 +238,7 @@ A valid use demonstrates that:
 - receipt replay or the declared verifier closed successfully;
 - sealed comparison labels did not leak into construction;
 - the display added no geometry or empirical interpretation;
+- audience and destination survived into the evidence packet and output;
 - nonclaims, research standings, `selection_effect`, and `hmmm` stayed visible;
 - human-readable and agent-readable WebMCP catalogues exposed the same skill; and
 - the MCP registry/handoff stayed read-only and permission-neutral.

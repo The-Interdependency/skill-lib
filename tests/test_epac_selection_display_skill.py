@@ -9,9 +9,12 @@ from frontmatter import frontmatter_for
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "epac-selection-display" / "SKILL.md"
+SOURCE_FIXTURE = ROOT / "epac-selection-display" / "STACK_SOURCE_FIXTURE.json"
 ADAPTER = ROOT / "skills" / "epac-selection-display" / "SKILL.md"
 INDEX = ROOT / "skills.json"
 STACK_SOURCE_COMMIT = "5b24db9a7fe40df4b2791e1137ade5de01c78942"
+STACK_SOURCE_PATH = "research/epac/README.md"
+STACK_SOURCE_BLOB = "a1f1dd6a50252349797806b2dc59897f1fb3a991"
 
 
 class EpacSelectionDisplaySkillTest(unittest.TestCase):
@@ -47,6 +50,27 @@ class EpacSelectionDisplaySkillTest(unittest.TestCase):
         self.assertIn("no independent authoritative source repository", self.compact)
         self.assertIn("base commit plus content digests", self.compact)
         self.assertIn(STACK_SOURCE_COMMIT, self.text)
+
+    def test_provisional_source_pin_has_immutable_stack_fixture(self) -> None:
+        fixture = json.loads(SOURCE_FIXTURE.read_text(encoding="utf-8"))
+        self.assertEqual("the-interdependency.epac-selection-display-source-fixture", fixture["schema"])
+        self.assertEqual("1.0.0", fixture["version"])
+        self.assertEqual("The-Interdependency/stack", fixture["source"]["repository"])
+        self.assertEqual(STACK_SOURCE_COMMIT, fixture["source"]["commit"])
+        self.assertEqual(STACK_SOURCE_PATH, fixture["source"]["path"])
+        self.assertEqual(STACK_SOURCE_BLOB, fixture["source"]["git_blob_sha"])
+        self.assertIn(fixture["source"]["commit"], self.text)
+        self.assertEqual("provisional stack-local EPAC research scaffold", fixture["standing"])
+        for field in (
+            "authority_transfer",
+            "canon_status_transfer",
+            "proof_status_transfer",
+            "measurement_status_transfer",
+            "empirical_status_transfer",
+        ):
+            self.assertFalse(fixture["boundaries"][field])
+        self.assertTrue(fixture["usage"])
+        self.assertTrue(fixture["hmmm"])
 
     def test_target_receipt_and_representation_are_verified(self) -> None:
         for phrase in (

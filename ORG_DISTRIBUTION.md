@@ -39,6 +39,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `meta/` — consultation router for current METAPAT authority; no frozen doctrine copy
 * `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
 * `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
+* `epac-selection-display/` — exact provisional EPAC target and representation selection with receipt-backed display, status preservation, and a read-only WebMCP handoff boundary
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
 * `project-incubation-graduation/` — incubation, qualification, extraction, release, reconsumption, and implementation-authority graduation doctrine
@@ -186,6 +187,18 @@ Before selecting among UCNS options or declaring a scoped winner, agents should 
 Freeze scope, candidates, hard gates, evidence, policies, authority, and
 ratification before outcome comparison. Do not let scores compensate for failed gates
 or transfer a scoped result into universal UCNS canon.
+
+Before selecting an EPAC artifact and representation for a human-facing or
+WebMCP display, agents should read:
+
+```text
+.agents/skills/epac-selection-display/SKILL.md
+```
+
+Pin the provisional EPAC source, exact target, receipt, and available renderer;
+preserve research standings, nonclaims, sealed-comparison boundaries, and `hmmm`;
+and keep the WebMCP server a read-only registry/handoff rather than an EPAC
+executor.
 
 Before choosing between the smallest decisive action and a maximal coherent program,
 selecting the highest-leverage next step under constrained time, attention, money,

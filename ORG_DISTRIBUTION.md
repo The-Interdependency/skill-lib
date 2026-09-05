@@ -161,7 +161,9 @@ Before creating or maintaining a root `llms.txt`, agents should read:
 Root LLM instructions should be declared in source `LLMS` blocks and generated
 with the llms-build runner, not hand-maintained as separate doctrine.
 
-Before translating raw, recursive, context-heavy, fragmentary, coined, or private-language thought for another human audience or public surface, agents should read:
+Before translating raw, recursive, context-heavy, fragmentary, coined, or
+private-language thought for another human audience or public surface, agents
+should read:
 
 ```text
 .agents/skills/thought-lens/SKILL.md
@@ -238,7 +240,8 @@ repository claims; classify defects separately from environment, external servic
 policy, and `hmmm`; repair only the owning layer under the user's authorization; and
 verify merge, release, and deployment as distinct terminal states when applicable.
 
-Before writing, reviewing, or troubleshooting repeatable SSH automation or a large terminal paste that contains SSH, agents should read:
+Before writing, reviewing, or troubleshooting repeatable SSH automation or a
+large terminal paste that contains SSH, agents should read:
 
 ```text
 .agents/skills/ssh-automation/SKILL.md

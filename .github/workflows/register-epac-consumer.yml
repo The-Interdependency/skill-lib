@@ -1,0 +1,67 @@
+name: register EPAC consumer
+
+on:
+  push:
+    branches:
+      - chore/register-epac-consumer
+
+permissions:
+  contents: write
+
+jobs:
+  register:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Align active consumer registry and drift matrix
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          org = Path("ORG_DISTRIBUTION.md")
+          text = org.read_text(encoding="utf-8")
+          marker = "* `The-Interdependency/pubskill-lib`\n"
+          addition = marker + "* `The-Interdependency/epac`\n"
+          if "* `The-Interdependency/epac`\n" not in text:
+              if marker not in text:
+                  raise SystemExit("ORG_DISTRIBUTION consumer marker not found")
+              text = text.replace(marker, addition, 1)
+          org.write_text(text, encoding="utf-8")
+
+          workflow = Path(".github/workflows/consumer-drift.yml")
+          text = workflow.read_text(encoding="utf-8")
+          anchor = "          - ptcna\n"
+          if "          - pubskill-lib\n" not in text or "          - epac\n" not in text:
+              if anchor not in text:
+                  raise SystemExit("consumer-drift matrix anchor not found")
+              replacement = anchor
+              if "          - pubskill-lib\n" not in text:
+                  replacement += "          - pubskill-lib\n"
+              if "          - epac\n" not in text:
+                  replacement += "          - epac\n"
+              text = text.replace(anchor, replacement, 1)
+          workflow.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Prove declared consumers actually vendor canonical skills
+        run: |
+          set -euo pipefail
+          git clone --quiet https://github.com/The-Interdependency/epac.git /tmp/epac
+          git clone --quiet https://github.com/The-Interdependency/pubskill-lib.git /tmp/pubskill-lib
+          python tools/check_consumer_drift.py /tmp/epac --require-vendored
+          python tools/check_consumer_drift.py /tmp/pubskill-lib --require-vendored
+
+      - name: Seal registration
+        run: |
+          set -euo pipefail
+          rm .github/workflows/register-epac-consumer.yml
+          git config user.name "skill-lib-consumer-agent"
+          git config user.email "skill-lib-consumer-agent@interdependentway.org"
+          git add ORG_DISTRIBUTION.md .github/workflows/consumer-drift.yml .github/workflows/register-epac-consumer.yml
+          git commit -m "chore: register EPAC consumer and repair drift matrix"
+          git push origin HEAD:chore/register-epac-consumer

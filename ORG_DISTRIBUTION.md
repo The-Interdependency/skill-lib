@@ -36,6 +36,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `llms-build/` — root llms.txt generation from LLMS blocks
 * `typed-meta-frontend/` — TypeScript self-building frontend generation from backend module metadata
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
+* `thought-lens/` — raw-thought to audience-legible translation with claim-kernel fidelity and back-translation checks
 * `meta/` — consultation router for current METAPAT authority; no frozen doctrine copy
 * `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
 * `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
@@ -157,6 +158,19 @@ Before creating or maintaining a root `llms.txt`, agents should read:
 
 Root LLM instructions should be declared in source `LLMS` blocks and generated
 with the llms-build runner, not hand-maintained as separate doctrine.
+
+Before translating raw, recursive, context-heavy, fragmentary, coined, or
+private-language thought for another human audience or public surface, agents
+should read:
+
+```text
+.agents/skills/thought-lens/SKILL.md
+```
+
+Recover and freeze the claim kernel before changing vocabulary. Reduce the
+context required from the reader without strengthening, flattening, or silently
+completing the thought; use `hmmm` where a bridge remains unresolved. Use
+`plain-lens` instead when the source is already a stable dense document.
 
 Before promoting a word or phrase into canon, a theorem, schema, ontology, encoding,
 or other semantic control surface, agents should read:

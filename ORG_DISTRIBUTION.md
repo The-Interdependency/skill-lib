@@ -77,6 +77,7 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0-betatest`
 * `The-Interdependency/metapat`
 * `The-Interdependency/ptcna`
+* `The-Interdependency/pubskill-lib`
 
 **Targets not in the drift matrix** (do not vendor a top-level subset yet, so
 `--require-vendored` would fail them):

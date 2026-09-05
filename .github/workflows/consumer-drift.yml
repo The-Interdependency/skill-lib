@@ -40,6 +40,8 @@ jobs:
           - aimmh
           - pcea
           - ptcna
+          - pubskill-lib
+          - epac
     steps:
       - name: Check out canonical skill-lib
         uses: actions/checkout@v7.0.1

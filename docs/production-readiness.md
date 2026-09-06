@@ -20,14 +20,18 @@ repo can answer four questions without guessing:
 - `ratios/ratios_check.py` provides the canonical ratios gate.
 - `tools/check_skill_lib_drift.py` and `tools/check_skill_compliance.py` provide
   editorial checks.
+- `.github/workflows/ci.yml` runs unit, strict editorial/compliance, adapter,
+  RATIOS, llms-build, and RepoLOTO gates; `hygiene.yml` separately rejects
+  tracked bytecode.
 
 ## Remaining work that should not be hidden
 
-1. **CI coverage:** `hygiene.yml` checks bytecode only. The editorial tests and
-   helper tools still need a CI workflow.
-2. **Collection automation:** `skill-lib_msdmd.ts` is seeded as a root collection
-   point; a local run of `python -m msdmd.collect ...` should replace or refresh
-   it.
+1. **TypeScript runtime parity:** Python CI regression-checks the Python and
+   TypeScript comment-marker registries, but does not execute the TypeScript
+   parser under a declared TypeScript toolchain.
+2. **Collection automation:** `skill-lib_msdmd.ts` remains an intentionally
+   policy-heavy seeded root collection point; the exact generated replacement
+   and freshness receipt are not yet selected.
 3. **Runner config:** artifact-aware skip lists are documented, but
    `msdmd/collect.py` does not yet accept a config file.
 4. **Target propagation:** consuming repos still need collection points and
@@ -41,8 +45,8 @@ Before tagging a release or calling a skill change propagated:
 
 ```bash
 python -m unittest discover -s tests
-python tools/check_skill_lib_drift.py
-python tools/check_skill_compliance.py
+python tools/check_skill_lib_drift.py --warnings-fail
+python tools/check_skill_compliance.py --warnings-fail
 python ratios/ratios_check.py --strict
 python -m llms.build --root . --out llms.txt --check
 ```
@@ -51,4 +55,5 @@ python -m llms.build --root . --out llms.txt --check
 
 This document records the boundary between doctrine-complete and automation-
 complete. The doctrine is usable now. Full production automation still requires
-CI wiring, collector config support, and target-repo propagation PRs.
+TypeScript runtime parity, collector config/collection freshness, and target-
+repo propagation PRs.

@@ -39,15 +39,16 @@ CLAUDE.md expectations:
 3. **Collection point** — a repo-level `<reponame>_msdmd.ts` aggregation surface
    (msdmd spec says SHOULD).
 4. **RATIOS bookends** — `ratios` is the **one declaration that is NOT a fenced
-   block**: it is a single `ratios:` comment line carried on the file's **first
-   and last non-blank lines** (`<marker> ratios: loc_comments=N:M
+   block**: it is a single `ratios:` comment line carried on the file's opening
+   and closing source boundaries (a valid line-1 shebang moves opening RATIOS
+   to line 2; closing remains the last non-blank line): `<marker> ratios: loc_comments=N:M
    imports_exports=N:M calls_definitions=N:M`). Measured here with
-   `ratios_placement`, which checks first/last placement — not a block parse.
+   `ratios_placement`, which checks opening/closing placement — not a block parse.
    **Every executable source file needs this bookend** (per the `ratios` skill:
    all executable `.py/.ts/.js/…`, but **not** `.json` or `.md`). A file with no
    `ratios:` line — or with it on only one end — is a gap, not exempt. So the
    "RATIOS (both ends)" column should be read against each repo's executable
-   file count, where the target is 100%. (a0's `N:M C:D I:O` first/last-line
+   file count, where the target is 100%. (a0's `N:M C:D I:O` boundary-line
    seal is the canonical origin form and is counted separately in its row.)
 5. **Parser fidelity** — stdlib-only, unforked parsers (verbatim vendor copies).
 

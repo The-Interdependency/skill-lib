@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import re
 import tempfile
 import unittest
 from pathlib import Path
 
 from msdmd.parsers.universal import (
+    COMMENT_MARKERS,
     marker_for,
     parse_file,
     parse_ratios,
@@ -12,6 +14,8 @@ from msdmd.parsers.universal import (
     ratios_placement,
     walk_tree,
 )
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class UniversalParserTest(unittest.TestCase):
@@ -80,9 +84,27 @@ class UniversalParserTest(unittest.TestCase):
 
     def test_marker_for_known_and_unknown_extensions(self) -> None:
         self.assertEqual("#", marker_for(Path("module.py")))
+        self.assertEqual("#", marker_for(Path("module.pl")))
         self.assertEqual("//", marker_for(Path("module.ts")))
+        self.assertEqual("//", marker_for(Path("module.c+")))
+        self.assertEqual("//", marker_for(Path("module.c++")))
+        self.assertEqual("//", marker_for(Path("module.java")))
         self.assertEqual("--", marker_for(Path("module.sql")))
+        self.assertEqual("%", marker_for(Path("module.erl")))
+        self.assertEqual(";", marker_for(Path("module.clj")))
+        self.assertEqual("!", marker_for(Path("module.f90")))
+        self.assertEqual("'", marker_for(Path("module.vb")))
+        self.assertEqual("*>", marker_for(Path("module.cob")))
+        # .m is ambiguous between Objective-C and MATLAB/Octave. Extension-only
+        # detection must not guess; callers can use parse_text with a marker.
+        self.assertIsNone(marker_for(Path("module.m")))
         self.assertIsNone(marker_for(Path("README.md")))
+
+    def test_python_and_typescript_comment_marker_registries_match(self) -> None:
+        source = (ROOT / "msdmd" / "parsers" / "universal.ts").read_text(encoding="utf-8")
+        body = source.split("export const COMMENT_MARKERS", 1)[1].split("};", 1)[0]
+        typescript_markers = dict(re.findall(r'"(\.[^"]+)":\s*"([^"]+)"', body))
+        self.assertEqual(COMMENT_MARKERS, typescript_markers)
 
     def test_parse_file_uses_extension_marker(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -99,6 +121,36 @@ class UniversalParserTest(unittest.TestCase):
                 [{"id": "module_owner", "owner": "platform"}],
                 parse_file(path, "OWNERS"),
             )
+
+    def test_parse_file_supports_additional_language_comment_families(self) -> None:
+        examples = {
+            "module.pl": "#",
+            "module.c+": "//",
+            "module.c++": "//",
+            "module.cpp": "//",
+            "module.java": "//",
+            "module.erl": "%",
+            "module.clj": ";",
+            "module.f90": "!",
+            "module.vb": "'",
+            "module.cob": "*>",
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for filename, marker in examples.items():
+                with self.subTest(filename=filename):
+                    path = root / filename
+                    path.write_text(
+                        f"{marker} === CAPABILITIES ===\n"
+                        f"{marker} id: portable_metadata\n"
+                        f"{marker}   summary: parses beside its owner\n"
+                        f"{marker} === END CAPABILITIES ===\n",
+                        encoding="utf-8",
+                    )
+                    self.assertEqual(
+                        [{"id": "portable_metadata", "summary": "parses beside its owner"}],
+                        parse_file(path, "CAPABILITIES"),
+                    )
 
     def test_walk_tree_reports_annotated_and_gaps(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -137,6 +189,45 @@ class UniversalParserTest(unittest.TestCase):
         self.assertEqual(6, len(entries))
         self.assertEqual({"id": "loc_comments", "value": "120:40"}, entries[0])
         self.assertEqual((True, True), ratios_placement(text, "#"))
+
+    def test_parse_ratios_allows_valid_line_one_shebang(self) -> None:
+        text = (
+            "#!/usr/bin/env perl\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+            "print qq(ok);\n"
+            "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+        )
+        self.assertEqual((True, True), ratios_placement(text, "#"))
+
+    def test_parse_ratios_allows_node_shebang_before_slash_marker(self) -> None:
+        text = (
+            "#!/usr/bin/env node\n"
+            "// ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+            "console.log('ok');\n"
+            "// ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0\n"
+        )
+        self.assertEqual((True, True), ratios_placement(text, "//"))
+
+    def test_parse_ratios_rejects_invalid_or_gapped_shebang_preamble(self) -> None:
+        ratio = "# ratios: loc_comments=1:1 imports_exports=0:0 calls_definitions=0:0"
+        self.assertEqual(
+            (False, True),
+            ratios_placement(f"#!\n{ratio}\nprint('ok')\n{ratio}\n", "#"),
+        )
+        self.assertEqual(
+            (False, True),
+            ratios_placement(
+                f"#!/usr/bin/env python3\n\n{ratio}\nprint('ok')\n{ratio}\n",
+                "#",
+            ),
+        )
+        self.assertEqual(
+            (False, True),
+            ratios_placement(
+                f"{ratio}\n#!/usr/bin/env python3\nprint('ok')\n{ratio}\n",
+                "#",
+            ),
+        )
 
     def test_parse_ratios_detects_misplacement(self) -> None:
         text = "x = 1\n# ratios: loc_comments=1:0 imports_exports=0:0 calls_definitions=0:0\ny = 2\n"

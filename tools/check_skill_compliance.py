@@ -91,7 +91,7 @@ def check_skill(path: Path, indexed: dict[str, dict]) -> list[Finding]:
         if "required" not in text.lower() and "Required" not in text:
             findings.append(Finding("warning", name, "field_requirements", "metadata-block skill should identify required vs optional fields or explain why not applicable"))
     elif kind == "procedural":
-        if not has_heading(text, "workflow", "canonization workflow", "compression procedure", "instancing sequence (dependency order — follow it top to bottom)", "instantiation sequence (dependency order — follow it top to bottom)", "compliance workflow for existing skills"):
+        if not has_heading(text, "workflow", "make-fresh workflow", "canonization workflow", "compression procedure", "instancing sequence (dependency order — follow it top to bottom)", "instantiation sequence (dependency order — follow it top to bottom)", "compliance workflow for existing skills"):
             findings.append(Finding("warning", name, "workflow_shape", "procedural skill should expose an ordered workflow, sequence, or procedure heading"))
 
     if "Anti-pattern" not in text and "anti-pattern" not in text:

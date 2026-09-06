@@ -1,4 +1,4 @@
-// ratios: loc_comments=196:0 imports_exports=1:0 calls_definitions=1:0
+// ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 import { defineMsdmdCollection } from "./msdmd/collection";
 
 // skill-lib is the canonical source of the msdmd family, not a normal consumer.
@@ -112,7 +112,7 @@ export default defineMsdmdCollection({
       block: "CONTRACTS",
       id: "skill_index_drift_gate",
       fields: {
-        call: "python tools/check_skill_lib_drift.py",
+        call: "python tools/check_skill_lib_drift.py --warnings-fail",
         summary: "Checks README, AGENTS, CLAUDE, ORG_DISTRIBUTION, skills.json, and generated llms.txt drift",
       },
     },
@@ -121,7 +121,7 @@ export default defineMsdmdCollection({
       block: "CONTRACTS",
       id: "skill_spec_compliance_gate",
       fields: {
-        call: "python tools/check_skill_compliance.py",
+        call: "python tools/check_skill_compliance.py --warnings-fail",
         summary: "Checks SKILL.md frontmatter, triggers, hmmm boundaries, and index registration",
       },
     },
@@ -197,4 +197,4 @@ export default defineMsdmdCollection({
     },
   ],
 });
-// ratios: loc_comments=196:0 imports_exports=1:0 calls_definitions=1:0
+// ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm

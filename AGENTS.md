@@ -78,8 +78,8 @@ the rest. Treat it as the public contract.
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
-   `a0p-instancing`, `plain-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `project-incubation-graduation`, `distributed-publication`, `loop-eng`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
+   `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
+   `interdependent-work-graph`, `project-incubation-graduation`, `distributed-publication`, `loop-eng`, `fresh-making`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -140,6 +140,9 @@ propagate from here.
   multi-lens companion view, a progressive-disclosure reader, or a dynamic
   page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
   paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
+- If you are translating raw, recursive, fragmentary, coined, or private-language
+  thought for strangers or a specific audience, load `thought-lens/SKILL.md`;
+  freeze the claim kernel before changing vocabulary and back-check the result.
 - If you are constructing, reviewing, replaying, or continuing UCNS gonols,
   including lexical floors, morphology, definitions, punctuation functions,
   closure, atomic promotion, or recursive relations, load `gonol-build/SKILL.md`.
@@ -159,6 +162,10 @@ propagate from here.
 - If a new component is born inside a stack, integration, laboratory, or incubator repository and may become an independent repository/package, load `project-incubation-graduation/SKILL.md`. Qualify it before extraction, preserve provenance, create a new implementation-authority boundary explicitly, release it through its declared distribution surface, and require the former forge to reconsume the released artifact before declaring graduation. Load `interdependent-work-graph` once the transition crosses repositories.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
+- If authoritative inputs changed and stored collections, documentation,
+  projections, package indexes, or other derived artifacts may be stale, load
+  `fresh-making/SKILL.md`; bind exact inputs and generator/verifier identities,
+  rebuild only the affected closure, and accept freshness only after verification.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
 - If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
 - If you are giving an MCP-capable agent operational contact with a private VM,

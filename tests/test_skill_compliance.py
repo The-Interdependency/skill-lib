@@ -6,9 +6,8 @@ from tools.check_skill_compliance import collect_findings
 
 
 class SkillComplianceCheckerTest(unittest.TestCase):
-    def test_no_baseline_skill_compliance_errors(self) -> None:
-        errors = [finding for finding in collect_findings() if finding.level == "error"]
-        self.assertEqual([], errors)
+    def test_no_skill_compliance_findings(self) -> None:
+        self.assertEqual([], collect_findings())
 
 
 if __name__ == "__main__":

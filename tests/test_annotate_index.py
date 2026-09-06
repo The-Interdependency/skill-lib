@@ -89,6 +89,56 @@ class BuildIndexTest(unittest.TestCase):
                 self.assertTrue(A._is_seal(lines[0], f.suffix))
                 self.assertTrue(A._is_seal(lines[-1], f.suffix))
 
+    def test_write_and_check_preserve_python_and_node_shebangs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            td = Path(tmp)
+            scripts = {
+                td / "tool.py": "#!/usr/bin/env python3",
+                td / "tool.ts": "#!/usr/bin/env node",
+            }
+            for path, shebang in scripts.items():
+                path.write_text(shebang + "\nprint('ok')\n", encoding="utf-8")
+
+            self.assertEqual(A.main(["--root", str(td), "--write"]), 0)
+            self.assertEqual(A.main(["--root", str(td), "--check"]), 0)
+            for path, shebang in scripts.items():
+                with self.subTest(path=path):
+                    lines = path.read_text(encoding="utf-8").splitlines()
+                    self.assertEqual(shebang, lines[0])
+                    self.assertTrue(A._is_seal(lines[1], path.suffix))
+                    self.assertEqual(lines[1], lines[-1])
+
+    def test_write_repairs_a_seal_that_displaced_the_shebang(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            td = Path(tmp)
+            script = td / "tool.py"
+            shebang = "#!/usr/bin/env python3"
+            script.write_text(shebang + "\nprint('ok')\n", encoding="utf-8")
+            self.assertEqual(A.main(["--root", str(td), "--write"]), 0)
+            lines = script.read_text(encoding="utf-8").splitlines()
+            script.write_text(
+                "\n".join([lines[1], lines[0], *lines[2:]]) + "\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(A.main(["--root", str(td), "--check"]), 1)
+
+            self.assertEqual(A.main(["--root", str(td), "--write"]), 0)
+            lines = script.read_text(encoding="utf-8").splitlines()
+            self.assertEqual(shebang, lines[0])
+            self.assertTrue(A._is_seal(lines[1], ".py"))
+            self.assertEqual(lines[1], lines[-1])
+
+    def test_check_rejects_a_stale_closing_seal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            td = Path(tmp)
+            script = td / "tool.py"
+            script.write_text("print('ok')\n", encoding="utf-8")
+            self.assertEqual(A.main(["--root", str(td), "--write"]), 0)
+            lines = script.read_text(encoding="utf-8").splitlines()
+            lines[-1] = "# 9:9 9:9 9:9"
+            script.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            self.assertEqual(A.main(["--root", str(td), "--check"]), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

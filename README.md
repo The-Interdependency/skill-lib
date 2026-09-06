@@ -3,6 +3,9 @@
 A portable library of agent skills built on **msdmd** — Module Self-
 Declared Metadata Markdown — a language-agnostic convention where each
 module declares its own structured metadata in a fenced comment block.
+The reference parsers recognize line-comment syntax across Python, Perl,
+C/C++, Java, JavaScript/TypeScript, Rust, Go, shell, SQL, Erlang, Lisp-family,
+Fortran, Visual Basic, COBOL, and other explicitly registered languages.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a
@@ -29,7 +32,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract evidence. Source modules declare behavior obligations in `# === CONTRACTS ===`; test modules declare executable witnesses in `# === CHECKS ===`; audit reconciles the witness list against the obligation list. |
 | [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
 | [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Applies msdmd → runtime boundary declarations. Modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
-| [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each executable/source module records `loc_comments`, `imports_exports`, and `calls_definitions` in a single `ratios:` line on the file's first and last line (not a fenced block; JSON/Markdown are out of scope); the reference `ratios_check.py` recomputes them and checks for drift and misplacement. |
+| [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each computer-covered source module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block; a valid line-1 shebang may precede opening RATIOS; JSON/Markdown are out of scope); the reference `ratios_check.py` recomputes Python values and checks for drift and misplacement. |
 | [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
 | [`llms-build/`](llms-build/SKILL.md) | Applies msdmd → canonical root `llms.txt`. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them, writes `llms.txt`, and reports drift. |
 | [`typed-meta-frontend/`](typed-meta-frontend/SKILL.md) | Applies msdmd-aligned backend metadata → TypeScript self-building frontend. The UI discovers every module, displays its living spec, exposes every declared editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
@@ -135,8 +138,8 @@ Pure-stdlib helper scripts live in [`tools/`](tools/README.md). The small
 `llms/` package exists only to provide the `python -m llms.build` command.
 
 ```bash
-python tools/check_skill_lib_drift.py
-python tools/check_skill_compliance.py
+python tools/check_skill_lib_drift.py --warnings-fail
+python tools/check_skill_compliance.py --warnings-fail
 python tools/char_compress_check.py
 python tools/propagate_skills.py ../target-repo          # dry-run
 python tools/propagate_skills.py ../target-repo --apply  # copy local files

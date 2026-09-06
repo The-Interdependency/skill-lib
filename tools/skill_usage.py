@@ -1,5 +1,5 @@
-# ratios: loc_comments=148:11 imports_exports=8:12 calls_definitions=56:12
 #!/usr/bin/env python3
+# ratios: loc_comments=148:11 imports_exports=8:12 calls_definitions=56:12
 """Record skill-lib exposure and derive evidence-qualified maturity.
 
 Usage guidance:

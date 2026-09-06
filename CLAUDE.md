@@ -42,7 +42,7 @@ llms/                  # python -m llms.build reference runner
 | `test-build/` | metadata-block | `msdmd` | Self-declaring contract evidence. Source modules declare behavior obligations in `# === CONTRACTS ===`; test modules declare executable witnesses in `# === CHECKS ===`; audit reconciles the witness list against the obligation list. |
 | `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
 | `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
-| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios for executable source files. Each module records `loc_comments`, `imports_exports`, and `calls_definitions` in a single `ratios:` line on the file's first and last line (not a fenced block); this is not for `json` or `.md` files. The reference `ratios_check.py` recomputes values, fails on drift or misplacement, and reports visible gaps. |
+| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios for executable source files. Each computer-covered module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block); a valid line-1 shebang may precede opening RATIOS. The reference `ratios_check.py` recomputes Python values, fails on drift or misplacement, and reports visible gaps without applying Python semantics to other languages. |
 | `manifest/` | metadata-block | `msdmd` | Living-spec generator. Derives observable repo facts from `pyproject.toml` + the file tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
 | `llms-build/` | metadata-block | `msdmd` | Root LLM instruction generation. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them into canonical root `llms.txt` and reports drift. |
 | `typed-meta-frontend/` | metadata-block | `msdmd`, `meta-module-build`, `doc-build` | TypeScript self-building frontend generation from backend-owned module metadata. Modules declare `# === FRONTEND_META ===` blocks or equivalent backend metadata; the UI renders every module living spec, exposes every editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
@@ -103,7 +103,7 @@ Two kinds:
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `gonol-build/`, `ucns-option-selection/`, `epac-selection-display/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `project-incubation-graduation/`, `loop-eng/`, `action-calibration/`, `repo-audit-repair/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
+  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `thought-lens/`, `gonol-build/`, `ucns-option-selection/`, `epac-selection-display/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `project-incubation-graduation/`, `loop-eng/`, `fresh-making/`, `action-calibration/`, `repo-audit-repair/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
 
 ## msdmd block syntax
 
@@ -115,8 +115,10 @@ Two kinds:
 # === END <BLOCK_NAME> ===
 ```
 
-- The comment marker (`#`, `//`, `--`) is whatever is idiomatic for the file's language; the
-  fence text and field structure are identical across languages.
+- The comment marker is whatever is idiomatic for the file's language; the
+  reference registry covers `#`, `//`, `--`, `%`, `;`, `!`, `'`, and `*>`
+  line-comment families. Fence text and field structure are identical across
+  languages; ambiguous extensions are not guessed.
 - `BLOCK_NAME` is uppercase snake case. Every entry begins with `id:` (unique within the block,
   stable across refactors). Field lines are indented one level beneath the id.
 - A file may contain multiple blocks of the same or different types; parsers concatenate entries.
@@ -126,8 +128,8 @@ Two kinds:
 
 | File | Public API | Notes |
 |---|---|---|
-| `universal.py` | `parse_text(text, block_name, marker="#")`, `parse_file(path, block_name)`, `walk_tree(root, block_name, *, skip=None, extensions=None)`, `marker_for(path)` | Pure Python stdlib. `walk_tree` returns `(annotated, untested)` so coverage gaps stay observable. |
-| `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart. |
+| `universal.py` | `parse_text(text, block_name, marker="#")`, `parse_file(path, block_name)`, `walk_tree(root, block_name, *, skip=None, extensions=None)`, `marker_for(path)`, `COMMENT_MARKERS` | Pure Python stdlib. `walk_tree` returns `(annotated, untested)` so coverage gaps stay observable. |
+| `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `COMMENT_MARKERS`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart; its extension registry is regression-checked against Python. |
 | `__init__.py` | — | Package marker / docstring. |
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
@@ -187,8 +189,8 @@ blocks first; do not hand-edit `llms.txt` as independent doctrine.
 
 ```bash
 python -m unittest discover -s tests
-python tools/check_skill_lib_drift.py
-python tools/check_skill_compliance.py
+python tools/check_skill_lib_drift.py --warnings-fail
+python tools/check_skill_compliance.py --warnings-fail
 python ratios/ratios_check.py --strict
 python -m llms.build --root . --out llms.txt --check
 python tests/test_repo_loto.py --audit
@@ -212,7 +214,9 @@ There is a small stdlib Python editorial test suite. There is still no `package.
   behavior and library integration, not every consuming-runner contract.
 - `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt`.
 - `check_skill_compliance.py` checks baseline `skill-build` invariants for each `SKILL.md`.
-- `ratios_check.py --strict` verifies first/last ratios seals for covered executable source files.
+- `ratios_check.py --strict` verifies opening/closing ratios seals for
+  Python files, including the shebang-safe opening exception; other
+  parser-supported languages remain visible outside the Python computer scope.
 - `tests/test_repo_loto.py --audit` reconciles RepoLOTO source `CONTRACTS` against test `CHECKS`; `tests/test_repo_loto.py` executes those checks.
 - `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
 - `propagate_skills.py` copies canonical skill directories into a checked-out target repo, and carries any shared `doctrine/<file>` docs the propagated skills link to into `.agents/skills/doctrine/`; it does not commit, push, open pull requests, or contact GitHub.

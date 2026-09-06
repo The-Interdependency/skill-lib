@@ -1,5 +1,5 @@
-# ratios: loc_comments=108:10 imports_exports=5:7 calls_definitions=54:7
 #!/usr/bin/env python3
+# ratios: loc_comments=108:10 imports_exports=5:7 calls_definitions=54:7
 """Build thin Codex plugin adapters for every canonical skill-lib skill.
 
 Usage guidance:

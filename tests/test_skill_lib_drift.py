@@ -6,6 +6,7 @@ from tempfile import TemporaryDirectory
 
 from tools.build_codex_plugin_skills import canonical_frontmatter
 from tools.check_skill_lib_drift import (
+    check,
     duplicate_entry_findings,
     duplicate_names,
     names_in_org_list,
@@ -14,6 +15,9 @@ from tools.check_skill_lib_drift import (
 
 
 class SkillLibDriftCheckerTest(unittest.TestCase):
+    def test_canonical_tree_has_no_editorial_drift_findings(self) -> None:
+        self.assertEqual([], check())
+
     def test_canonical_frontmatter_supports_folded_trigger_descriptions(self) -> None:
         with TemporaryDirectory() as tmp:
             path = Path(tmp) / "SKILL.md"

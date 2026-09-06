@@ -19,9 +19,9 @@ jobs:
       - name: Unit tests
         run: python -m unittest discover -s tests
       - name: Skill library drift
-        run: python tools/check_skill_lib_drift.py
+        run: python tools/check_skill_lib_drift.py --warnings-fail
       - name: Skill compliance
-        run: python tools/check_skill_compliance.py
+        run: python tools/check_skill_compliance.py --warnings-fail
       - name: Codex plugin adapter drift
         run: python tools/build_codex_plugin_skills.py --check
       - name: Ratios strict gate

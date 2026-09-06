@@ -9,9 +9,9 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS_JSON = ROOT / "skills.json"
 RATIO_BOOKEND_RE = re.compile(
     r"^(?P<marker>#|//|--) ratios: "
-    r"loc_comments=(?P<loc>\d+:\d+) "
-    r"imports_exports=(?P<imp>\d+:\d+) "
-    r"calls_definitions=(?P<calls>\d+:\d+)$"
+    r"loc_comments=(?P<loc>\d+:\d+|hmmm) "
+    r"imports_exports=(?P<imp>\d+:\d+|hmmm) "
+    r"calls_definitions=(?P<calls>\d+:\d+|hmmm)$"
 )
 
 
@@ -76,7 +76,9 @@ class SkillLibraryTest(unittest.TestCase):
             match = RATIO_BOOKEND_RE.fullmatch(first)
             self.assertIsNotNone(match, f"{path}: {first!r}")
             for group in ("loc", "imp", "calls"):
-                self.assertRegex(match.group(group), r"^\d+:\d+$")
+                value = match.group(group)
+                if value != "hmmm":
+                    self.assertRegex(value, r"^\d+:\d+$")
 
             interior_bookends = [
                 line for line in lines[1:-1] if RATIO_BOOKEND_RE.fullmatch(line)

@@ -173,7 +173,9 @@ class SkillSpecCoverageTest(unittest.TestCase):
             [
                 "ratios: loc_comments=",
                 "not a fenced block",
-                "first line and its last non-blank line",
+                "opening seal immediately on literal line 2",
+                "last non-blank line",
+                "non-empty `#!` interpreter directive",
                 "loc_comments",
                 "imports_exports",
                 "calls_definitions",

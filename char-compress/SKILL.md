@@ -1,18 +1,15 @@
 ---
 name: char-compress
-description: Character-based context compression for agent handoff and skill writing, derived from the mathematics of the Unit Circle Number System. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. This is a procedural skill-level projection of UCNS compression mathematics, not a UCNS-A theorem/status transfer and not an edcmbone metric implementation.
+description: Character-based context compression for agent handoff and skill writing, owned as a skill-lib procedure rather than current UCNS mathematics. Use this when compressing a long thread, document, repo audit, canon handoff, or agent working-memory state; when a context window is filling and operative facts must survive; when writing a SKILL.md that should be flesh-dense and bone-sparse; or when checking whether a compression deleted negation, order, quantifier, operator, named object, value, decision, or unresolved hmmm. Historical bone/flesh and text-stack terminology is local compression notation, not a UCNS theorem/status transfer, EDCM constructor, or edcmbone metric implementation.
 ---
 
-# char-compress — UCNS-derived bone/flesh compression for agent context
+# char-compress — bone/flesh compression for agent context
 
-`char-compress` is a procedural skill for applying the compression side of the
-Unit Circle Number System to agent context. The mathematics of the Unit Circle
-Number System comprises the compression algorithm: preserve the irreducible
-content, suppress the regenerable recurrence, and reconstruct only through a
-shared grammar/domain.
-
-This skill is the agent-facing projection of that mathematics. It is not the
-full UCNS compression engine.
+`char-compress` is a skill-lib-owned procedure: preserve irreducible content,
+suppress only safely regenerable recurrence, and reconstruct through an
+explicit shared grammar/domain. Its historical bone/flesh and text-stack
+vocabulary is retained as local compression notation, not asserted as current
+UCNS mathematics. It is not an implemented UCNS compression engine.
 
 It separates text into:
 
@@ -45,22 +42,20 @@ this repo remains the canonical source.
 
 ### Relation to `ucns`
 
-`ucns` owns the Unit Circle Number System. Its mathematics is the source of the
-compression algorithm: inventory, recurrence, carrier position, suppression,
-reconstruction, and proof/status boundaries all belong to the UCNS side of the
-system.
+`ucns` owns current geometry, not lexical classes or this compression procedure.
+EDCM owns text-domain gonol construction. Neither repository's authority is
+acquired by calling a text inventory a carrier or a separator a twist.
 
-This skill does state that `char-compress` is UCNS-derived. It does not state
-that the current skill file or fixture runner is a full implementation of the
-UCNS compression engine.
+The vocabulary below records this skill's historical model only. An exact
+historical UCNS source establishing that model is unresolved (`hmmm`); no current
+UCNS mathematical derivation is claimed. Resolve an exact producer contract
+before using any actual UCNS operation or EDCM constructor.
 
 Allowed relation:
 
-- char inventories and suppressed fingerprints are compression artifacts of
-  the Unit Circle Number System;
-- this skill may define agent behavior for applying those artifacts to context;
-- future code may promote the current guardrail runner into a fuller UCNS
-  compression engine;
+- character inventories and suppressed fingerprints are local compression artifacts;
+- this skill defines agent behavior for applying those artifacts to context;
+- future code needs a separately declared, tested codec contract;
 - proof/status claims must remain scoped to the specific UCNS theorem or tested
   implementation that establishes them.
 
@@ -91,9 +86,11 @@ Use edcmbone doctrine as a guardrail:
 - reconstruction should be checked against F-loss and operator preservation
   when an edcmbone runner is available.
 
-## UCNS text-stack model
+## Optional local text-stack notation
 
-Text is a recursive stack of gonols.
+The following is an optional notation for text grouping, not a UCNS construction
+law or a mandatory EDCM scale ladder. Here `tensor`, `twist`, `gonol`, `carrier`,
+`spiral`, and `chirality` are historical local labels, not constructed geometry.
 
 ```text
 tensors = characters
@@ -105,9 +102,9 @@ chapters = paragraph-gonols
 volumes = chapter-gonols
 ```
 
-A space is not absence. A space is a twist seam: it closes one word-gonol and
-opens attachment into the next layer. Punctuation is a stronger typed twist.
-A paragraph break, chapter break, and volume break are higher-scale twist seams.
+Under this notation a meaningful space is recorded as a separator (`twist`),
+and punctuation/breaks retain their source-specific attachment role. No geometric
+strength, operation, or closure follows from a punctuation class alone.
 
 Each higher object is a gonol whose vertices are lower objects:
 
@@ -248,9 +245,9 @@ banana -> ban
 committee -> comite
 ```
 
-The result is an inventory fingerprint. In UCNS terms, it preserves the
-first-cycle carrier of the word-gonol and suppresses recurrence into spiral
-weight/layer data. For closed-class words in known slots, that fingerprint plus
+The result is an inventory fingerprint. In this local notation it preserves the
+first-occurrence inventory, with recurrence retained as explicit ordered data
+when required. For closed-class words in known slots, that fingerprint plus
 grammar often recovers the word. For open-class content, the same operation can
 destroy needed information unless recurrence and position data are carried.
 
@@ -268,9 +265,9 @@ space/twist changes attachment or closure -> twist data must be preserved
 1. **Mark the domain.** State the repo, thread, language, and grammar assumed by
    the reconstruction. Compression is only lossless relative to that grammar.
 
-2. **Build the text stack.** Treat characters as tensors, spaces as twists,
-   words as character-gonols, sentences as word-gonols, paragraphs as
-   sentence-gonols, chapters as paragraph-gonols, and volumes as chapter-gonols.
+2. **Declare the text grouping.** Use source-appropriate character, word,
+   sentence, or other boundaries. The optional local text-stack notation above
+   is not required and does not construct UCNS geometry or EDCM gonols.
 
 3. **Run a suppression sort.** Identify first-cycle carrier vertices,
    recurrence weights/layers, units that survive as recognizable scaffold, and
@@ -310,7 +307,7 @@ Use this shape when compressing a thread or repo audit:
 char_compress:
   domain: <repo/thread/document/language>
   mode: context-compression | structure-preserving
-  ucns_relation: skill-level projection of Unit Circle Number System compression mathematics
+  ucns_relation: no current geometric derivation claimed; local compression notation
   text_stack:
     tensor: character
     twist: space_or_separator
@@ -393,7 +390,7 @@ python tools/char_compress_check.py
 python tools/char_compress_check.py --json
 ```
 
-The runner is a guardrail, not the full Unit Circle Number System compression
+The runner is a local preservation guardrail, not a UCNS compression
 engine. It verifies that the fixture skeleton preserves negation, quantifier,
 order, values, statuses, secrets, `hmmm`, and the theorem/status boundary.
 
@@ -481,7 +478,7 @@ no theorem/proof/status support is transferred beyond the tested UCNS domain.
 - reconstruction assumes a shared grammar; a different agent grammar may
   regenerate different bones
 - `tools/char_compress_check.py` is deterministic fixture support, not a full codec
-- the full UCNS compression engine is not implemented in this skill-lib helper yet
+- exact historical source for the text-stack model remains unresolved; this helper is not a UCNS codec
 - whether repeated characters become weights only, ordered recurrence layers only,
   or both
 - whether future structure-preserving mode should carry bone fingerprints,

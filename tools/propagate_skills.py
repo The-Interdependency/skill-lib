@@ -1,4 +1,4 @@
-# ratios: loc_comments=162:12 imports_exports=9:10 calls_definitions=80:10
+# ratios: loc_comments=182:13 imports_exports=9:10 calls_definitions=91:10
 """Synchronize canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -112,6 +112,19 @@ def referenced_doctrine(skill_srcs: Iterable[Path]) -> List[str]:
 
 
 def write_readme(target_install_root: Path, sha: str, skills: Sequence[str]) -> None:
+    readme = target_install_root / "README.md"
+    old_text = readme.read_text(encoding="utf-8") if readme.is_file() else ""
+    old_entries = dict(re.findall(r"^(- `([^`/]+)/`[^\n]*)$", old_text, re.MULTILINE))
+    # Preserve owner-written descriptions for installed but unrefreshed skills.
+    by_name = {name: line for line, name in old_entries.items()}
+    others = sorted(path.parent.name for path in target_install_root.glob("*/SKILL.md")
+                    if path.parent.name not in skills)
+    prior = previous_source_sha(target_install_root)
+    canonical = set(load_skill_names())
+    for name in others:
+        if name in canonical and "prior source:" not in by_name.get(name, ""):
+            identity = prior if name in by_name and prior else "hmmm"
+            by_name[name] = by_name.get(name, f"- `{name}/`") + f" [not refreshed; prior source: `{identity}`]"
     lines = [
         "# Local agent skills",
         "",
@@ -123,11 +136,19 @@ def write_readme(target_install_root: Path, sha: str, skills: Sequence[str]) -> 
         "Repo-local copies are not the source of truth. Edit `skill-lib` first,",
         "then propagate from the canonical source.",
         "",
-        "Installed skills:",
+        "Skills refreshed from the source commit above:",
         "",
     ]
     lines.extend(f"- `{name}/`" for name in skills)
     lines.append("")
+    if others:
+        lines.extend([
+            "Other installed skills (not refreshed by this propagation):", "",
+            "Their existing files retain their own authority/provenance; the source",
+            "commit above does not assert that these copies were refreshed.", "",
+        ])
+        lines.extend(by_name.get(name, f"- `{name}/`") for name in others)
+        lines.append("")
     target_install_root.mkdir(parents=True, exist_ok=True)
     (target_install_root / "README.md").write_text("\n".join(lines), encoding="utf-8")
 
@@ -207,4 +228,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=162:12 imports_exports=9:10 calls_definitions=80:10
+# ratios: loc_comments=182:13 imports_exports=9:10 calls_definitions=91:10

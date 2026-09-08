@@ -29,7 +29,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `canon/` — canonical-source and doctrine maintenance
 * `domain-claims/` — domain-first lexical standing, collision checks, and semantic provenance gating
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
-* `char-compress/` — bone/flesh context compression for handoffs and skill writing
+* `char-compress/` — skill-lib-owned bone/flesh context compression for handoffs and skill writing; historical notation is not current UCNS mathematics
 * `agent-instantiation/` — a0/a0ucns agent spawn/fork/merge lifecycle methodology
 * `a0p-instancing/` — a0-betatest (a0p) per-user CRUD + native-ZFAE instancing methodology
 * `manifest/` — living-spec generation
@@ -38,7 +38,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `plain-lens/` — plain-language, multi-lens companion views of dense canonical text
 * `thought-lens/` — raw-thought to audience-legible translation with claim-kernel fidelity and back-translation checks
 * `meta/` — consultation router for current METAPAT authority; no frozen doctrine copy
-* `gonol-build/` — UCNS gonol construction, closure, atomic promotion, explicit function application, complete replay, and honest continuation boundaries
+* `gonol-build/` — UCNS geometry / EDCM text construction, declared scale options, closure, atomic participation, protocol-required replay, and honest continuation boundaries
 * `ucns-option-selection/` — fail-closed scoped UCNS option comparison, selection, ratification, non-transfer, rollback, and decision receipts
 * `epac-selection-display/` — exact provisional EPAC target and representation selection with receipt-backed display, status preservation, and a read-only WebMCP handoff boundary
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects

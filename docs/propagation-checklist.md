@@ -36,6 +36,11 @@ python tools/propagate_skills.py ../target-repo          # inspect dry-run
 python tools/propagate_skills.py ../target-repo --apply  # copy skill dirs
 ```
 
+A partial `--skills` refresh lists the copied skills under its exact source
+commit and keeps every other installed skill in a separate, unrefreshed section.
+Owner-written local descriptions are retained. An unrefreshed canonical copy's
+prior cited source is retained when known; otherwise it stays `hmmm`.
+
 Then in the target repo:
 
 1. Add or update `.agents/skills/README.md`.

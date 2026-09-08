@@ -10,6 +10,15 @@ export default defineMsdmdCollection({
   repo: "The-Interdependency/skill-lib",
   declarations: [
     {
+      file: "gonol-build/check_edcm_boundary.py",
+      block: "MODULE_BUILD",
+      id: "gonol_edcm_scale_witness",
+      fields: {
+        source: "gonol-build/check_edcm_boundary.py",
+        summary: "Exact EDCM cross-source witness for non-adjacent scale construction, replay, and candidate non-transfer; not geometry or measurement proof",
+      },
+    },
+    {
       file: "msdmd/SKILL.md",
       block: "DOCS",
       id: "msdmd_foundational_contract",

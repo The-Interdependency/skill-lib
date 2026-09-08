@@ -17,6 +17,24 @@ _spec.loader.exec_module(ps)
 
 
 class PropagateDoctrineTest(unittest.TestCase):
+    def test_partial_refresh_preserves_local_skill_index_and_description(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            for name in ("hmmm", "test-build"):
+                path = root / name / "SKILL.md"
+                path.parent.mkdir(parents=True)
+                path.write_text("owner-retained content\n", encoding="utf-8")
+            local_entry = "- `hmmm/` — mandatory unresolved-constraint boundary object"
+            (root / "README.md").write_text(local_entry + "\n", encoding="utf-8")
+            for _ in range(2):
+                self.assertEqual(ps.main([str(target), "--skills", "msdmd", "--apply"]), 0)
+                readme = (root / "README.md").read_text(encoding="utf-8")
+                self.assertEqual(readme.count(local_entry), 1)
+                self.assertIn("- `test-build/`", readme)
+                self.assertIn("not refreshed by this propagation", readme)
+                self.assertEqual((root / "hmmm/SKILL.md").read_text(), "owner-retained content\n")
+
     def test_referenced_doctrine_helper_finds_link(self) -> None:
         # canonical msdmd/SKILL.md links to ../doctrine/msdmd-checks.md
         refs = ps.referenced_doctrine([ROOT / "msdmd"])

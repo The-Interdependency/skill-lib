@@ -86,7 +86,7 @@ export function parseText(
     "gm",
   );
   const idRe = new RegExp(`^\\s*${m}\\s*id:\\s*(\\S+)\\s*$`);
-  const fieldRe = new RegExp(`^\\s*${m}\\s+([a-z_]+):\\s*(.+?)\\s*$`);
+  const fieldRe = new RegExp(`^\\s*${m}\\s+([a-z_][a-z0-9_]*):\\s*(.+?)\\s*$`);
 
   const entries: Entry[] = [];
   let match: RegExpExecArray | null;
@@ -185,7 +185,7 @@ function ratiosLineRe(marker: string): RegExp {
 
 export function parseRatios(text: string, marker: string = "#"): Entry[] {
   const lineRe = ratiosLineRe(marker);
-  const tokenRe = /([a-z_]+)=(\S+)/g;
+  const tokenRe = /([a-z_][a-z0-9_]*)=(\S+)/g;
   const out: Entry[] = [];
   for (const raw of text.split("\n")) {
     const lm = lineRe.exec(raw.replace(/\s+$/, ""));
@@ -218,17 +218,15 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   const openingOk =
     lines.length > openingIndex &&
     lineRe.test(lines[openingIndex].replace(/\s+$/, ""));
-  const displacedShebang =
-    openingIndex === 0 &&
-    lines.length > 1 &&
-    lines[1].startsWith("#!") &&
-    lines[1].slice(2).trim().length > 0;
-  let lastOk = false;
-  for (let i = lines.length - 1; i >= 0; i--) {
+  if (openingIndex === 0 && lines.length > 1) {
+    const displaced = lines[1].startsWith("#!") && lines[1].slice(2).trim().length > 0;
+    if (displaced) return [false, false];
+  }
+  let closingOk = false;
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
     if (lines[i].trim() === "") continue;
-    lastOk = lineRe.test(lines[i].replace(/\s+$/, ""));
+    closingOk = lineRe.test(lines[i].replace(/\s+$/, ""));
     break;
   }
-  return [openingOk && !displacedShebang, lastOk];
+  return [openingOk, closingOk];
 }
-// ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm

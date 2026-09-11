@@ -21,3 +21,13 @@ class CharCompressAuthorityTests(unittest.TestCase):
         for guard in ("Freeze dangerous bones", "Reconstruct and compare", "Carry hmmm",
                       "lost recurrence order", "dropped negation", "changed proof/status label"):
             self.assertIn(guard, text)
+
+    def test_optional_text_stack_is_not_a_required_completion_gate(self):
+        text = (ROOT / "char-compress/SKILL.md").read_text()
+        procedure = text.split("## Compression procedure", 1)[1].split("## Skill-writing use", 1)[0]
+        completion = text.split("## Completion criteria", 1)[1].split("## Anti-patterns", 1)[0]
+        self.assertIn("local_notation: none | historical-text-stack", procedure)
+        self.assertIn("Include\n`text_stack` only when", procedure)
+        self.assertNotIn("Identify first-cycle carrier vertices", procedure)
+        self.assertNotIn("text-stack scale is declared;", completion)
+        self.assertIn("not required in notation-free compression", completion)

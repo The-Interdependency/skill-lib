@@ -1,4 +1,4 @@
-# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=16:1
+# ratios: loc_comments=33:22 imports_exports=4:1 calls_definitions=16:1
 """Executable cross-source scale witness; not a geometry or measurement proof.
 
 Usage: python tools/check_edcm_boundary.py /exact/edcm/checkout
@@ -63,4 +63,4 @@ def check(root: Path) -> None:
 
 if __name__ == "__main__":
     check(Path(sys.argv[1]))
-# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=16:1
+# ratios: loc_comments=33:22 imports_exports=4:1 calls_definitions=16:1

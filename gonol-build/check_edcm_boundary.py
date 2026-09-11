@@ -1,4 +1,4 @@
-# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=12:1
+# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=16:1
 """Executable cross-source scale witness; not a geometry or measurement proof.
 
 Usage: python gonol-build/check_edcm_boundary.py /exact/edcm/checkout
@@ -44,10 +44,10 @@ def check(root: Path) -> None:
     definition = construct_gonol(scale="definition", source="bounded evidence",
                                  relation="skill-lib:defined-by", participants=(character.gonol,),
                                  source_id="skill-lib:definition")
-    assert definition.gonol.participants == (character.gonol,)
-    assert replay_gonol(receipt=definition).receipt_digest == definition.receipt_digest
-    assert definition.standing == "implemented-candidate"
-    assert definition.selection_effect == "none"
+    if definition.gonol.participants != (character.gonol,): raise AssertionError("definition participants changed")
+    if replay_gonol(receipt=definition).receipt_digest != definition.receipt_digest: raise AssertionError("replay digest changed")
+    if definition.standing != "implemented-candidate": raise AssertionError("candidate standing changed")
+    if definition.selection_effect != "none": raise AssertionError("selection effect transferred")
     try:
         construct_gonol(scale="undeclared-scale", source="x", source_id="skill-lib:invalid")
     except GonolConstructionError:
@@ -59,4 +59,4 @@ def check(root: Path) -> None:
 
 if __name__ == "__main__":
     check(Path(sys.argv[1]))
-# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=12:1
+# ratios: loc_comments=29:22 imports_exports=4:1 calls_definitions=16:1

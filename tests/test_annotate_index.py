@@ -1,4 +1,4 @@
-# ratios: loc_comments=127:1 imports_exports=6:1 calls_definitions=81:10
+# ratios: loc_comments=149:1 imports_exports=6:1 calls_definitions=93:11
 """Tests for the portable canonical-seal computer (ratios/annotate_index.py)."""
 from __future__ import annotations
 
@@ -64,6 +64,30 @@ class BuildIndexTest(unittest.TestCase):
             self.assertIn(store, graph["adjacency"][routes])
             self.assertEqual(graph["unresolved"], [])
             self.assertEqual(graph["ambiguous"], [])
+
+    def test_named_seals_self_exclude_without_becoming_compact_seals(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            td = Path(tmp)
+            py_seal = "# ratios: loc_comments=2:1 imports_exports=0:1 calls_definitions=0:1"
+            ts_seal = "// ratios: loc_comments=1:1 imports_exports=0:1 calls_definitions=0:0"
+            py = td / "named.py"
+            ts = td / "named.ts"
+            py.write_text(
+                py_seal + "\n\"\"\"doc.\"\"\"\ndef public():\n    return 1\n" + py_seal + "\n",
+                encoding="utf-8",
+            )
+            ts.write_text(
+                ts_seal + "\n// doc\nexport const value = 1;\n" + ts_seal + "\n",
+                encoding="utf-8",
+            )
+
+            idx = A.build_index(A.collect_files(td), td)
+            self.assertEqual((idx[str(py)]["code"], idx[str(py)]["comment"]), (2, 1))
+            self.assertEqual((idx[str(ts)]["code"], idx[str(ts)]["comment"]), (1, 1))
+            self.assertTrue(A._is_named_seal(py_seal))
+            self.assertTrue(A._is_named_seal(ts_seal))
+            self.assertFalse(A._is_seal(py_seal, ".py"))
+            self.assertFalse(A._is_seal(ts_seal, ".ts"))
 
     def test_seal_line_format(self):
         m = {"code": 4, "comment": 1, "consumed": 1, "declared": 2,
@@ -143,4 +167,4 @@ class BuildIndexTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-# ratios: loc_comments=127:1 imports_exports=6:1 calls_definitions=81:10
+# ratios: loc_comments=149:1 imports_exports=6:1 calls_definitions=93:11

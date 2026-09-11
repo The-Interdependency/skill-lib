@@ -1,4 +1,4 @@
-# ratios: loc_comments=307:38 imports_exports=7:5 calls_definitions=117:21
+# ratios: loc_comments=324:42 imports_exports=7:5 calls_definitions=124:23
 """Portable computer for the canonical ratios seal — a0's `N:M C:D I:O`.
 
 This is the shared, stdlib port of `The-Interdependency/a0`'s
@@ -40,6 +40,8 @@ Public API:
 Pure stdlib; safe to copy verbatim into any consuming repo. The import graph
 exposes the same relative-import stem evidence already used for canonical
 fan-in; it does not alter seal computation or invent absolute-import coverage.
+Metric computation self-excludes both compact canonical seals and portable named
+`ratios:` bookends; canonical write/check placement remains compact-only.
 """
 from __future__ import annotations
 import os
@@ -55,11 +57,22 @@ DEFAULT_SKIP = {
 DEFAULT_CONSUMER_DIRS = ("client/src", "server")
 _ANN_PY = re.compile(r"^#\s*\d+:\d+(\s+\d+:\d+){0,2}\s*$")
 _ANN_TS = re.compile(r"^//\s*\d+:\d+(\s+\d+:\d+){0,2}\s*$")
+_NAMED_ANN = re.compile(
+    r"^(?:#|//)\s*ratios:\s+"
+    r"loc_comments=(?:\d+:\d+|hmmm)\s+"
+    r"imports_exports=(?:\d+:\d+|hmmm)\s+"
+    r"calls_definitions=(?:\d+:\d+|hmmm)\s*$"
+)
 
 
 def _is_seal(line: str, ext: str) -> bool:
     s = line.strip()
     return bool((_ANN_PY if ext == ".py" else _ANN_TS).match(s))
+
+
+def _is_named_seal(line: str) -> bool:
+    """Return whether a line is the portable named RATIOS boundary seal."""
+    return bool(_NAMED_ANN.match(line.strip()))
 
 
 def _has_valid_shebang(lines: list[str]) -> bool:
@@ -85,6 +98,18 @@ def _strip_seal(lines: list[str], ext: str) -> list[str]:
         del w[opening]
     closing = _last_nonblank_index(w)
     if closing is not None and _is_seal(w[closing], ext):
+        del w[closing]
+    return w
+
+
+def _strip_measurement_seals(lines: list[str], ext: str) -> list[str]:
+    """Exclude compact or named boundary seals from metric computation only."""
+    w = _strip_seal(lines, ext)
+    opening = _opening_index(w)
+    if len(w) > opening and _is_named_seal(w[opening]):
+        del w[opening]
+    closing = _last_nonblank_index(w)
+    if closing is not None and _is_named_seal(w[closing]):
         del w[closing]
     return w
 
@@ -281,7 +306,7 @@ def build_index(
     for path in files:
         text = texts[str(path)]
         ext = path.suffix
-        working = _strip_seal(text.splitlines(), ext)
+        working = _strip_measurement_seals(text.splitlines(), ext)
         if ext == ".py":
             code, comment = _count_python(working)
             endpoints = _py_endpoints(working)
@@ -405,4 +430,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=307:38 imports_exports=7:5 calls_definitions=117:21
+# ratios: loc_comments=324:42 imports_exports=7:5 calls_definitions=124:23

@@ -1,36 +1,25 @@
 ---
 name: msdmd
-description: Module Self-Declared Metadata in Markdown — the foundational convention where each module declares its own structured metadata in a fenced comment block. Other skills in this lib (doc-build, cap-build, deps-build, owner-build, test-build, meta-module-build, risk-boundary-build, ratios, etc.) are thin applications on top of this convention. Load this when authoring a new metadata-driven skill, when extending the block schema, or when building a parser/executor for a new application.
+description: Module Self-Declared Metadata Markdown — a language-agnostic convention where each source module declares its own structured metadata in fenced comment blocks. Load this when creating, parsing, validating, or extending msdmd block syntax; when a repo needs self-declared module metadata; when another msdmd-family skill needs parser behavior or comment-marker rules; or when checking whether a proposed metadata convention belongs in the foundational parser rather than a runner-local dialect.
 ---
 
-# msdmd — Module Self-Declared Metadata in Markdown
+# msdmd — Module Self-Declared Metadata Markdown
 
-## The doctrine
+msdmd is a convention for putting small, structured declarations beside the
+source that owns them. The declarations are ordinary line comments, so they
+remain readable in any editor and require no framework runtime.
 
-Every cross-cutting fact a module owns — its behavior obligations,
-public documentation, declared capabilities, dependency edges, owner,
-runtime boundaries, or executable evidence — should live **in the same
-file as the module that owns that fact**, in a structured comment
-block. A meta-runner walks the tree, parses every block, and acts on
-it.
+The design rule is simple:
 
-Modules without the relevant block surface as visible coverage gaps in
-the runner output. Coverage is observable, not implicit.
+```text
+owner module declares local facts -> shared parser reads them -> specialized runner interprets them
+```
 
-This is the inverse of the conventional "keep your docs/tests/configs in
-sync with code" approach, which fails because the contract and the
-implementation live in different files. Anyone can delete the code and
-forget the doc; the lie persists. msdmd makes the lie structurally
-visible: when the implementation-owning file disappears, its owned
-block disappears in the same diff.
+Do not fork parser syntax in a consumer. If a field shape is generally useful,
+extend the canonical parser contract here and keep the Python/TypeScript
+reference implementations aligned.
 
-For tests, ownership is split rather than flattened: source modules own
-`CONTRACTS` obligations; test modules own `CHECKS` evidence that
-claims to prove those obligations. See
-[`test-build/SKILL.md`](../test-build/SKILL.md) and
-[`doctrine/msdmd-checks.md`](../doctrine/msdmd-checks.md).
-
-## Block syntax
+## Canonical shape
 
 ```python
 # === <BLOCK_NAME> ===
@@ -62,8 +51,10 @@ claims to prove those obligations. See
   unique within its block and stable across refactors (so it can be
   referenced from external tooling).
 - **Field lines**: indented one level beneath the id (two spaces of
-  visible indent inside the comment). Field names are lowercase
-  snake_case followed by `:` and a value.
+  visible indent inside the comment). Field names are lowercase snake_case
+  followed by `:` and a value. Digits are allowed after the first character,
+  so names such as `evidence_sha256` are valid; the first character must be a
+  lowercase letter or underscore.
 - **Multiple blocks per file**: a module may declare more than one
   block, of the same or different types. The parser concatenates
   entries.
@@ -178,146 +169,44 @@ export default defineMsdmdCollection({
   gaps: [
     { file: "path/to/module.py", missing: ["CONTRACTS", "DOCS"] },
   ],
-  edges: [
-    { from: "module_a", to: "module_b", kind: "requires", source_block: "DEPENDENCIES", source_id: "..." },
-    { from: "check_module_a", to: "module_a_contract", kind: "claims_proves", source_block: "CHECKS", source_id: "..." },
-  ],
 });
-
-export const declarations = [];
-export const gaps = [];
 ```
 
-A repo-level msdmd visualizer SHOULD read `<reponame>_msdmd.ts` and render
-relationships between modules using the `MsdmdEdge` shape:
-`DEPENDENCIES.requires`, `CAPABILITIES.exposes`, `OWNERS.owner`,
-`BOUNDARIES` risk fields, `DOCS.covers`, `CHECKS.call`,
-`CHECKS.proves` as `claims_proves`, and any `requires` edges shared
-across application skills. The visualizer is a consumer of the
-collection point, not a second metadata source.
+The collection point is an index, not a second authority. Module-local blocks
+remain authoritative for their own declarations.
 
-If a repo has no collection point or visualizer yet, record that as `hmmm` in
-repo-local planning rather than pretending the graph exists.
+## Usage guidance
 
-A small stdlib generator prototype lives at `msdmd/collect.py`. Consuming repos
-can run it directly or copy it as a starting point:
+Use the parser directly when a runner needs multiple block families without
+inventing syntax:
 
-```bash
-python -m msdmd.collect --root . --repo <reponame> --out <reponame>_msdmd.ts
+```python
+from msdmd.parsers.universal import parse_file
+
+contracts = parse_file(path, "CONTRACTS")
+docs = parse_file(path, "DOCS")
 ```
 
-The generator is intentionally conservative: it parses module-local blocks,
-emits declarations, optional expected-block gaps, and simple relationship
-edges from reserved fields. Repo-specific runners may enrich the output, but
-should preserve the `MsdmdCollection` shape.
+To add a new metadata skill:
 
-A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and reads
-raw JSON or generated TypeScript collection points:
-
-```bash
-python -m msdmd.visualize <reponame>_msdmd.ts --out <reponame>_msdmd.mmd
-```
-
-The visualizer is deliberately small: it renders declaration nodes, normalized
-edge relationships, and visible gap nodes. Rich repo-specific UIs should consume
-the same collection shape rather than re-parsing source files.
-
-
-## The runner protocol
-
-A msdmd runner combines a parser and an executor:
-
-```
-walk(root: Path, block_name: str) -> Iterator[(file: Path, entries: list[Entry])]
-```
-
-Implementation rules every runner MUST follow:
-
-1. **Walk the source tree** under a configurable root, skipping
-   conventional non-source paths (`__pycache__`, `node_modules`,
-   `.git`, build outputs, the runner's own test directory).
-2. **Detect comment marker by extension**, not by content sniffing. Consume the
-   parser's `COMMENT_MARKERS` registry rather than maintaining a runner-local
-   language list. Python and TypeScript registries must remain identical.
-3. **Parse all matching blocks** in each file. Multiple blocks of the
-   same type concatenate; entries from different blocks are
-   distinguishable only by id, not by source block.
-4. **Visit modules without any block of the requested type** and emit
-   them as a separate "untested" / "undocumented" / "uncapable" gap
-   list. Truncate noise (e.g. show first 20, count the rest), but
-   never silently drop. Visibility is the whole point.
-5. **Exit non-zero** when any entry fails the executor's check. The
-   gap list itself is informational unless the application opts in to
-   strict mode (in which case missing blocks are also a fail).
-
-## Field naming conventions
-
-Reserved field names and their canonical meanings (for cross-skill
-consistency):
-
-| Field | Meaning |
-|---|---|
-| `id` | Unique stable identifier within the block. Required on every entry. |
-| `class` | Free-text tag for grouping (`security`, `correctness`, `idempotency`, etc.). The runner counts entries per class in summaries. |
-| `call` | Executable target owned by an evidence/check declaration. Source `CONTRACTS` do not use this field for test topology. |
-| `proves` | Comma-separated ids this evidence/check entry claims to prove. The collection edge kind is `claims_proves`; mutation sensitivity is a higher verification rung. |
-| `summary` | One-sentence human description. |
-| `requires` | Comma-separated dependency ids or host capabilities. Exact semantics are application-specific and must be documented by the skill that consumes it. |
-| `owner` | Who is responsible (person, agent role, team). |
-| `since` | Version or date this declaration was added. |
-| `deprecated` | If present, marks the entry as scheduled for removal. |
-
-Application-specific fields (`given`, `then`, `expects`, `inputs`,
-`outputs`, `mutates`, `cleanup`, `timeout`, etc.) are introduced by
-individual SKILLs and documented in their own SKILL.md.
-
-## Authoring a new msdmd application
-
-1. **Pick a block name** that doesn't collide with an existing
-   application. Search the lib README for current names.
-2. **Define the field schema** — which fields are required, which
-   optional, what types they carry. Document in your SKILL.md.
-3. **Write the executor** — the function that takes parsed entries
-   and acts on them. Use the universal parser; do not write a new
-   one unless your block needs syntax the universal parser can't
-   express.
-4. **Implement the visibility report** — your runner must list
-   modules without your block type as gaps, and the gap list must
-   be visible in normal output (not buried behind a flag).
-5. **Author a SKILL.md** in this lib with the convention spec, the
-   executor's behavior, and at least one worked example.
-
-`test-build/` is the canonical reference application for paired source
-`CONTRACTS` and test `CHECKS`. Read its SKILL.md alongside this one to
-see the pattern fully realized; read `doc-build/`, `cap-build/`,
-`deps-build/`, `owner-build/`, `risk-boundary-build/`, and `ratios/`
-for additional applications over the same parser contract.
+1. define its block name and field semantics in that skill;
+2. keep the universal parser generic;
+3. write the runner against the shared parser output;
+4. surface unannotated modules as visible gaps instead of pretending coverage;
+5. propose a canonical parser extension here before accepting any syntax the
+   shared parser cannot represent.
 
 ## Anti-patterns
 
-- **Don't define an owned declaration in a detached side file.** The
-  whole point is that the declaration lives next to the module that
-  owns that fact. Source obligations belong in source; test evidence
-  belongs in the test module that owns the evidence.
-- **Don't put `call:` in source `CONTRACTS`.** Source modules own
-  obligations, not test topology. Put executable targets in `CHECKS`.
-- **Don't make ids reflect implementation details.** `chat_returns_200`
-  tells future-you nothing; `chat_get_other_owner_404` tells you what's
-  protected. Ids are part of the documentation.
-- **Don't silently drop modules without blocks.** Coverage gaps must be
-  visible. If your runner doesn't emit the gap list, it's not a msdmd
-  runner; it's a test discovery tool with extra steps.
-- **Don't introduce parser dialects.** If you need richer syntax than
-  the universal parser handles, propose an extension to msdmd, not a
-  fork. The portability of the convention depends on the parser
-  contract being one thing.
+- Creating a runner-local parser dialect.
+- Treating absence of a block as evidence that the module has no obligation.
+- Inferring a comment marker from content when the extension is ambiguous.
+- Adding block-specific semantic validation to the universal parser.
+- Hiding parse or coverage gaps to make a report look complete.
 
-## Versioning
+## hmmm
 
-- **Block syntax is stable.** Breaking changes (renaming the fence,
-  changing field-line indentation rules, etc.) go through a major
-  version bump and a migration note in the lib README.
-- **Reserved field names** above are stable. New reserved names are
-  additive only.
-- **Application SKILLs** version independently in their own SKILL.md
-  files.
+- block schema/version negotiation across independently evolving consumers
+- a canonical escape/multiline-value syntax beyond the current flat line form
+- whether ids should receive a stricter lexical grammar than the current
+  non-whitespace stable-identity rule

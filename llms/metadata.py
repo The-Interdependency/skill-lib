@@ -8,7 +8,7 @@
 #
 # id: key_definitions
 #   msdmd: Module Self-Declared Metadata in Markdown — the foundational convention where each source module declares its own structured metadata in a fenced comment block.
-#   char-compress: Character-based context compression for agent handoff and skill writing, derived from the mathematics of the Unit Circle Number System.
+#   char-compress: Skill-lib-owned character-based context compression for agent handoff and skill writing; its historical bone/flesh and text-stack notation is not current UCNS mathematics.
 #   llms-build: Self-declaring LLM instructions file generation from LLMS blocks into canonical root llms.txt.
 #
 # id: architecture_summary

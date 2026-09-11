@@ -55,6 +55,26 @@ class PropagateDoctrineTest(unittest.TestCase):
                 self.assertEqual(ps.main([str(target), "--skills", "test-build", "--apply"]), 0)
             self.assertEqual(sync.call_args.args[2], "aaaaaaa")
 
+    def test_partial_refresh_preserves_explicitly_unknown_skill_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            skill = root / "test-build" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("unknown-origin copy\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Local agent skills\n\n"
+                "Source commit: `bbbbbbb`\n\n"
+                "Other installed skills (not refreshed by this propagation):\n\n"
+                "- `test-build/` [not refreshed; prior source: `hmmm`]\n",
+                encoding="utf-8",
+            )
+            with patch.object(ps, "current_sha", return_value="ccccccc"), patch.object(
+                ps, "sync_tree", return_value=[]
+            ) as sync:
+                self.assertEqual(ps.main([str(target), "--skills", "test-build", "--apply"]), 0)
+            self.assertIsNone(sync.call_args.args[2])
+
     def test_referenced_doctrine_helper_finds_link(self) -> None:
         # canonical msdmd/SKILL.md links to ../doctrine/msdmd-checks.md
         refs = ps.referenced_doctrine([ROOT / "msdmd"])

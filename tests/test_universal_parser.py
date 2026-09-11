@@ -57,6 +57,17 @@ class UniversalParserTest(unittest.TestCase):
             parse_text(text, "DOCS"),
         )
 
+    def test_parse_numeric_snake_case_field(self) -> None:
+        text = """# === NARRATIVE ===
+# id: source_bound_narrative
+#   evidence_sha256: abc123
+# === END NARRATIVE ===
+"""
+        self.assertEqual(
+            [{"id": "source_bound_narrative", "evidence_sha256": "abc123"}],
+            parse_text(text, "NARRATIVE"),
+        )
+
     def test_parse_typescript_comment_marker(self) -> None:
         text = """// === CAPABILITIES ===
 // id: browser_opens_page

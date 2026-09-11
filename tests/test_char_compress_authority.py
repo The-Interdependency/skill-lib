@@ -30,4 +30,4 @@ class CharCompressAuthorityTests(unittest.TestCase):
         self.assertIn("Include\n`text_stack` only when", procedure)
         self.assertNotIn("Identify first-cycle carrier vertices", procedure)
         self.assertNotIn("text-stack scale is declared;", completion)
-        self.assertIn("not required in notation-free compression", completion)
+        self.assertIn("not required in notation-free compression", " ".join(completion.split()))

@@ -1,4 +1,4 @@
-# ratios: loc_comments=182:13 imports_exports=9:10 calls_definitions=91:10
+# ratios: loc_comments=193:14 imports_exports=9:11 calls_definitions=96:11
 """Synchronize canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -26,6 +26,7 @@ DEFAULT_INSTALL_ROOT = Path(".agents/skills")
 # those must be carried alongside the skills or the vendored links go dead.
 DOCTRINE_REF_RE = re.compile(r"(?:\.\./)?doctrine/([A-Za-z0-9][\w./-]*\.md)")
 SOURCE_SHA_RE = re.compile(r"Source commit:[^\n]*`([0-9a-f]{7,40})`")
+SKILL_SOURCE_RE = re.compile(r"^- `([^`/]+)/`[^\n]*\[not refreshed; prior source: `([0-9a-f]{7,40}|hmmm)`\]$", re.MULTILINE)
 _TEXT_SUFFIXES = {".md", ".py", ".ts", ".txt"}
 
 
@@ -63,6 +64,18 @@ def previous_source_sha(target_install_root: Path) -> str | None:
         return None
     match = SOURCE_SHA_RE.search(readme.read_text(encoding="utf-8"))
     return match.group(1) if match else None
+
+
+def previous_skill_source_sha(target_install_root: Path, skill_name: str) -> str | None:
+    """Return a skill-local prior source recorded by an earlier partial refresh."""
+    readme = target_install_root / "README.md"
+    if not readme.is_file():
+        return None
+    text = readme.read_text(encoding="utf-8")
+    for name, sha in SKILL_SOURCE_RE.findall(text):
+        if name == skill_name:
+            return None if sha == "hmmm" else sha
+    return None
 
 
 def previous_canonical_blob(sha: str, skill_name: str, relative_path: Path) -> bytes | None:
@@ -215,7 +228,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         shutil.rmtree(dst)
     removed_files: List[tuple[str, Path]] = []
     for src, dst in actions:
-        removed_files.extend((src.name, path) for path in sync_tree(src, dst, prior_sha))
+        skill_prior_sha = previous_skill_source_sha(install_root, src.name) or prior_sha
+        removed_files.extend((src.name, path) for path in sync_tree(src, dst, skill_prior_sha))
     for src, dst in doc_actions:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
@@ -228,4 +242,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=182:13 imports_exports=9:10 calls_definitions=91:10
+# ratios: loc_comments=193:14 imports_exports=9:11 calls_definitions=96:11

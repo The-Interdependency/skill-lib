@@ -257,7 +257,7 @@ Use suppression as a classifier, not as the complete codec:
 survives suppression + grammar can restore it -> candidate bone
 breaks under suppression or carries operative fact -> flesh
 looks grammatical but controls polarity/order/scope/status -> frozen bone
-space/twist changes attachment or closure -> twist data must be preserved
+separator/boundary data that changes attachment or closure must be preserved
 ```
 
 ## Compression procedure
@@ -269,9 +269,11 @@ space/twist changes attachment or closure -> twist data must be preserved
    sentence, or other boundaries. The optional local text-stack notation above
    is not required and does not construct UCNS geometry or EDCM gonols.
 
-3. **Run a suppression sort.** Identify first-cycle carrier vertices,
-   recurrence weights/layers, units that survive as recognizable scaffold, and
-   units that become ambiguous or lose operative force.
+3. **Run a suppression sort.** Identify first-occurrence inventory,
+   recurrence data required for reconstruction, units that survive as
+   recognizable scaffold, and units that become ambiguous or lose operative
+   force. Historical `carrier`/`layer` labels apply only when that optional
+   notation is explicitly selected.
 
 4. **Extract flesh once.** Record every distinct operative item in resolved form.
    Do not repeat a flesh item unless the repetition itself is meaningful.
@@ -284,9 +286,10 @@ space/twist changes attachment or closure -> twist data must be preserved
    regenerable. Promote the transform to frozen bone when it changes status,
    safety, legality, or theorem scope.
 
-7. **Preserve twist data where it changes attachment.** Spaces, punctuation,
-   paragraph breaks, and other separators are twist seams. Drop only those twist
-   details that are safe to regenerate.
+7. **Preserve boundary data where it changes attachment.** Spaces, punctuation,
+   paragraph breaks, and other separators must survive when they affect
+   attachment or closure. Call them `twist` data only when using the optional
+   historical notation.
 
 8. **Drop regenerable scaffold.** Remove articles, routine connective prose,
    and repeated explanation that adds no new operative item.
@@ -296,35 +299,30 @@ space/twist changes attachment or closure -> twist data must be preserved
 
 10. **Reconstruct and compare.** Regenerate readable prose around the skeleton.
     Check named objects, values, decisions, negations, operators, order,
-    statuses, twist closure, and hmmm. If any operative item is missing or
-    inverted, move it to flesh, frozen bone, or preserved twist data.
+    statuses, boundary/attachment closure, and hmmm. If any operative item is
+    missing or inverted, move it to flesh, frozen bone, or preserved boundary
+    data.
 
 ## Output shape for compressed handoffs
 
-Use this shape when compressing a thread or repo audit:
+Use this notation-neutral shape when compressing a thread or repo audit. Include
+`text_stack` only when the optional historical notation is actually selected.
 
 ```yaml
 char_compress:
   domain: <repo/thread/document/language>
   mode: context-compression | structure-preserving
-  ucns_relation: no current geometric derivation claimed; local compression notation
-  text_stack:
-    tensor: character
-    twist: space_or_separator
-    word: character_gonol
-    sentence: word_gonol
-    paragraph: sentence_gonol
-    chapter: paragraph_gonol
-    volume: chapter_gonol
+  ucns_relation: no current geometric derivation claimed
+  local_notation: none | historical-text-stack
   flesh:
     - <distinct operative item>
   frozen_bones:
     - <meaning-critical operator/scope/status unit>
-  twist_data:
+  boundary_data:
     - <space/punctuation/break/closure data that changes attachment>
   recurrence:
-    - carrier: <first-cycle carrier>
-      weights_or_layers: <required recurrence data>
+    - unit: <first-occurrence unit>
+      positions_or_weights: <required recurrence data>
   transforms:
     - root: <root>
       transform: <prefix/suffix/class/aspect/polarity>
@@ -340,10 +338,23 @@ char_compress:
     order: pass | fail
     operators: pass | fail
     statuses: pass | fail
-    twist_closure: pass | fail
+    boundary_closure: pass | fail
     hmmm: pass | fail
   hmmm:
     - <unresolved constraint>
+```
+
+Optional historical extension:
+
+```yaml
+text_stack:
+  tensor: character
+  twist: space_or_separator
+  word: character_gonol
+  sentence: word_gonol
+  paragraph: sentence_gonol
+  chapter: paragraph_gonol
+  volume: chapter_gonol
 ```
 
 ## Skill-writing use
@@ -368,7 +379,7 @@ Do not remove:
 
 ```text
 negation, ordering, scope, proof boundary, security warning, privacy status,
-operator semantics, failure criteria, twist closure
+operator semantics, failure criteria, attachment/closure boundaries
 ```
 
 Test a skill by stripping the connective prose. If the operative content still
@@ -423,16 +434,16 @@ Minimum fixture set for an implementation:
 6. secret_preserved: private carrier material stays private
 7. hmmm_preserved: unresolved constraints remain visible
 8. no_theorem_transfer: output does not claim unearned theorem/status support
-9. twist_preserved: spaces/punctuation/breaks that change attachment survive
-10. recurrence_preserved: repeated characters/words/sentences keep required weight or layer data
+9. boundary_preserved: spaces/punctuation/breaks that change attachment survive
+10. recurrence_preserved: repeated units keep required position/order/weight data
 ```
 
 ## Security note
 
 Compression is not opacity. Bone fingerprints leak structure: clause count,
-hinge placement, relation shape, twist placement, and sometimes operator class.
-If opacity is required, the inventory-to-position mapping is key material and
-must not be published.
+hinge placement, relation shape, boundary placement, and sometimes operator
+class. If opacity is required, the inventory-to-position mapping is key material
+and must not be published.
 
 Do not place private carrier arrangements, slot maps, secret alphabets, or
 cryptographic mappings in public skills, public README files, demos, tests, or
@@ -446,15 +457,20 @@ A compression is complete when:
 all flesh appears once in resolved form;
 all frozen bones are explicit;
 transforms are root + transform;
-text-stack scale is declared;
-twist seams that affect closure/attachment are preserved;
-recurrence weights/layers required for reconstruction are preserved;
+source grouping and grammar required for reconstruction are declared;
+boundary/separator details that affect closure or attachment are preserved;
+recurrence position/order/weight data required for reconstruction are preserved;
 regenerable scaffold is absent or fingerprinted according to mode;
 hmmm is visible;
 reconstruction preserves named objects, values, decisions, negation,
-quantifiers, order, operators, statuses, twist closure, recurrence, and unresolved constraints;
-no theorem/proof/status support is transferred beyond the tested UCNS domain.
+quantifiers, order, operators, statuses, boundary closure, recurrence, and unresolved constraints;
+no theorem/proof/status support is inferred from this procedure or its optional historical notation.
 ```
+
+When `local_notation: historical-text-stack` is selected, additionally record
+the chosen text-stack scale and any `twist`/`carrier`/`layer` details required
+for reconstruction. Those historical fields are not required in notation-free
+compression.
 
 ## Anti-patterns
 
@@ -462,7 +478,7 @@ no theorem/proof/status support is transferred beyond the tested UCNS domain.
 - Dropping a named object, value, status, path, repo, URL, or decision.
 - Dropping `not`, `only`, `unless`, `must`, `cannot`, `before`, or `after`.
 - Treating a short token as safe because it is common.
-- Treating a space as absence instead of a twist seam.
+- Treating a meaningful separator as absence when it changes attachment.
 - Treating recurrence weight as enough when ordered recurrence is required.
 - Treating the bone channel as opaque.
 - Compressing an unresolved constraint into silence.

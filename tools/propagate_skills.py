@@ -1,4 +1,4 @@
-# ratios: loc_comments=193:14 imports_exports=9:11 calls_definitions=96:11
+# ratios: loc_comments=197:14 imports_exports=9:11 calls_definitions=96:11
 """Synchronize canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -74,7 +74,7 @@ def previous_skill_source_sha(target_install_root: Path, skill_name: str) -> str
     text = readme.read_text(encoding="utf-8")
     for name, sha in SKILL_SOURCE_RE.findall(text):
         if name == skill_name:
-            return None if sha == "hmmm" else sha
+            return sha
     return None
 
 
@@ -228,7 +228,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         shutil.rmtree(dst)
     removed_files: List[tuple[str, Path]] = []
     for src, dst in actions:
-        skill_prior_sha = previous_skill_source_sha(install_root, src.name) or prior_sha
+        skill_prior_sha = previous_skill_source_sha(install_root, src.name)
+        if skill_prior_sha is None:
+            skill_prior_sha = prior_sha
+        elif skill_prior_sha == "hmmm":
+            skill_prior_sha = None
         removed_files.extend((src.name, path) for path in sync_tree(src, dst, skill_prior_sha))
     for src, dst in doc_actions:
         dst.parent.mkdir(parents=True, exist_ok=True)
@@ -242,4 +246,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=193:14 imports_exports=9:11 calls_definitions=96:11
+# ratios: loc_comments=197:14 imports_exports=9:11 calls_definitions=96:11

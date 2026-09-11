@@ -90,16 +90,19 @@ Replay establishes reproducibility of that construction only. It does not by its
 
 ## Usage guidance
 
-The executable cross-source witness is `gonol-build/check_edcm_boundary.py`.
-Run it against a clean EDCM checkout at the script's exact `EDCM_COMMIT`:
+The executable cross-source witness is owned by skill-lib at
+`tools/check_edcm_boundary.py`, outside the propagated skill directory. In a
+skill-lib checkout, run it against a clean EDCM checkout at the script's exact
+`EDCM_COMMIT`:
 
 ```bash
-python gonol-build/check_edcm_boundary.py /path/to/edcm
+python tools/check_edcm_boundary.py /path/to/edcm
 ```
 
 It checks direct character-to-definition construction, replay, candidate standing,
-and refusal of an undeclared scale. This pinned witness is not a universal scale
-registry; current construction must still resolve its owning EDCM option set.
+and refusal of an undeclared scale. It is deliberately not vendored into UCNS or
+other geometry consumers. This pinned witness is not a universal scale registry;
+current construction must still resolve its owning EDCM option set.
 
 For text construction, start in EDCM and consume current UCNS geometry.
 
@@ -113,9 +116,10 @@ When a gonol closes, use it atomically at any admissible consuming scale. Ignore
 ## Anti-patterns
 
 - Moving text semantics into UCNS or inventing geometry in EDCM.
+- Vendoring the EDCM executable witness into a UCNS geometry repository.
 - Imposing an adjacent-scale ladder or inventing an eligible scale option without EDCM authority.
 - Letting pronunciation alter gonol identity, closure, ordering, or relations unless a later explicitly declared experiment makes phonology part of its construction.
-- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, or hashes for gonol identity unless the active contract explicitly authorizes it.
+- Normalizing, deduplicating, inferring relations, or substituting tokens, embeddings, hashes for gonol identity unless the active contract explicitly authorizes it.
 - Adding arbitrary wall-clock limits to a healthy admitted run.
 - Treating replay as semantic quality, measurement validity, cognition, or extra-scope canon.
 

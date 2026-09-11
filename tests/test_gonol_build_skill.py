@@ -9,6 +9,7 @@ from frontmatter import frontmatter_for
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "gonol-build" / "SKILL.md"
 ADAPTER = ROOT / "skills" / "gonol-build" / "SKILL.md"
+WITNESS = ROOT / "tools" / "check_edcm_boundary.py"
 
 
 class GonolBuildSkillTest(unittest.TestCase):
@@ -44,6 +45,12 @@ class GonolBuildSkillTest(unittest.TestCase):
         self.assertIn("not a mandatory ladder", self.compact)
         self.assertIn("character-to-definition construction must not be rejected", self.compact)
         self.assertNotIn("This order is load-bearing", self.compact)
+
+    def test_cross_source_witness_stays_out_of_propagated_skill(self) -> None:
+        self.assertTrue(WITNESS.is_file())
+        self.assertFalse((ROOT / "gonol-build" / "check_edcm_boundary.py").exists())
+        self.assertIn("`tools/check_edcm_boundary.py`", self.text)
+        self.assertIn("deliberately not vendored into UCNS", self.compact)
 
     def test_closed_words_promote_atomically(self) -> None:
         for phrase in (

@@ -35,6 +35,26 @@ class PropagateDoctrineTest(unittest.TestCase):
                 self.assertIn("not refreshed by this propagation", readme)
                 self.assertEqual((root / "hmmm/SKILL.md").read_text(), "owner-retained content\n")
 
+    def test_partial_refresh_uses_annotated_skill_prior_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            skill = root / "test-build" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("older canonical copy\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Local agent skills\n\n"
+                "Source commit: `bbbbbbb`\n\n"
+                "Other installed skills (not refreshed by this propagation):\n\n"
+                "- `test-build/` [not refreshed; prior source: `aaaaaaa`]\n",
+                encoding="utf-8",
+            )
+            with patch.object(ps, "current_sha", return_value="ccccccc"), patch.object(
+                ps, "sync_tree", return_value=[]
+            ) as sync:
+                self.assertEqual(ps.main([str(target), "--skills", "test-build", "--apply"]), 0)
+            self.assertEqual(sync.call_args.args[2], "aaaaaaa")
+
     def test_referenced_doctrine_helper_finds_link(self) -> None:
         # canonical msdmd/SKILL.md links to ../doctrine/msdmd-checks.md
         refs = ps.referenced_doctrine([ROOT / "msdmd"])

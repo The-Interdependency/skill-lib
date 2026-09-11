@@ -17,6 +17,64 @@ _spec.loader.exec_module(ps)
 
 
 class PropagateDoctrineTest(unittest.TestCase):
+    def test_partial_refresh_preserves_local_skill_index_and_description(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            for name in ("hmmm", "test-build"):
+                path = root / name / "SKILL.md"
+                path.parent.mkdir(parents=True)
+                path.write_text("owner-retained content\n", encoding="utf-8")
+            local_entry = "- `hmmm/` — mandatory unresolved-constraint boundary object"
+            (root / "README.md").write_text(local_entry + "\n", encoding="utf-8")
+            for _ in range(2):
+                self.assertEqual(ps.main([str(target), "--skills", "msdmd", "--apply"]), 0)
+                readme = (root / "README.md").read_text(encoding="utf-8")
+                self.assertEqual(readme.count(local_entry), 1)
+                self.assertIn("- `test-build/`", readme)
+                self.assertIn("not refreshed by this propagation", readme)
+                self.assertEqual((root / "hmmm/SKILL.md").read_text(), "owner-retained content\n")
+
+    def test_partial_refresh_uses_annotated_skill_prior_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            skill = root / "test-build" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("older canonical copy\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Local agent skills\n\n"
+                "Source commit: `bbbbbbb`\n\n"
+                "Other installed skills (not refreshed by this propagation):\n\n"
+                "- `test-build/` [not refreshed; prior source: `aaaaaaa`]\n",
+                encoding="utf-8",
+            )
+            with patch.object(ps, "current_sha", return_value="ccccccc"), patch.object(
+                ps, "sync_tree", return_value=[]
+            ) as sync:
+                self.assertEqual(ps.main([str(target), "--skills", "test-build", "--apply"]), 0)
+            self.assertEqual(sync.call_args.args[2], "aaaaaaa")
+
+    def test_partial_refresh_preserves_explicitly_unknown_skill_source(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            target = Path(tmp)
+            root = target / ".agents/skills"
+            skill = root / "test-build" / "SKILL.md"
+            skill.parent.mkdir(parents=True)
+            skill.write_text("unknown-origin copy\n", encoding="utf-8")
+            (root / "README.md").write_text(
+                "# Local agent skills\n\n"
+                "Source commit: `bbbbbbb`\n\n"
+                "Other installed skills (not refreshed by this propagation):\n\n"
+                "- `test-build/` [not refreshed; prior source: `hmmm`]\n",
+                encoding="utf-8",
+            )
+            with patch.object(ps, "current_sha", return_value="ccccccc"), patch.object(
+                ps, "sync_tree", return_value=[]
+            ) as sync:
+                self.assertEqual(ps.main([str(target), "--skills", "test-build", "--apply"]), 0)
+            self.assertIsNone(sync.call_args.args[2])
+
     def test_referenced_doctrine_helper_finds_link(self) -> None:
         # canonical msdmd/SKILL.md links to ../doctrine/msdmd-checks.md
         refs = ps.referenced_doctrine([ROOT / "msdmd"])

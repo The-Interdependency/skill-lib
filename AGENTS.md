@@ -146,7 +146,7 @@ propagate from here.
 - If you are constructing, reviewing, replaying, or continuing UCNS gonols,
   including lexical floors, morphology, definitions, punctuation functions,
   closure, atomic promotion, or recursive relations, load `gonol-build/SKILL.md`.
-  Resolve current UCNS authority first; never restore historical
+  Resolve current UCNS geometry and EDCM text/scale authority first; never impose a universal adjacent-scale ladder or restore historical
   `gonal-morphology` doctrine as current canon.
 - If you are comparing UCNS options, deciding whether evidence authorizes a
   winner, or issuing a scoped selection receipt, load

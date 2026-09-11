@@ -9,6 +9,7 @@ from frontmatter import frontmatter_for
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / "gonol-build" / "SKILL.md"
 ADAPTER = ROOT / "skills" / "gonol-build" / "SKILL.md"
+WITNESS = ROOT / "tools" / "check_edcm_boundary.py"
 
 
 class GonolBuildSkillTest(unittest.TestCase):
@@ -22,7 +23,7 @@ class GonolBuildSkillTest(unittest.TestCase):
         for phrase in (
             "character, word, definition, or recursive-relation gonols",
             "UCNS owns geometry; EDCM owns text construction",
-            "characters -> words -> definitions -> recursive gonol relations",
+            "no universal adjacent-scale ladder is required",
             "Pronunciation is not required",
             "Do not load",
         ):
@@ -38,27 +39,31 @@ class GonolBuildSkillTest(unittest.TestCase):
         ):
             self.assertIn(phrase, self.compact)
 
-    def test_edcm_skeleton_requires_words(self) -> None:
-        self.assertIn(
-            "characters -> words -> definitions -> recursive gonol relations",
-            self.compact,
-        )
-        self.assertNotIn("characters -> definitions -> recursive gonol relations", self.compact)
-        self.assertIn("This order is load-bearing", self.compact)
-        self.assertIn("Ordered character gonols close into a word gonol", self.compact)
+    def test_scale_options_are_owned_by_edcm(self) -> None:
+        self.assertIn("`docs/GONOL_LANGUAGE_BOUNDARY.md`", self.text)
+        self.assertIn("`edcm/gonol.py`", self.text)
+        self.assertIn("not a mandatory ladder", self.compact)
+        self.assertIn("character-to-definition construction must not be rejected", self.compact)
+        self.assertNotIn("This order is load-bearing", self.compact)
+
+    def test_cross_source_witness_stays_out_of_propagated_skill(self) -> None:
+        self.assertTrue(WITNESS.is_file())
+        self.assertFalse((ROOT / "gonol-build" / "check_edcm_boundary.py").exists())
+        self.assertIn("`tools/check_edcm_boundary.py`", self.text)
+        self.assertIn("deliberately not vendored into UCNS", self.compact)
 
     def test_closed_words_promote_atomically(self) -> None:
         for phrase in (
-            "A closed word gonol is atomic at the consuming scale",
+            "Any closed gonol is atomic at an admissible consuming scale",
             "constituent identities, order, multiplicity, source positions, and provenance remain recoverable",
-            "Definition gonols are constructed from the applicable closed word gonols",
+            "Definition gonols use eligible closed participants",
             "Recursive relations are constructed from already-closed gonols",
         ):
             self.assertIn(phrase, self.compact)
 
     def test_no_undeclared_intermediate_stage(self) -> None:
         self.assertIn(
-            "Do not insert another required stage into this sequence unless the governing contract is explicitly changed",
+            "Do not invent participant eligibility or another required stage",
             self.compact,
         )
 
@@ -108,7 +113,7 @@ class GonolBuildSkillTest(unittest.TestCase):
             self.assertIn(phrase, workflow)
         self.assertLess(
             workflow.index("Before launching construction or replay"),
-            workflow.index("Keep the EDCM order load-bearing"),
+            workflow.index("Resolve the EDCM constructor's declared scale option set"),
         )
         self.assertNotIn(
             "Preflight resources before a completion claim, then replay the complete declared scope",
@@ -134,7 +139,7 @@ class GonolBuildSkillTest(unittest.TestCase):
 
     def test_usage_guidance_repeats_operational_contract(self) -> None:
         self.assertIn("For text construction, start in EDCM and consume current UCNS geometry", self.compact)
-        self.assertIn("When a word closes, use that word gonol atomically at the next scale", self.compact)
+        self.assertIn("When a gonol closes, use it atomically at any admissible consuming scale", self.compact)
         self.assertIn("Ignore pronunciation unless a future explicit construction says otherwise", self.compact)
 
     def test_codex_adapter_points_to_canonical_skill(self) -> None:

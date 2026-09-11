@@ -218,15 +218,17 @@ export function ratiosPlacement(text: string, marker: string = "#"): [boolean, b
   const openingOk =
     lines.length > openingIndex &&
     lineRe.test(lines[openingIndex].replace(/\s+$/, ""));
-  if (openingIndex === 0 && lines.length > 1) {
-    const displaced = lines[1].startsWith("#!") && lines[1].slice(2).trim().length > 0;
-    if (displaced) return [false, false];
-  }
-  let closingOk = false;
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
+  const displacedShebang =
+    openingIndex === 0 &&
+    lines.length > 1 &&
+    lines[1].startsWith("#!") &&
+    lines[1].slice(2).trim().length > 0;
+  let lastOk = false;
+  for (let i = lines.length - 1; i >= 0; i--) {
     if (lines[i].trim() === "") continue;
-    closingOk = lineRe.test(lines[i].replace(/\s+$/, ""));
+    lastOk = lineRe.test(lines[i].replace(/\s+$/, ""));
     break;
   }
-  return [openingOk, closingOk];
+  return [openingOk && !displacedShebang, lastOk];
 }
+// ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm

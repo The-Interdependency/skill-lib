@@ -1,4 +1,4 @@
-# ratios: loc_comments=264:34 imports_exports=7:4 calls_definitions=99:17
+# ratios: loc_comments=307:38 imports_exports=7:5 calls_definitions=117:21
 """Portable computer for the canonical ratios seal — a0's `N:M C:D I:O`.
 
 This is the shared, stdlib port of `The-Interdependency/a0`'s
@@ -33,10 +33,13 @@ bit made configurable here.
 
 Public API:
     build_index(files, root, *, consumer_dirs=("client/src", "server")) -> dict
+    build_import_graph(files) -> {adjacency, unresolved, ambiguous}
     seal_line(metrics, marker="#") -> str
     collect_files(root, *, skip=None, extensions=(".py",".ts",".tsx")) -> list[Path]
 
-Pure stdlib; safe to copy verbatim into any consuming repo.
+Pure stdlib; safe to copy verbatim into any consuming repo. The import graph
+exposes the same relative-import stem evidence already used for canonical
+fan-in; it does not alter seal computation or invent absolute-import coverage.
 """
 from __future__ import annotations
 import os
@@ -188,6 +191,83 @@ def _read_consumer_text(root: Path, consumer_dirs: Iterable[str]) -> str:
     return "\n".join(parts)
 
 
+def _read_texts(files: Iterable[Path]) -> dict[str, str]:
+    texts: dict[str, str] = {}
+    for path in files:
+        try:
+            texts[str(path)] = path.read_text(encoding="utf-8")
+        except OSError:
+            texts[str(path)] = ""
+    return texts
+
+
+def _imported_stems(text: str, ext: str) -> set[str]:
+    """Return relative-import terminal stems using canonical fan-in semantics."""
+    stems: set[str] = set()
+    for line in text.splitlines():
+        s = line.strip()
+        if ext == ".py":
+            m = re.match(r"from\s+([.]+[\w.]*)\s+import", s)
+            if m:
+                parts = [part for part in m.group(1).split(".") if part]
+                if parts:
+                    stems.add(parts[-1])
+        elif ext in (".ts", ".tsx"):
+            m = re.match(r"""\s*import\s+.*from\s+['"]([.][^'"]+)['"]""", s)
+            if m:
+                segment = m.group(1).rstrip("/").split("/")[-1]
+                stem = re.sub(r"\.\w+$", "", segment)
+                if stem:
+                    stems.add(stem)
+    return stems
+
+
+def _import_evidence(files: list[Path], texts: dict[str, str]) -> dict:
+    by_stem: dict[str, list[str]] = {}
+    for path in files:
+        by_stem.setdefault(path.stem, []).append(str(path))
+
+    stem_importers: dict[str, set[str]] = {}
+    source_stems: dict[str, set[str]] = {}
+    for src_path in files:
+        src = str(src_path)
+        stems = _imported_stems(texts.get(src, ""), src_path.suffix)
+        source_stems[src] = stems
+        for stem in stems:
+            stem_importers.setdefault(stem, set()).add(src)
+
+    adjacency = {str(path): set() for path in files}
+    unresolved: list[dict] = []
+    ambiguous: list[dict] = []
+    for src, stems in source_stems.items():
+        for stem in sorted(stems):
+            targets = sorted(target for target in by_stem.get(stem, []) if target != src)
+            if not targets:
+                unresolved.append({"source": src, "stem": stem})
+                continue
+            if len(targets) > 1:
+                ambiguous.append({"source": src, "stem": stem, "targets": targets})
+            adjacency[src].update(targets)
+
+    return {
+        "stem_importers": stem_importers,
+        "adjacency": adjacency,
+        "unresolved": unresolved,
+        "ambiguous": ambiguous,
+    }
+
+
+def build_import_graph(files: list[Path]) -> dict:
+    """Expose the canonical relative-import stem graph without changing seals."""
+    texts = _read_texts(files)
+    evidence = _import_evidence(files, texts)
+    return {
+        "adjacency": {node: sorted(targets) for node, targets in evidence["adjacency"].items()},
+        "unresolved": evidence["unresolved"],
+        "ambiguous": evidence["ambiguous"],
+    }
+
+
 def build_index(
     files: list[Path],
     root: Path,
@@ -196,14 +276,10 @@ def build_index(
 ) -> dict:
     """Compute N:M C:D I:O for every file. Fan-in via one inverted-index pass."""
     index: dict[str, dict] = {}
-    texts: dict[str, str] = {}
+    texts = _read_texts(files)
 
     for path in files:
-        try:
-            text = path.read_text(encoding="utf-8")
-        except OSError:
-            text = ""
-        texts[str(path)] = text
+        text = texts[str(path)]
         ext = path.suffix
         working = _strip_seal(text.splitlines(), ext)
         if ext == ".py":
@@ -222,27 +298,8 @@ def build_index(
             "fan_out": fan_out, "fan_in": 0, "endpoints": endpoints,
         }
 
-    # inverted import index: stem -> importer files (relative imports only)
-    stem_importers: dict[str, set[str]] = {}
-    for src_path in files:
-        src_str = str(src_path)
-        src_ext = src_path.suffix
-        for line in texts.get(src_str, "").splitlines():
-            s = line.strip()
-            if src_ext == ".py":
-                m = re.match(r"from\s+([.]+[\w.]*)\s+import", s)
-                if m:
-                    parts = [p for p in m.group(1).split(".") if p]
-                    if parts:
-                        stem_importers.setdefault(parts[-1], set()).add(src_str)
-            elif src_ext in (".ts", ".tsx"):
-                m = re.match(r"""\s*import\s+.*from\s+['"]([.][^'"]+)['"]""", s)
-                if m:
-                    seg = m.group(1).rstrip("/").split("/")[-1]
-                    stem = re.sub(r"\.\w+$", "", seg)
-                    if stem:
-                        stem_importers.setdefault(stem, set()).add(src_str)
-
+    evidence = _import_evidence(files, texts)
+    stem_importers = evidence["stem_importers"]
     for path in files:
         importers = stem_importers.get(path.stem, set()) - {str(path)}
         index[str(path)]["fan_in"] = len(importers)
@@ -348,4 +405,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=264:34 imports_exports=7:4 calls_definitions=99:17
+# ratios: loc_comments=307:38 imports_exports=7:5 calls_definitions=117:21

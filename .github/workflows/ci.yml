@@ -24,7 +24,7 @@ jobs:
           git -C "$EDCM_CHECKOUT" init
           git -C "$EDCM_CHECKOUT" fetch --depth 1 https://github.com/The-Interdependency/edcm.git ddc89a97ebbcf0a5863dad6e633b01b520e9bccf
           git -C "$EDCM_CHECKOUT" checkout --detach FETCH_HEAD
-          python gonol-build/check_edcm_boundary.py "$EDCM_CHECKOUT"
+          python tools/check_edcm_boundary.py "$EDCM_CHECKOUT"
       - name: Skill library drift
         run: python tools/check_skill_lib_drift.py --warnings-fail
       - name: Skill compliance

@@ -5,7 +5,7 @@
 #   module_kind: instrument
 #   summary: parses canonical line-comment metadata without executing inspected source
 #   owner: The Interdependency skill-lib
-#   public_surface: COMMENT_MARKERS, marker_for, parse_text, parse_file, walk_tree, parse_ratios, parse_ratios_file, ratios_placement
+#   public_surface: COMMENT_MARKERS, RATIO_IDS, marker_for, parse_text, parse_file, walk_tree, parse_ratios, parse_ratios_file, ratios_placement
 #   internal_surface: marker and block matching helpers
 #   auth_boundary: none
 #   storage_boundary: read

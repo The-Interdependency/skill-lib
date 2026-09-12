@@ -10,6 +10,8 @@
 from __future__ import annotations
 
 import re
+import json
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -48,7 +50,40 @@ def test_parser_field_contract() -> None:
         checks.assertFalse(marker.exists(), "parsing executed inspected source")
 
 
+# === CHECKS ===
+# id: check_msdmd_typescript_numeric_field_contract
+#   proves: msdmd_typescript_parser_preserves_field_names
+#   call: self::test_typescript_parser_field_contract
+#   requires: python3, node24
+#   timeout: 10
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
+# === END CHECKS ===
+
+
+def test_typescript_parser_field_contract() -> None:
+    """Execute the actual TypeScript parser using Node's native type stripping."""
+    checks = unittest.TestCase()
+    helper = ROOT / "msdmd/parsers/universal.ts"
+    module = parse_file(helper, "MODULE_BUILD")[0]
+    checks.assertEqual("msdmd_typescript_reference_parser", module["id"])
+    checks.assertEqual("msdmd_typescript_parser_preserves_field_names", parse_file(helper, "CONTRACTS")[0]["id"])
+    with tempfile.TemporaryDirectory() as directory:
+        marker = Path(directory) / "executed"
+        source = Path(directory) / "inspected.ts"
+        text = "// === NARRATIVE ===\n// id: source_bound_narrative\n//   evidence_sha256: abc123\n// === END NARRATIVE ===\n"
+        source.write_text(text + 'import {writeFileSync} from "node:fs";\n' + f'writeFileSync({json.dumps(str(marker))}, "executed");\n')
+        script = f"import {{parseText, parseFile}} from {json.dumps(helper.as_uri())};" + f"process.stdout.write(JSON.stringify([parseText({json.dumps(text)}, 'NARRATIVE', '//'),parseFile({json.dumps(str(source))}, 'NARRATIVE')]));"
+        result = subprocess.run(["node", "--input-type=module", "--eval", script], check=True, capture_output=True, text=True)
+        expected = [{"id": "source_bound_narrative", "evidence_sha256": "abc123"}]
+        checks.assertEqual([expected, expected], json.loads(result.stdout))
+        checks.assertFalse(marker.exists(), "TypeScript parsing executed inspected source")
+
+
 class UniversalParserTest(unittest.TestCase):
+    def test_typescript_numeric_field_contract(self) -> None:
+        test_typescript_parser_field_contract()
+
     def test_parse_single_block_with_multiple_entries(self) -> None:
         text = """# === CONTRACTS ===
 # id: first_contract

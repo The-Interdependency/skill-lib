@@ -43,6 +43,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `epac-selection-display/` — exact provisional EPAC target and representation selection with receipt-backed display, status preservation, and a read-only WebMCP handoff boundary
 * `the-interdependency/` — org-wide workflow protocol and usage-guidance doctrine for The Interdependency projects
 * `interdependent-work-graph/` — cross-repository identity, authority, coordination, and shared stack-manifest doctrine
+* `stack-update/` — fail-closed structural stack update protocol; keeps authority, relation, lifecycle, provenance, manifests, BASE records, and work-graph identity coherent in one transaction
 * `project-incubation-graduation/` — incubation, qualification, extraction, release, reconsumption, and implementation-authority graduation doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
@@ -86,6 +87,10 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
   repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
   embeds carry their own copies; re-sync those from their source repos.
+* `The-Interdependency/stack` — receives `stack-update` in the paired stack PR;
+  add it to the active drift matrix after that vendored copy lands on `main` with
+  an exact skill-lib source-commit receipt.
+
 **Archived or superseded** — not active drift consumers:
 
 * `The-Interdependency/edcmbone` — archived; maintained EDCM work lives in `edcm`
@@ -125,6 +130,19 @@ Before assigning a stack-level task to one repository, agents should read:
 ```
 
 Resolve the exact participating repository and evidence-source identities first. Repository boundaries remain authority and provenance boundaries, not agent-attention boundaries.
+
+Before changing the structure of `The-Interdependency/stack` — including participant,
+pin, authority, relation, workspace, BASE, extraction/graduation, or architecture
+projections — agents should read:
+
+```text
+.agents/skills/stack-update/SKILL.md
+```
+
+Load `interdependent-work-graph` with it. Treat the mutation as one coherent
+transaction: update every affected authority/provenance projection, remove superseded
+claims, recompute the work-graph digest, and require the stack consistency checker to
+pass before merge.
 
 Before deciding whether a component born inside a stack, integration, laboratory, or incubator repository should become an independent repository/package, or before extracting, publishing, reconsuming, or declaring such a component graduated, agents should read:
 

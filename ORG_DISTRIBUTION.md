@@ -80,6 +80,7 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/ptcna`
 * `The-Interdependency/pubskill-lib`
 * `The-Interdependency/epac`
+* `The-Interdependency/stack`
 
 **Targets not in the drift matrix** (do not vendor a top-level subset yet, so
 `--require-vendored` would fail them):
@@ -87,9 +88,6 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
   repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
   embeds carry their own copies; re-sync those from their source repos.
-* `The-Interdependency/stack` — receives `stack-update` in the paired stack PR;
-  add it to the active drift matrix after that vendored copy lands on `main` with
-  an exact skill-lib source-commit receipt.
 
 **Archived or superseded** — not active drift consumers:
 

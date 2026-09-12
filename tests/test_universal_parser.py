@@ -1,11 +1,11 @@
 # === CHECKS ===
 # id: check_msdmd_python_numeric_field_contract
 #   proves: msdmd_python_parser_preserves_field_names
-#   call: self::UniversalParserTest.test_parse_numeric_snake_case_field
+#   call: self::test_parser_field_contract
 #   requires: python3
 #   timeout: 10
-#   mutates: none
-#   cleanup: none
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
 # === END CHECKS ===
 from __future__ import annotations
 
@@ -25,6 +25,27 @@ from msdmd.parsers.universal import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_parser_field_contract() -> None:
+    """No-argument CHECKS witness, also executed by the unittest suite."""
+    checks = unittest.TestCase()
+    helper = ROOT / "msdmd/parsers/universal.py"
+    module = parse_file(helper, "MODULE_BUILD")[0]
+    checks.assertEqual("msdmd_python_reference_parser", module["id"])
+    checks.assertIn("COMMENT_MARKERS", module["public_surface"].split(", "))
+    checks.assertEqual("read", module["storage_boundary"])
+    checks.assertEqual("read", module["user_data_boundary"])
+    checks.assertEqual("msdmd_python_parser_preserves_field_names", parse_file(helper, "CONTRACTS")[0]["id"])
+    with tempfile.TemporaryDirectory() as directory:
+        marker = Path(directory) / "executed"
+        source = Path(directory) / "inspected.py"
+        text = "# === NARRATIVE ===\n# id: source_bound_narrative\n#   evidence_sha256: abc123\n# === END NARRATIVE ===\n"
+        source.write_text(text + "from pathlib import Path\n" + f"Path({str(marker)!r}).write_text('executed')\n")
+        expected = [{"id": "source_bound_narrative", "evidence_sha256": "abc123"}]
+        checks.assertEqual(expected, parse_text(text, "NARRATIVE"))
+        checks.assertEqual(expected, parse_file(source, "NARRATIVE"))
+        checks.assertFalse(marker.exists(), "parsing executed inspected source")
 
 
 class UniversalParserTest(unittest.TestCase):
@@ -67,18 +88,7 @@ class UniversalParserTest(unittest.TestCase):
         )
 
     def test_parse_numeric_snake_case_field(self) -> None:
-        helper = ROOT / "msdmd/parsers/universal.py"
-        self.assertEqual("msdmd_python_reference_parser", parse_file(helper, "MODULE_BUILD")[0]["id"])
-        self.assertEqual("msdmd_python_parser_preserves_field_names", parse_file(helper, "CONTRACTS")[0]["id"])
-        text = """# === NARRATIVE ===
-# id: source_bound_narrative
-#   evidence_sha256: abc123
-# === END NARRATIVE ===
-"""
-        self.assertEqual(
-            [{"id": "source_bound_narrative", "evidence_sha256": "abc123"}],
-            parse_text(text, "NARRATIVE"),
-        )
+        test_parser_field_contract()
 
     def test_parse_typescript_comment_marker(self) -> None:
         text = """// === CAPABILITIES ===

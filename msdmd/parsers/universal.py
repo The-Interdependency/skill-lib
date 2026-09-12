@@ -5,12 +5,12 @@
 #   module_kind: instrument
 #   summary: parses canonical line-comment metadata without executing inspected source
 #   owner: The Interdependency skill-lib
-#   public_surface: marker_for, parse_text, parse_file, walk_tree, parse_ratios, parse_ratios_file, ratios_placement
+#   public_surface: COMMENT_MARKERS, marker_for, parse_text, parse_file, walk_tree, parse_ratios, parse_ratios_file, ratios_placement
 #   internal_surface: marker and block matching helpers
 #   auth_boundary: none
-#   storage_boundary: read caller-selected files
+#   storage_boundary: read
 #   network_boundary: none
-#   user_data_boundary: read caller-selected source text
+#   user_data_boundary: read
 #   admin_only: false
 #   tests: tests/test_universal_parser.py
 #   rollout: exact-pinned reference parser propagation

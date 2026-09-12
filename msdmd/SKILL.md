@@ -146,6 +146,13 @@ A reference implementation in pure stdlib Python lives at
 Both commit to zero non-stdlib dependencies so you can copy them into
 any project.
 
+The Python reference helper owns its `MODULE_BUILD` and field-preservation
+`CONTRACTS` beside the implementation. A consumer that executes this vendored
+helper in its contract audit should reconcile those exact dependency declarations
+and provide a local resolving `CHECKS` witness. The dependency's canonical owner
+and exact source identity remain explicit; local execution does not transfer
+parser ownership to the consumer.
+
 Extension detection refuses ambiguous suffixes rather than sniffing content.
 For example, `.m` can mean Objective-C or MATLAB/Octave and therefore has no
 automatic marker. A caller that already knows the language may still call

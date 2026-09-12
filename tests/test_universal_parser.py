@@ -1,3 +1,12 @@
+# === CHECKS ===
+# id: check_msdmd_python_numeric_field_contract
+#   proves: msdmd_python_parser_preserves_field_names
+#   call: self::UniversalParserTest.test_parse_numeric_snake_case_field
+#   requires: python3
+#   timeout: 10
+#   mutates: none
+#   cleanup: none
+# === END CHECKS ===
 from __future__ import annotations
 
 import re
@@ -58,6 +67,9 @@ class UniversalParserTest(unittest.TestCase):
         )
 
     def test_parse_numeric_snake_case_field(self) -> None:
+        helper = ROOT / "msdmd/parsers/universal.py"
+        self.assertEqual("msdmd_python_reference_parser", parse_file(helper, "MODULE_BUILD")[0]["id"])
+        self.assertEqual("msdmd_python_parser_preserves_field_names", parse_file(helper, "CONTRACTS")[0]["id"])
         text = """# === NARRATIVE ===
 # id: source_bound_narrative
 #   evidence_sha256: abc123

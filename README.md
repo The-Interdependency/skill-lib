@@ -1,11 +1,13 @@
 # skill-lib
 
 A portable library of agent skills built on **msdmd** — Module Self-
-Declared Metadata Markdown — a language-agnostic convention where each
-module declares its own structured metadata in a fenced comment block.
-The reference parsers recognize line-comment syntax across Python, Perl,
-C/C++, Java, JavaScript/TypeScript, Rust, Go, shell, SQL, Erlang, Lisp-family,
-Fortran, Visual Basic, COBOL, and other explicitly registered languages.
+Declared Metadata in Markdown. MSDMD consumes metadata already expressed in
+native code, documentation, manifests, schemas, tooling, and evidence formats;
+its own comment blocks supplement information not already expressed adequately.
+The [foundational skill](msdmd/SKILL.md) and
+[convention catalogue](msdmd/references/metadata-conventions.md) define the
+native-first contract. The shipped collector currently implements the narrower
+MSDMD-block path; listed conventions are not claims of implemented readers.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a
@@ -24,17 +26,17 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every metadata-block skill in this lib depends on it. |
-| [`doc-build/`](doc-build/SKILL.md) | Applies msdmd → documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths and anchors, reports stale docs, and surfaces visible gaps. |
-| [`cap-build/`](cap-build/SKILL.md) | Applies msdmd → capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
-| [`deps-build/`](deps-build/SKILL.md) | Applies msdmd → dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs, detects unresolved edges, and reports cycles. |
-| [`owner-build/`](owner-build/SKILL.md) | Applies msdmd → module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
-| [`test-build/`](test-build/SKILL.md) | Applies msdmd → contract evidence. Source modules declare behavior obligations in `# === CONTRACTS ===`; test modules declare executable witnesses in `# === CHECKS ===`; audit reconciles the witness list against the obligation list. |
-| [`meta-module-build/`](meta-module-build/SKILL.md) | Applies msdmd → metadata-first module scaffolding. Each module declares its build manifest in a `# === MODULE_BUILD ===` block before implementation drifts into unscoped patches. |
-| [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Applies msdmd → runtime boundary declarations. Modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The shipped collector remains block-only pending native-reader implementation. |
+| [`doc-build/`](doc-build/SKILL.md) | Applies native-first msdmd to documentation comments and source-linked documents; supplemental `DOCS` entries cover remaining obligations. Reader support and missing information stay distinct. |
+| [`cap-build/`](cap-build/SKILL.md) | Consumes native signatures, exports and API schemas; supplemental `CAPABILITIES` entries add otherwise unexpressed intent. Declared surfaces are not verified behavior. |
+| [`deps-build/`](deps-build/SKILL.md) | Consumes native imports, manifests and build metadata at their owning scopes; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
+| [`owner-build/`](owner-build/SKILL.md) | Consumes provider-specific native ownership/review rules; supplemental `OWNERS` entries add missing stewardship information. Review assignment does not automatically establish operational ownership. |
+| [`test-build/`](test-build/SKILL.md) | Consumes supported native obligations and witnesses or supplemental `CONTRACTS` / `CHECKS`; preserves source/test ownership, explicit linkage and no-exec audits. Native evidence readers remain a contract. |
+| [`meta-module-build/`](meta-module-build/SKILL.md) | Consumes native manifests, schemas and planning records before requesting supplemental `MODULE_BUILD` information. Boundary, test, rollout and rollback obligations remain required. |
+| [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Consumes native permission, configuration and effect declarations before supplemental `BOUNDARIES` information. Declared controls are not verified enforcement. |
 | [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each computer-covered source module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block; a valid line-1 shebang may precede opening RATIOS; JSON/Markdown are out of scope); the reference `ratios_check.py` recomputes Python values and checks for drift and misplacement. |
 | [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
-| [`llms-build/`](llms-build/SKILL.md) | Applies msdmd → canonical root `llms.txt`. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them, writes `llms.txt`, and reports drift. |
+| [`llms-build/`](llms-build/SKILL.md) | Native-first instruction-publication contract; shipped `python -m llms.build` still generates root `llms.txt` from existing `LLMS` blocks only. Native readers remain unimplemented. |
 | [`typed-meta-frontend/`](typed-meta-frontend/SKILL.md) | Applies msdmd-aligned backend metadata → TypeScript self-building frontend. The UI discovers every module, displays its living spec, exposes every declared editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
 | [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
 | [`domain-claims/`](domain-claims/SKILL.md) | Domain-first lexical and semantic governance. Before a word becomes a theorem term, ontology primitive, schema field, encoding label, or other control surface, establish the domain-qualified sense, scope, exclusions, collision status, and standing that later provenance may attach to. Independent of msdmd. |
@@ -189,21 +191,28 @@ directory or package.| ∆|
 
 ## The core idea
 
-Most "keep docs/tests/configs in sync with code" attempts rot because the
-contract lives in a separate file from the code it describes. Anyone can
-delete the code and forget the doc; the lie persists.
+**Consume declarations where they already live; do not demand a second copy.**
+A docstring can own symbol documentation, a package manifest can own package
+metadata, and a native ownership file can own review rules. MSDMD preserves
+source identity and scope while making this information available to shared
+collection consumers. Supplemental MSDMD blocks express remaining obligations.
 
-msdmd inverts this: the contract lives **in the same file as the code that
-implements it**, in a structured comment block. A meta-runner walks the
-tree, parses every block, and acts on it. Modules without the relevant
-block surface as visible coverage gaps in the runner output. Coverage is
-observable, not implicit.
+Native-first coverage measures required information, not compulsory block
+adoption. Missing blocks, genuinely missing information, unsupported readers,
+conflicting declarations, and unverified behavior remain separate findings.
+The affected application skills and their load-bearing descriptions apply the
+same native-first coverage rule without removing their semantic obligations.
 
-The same convention covers tests, docs, capability registries, dependency
-topologies, ownership manifests — anywhere a module needs to declare
-something structured about itself for an external tool to read.
+The current universal parsers and `msdmd/collect.py` remain block readers.
+Native ingestion and the versioned native-capable collection schema are explicit
+implementation work; the skill revision alone does not implement them.
+`skills.json` keeps the shipped collector discoverable as `runnable`, with
+`runner_scope: msdmd-blocks-only`, while `native_ingestion` is separately marked
+`contract` with no runner. The generic collector still lacks qualified edge
+identities and duplicate-ID diagnostics; its prototype graph is not an identity
+validation result. See the [helper limitations](msdmd/SKILL.md#shipped-helper-limitations).
 
-## Block syntax (universal)
+## Supplemental block syntax (universal)
 
 ```python
 # === <BLOCK_NAME> ===
@@ -225,17 +234,20 @@ authoritative spec.
 
 Skills come in two kinds. Pick the right one for what you're adding.
 
-**Metadata-block skills** apply the `msdmd` convention to a new block
-name (`doc-build`, `cap-build`, `deps-build`, `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
+**Metadata-block skills** apply `msdmd` to a domain's required information,
+native owning sources and optional supplemental syntax (`doc-build`, `cap-build`,
+`deps-build`, `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
 `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend` are the existing examples).
+The historical kind label does not make custom blocks compulsory.
 To add one:
 
-1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`, `LLMS`).
-2. Decide the field schema (which fields are required, which optional).
-3. Specify the runner/executor contract, or write a thin executor that takes
-   parsed entries from `msdmd/parsers/universal.py` or an equivalent parser and does something with
-   them.
-4. Author a `SKILL.md` that documents the convention and runner behavior.
+1. Define the required information and its owning scopes; inventory existing
+   native conventions before requesting supplemental declarations.
+2. Specify native-reader mappings and support boundaries. Pick a `<BLOCK_NAME>`
+   only for information that needs an MSDMD-specific declaration.
+3. Specify or implement extraction, reconciliation, information-coverage checks,
+   and the executor. Keep the universal parser for the supplemental block path.
+4. Author a `SKILL.md` with usage guidance, reader-status boundaries, and tests.
 
 `test-build/` is the canonical worked example. `llms-build/` is the worked
 example for a metadata-block skill that also ships a stdlib command module.

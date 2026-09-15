@@ -1,11 +1,13 @@
 # skill-lib
 
 A portable library of agent skills built on **msdmd** — Module Self-
-Declared Metadata Markdown — a language-agnostic convention where each
-module declares its own structured metadata in a fenced comment block.
-The reference parsers recognize line-comment syntax across Python, Perl,
-C/C++, Java, JavaScript/TypeScript, Rust, Go, shell, SQL, Erlang, Lisp-family,
-Fortran, Visual Basic, COBOL, and other explicitly registered languages.
+Declared Metadata in Markdown. MSDMD consumes metadata already expressed in
+native code, documentation, manifests, schemas, tooling, and evidence formats;
+its own comment blocks supplement information not already expressed adequately.
+The [foundational skill](msdmd/SKILL.md) and
+[convention catalogue](msdmd/references/metadata-conventions.md) define the
+native-first contract. The shipped collector currently implements the narrower
+MSDMD-block path; listed conventions are not claims of implemented readers.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a
@@ -24,7 +26,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational convention. Defines the block syntax, parser contract, and visibility (gap-reporting) requirement. Every metadata-block skill in this lib depends on it. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The shipped collector remains block-only pending native-reader implementation. |
 | [`doc-build/`](doc-build/SKILL.md) | Applies msdmd → documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths and anchors, reports stale docs, and surfaces visible gaps. |
 | [`cap-build/`](cap-build/SKILL.md) | Applies msdmd → capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
 | [`deps-build/`](deps-build/SKILL.md) | Applies msdmd → dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs, detects unresolved edges, and reports cycles. |
@@ -189,21 +191,23 @@ directory or package.| ∆|
 
 ## The core idea
 
-Most "keep docs/tests/configs in sync with code" attempts rot because the
-contract lives in a separate file from the code it describes. Anyone can
-delete the code and forget the doc; the lie persists.
+**Consume declarations where they already live; do not demand a second copy.**
+A docstring can own symbol documentation, a package manifest can own package
+metadata, and a native ownership file can own review rules. MSDMD preserves
+source identity and scope while making this information available to shared
+collection consumers. Supplemental MSDMD blocks express remaining obligations.
 
-msdmd inverts this: the contract lives **in the same file as the code that
-implements it**, in a structured comment block. A meta-runner walks the
-tree, parses every block, and acts on it. Modules without the relevant
-block surface as visible coverage gaps in the runner output. Coverage is
-observable, not implicit.
+Native-first coverage measures required information, not compulsory block
+adoption. Missing blocks, genuinely missing information, unsupported readers,
+conflicting declarations, and unverified behavior remain separate findings.
+The foundational skill supersedes older block-only coverage examples across
+the MSDMD family without removing application-specific semantic obligations.
 
-The same convention covers tests, docs, capability registries, dependency
-topologies, ownership manifests — anywhere a module needs to declare
-something structured about itself for an external tool to read.
+The current universal parsers and `msdmd/collect.py` remain block readers.
+Native ingestion and the versioned native-capable collection schema are explicit
+implementation work; the skill revision alone does not implement them.
 
-## Block syntax (universal)
+## Supplemental block syntax (universal)
 
 ```python
 # === <BLOCK_NAME> ===
@@ -230,12 +234,13 @@ name (`doc-build`, `cap-build`, `deps-build`, `owner-build`, `test-build`, `meta
 `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend` are the existing examples).
 To add one:
 
-1. Pick a `<BLOCK_NAME>` (e.g. `DOCS`, `CAPABILITIES`, `OWNERS`, `LLMS`).
-2. Decide the field schema (which fields are required, which optional).
-3. Specify the runner/executor contract, or write a thin executor that takes
-   parsed entries from `msdmd/parsers/universal.py` or an equivalent parser and does something with
-   them.
-4. Author a `SKILL.md` that documents the convention and runner behavior.
+1. Define the required information and its owning scopes; inventory existing
+   native conventions before requesting supplemental declarations.
+2. Specify native-reader mappings and support boundaries. Pick a `<BLOCK_NAME>`
+   only for information that needs an MSDMD-specific declaration.
+3. Specify or implement extraction, reconciliation, information-coverage checks,
+   and the executor. Keep the universal parser for the supplemental block path.
+4. Author a `SKILL.md` with usage guidance, reader-status boundaries, and tests.
 
 `test-build/` is the canonical worked example. `llms-build/` is the worked
 example for a metadata-block skill that also ships a stdlib command module.

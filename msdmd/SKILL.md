@@ -88,7 +88,9 @@ example, does not by itself supply a behavioral contract or a passing witness.
    actual supported subset. Report exact inputs, commands, outcomes, changes,
    and remaining `hmmm`. A catalogue entry alone earns no support claim.
 
-## Reader and collection contract
+## The parser contract
+
+### Native readers and collection
 
 A native reader is a pure extraction boundary over supplied source bytes and
 explicit context. Its manifest states detection, supported grammar/features,
@@ -113,7 +115,9 @@ with explicit migration and consumer negotiation. The existing `MsdmdCollection`
 remains a block-only format until that implementation lands. Refuse silent
 projection when an old consumer would lose required information.
 
-## Information coverage, not compulsory annotation
+## The runner protocol
+
+### Information coverage, not compulsory annotation
 
 A missing `DOCS` block is a **block-adoption observation**, not proof of missing
 documentation. A missing `OWNERS` block does not establish an unowned file before
@@ -135,7 +139,9 @@ parse/schema errors, or unresolved required-field conflicts. Optional unknowns
 remain visible without necessarily blocking unrelated work. A non-strict
 inventory may complete successfully while clearly reporting incomplete coverage.
 
-## Supplemental block syntax and parser contract
+## Block syntax
+
+### Supplemental MSDMD declarations
 
 The existing block syntax remains supported; its purpose is supplementation,
 not redeclaration of everything already present in native syntax.
@@ -151,7 +157,8 @@ not redeclaration of everything already present in native syntax.
 
 Source modules own `CONTRACTS` obligations. Test modules own `CHECKS` witnesses;
 `proves` produces `claims_proves`, not an automatic proof. Keep `call` with the
-witness, not the source obligation. See [test-build](../test-build/SKILL.md).
+witness, not the source obligation. See [test-build](../test-build/SKILL.md)
+and the [CONTRACTS/CHECKS doctrine](../doctrine/msdmd-checks.md).
 
 The block parser contract is unchanged: parse the requested block type from
 text into all matching flat string-valued entries; preserve declared fields;
@@ -172,6 +179,8 @@ block comments, docstrings, XML documentation, or manifest syntax require their
 own readers, not invalid adaptations of line-comment fences. Ambiguous suffixes
 such as `.m` require explicit language context. Preserve valid first-line
 shebangs and the separate [RATIOS boundary contract](../ratios/SKILL.md).
+
+## Field naming conventions
 
 Reserved fields retain their existing meanings: `id` identifies the entry;
 `class` groups it; `summary` describes it; `call` addresses a witness;
@@ -214,7 +223,9 @@ operational ownership, or proof of a team's live permissions.
 With only the currently shipped block collector, this repository cannot receive
 a native-information coverage verdict. Report that reader gap explicitly.
 
-## Existing helper usage
+## Repo collection point and visualizer
+
+### Existing helper usage
 
 These commands collect and visualize **MSDMD blocks only**:
 
@@ -223,6 +234,7 @@ python -m msdmd.collect --root . --repo example --out example_msdmd.ts
 python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 ```
 
+The existing collection's `gaps` field records expected-block gaps only.
 `--expected-block` measures block presence, not native metadata completeness.
 Do not use its output as the new information-coverage gate. Repo-level collection
 points such as `<reponame>_msdmd.ts` remain generated consumers of owning sources,

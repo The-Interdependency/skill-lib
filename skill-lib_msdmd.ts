@@ -2,11 +2,12 @@
 import { defineMsdmdCollection } from "./msdmd/collection";
 
 // skill-lib is the canonical source of the msdmd family, not a normal consumer.
-// This collection point is intentionally policy-heavy: it records the source
-// surfaces other repos depend on, and it names the remaining completion gaps
-// so visualizers have a root node to render.
+// This hand-curated collection point remains an explicit schema-1 compatibility
+// artifact. New collection runs use schema 2 through `python -m msdmd.collect`;
+// schema 1 cannot represent their native facts, provenance, or diagnostics.
 
 export default defineMsdmdCollection({
+  schema_version: "1.0.0",
   repo: "The-Interdependency/skill-lib",
   declarations: [
     {
@@ -165,8 +166,8 @@ export default defineMsdmdCollection({
   gaps: [
     {
       file: "skill-lib_msdmd.ts",
-      missing: ["local generated refresh"],
-      reason: "Still manually curated from known canonical surfaces; regenerate with python -m msdmd.collect after local checkout verification.",
+      missing: ["schema-2 publication decision"],
+      reason: "This checked-in file is retained for schema-1 consumers; current-head schema-2 collection is verified by tests/test_native_collection.py without silently replacing this compatibility artifact.",
     },
     {
       file: "ORG_DISTRIBUTION.md",

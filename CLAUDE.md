@@ -135,8 +135,9 @@ Two kinds:
 | `__init__.py` | — | Package marker / docstring. |
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
-`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
-generator prototype that emits that shape from parsed module-local blocks.
+`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` emits schema-2
+native facts plus supplemental blocks, and `msdmd/readers.py` publishes the
+exact static-reader manifests. Schema 1 remains explicit block-only compatibility.
 `msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
 TypeScript collection points.
 

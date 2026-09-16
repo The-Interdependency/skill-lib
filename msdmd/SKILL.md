@@ -21,12 +21,16 @@ This is the foundational metadata-block skill, expanded to native-first
 interoperability; it owns the common ingestion contract, not every language's
 syntax. Ordinary prose editing with no metadata contract is a non-trigger.
 
-**Implementation boundary:** at the reviewed source revision
-`22c2c5702d14fb4b0faeb717777ecab2665770a1`, `collect.py` implements MSDMD-block
-collection and `collection.ts` represents block-origin declarations. The native
-reader, provenance, conflict, and information-coverage requirements below are
-contracts for implementation, not capabilities supplied by this document.
-Existing helpers remain useful for their narrower, explicitly named purpose.
+**Implementation boundary:** `collect.py` now emits native-capable collection
+schema `2.0.0`; `readers.py` publishes the exact tested static-reader manifests;
+and `collection.ts` keeps schema 1 and schema 2 distinct. Shipped support covers
+Python syntax/docstrings/imports, JSON, TOML, flat Markdown frontmatter, a
+fixture-bounded safe YAML subset, a partial JavaScript/TypeScript static subset,
+the RATIOS boundary line, GitHub CODEOWNERS, shell declarations, systemd units,
+Git ignore rules, Python requirements files, bounded license-text
+detection, SVG document metadata, root `llms.txt` structure, and supplemental
+MSDMD blocks. The wider convention catalogue remains an
+open discovery contract, not a claim that every listed convention is readable.
 
 ## Doctrine
 
@@ -110,10 +114,11 @@ source. Sensitive material stays access-controlled or explicitly redacted;
 source preservation does not require publishing credentials or private content.
 
 Do not repurpose `MsdmdDeclaration.block` to mean JSDoc, TOML, or any other
-non-block convention. Introduce a versioned native-capable collection schema
-with explicit migration and consumer negotiation. The existing `MsdmdCollection`
-remains a block-only format until that implementation lands. Refuse silent
-projection when an old consumer would lose required information.
+non-block convention. Schema 2 stores native inputs as typed `facts` and keeps
+supplemental block `declarations` separate. The existing `MsdmdCollection`
+schema-1 type remains block-only; new consumers explicitly use
+`MsdmdCollectionV2` / `defineMsdmdCollectionV2`. Refuse silent projection when
+an old consumer would lose required information.
 
 ## The runner protocol
 
@@ -173,12 +178,12 @@ IDs to be unique within one block type in one owning file; multiple matching
 blocks concatenate. A conforming identity validator must diagnose conflicting
 IDs and qualify collection addresses by repository, file, block and entry.
 
-**That validation is not implemented by the shipped helpers.** The generic
-collector does not diagnose duplicate IDs, and its edge `from` and `source_id`
-values are bare entry IDs. The visualizer can merge distinct declarations when
-IDs are reused across files or block types. Do not treat a successful collection
-exit or its graph as evidence of identity validity. See the
-[shipped helper limitations](#shipped-helper-limitations).
+Schema 2 diagnoses duplicate IDs within one block type and owning file, emits
+unresolved identity conflicts, and qualifies declaration and source-edge
+addresses by repository, file, block, and entry. Same IDs in different files or
+block types remain distinct. Ambiguous bare target references remain visible;
+only a globally unique entry ID is resolved automatically. Explicit schema-1
+compatibility retains its historical bare-ID shape and supplies no such guarantee.
 
 Use the helpers' matching `COMMENT_MARKERS` registries for supported repeated
 line-comment syntax; do not duplicate their language lists in runners. Native
@@ -227,53 +232,62 @@ blocks need to be inserted. The return annotation is a declaration, not a test
 result. CODEOWNERS review responsibility is not automatically authorship,
 operational ownership, or proof of a team's live permissions.
 
-With only the currently shipped block collector, this repository cannot receive
-a native-information coverage verdict. Report that reader gap explicitly.
+The shipped Python, TOML and CODEOWNERS readers collect these declarations with
+their distinct scopes and standing. They still do not issue a complete
+native-information coverage verdict without an explicit obligation policy;
+report that policy boundary rather than manufacturing completeness.
 
 ## Repo collection point and visualizer
 
 ### Existing helper usage
 
-`skills.json` retains `status: runnable` and `runner: msdmd/collect.py` for
-shipped block collection. `runner_scope: msdmd-blocks-only` bounds that capability;
-`native_ingestion.status: contract` with no runner separates the unimplemented
-native-reader contract. Neither index field upgrades helper behavior.
+`skills.json` records schema 2 native-and-block collection as runnable and names
+the implemented reader IDs. The runner manifests inside each result remain the
+authority for exact versions, feature subsets, limitations, and run status.
 
-These commands collect and visualize **MSDMD blocks only**:
+Collect and visualize schema 2:
 
 ```bash
 python -m msdmd.collect --root . --repo example --out example_msdmd.ts
 python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 ```
 
-The existing collection's `gaps` field records expected-block gaps only.
+Use `--strict` when invalid syntax or identity diagnostics must fail the command.
+Use `--legacy-blocks-only` only for a consumer that explicitly negotiates schema
+1; native facts cannot be projected into that format.
+
+The collection's `gaps` field records expected-block adoption gaps only.
 `--expected-block` measures block presence, not native metadata completeness.
 Do not use its output as the new information-coverage gate. Repo-level collection
 points such as `<reponame>_msdmd.ts` remain generated consumers of owning sources,
-not editable replacements for them. No native-ingestion command is claimed here.
+not editable replacements for them.
 
-### Shipped helper limitations
+### Shipped reader boundary
 
-The declarations preserve `file`, `block` and `id`, but the current edge format
-omits source-file identity and uses bare IDs; the Mermaid view can collapse
-cross-file or cross-block identities. Duplicate IDs inside one file/block are
-emitted without diagnostics. Qualified addresses and duplicate-ID validation
-are required future validator behavior, not shipped guarantees.
+Python block extraction is syntax-aware, so block-shaped examples inside Python
+strings do not become declarations. Other line-comment languages still use the
+universal text grammar and therefore do not yet claim full string/comment
+discrimination. The YAML and JavaScript/TypeScript readers are explicitly partial. Unsupported extensions,
+excluded files, parse failures, dynamic Python exports, ambiguous edge targets,
+and reader applicability remain visible in discovery or diagnostics.
+Files named `*_msdmd.ts` are outside the collector's source-input scope,
+preventing a collection from becoming evidence for itself or changing its own
+next generation merely by existing.
 
-Until implemented and tested with an explicit compatible schema/consumer
-transition, use these helpers only for the disclosed inventory/prototype scope.
-An identity-sensitive audit needs an independent, capable validator and an
-unambiguous target-resolution policy. Without them, that required scope is
-`hmmm`; a zero exit code cannot make it pass. This skill revision does not repair
-the collector or visualizer runtime.
+Schema 2 collects information; it does not supply every application's obligation
+policy, framework-specific resolver, behavior verifier, provider permission
+check, or precedence rule. `coverage.information_availability` and
+`coverage.verified_behavior` therefore remain not evaluated unless an owning
+application layer supplies those policies.
 
 ## Validation and acceptance
 
 The [acceptance matrix](references/metadata-conventions.md#acceptance-matrix)
-defines the native-reader tests. Its decisive case is an unchanged repository
-with supported native conventions and zero MSDMD blocks: metadata is collected
-accurately, unknowns stay visible, and no false missing-information findings are
-manufactured. Pair it with cases where required information really is missing.
+defines the full native-reader program. `tests/test_native_collection.py`
+executes the shipped subset's decisive cases: native-only input with zero MSDMD
+blocks, qualified same-name identities, duplicate rejection, Python string
+discrimination, invalid input, deterministic replay, and collection against the
+current skill-lib tree. Unimplemented catalogue rows remain `hmmm`.
 
 For a skill/index edit, run the repository's editorial gates separately:
 
@@ -302,17 +316,16 @@ ratios/LLMS/frontend skill; preserve that application's semantic obligations.
 
 ## Versioning and migration
 
-This revision supersedes the block-only ingestion/coverage doctrine, not the
-stable block grammar. Keep native-reader versions, convention versions, collection
-schema versions, and application versions distinct. Ship schema migration,
-consumer updates, and tests together when native ingestion is implemented;
-remove superseded routes rather than leaving contradictory active defaults.
+This revision supersedes block-only default collection, not the stable block
+grammar. Schema 2 is the native-capable default. Schema 1 remains an explicit
+compatibility route through `--legacy-blocks-only`; it cannot accept native facts.
+Keep native-reader versions, convention versions, collection schema versions,
+and application versions distinct.
 
 ## hmmm
 
-The skill now requires native-first ingestion across all applicable conventions.
-The reviewed collector and collection schema still implement the narrower block
-path without qualified edge identities or duplicate-ID diagnostics. Native
-readers, identity validation, the versioned collection migration and their
-executable acceptance fixtures remain to be implemented and verified. Unknown conventions
-remain visible extensions of scope, not imaginary completed support.
+The shipped readers cover the exact subsets named above, not the entire open
+catalogue. Application-specific completeness policies, semantic conflict
+precedence, framework/API schema readers, non-Python string-aware block parsing,
+and independently verified behavior remain `hmmm`. Unknown conventions remain
+visible extensions of scope, not imaginary completed support.

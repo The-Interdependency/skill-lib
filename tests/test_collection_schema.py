@@ -34,6 +34,11 @@ class CollectionSchemaTest(unittest.TestCase):
             "MsdmdEdge",
             "MsdmdCollection",
             "defineMsdmdCollection",
+            "MsdmdCollectionV2",
+            "MsdmdNativeFact",
+            "MsdmdReaderManifest",
+            "MsdmdDiagnostic",
+            "defineMsdmdCollectionV2",
         ]:
             with self.subTest(exported=exported):
                 self.assertIn(f"export ", self.source)
@@ -55,7 +60,24 @@ class CollectionSchemaTest(unittest.TestCase):
             "kind: string",
             "source_block: MsdmdBlockName",
             "source_id: string",
-            "edges?: MsdmdEdge[]",
+            "edges?: MsdmdEdgeV1[]",
+        ]:
+            with self.subTest(field=field):
+                self.assertIn(field, self.source)
+
+    def test_native_schema_requires_version_provenance_and_negotiation(self) -> None:
+        for field in [
+            'schema_version: "2.0.0"',
+            "address: string",
+            "source: MsdmdSourceReference",
+            "content_sha256: string",
+            "reader_manifests: MsdmdReaderManifest[]",
+            "facts: MsdmdNativeFact[]",
+            "discovery: MsdmdDiscoveryEntry[]",
+            "conflicts: MsdmdConflict[]",
+            "diagnostics: MsdmdDiagnostic[]",
+            "source_entry_id?: string",
+            "target_resolution:",
         ]:
             with self.subTest(field=field):
                 self.assertIn(field, self.source)

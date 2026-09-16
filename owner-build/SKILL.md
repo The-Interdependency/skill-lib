@@ -10,8 +10,9 @@ who is responsible for a module from the source that owns that responsibility,
 so agents do not invent authority or edit sensitive code without a review path.
 
 Implementation status: this skill defines the `OWNERS` block and runner
-contract. This repo does not currently ship an OWNERS runner script or native
-ownership reader; consuming repos implement and test the applicable mappings.
+contract. The MSDMD schema-2 collector ships ordered GitHub CODEOWNERS rule
+extraction as review assignment only, but no path-applicability or operational-
+ownership policy runner. Consuming repos implement and test those mappings.
 
 Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
 explicit reader-support contracts apply.
@@ -29,8 +30,7 @@ must be explicit in the consuming policy, not guessed by the reader.
 A native declaration needs no duplicate OWNERS block. Unsupported matching,
 unresolved teams and conflicting assignments remain `PENDING` / `hmmm`, not
 proof that a module is unowned. Missing-information findings require completed
-eligible-source inspection with capable readers. No native reader is supplied
-by this skill text.
+eligible-source inspection with capable readers.
 
 ## The block
 
@@ -119,6 +119,6 @@ missing-owner, unsupported-rule, conflict and strict-mode fixtures.
 - Guessing a team from a filename. Unknown is `hmmm`.
 
 hmmm
-- native provider-specific ownership readers remain consuming-repo work
+- non-GitHub provider ownership readers remain consuming-repo work
 - whether strict policy requires operational owners for all modules or only public/sensitive ones
 - how to represent temporary stewardship during incidents

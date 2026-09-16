@@ -6,8 +6,9 @@ native code, documentation, manifests, schemas, tooling, and evidence formats;
 its own comment blocks supplement information not already expressed adequately.
 The [foundational skill](msdmd/SKILL.md) and
 [convention catalogue](msdmd/references/metadata-conventions.md) define the
-native-first contract. The shipped collector currently implements the narrower
-MSDMD-block path; listed conventions are not claims of implemented readers.
+native-first contract. The schema-2 collector ships a bounded set of tested
+static readers; listed conventions outside that manifest remain discovery scope,
+not claims of implementation.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a
@@ -26,7 +27,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The shipped collector remains block-only pending native-reader implementation. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract and schema-2 collector: tested static readers, provenance, qualified identities, diagnostics, discovery accounting, and supplemental block syntax. |
 | [`doc-build/`](doc-build/SKILL.md) | Applies native-first msdmd to documentation comments and source-linked documents; supplemental `DOCS` entries cover remaining obligations. Reader support and missing information stay distinct. |
 | [`cap-build/`](cap-build/SKILL.md) | Consumes native signatures, exports and API schemas; supplemental `CAPABILITIES` entries add otherwise unexpressed intent. Declared surfaces are not verified behavior. |
 | [`deps-build/`](deps-build/SKILL.md) | Consumes native imports, manifests and build metadata at their owning scopes; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
@@ -36,7 +37,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 | [`risk-boundary-build/`](risk-boundary-build/SKILL.md) | Consumes native permission, configuration and effect declarations before supplemental `BOUNDARIES` information. Declared controls are not verified enforcement. |
 | [`ratios/`](ratios/SKILL.md) | Applies msdmd → module composition ratio verification. Each computer-covered source module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block; a valid line-1 shebang may precede opening RATIOS; JSON/Markdown are out of scope); the reference `ratios_check.py` recomputes Python values and checks for drift and misplacement. |
 | [`manifest/`](manifest/SKILL.md) | Living-spec generator (msdmd family). Derives observable repo facts from `pyproject.toml` + the tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
-| [`llms-build/`](llms-build/SKILL.md) | Native-first instruction-publication contract; shipped `python -m llms.build` still generates root `llms.txt` from existing `LLMS` blocks only. Native readers remain unimplemented. |
+| [`llms-build/`](llms-build/SKILL.md) | Native-first instruction-publication contract; shipped `python -m llms.build` still generates root `llms.txt` from existing `LLMS` blocks only. MSDMD native collection does not yet make that application runner native-capable. |
 | [`typed-meta-frontend/`](typed-meta-frontend/SKILL.md) | Applies msdmd-aligned backend metadata → TypeScript self-building frontend. The UI discovers every module, displays its living spec, exposes every declared editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
 | [`canon/`](canon/SKILL.md) | Canonical-source and doctrine maintenance. Helps agents decide what is source-backed canon, proposed canon, or `hmmm` before changing skills or org doctrine. Independent of msdmd. |
 | [`domain-claims/`](domain-claims/SKILL.md) | Domain-first lexical and semantic governance. Before a word becomes a theorem term, ontology primitive, schema field, encoding label, or other control surface, establish the domain-qualified sense, scope, exclusions, collision status, and standing that later provenance may attach to. Independent of msdmd. |
@@ -203,14 +204,20 @@ conflicting declarations, and unverified behavior remain separate findings.
 The affected application skills and their load-bearing descriptions apply the
 same native-first coverage rule without removing their semantic obligations.
 
-The current universal parsers and `msdmd/collect.py` remain block readers.
-Native ingestion and the versioned native-capable collection schema are explicit
-implementation work; the skill revision alone does not implement them.
-`skills.json` keeps the shipped collector discoverable as `runnable`, with
-`runner_scope: msdmd-blocks-only`, while `native_ingestion` is separately marked
-`contract` with no runner. The generic collector still lacks qualified edge
-identities and duplicate-ID diagnostics; its prototype graph is not an identity
-validation result. See the [helper limitations](msdmd/SKILL.md#shipped-helper-limitations).
+`msdmd/collect.py` now emits versioned schema `2.0.0` with typed native facts,
+supplemental declarations, exact source digests, reader manifests, discovery
+accounting, qualified source edges, conflicts and diagnostics. Shipped readers
+cover Python, JSON, TOML, flat Markdown frontmatter, partial safe YAML and
+JavaScript/TypeScript subsets, RATIOS boundary lines, GitHub CODEOWNERS, shell
+declarations, systemd units, Git ignore rules, Python requirements, bounded
+license/SVG metadata, and root `llms.txt` structure. Duplicate IDs within
+one file/block are invalid. Explicit `--legacy-blocks-only` output preserves the
+schema-1 block path for negotiated old consumers; it cannot represent native facts.
+
+Application-specific coverage and verification remain separate. The generic
+collector does not infer that a signature proves behavior, CODEOWNERS establishes
+operational ownership, or a discovered declaration satisfies an unstated policy.
+See the [shipped reader boundary](msdmd/SKILL.md#shipped-reader-boundary).
 
 ## Supplemental block syntax (universal)
 
@@ -292,9 +299,9 @@ behavior, and parser ratio bookends.
   pure-stdlib dependencies; you can copy them anywhere.
 - The repo-level collection point shape lives at `msdmd/collection.ts`;
   consuming repos can import or copy it for `<reponame>_msdmd.ts`.
-- A stdlib collection generator prototype lives at `msdmd/collect.py` and
-  can emit `<reponame>_msdmd.ts` from parsed module-local blocks.
-- A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and
-  can render collection edges and gaps.
+- The stdlib schema-2 collector lives at `msdmd/collect.py`; bounded static
+  readers and their manifests live at `msdmd/readers.py`.
+- `msdmd/visualize.py` renders qualified collection edges, gaps, and invalid
+  diagnostics without collapsing same-named declarations from different files.
 - The `llms-build` runner lives at `llms/build.py` and can generate or check
   root `llms.txt` from `LLMS` blocks.

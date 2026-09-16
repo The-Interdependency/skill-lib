@@ -1,4 +1,4 @@
-# ratios: loc_comments=167:13 imports_exports=5:3 calls_definitions=70:8
+# ratios: loc_comments=190:14 imports_exports=6:3 calls_definitions=85:8
 """Render an msdmd collection as a small Mermaid relationship graph.
 
 The input may be raw JSON, the generated TypeScript shape emitted by
@@ -11,13 +11,16 @@ a ``MsdmdCollection`` and adds gap nodes for visible coverage gaps.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
 
 _SAFE_NODE_RE = re.compile(r"[^A-Za-z0-9_]")
 _IDENT_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
-_CALL_MARKER = "defineMsdmdCollection("
+_COLLECTION_CALL_RE = re.compile(
+    r"export\s+default\s+(?:defineMsdmdCollectionV2|defineMsdmdCollection)\s*\("
+)
 
 
 def _strip_comments(text: str) -> str:
@@ -57,10 +60,10 @@ def _strip_comments(text: str) -> str:
 
 def _extract_payload(text: str, path: Path) -> str:
     """Return the argument of ``defineMsdmdCollection(...)`` in ``text``."""
-    start = text.find(_CALL_MARKER)
-    if start < 0:
+    match = _COLLECTION_CALL_RE.search(text)
+    if match is None:
         raise ValueError(f"{path} is not JSON or a defineMsdmdCollection TypeScript collection point")
-    i = start + len(_CALL_MARKER)
+    i = match.end()
     depth, j, quote = 1, i, ""
     while j < len(text):
         ch = text[j]
@@ -146,8 +149,9 @@ def load_collection(path: Path) -> dict:
 
 
 def _node_id(value: str) -> str:
-    normalized = _SAFE_NODE_RE.sub("_", value).strip("_")
-    return normalized or "hmmm"
+    """Return a collision-resistant Mermaid id for a qualified address."""
+    normalized = _SAFE_NODE_RE.sub("_", value).strip("_")[:32] or "hmmm"
+    return f"{normalized}_{hashlib.sha256(value.encode('utf-8')).hexdigest()[:12]}"
 
 
 def _label(value: str) -> str:
@@ -155,28 +159,42 @@ def _label(value: str) -> str:
 
 
 def render_mermaid(collection: dict) -> str:
-    """Render ``collection`` as Mermaid flowchart text."""
+    """Render schema-1 or schema-2 ``collection`` as Mermaid flowchart text."""
     lines = ["flowchart TD"]
     repo = collection.get("repo", "repo")
-    lines.append(f'  repo["{_label(str(repo))}"]')
+    repo_node = _node_id(f"repository:{repo}")
+    lines.append(f'  {repo_node}["{_label(str(repo))}"]')
 
-    emitted_nodes = {"repo"}
+    emitted_nodes = {repo_node}
+    labels: dict[str, str] = {}
     for declaration in collection.get("declarations", []):
-        node = _node_id(str(declaration["id"]))
+        address = str(declaration.get("address", declaration["id"]))
+        node = _node_id(address)
         label = f'{declaration["id"]}\\n{declaration["block"]}\\n{declaration["file"]}'
+        labels[address] = label
         if node not in emitted_nodes:
             lines.append(f'  {node}["{_label(label)}"]')
-            lines.append(f"  repo --> {node}")
+            lines.append(f"  {repo_node} --> {node}")
             emitted_nodes.add(node)
 
+    for fact in collection.get("facts", []):
+        subject = fact.get("subject", {})
+        address = str(subject.get("address", fact.get("address", "hmmm")))
+        labels.setdefault(
+            address,
+            f'{subject.get("identity", "hmmm")}\\n{subject.get("scope", fact.get("kind", "native"))}\\n{fact.get("source", {}).get("file", "hmmm")}',
+        )
+
     for edge in collection.get("edges", []):
-        source = _node_id(str(edge["from"]))
-        target = _node_id(str(edge["to"]))
+        source_address = str(edge["from"])
+        target_address = str(edge["to"])
+        source = _node_id(source_address)
+        target = _node_id(target_address)
         if source not in emitted_nodes:
-            lines.append(f'  {source}["{_label(str(edge["from"]))}"]')
+            lines.append(f'  {source}["{_label(labels.get(source_address, source_address))}"]')
             emitted_nodes.add(source)
         if target not in emitted_nodes:
-            lines.append(f'  {target}["{_label(str(edge["to"]))}"]')
+            lines.append(f'  {target}["{_label(labels.get(target_address, target_address))}"]')
             emitted_nodes.add(target)
         lines.append(f'  {source} -- "{_label(str(edge["kind"]))}" --> {target}')
 
@@ -185,7 +203,15 @@ def render_mermaid(collection: dict) -> str:
         missing = ", ".join(gap.get("missing", []))
         label = f'{gap.get("file", "hmmm")}\\nmissing: {missing or "hmmm"}'
         lines.append(f'  {node}[["{_label(label)}"]]')
-        lines.append(f"  repo -. gap .-> {node}")
+        lines.append(f"  {repo_node} -. gap .-> {node}")
+
+    for index, diagnostic in enumerate(collection.get("diagnostics", []), start=1):
+        if diagnostic.get("severity") != "error":
+            continue
+        node = f"diagnostic_{index}"
+        label = f'{diagnostic.get("code", "hmmm")}\\n{diagnostic.get("status", "hmmm")}'
+        lines.append(f'  {node}{{"{_label(label)}"}}')
+        lines.append(f"  {repo_node} -. diagnostic .-> {node}")
 
     return "\n".join(lines) + "\n"
 
@@ -206,4 +232,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=167:13 imports_exports=5:3 calls_definitions=70:8
+# ratios: loc_comments=190:14 imports_exports=6:3 calls_definitions=85:8

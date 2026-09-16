@@ -9,8 +9,9 @@ description: Native-first documentation coverage built on msdmd. Consume docstri
 source-owned documentation obligations and their coverage inspectable.
 
 Implementation status: this skill defines the `DOCS` block and runner contract.
-This repo does not currently ship a DOCS runner or native documentation readers;
-consuming repos implement and test the contract against their documentation tree.
+The MSDMD schema-2 collector ships Python PEP 257 and flat Markdown-frontmatter
+readers, but no complete DOCS obligation/link/anchor runner. Consuming repos add
+and test the policies and resolvers their documentation tree requires.
 
 Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
 explicit reader-support contracts apply.
@@ -26,8 +27,8 @@ Policy determines which information each audience/surface actually requires.
 
 Missing descriptions, unresolved readers, broken links and block adoption are
 separate findings. Comments alone do not prove every documentation obligation is
-met; lack of DOCS syntax does not prove documentation is missing. Native readers
-remain implementation work, not capabilities supplied by this skill text.
+met; lack of DOCS syntax does not prove documentation is missing. Reader support
+outside the shipped manifest remains implementation work.
 
 ## The block
 

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from msdmd.collect import collect, render_typescript
+from msdmd.collect import SCHEMA_VERSION, collect, collect_legacy, render_typescript
 
 
 class CollectTest(unittest.TestCase):
@@ -51,83 +51,51 @@ class CollectTest(unittest.TestCase):
             )
 
             self.assertEqual("sample", collection["repo"])
-            self.assertEqual("abc123", collection["source_commit"])
+            self.assertEqual(SCHEMA_VERSION, collection["schema_version"])
+            self.assertEqual("abc123", collection["source"]["revision"])
             self.assertEqual(
                 [
-                    {
-                        "file": "module.py",
-                        "block": "DEPENDENCIES",
-                        "id": "module_edges",
-                        "fields": {
-                            "summary": "module depends on another module",
-                            "requires": "other_module",
-                        },
-                    },
-                    {
-                        "file": "module.py",
-                        "block": "DOCS",
-                        "id": "module_docs",
-                        "fields": {
-                            "summary": "module docs",
-                            "source": "docs/module.md",
-                            "status": "current",
-                        },
-                    },
-                    {
-                        "file": "test_module.py",
-                        "block": "CHECKS",
-                        "id": "check_module_edges",
-                        "fields": {
-                            "proves": "module_contract",
-                            "call": "self::test_module_edges",
-                        },
-                    },
+                    ("module.py", "DEPENDENCIES", "module_edges"),
+                    ("module.py", "DOCS", "module_docs"),
+                    ("test_module.py", "CHECKS", "check_module_edges"),
                 ],
-                collection["declarations"],
+                [(item["file"], item["block"], item["id"]) for item in collection["declarations"]],
             )
+            self.assertTrue(all(item["address"].startswith("msdmd://sample@abc123/") for item in collection["declarations"]))
             self.assertEqual(
                 [
-                    {"file": "gap.py", "missing": ["DOCS"]},
-                    {"file": "test_module.py", "missing": ["DOCS"]},
+                    {"file": "gap.py", "missing": ["DOCS"], "kind": "block-adoption"},
+                    {"file": "test_module.py", "missing": ["DOCS"], "kind": "block-adoption"},
                 ],
                 collection["gaps"],
             )
-            self.assertEqual(
-                [
-                    {
-                        "from": "check_module_edges",
-                        "to": "self::test_module_edges",
-                        "kind": "calls",
-                        "source_block": "CHECKS",
-                        "source_id": "check_module_edges",
-                    },
-                    {
-                        "from": "check_module_edges",
-                        "to": "module_contract",
-                        "kind": "claims_proves",
-                        "source_block": "CHECKS",
-                        "source_id": "check_module_edges",
-                    },
-                    {
-                        "from": "module_edges",
-                        "to": "other_module",
-                        "kind": "requires",
-                        "source_block": "DEPENDENCIES",
-                        "source_id": "module_edges",
-                    },
-                ],
-                collection["edges"],
-            )
+            block_edges = [item for item in collection["edges"] if "source_block" in item]
+            self.assertEqual(["calls", "claims_proves", "requires"], sorted(item["kind"] for item in block_edges))
+            self.assertTrue(all(item["from"].startswith("msdmd://sample@abc123/") for item in block_edges))
+            self.assertTrue(all(item["source_id"] == item["from"] for item in block_edges))
 
     def test_render_typescript_uses_collection_helper(self) -> None:
         rendered = render_typescript(
-            {"repo": "sample", "declarations": [], "gaps": [], "edges": []},
+            {"schema_version": SCHEMA_VERSION, "repo": "sample", "declarations": [], "gaps": [], "edges": []},
             import_path="./msdmd/collection",
         )
 
-        self.assertIn('import { defineMsdmdCollection } from "./msdmd/collection";', rendered)
-        self.assertIn("export default defineMsdmdCollection", rendered)
+        self.assertIn('import { defineMsdmdCollectionV2 } from "./msdmd/collection";', rendered)
+        self.assertIn("export default defineMsdmdCollectionV2", rendered)
         self.assertIn('"repo": "sample"', rendered)
+
+    def test_collect_legacy_is_explicitly_block_only(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "module.py").write_text(
+                "# === DOCS ===\n# id: module_docs\n#   summary: docs\n# === END DOCS ===\n",
+                encoding="utf-8",
+            )
+            collection = collect_legacy(root, "sample", block_names=("DOCS",), source_commit="abc123")
+
+        self.assertEqual("1.0.0", collection["schema_version"])
+        self.assertNotIn("facts", collection)
+        self.assertEqual("abc123", collection["source_commit"])
 
     def test_collect_skips_vendored_agent_skills(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

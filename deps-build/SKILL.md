@@ -10,8 +10,9 @@ source-owned dependency edges and otherwise unexpressed architectural intent
 inspectable without demanding a second declaration of existing imports.
 
 Implementation status: this skill defines the `DEPENDENCIES` block and runner
-contract. This repo does not currently ship a DEPENDENCIES graph runner or
-native dependency readers; consuming repos implement and test local resolvers.
+contract. The MSDMD schema-2 collector ships Python import, `package.json`, and
+`pyproject.toml` dependency extraction, but no complete resolution/cycle runner;
+consuming repos implement and test local resolvers and policies.
 
 Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
 explicit reader-support contracts apply.
@@ -27,7 +28,7 @@ An import is not a call edge or a complete architecture explanation. A lockfile
 records a resolution, not every source-level usage. Collect the native edge as
 expressed; supplement missing intent only where policy actually requires it.
 Unsupported discovery/resolution remains `PENDING` / `hmmm`, not absent metadata.
-Native readers are implementation work, not capabilities supplied by this text.
+Reader support beyond the shipped subsets remains implementation work.
 
 ## The block
 
@@ -117,4 +118,4 @@ unknown build conditions, genuinely missing intent and permitted/forbidden cycle
 hmmm
 - exact resolver syntax for cross-language call and route edges
 - which dependency classes disallow cycles by default
-- native readers and qualified graph identities remain consuming-runner work
+- cross-language resolution and application cycle policy remain consuming-runner work

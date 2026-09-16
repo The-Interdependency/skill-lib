@@ -10,8 +10,9 @@ agents and humans a source-backed inventory of declared capabilities, exposed
 surfaces and the boundaries they are declared to cross.
 
 Implementation status: this skill defines the `CAPABILITIES` block and runner
-contract. This repo does not currently ship a CAPABILITIES runner or native
-surface readers; consuming repos implement and test their applicable mappings.
+contract. The MSDMD schema-2 collector ships a Python callable/class/export
+reader, but no complete behavioral capability or framework/API-schema runner;
+consuming repos implement and test their remaining mappings.
 
 Read `msdmd/SKILL.md` first. Its provenance, information-coverage, parser and
 explicit reader-support contracts apply.
@@ -26,8 +27,8 @@ missing behavioral intent may still require a supplemental declaration.
 
 Keep syntactically observed surfaces, documented behavior, derived mappings and
 verified outcomes distinct. Unsupported surface discovery is `PENDING`, not
-proof of either complete coverage or an absent capability. Native readers remain
-implementation work, not capabilities supplied by this skill text.
+proof of either complete coverage or an absent capability. Reader support beyond
+the shipped Python subset remains implementation work.
 
 ## The block
 
@@ -112,5 +113,5 @@ Include same-name/different-scope, genuinely missing intent and unsupported-read
 
 hmmm
 - exact resolver syntax for framework-specific route and UI surfaces
-- qualified identity and duplicate validation remain consuming-runner work
+- application capability identity and semantic conflict policy remain consuming-runner work
 - whether private capabilities need a distinct class in the consuming policy

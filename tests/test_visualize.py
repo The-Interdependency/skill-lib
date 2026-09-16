@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from msdmd.collect import render_typescript
-from msdmd.visualize import load_collection, render_mermaid
+from msdmd.visualize import _node_id, load_collection, render_mermaid
 
 
 class VisualizeTest(unittest.TestCase):
@@ -47,6 +47,27 @@ class VisualizeTest(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertEqual("sample", load_collection(path)["repo"])
+
+    def test_load_collection_reads_generated_schema_two_with_legacy_name_in_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "sample_msdmd.ts"
+            collection = {
+                "schema_version": "2.0.0",
+                "repo": "sample",
+                "declarations": [],
+                "facts": [{"note": "defineMsdmdCollection({not the wrapper})"}],
+                "gaps": [],
+                "edges": [],
+            }
+            path.write_text(
+                render_typescript(collection, import_path="./msdmd/collection"),
+                encoding="utf-8",
+            )
+
+            loaded = load_collection(path)
+
+        self.assertEqual("2.0.0", loaded["schema_version"])
+        self.assertEqual(collection["facts"], loaded["facts"])
 
     def test_load_collection_reads_hand_authored_typescript(self) -> None:
         hand_authored = (
@@ -106,10 +127,30 @@ class VisualizeTest(unittest.TestCase):
         rendered = render_mermaid(self.sample_collection())
 
         self.assertIn("flowchart TD", rendered)
-        self.assertIn('repo["sample"]', rendered)
-        self.assertIn('module_edges["module_edges\\nDEPENDENCIES\\nmodule.py"]', rendered)
-        self.assertIn('module_edges -- "requires" --> other_module', rendered)
+        self.assertIn(f'{_node_id("repository:sample")}["sample"]', rendered)
+        self.assertIn('["module_edges\\nDEPENDENCIES\\nmodule.py"]', rendered)
+        self.assertIn('-- "requires" -->', rendered)
         self.assertIn('gap_1[["gap.py\\nmissing: DOCS"]]', rendered)
+
+    def test_render_mermaid_keeps_same_entry_id_in_two_files_distinct(self) -> None:
+        collection = {
+            "schema_version": "2.0.0",
+            "repo": "sample",
+            "declarations": [
+                {"address": "msdmd://sample@abc/a.py#block/DOCS/shared", "file": "a.py", "block": "DOCS", "id": "shared", "fields": {}},
+                {"address": "msdmd://sample@abc/b.py#block/DOCS/shared", "file": "b.py", "block": "DOCS", "id": "shared", "fields": {}},
+            ],
+            "facts": [],
+            "gaps": [],
+            "edges": [],
+            "diagnostics": [],
+        }
+
+        rendered = render_mermaid(collection)
+
+        self.assertIn(_node_id(collection["declarations"][0]["address"]), rendered)
+        self.assertIn(_node_id(collection["declarations"][1]["address"]), rendered)
+        self.assertNotEqual(_node_id(collection["declarations"][0]["address"]), _node_id(collection["declarations"][1]["address"]))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Regression checks for native-first contracts, not native-reader execution.
+"""Regression checks for native-first contracts and shipped reader discovery.
 
 Usage: python -m unittest discover -s tests -p 'test_msdmd_native_contract_docs.py'
 The complete repository suite and generated-file gates remain separate checks.
@@ -71,32 +71,43 @@ class NativeContractDocsTests(unittest.TestCase):
                 with self.subTest(skill=name, phrase=phrase):
                     self.assertNotIn(phrase, text)
 
-    def test_block_runner_remains_discoverable_without_native_support_claim(self) -> None:
+    def test_native_runner_and_exact_reader_subset_are_discoverable(self) -> None:
         entry = self.entries["msdmd"]
         self.assertEqual(entry["status"], "runnable")
         self.assertEqual(entry["runner"], "msdmd/collect.py")
-        self.assertEqual(entry["runner_scope"], "msdmd-blocks-only")
-        self.assertEqual(entry["native_ingestion"], {"status": "contract", "runner": None})
+        self.assertEqual(entry["runner_scope"], "native-and-msdmd-blocks")
+        self.assertEqual(entry["collection_schema"], "2.0.0")
+        self.assertEqual(entry["native_ingestion"]["status"], "runnable")
+        self.assertEqual(entry["native_ingestion"]["runner"], "msdmd/collect.py")
+        self.assertEqual(
+            {
+                "python-ast", "msdmd-ratios", "json-stdlib", "toml-stdlib", "markdown-frontmatter",
+                "yaml-safe-subset", "typescript-static", "github-codeowners", "shell-static", "systemd-unit",
+                "gitignore-lines", "python-requirements", "license-text", "svg-metadata", "llms-text",
+            },
+            set(entry["native_ingestion"]["readers"]),
+        )
 
-    def test_helper_identity_limitations_are_explicit(self) -> None:
+    def test_identity_repairs_and_remaining_boundaries_are_explicit(self) -> None:
         text = (ROOT / "msdmd/SKILL.md").read_text(encoding="utf-8")
         for statement in (
-            "does not diagnose duplicate IDs",
-            "edge `from` and `source_id`",
-            "bare entry IDs",
-            "### Shipped helper limitations",
-            "emitted without diagnostics",
-            "does not repair\nthe collector or visualizer runtime",
+            "Schema 2 diagnoses duplicate IDs",
+            "qualifies declaration and source-edge",
+            "Ambiguous bare target references remain visible",
+            "### Shipped reader boundary",
+            "YAML and JavaScript/TypeScript readers are explicitly partial",
+            "coverage.verified_behavior",
         ):
             self.assertIn(statement, text)
-        self.assertNotIn("collection addresses additionally\nqualify", text)
+        self.assertNotIn("does not diagnose duplicate IDs", text)
 
     def test_llm_publication_matches_owning_sources(self) -> None:
         source = (ROOT / "llms/metadata.py").read_text(encoding="utf-8")
         entries = build.parse_text(source, source=Path("llms/metadata.py"))
         definitions = next(entry.fields for entry in entries if entry.id == "key_definitions")
         self.assertIn("native-first", definitions["msdmd"])
-        self.assertIn("shipped collector remains block-only", definitions["msdmd"])
+        self.assertIn("schema-2", definitions["msdmd"])
+        self.assertIn("tested static readers", definitions["msdmd"])
         self.assertNotIn("each source module declares", source)
         generated = build.generate(build.collect(ROOT), self.index["repo"].split("/")[-1])
         self.assertEqual((ROOT / "llms.txt").read_text(encoding="utf-8"), generated)

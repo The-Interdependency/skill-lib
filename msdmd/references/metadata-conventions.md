@@ -97,6 +97,33 @@ source references and diagnostics. Do not impose a fictitious callable signature
 on helpers that have not been implemented. Keep discovery, extraction, semantic
 mapping, policy evaluation and execution evidence separate and composable.
 
+### Shipped reader subset
+
+`msdmd/readers.py` implements and fixture-tests these bounded readers:
+
+- Python AST: module/symbol PEP 257 docstrings, callable/class declarations,
+  annotations, decorators, imports and static `__all__`, without importing code;
+- the MSDMD RATIOS opening/closing boundary convention without running its
+  metric computers;
+- RFC 8259 JSON trees plus `package.json` dependency-class projections;
+- stdlib TOML trees plus `pyproject.toml` project/build dependency projections;
+- flat Markdown YAML frontmatter, including folded/literal scalar continuation;
+- a partial safe YAML structural subset for repository configuration and GitHub
+  Actions shape, without tags, anchors, aliases, templates or execution;
+- a partial JavaScript/TypeScript static subset for imports, exported named
+  declarations and adjacent documentation comments, without executing modules;
+- ordered GitHub CODEOWNERS rules as review assignment only;
+- shell shebang and ShellCheck directives without sourcing the file;
+- ordered systemd section/directive declarations, including repeated keys; and
+- ordered Git ignore rules, Python requirements lines, bounded license-text
+  detection, SVG root/title/description metadata, and root `llms.txt` structure.
+
+Each schema-2 collection embeds the exact reader manifests and per-run status.
+Unmatched inputs remain in discovery as `unsupported`; recognition never expands
+the feature subset beyond the manifest. Python MSDMD block extraction tokenizes
+real comments. Other line-comment languages retain the universal textual block
+reader and do not yet claim full string/comment discrimination.
+
 ### Minimum native-capable fact shape
 
 The future versioned collection must be able to express:

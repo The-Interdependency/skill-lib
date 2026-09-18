@@ -10,6 +10,9 @@ from pathlib import Path
 import unittest
 
 from llms import build
+from msdmd.collect import collect, render_typescript
+from msdmd.parsers.universal import parse_file
+from msdmd.visualize import load_collection
 from tools.build_codex_plugin_skills import adapter, canonical_frontmatter
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +116,33 @@ class NativeContractDocsTests(unittest.TestCase):
             self.assertIn(statement, evidence)
         self.assertIn("CODEOWNERS review assignment does not automatically", ownership)
         self.assertIn("operational-owner obligation", ownership)
+
+    def test_repository_collection_replays_from_owning_blocks(self) -> None:
+        path = ROOT / "skill-lib_msdmd.ts"
+        generated = render_typescript(
+            collect(ROOT, self.index["repo"]), import_path="./msdmd/collection",
+        )
+        self.assertEqual(path.read_text(encoding="utf-8"), generated)
+        collection = load_collection(path)
+        for block, entry_id in (
+            ("DOCS", "msdmd_foundational_contract"),
+            ("CAPABILITIES", "repo_collection_generator"),
+        ):
+            with self.subTest(block=block):
+                source = next(
+                    item for item in parse_file(ROOT / "msdmd/collect.py", block)
+                    if item["id"] == entry_id
+                )
+                declaration = next(
+                    item for item in collection["declarations"]
+                    if (item["file"], item["block"], item["id"])
+                    == ("msdmd/collect.py", block, entry_id)
+                )
+                self.assertEqual(
+                    declaration["fields"],
+                    {key: value for key, value in source.items() if key != "id"},
+                )
+        self.assertEqual([], collection["gaps"])
 
 
 if __name__ == "__main__":

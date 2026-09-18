@@ -51,6 +51,20 @@ class LlmsBuildTest(unittest.TestCase):
         self.assertIn("## Architecture Summary\nhmmm", generated)
         self.assertIn("## How to Use This Repo with LLMs / Agents\nhmmm", generated)
 
+    def test_native_only_input_retains_uncertainty_and_source_authority(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "AGENTS.md").write_text("Native instructions remain here.\n")
+            entries = collect(root)
+            generated = generate(entries, repo_name="native-only")
+
+        self.assertEqual([], entries)
+        self.assertIn("hmmm", generated)
+        self.assertIn("Owning source declarations remain authoritative", generated)
+        self.assertIn("omission here does not establish absence", generated)
+        self.assertNotIn("single source of truth", generated)
+        self.assertNotIn("does not exist in this repository", generated)
+
     def test_collect_and_generate_from_repo_tree(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

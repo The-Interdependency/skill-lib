@@ -92,7 +92,9 @@ class VisualizeTest(unittest.TestCase):
         self.assertEqual("The-Interdependency/skill-lib", collection["repo"])
         self.assertTrue(collection["declarations"])
         self.assertTrue(collection["edges"])
-        self.assertTrue(collection["gaps"])
+        # Canonical collection requests no expected blocks; this says nothing
+        # about native coverage. Synthetic gap rendering is tested separately.
+        self.assertEqual([], collection["gaps"])
         self.assertIn("flowchart TD", render_mermaid(collection))
 
     def test_load_collection_rejects_non_collection_text(self) -> None:

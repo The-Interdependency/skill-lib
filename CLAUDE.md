@@ -35,17 +35,17 @@ llms/                  # python -m llms.build reference runner
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Foundational convention. Defines the comment-block syntax, the parser contract, the runner protocol, reserved field names, and the visible gap-reporting requirement. Ships reference parsers under `msdmd/parsers/`. Every metadata-block skill builds on it. |
-| `doc-build/` | metadata-block | `msdmd` | Self-declaring documentation coverage. Modules declare `# === DOCS ===` blocks; a runner verifies documentation paths/anchors and reports stale docs plus visible gaps. |
-| `cap-build/` | metadata-block | `msdmd` | Self-declaring capability inventory. Modules declare `# === CAPABILITIES ===` blocks; a runner builds a capability map and verifies exposed surfaces. |
-| `deps-build/` | metadata-block | `msdmd` | Self-declaring dependency topology. Modules declare `# === DEPENDENCIES ===` blocks; a runner builds import/call/capability graphs and reports unresolved edges, cycles, and visible gaps. |
-| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Self-declaring module stewardship. Modules declare `# === OWNERS ===` blocks; a runner reports unowned modules, unresolved owners, and review coverage gaps. |
-| `test-build/` | metadata-block | `msdmd` | Self-declaring contract evidence. Source modules declare behavior obligations in `# === CONTRACTS ===`; test modules declare executable witnesses in `# === CHECKS ===`; audit reconciles the witness list against the obligation list. |
-| `meta-module-build/` | metadata-block | `msdmd` | Metadata-first module scaffolding. Each module declares a `# === MODULE_BUILD ===` block (manifest: surfaces, boundaries, tests, rollout, rollback) before implementation. New module work in any org repo is expected to start here. |
-| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Runtime risk and permission boundaries. Existing modules declare `# === BOUNDARIES ===` blocks for auth, storage, network, user-data, admin, and operational effects. |
+| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. Shipped parsers and collector remain block-only; native readers remain a contract. |
+| `doc-build/` | metadata-block | `msdmd` | Consumes native documentation at its owning scope; supplemental `DOCS` entries add otherwise unexpressed information. Missing blocks alone do not establish missing documentation. |
+| `cap-build/` | metadata-block | `msdmd` | Consumes native signatures, exports, and API schemas; supplemental `CAPABILITIES` entries add remaining intent. Declared surfaces are not verified behavior. |
+| `deps-build/` | metadata-block | `msdmd` | Consumes native imports, manifests, and build metadata; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
+| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Consumes provider-specific native ownership/review rules; supplemental `OWNERS` entries add missing stewardship information. Review assignment does not establish operational ownership. |
+| `test-build/` | metadata-block | `msdmd` | Consumes supported native obligations and witnesses or supplemental `CONTRACTS` / `CHECKS`; source modules own promises and test modules own evidence. Native readers remain a contract. |
+| `meta-module-build/` | metadata-block | `msdmd` | Consumes native manifests, schemas, and design records before supplemental `MODULE_BUILD` information. Purpose, surfaces, boundaries, tests, rollout, and rollback remain required before implementation. |
+| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Consumes native permissions, configuration, and effect declarations before supplemental `BOUNDARIES` information. Declared controls are not verified enforcement. |
 | `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios for executable source files. Each computer-covered module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block); a valid line-1 shebang may precede opening RATIOS. The reference `ratios_check.py` recomputes Python values, fails on drift or misplacement, and reports visible gaps without applying Python semantics to other languages. |
 | `manifest/` | metadata-block | `msdmd` | Living-spec generator. Derives observable repo facts from `pyproject.toml` + the file tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
-| `llms-build/` | metadata-block | `msdmd` | Root LLM instruction generation. Modules or central files declare `# === LLMS ===` blocks; `python -m llms.build` aggregates them into canonical root `llms.txt` and reports drift. |
+| `llms-build/` | metadata-block | `msdmd` | Native-first instruction-publication contract; shipped `python -m llms.build` generates root `llms.txt` from existing `LLMS` blocks only. Native readers remain unimplemented. |
 | `typed-meta-frontend/` | metadata-block | `msdmd`, `meta-module-build`, `doc-build` | TypeScript self-building frontend generation from backend-owned module metadata. Modules declare `# === FRONTEND_META ===` blocks or equivalent backend metadata; the UI renders every module living spec, exposes every editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
 | `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
 | `domain-claims/` | procedural | — | Domain-first lexical and semantic governance. Establishes the domain-qualified sense, scope, exclusions, collision result, and standing that must precede a canonical definition, conversational provenance, or structural encoding. No metadata block. |
@@ -101,7 +101,10 @@ Two kinds:
 
 - **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
   `CHECKS`, `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, `FRONTEND_META`, …). They define a field schema, a thin executor that consumes parsed
-  entries, and a runner that emits a visible gap list. `test-build/` is the canonical worked
+  entries, and a runner contract with visible coverage findings. Native-first
+  applications consume supported owning conventions before requesting supplemental
+  blocks. Block absence measures adoption, not missing information; unsupported
+  extraction remains `hmmm`. `test-build/` is the canonical worked
   example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
   `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
 - **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
@@ -136,7 +139,13 @@ Two kinds:
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
 `<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
-generator prototype that emits that shape from parsed module-local blocks.
+block-only generator prototype that emits that shape from parsed source text.
+Native readers, qualified edge identities, duplicate-ID validation, and the
+native-capable collection schema remain unimplemented. A zero collection exit
+does not validate identities or prove complete information coverage. The root
+collection's regeneration command and lexical scan limitations are documented
+in `ORG_DISTRIBUTION.md`; native discovery and exclusions are governed by
+`docs/runner-config-guidance.md`.
 `msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
 TypeScript collection points.
 
@@ -248,7 +257,7 @@ There is a small stdlib Python editorial test suite. There is still no `package.
 2. Keep `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt` synchronized when adding, renaming, or removing a skill.
 3. Preserve load-bearing descriptions.
 4. Mark unknowns as `hmmm`; do not guess.
-5. New module work in consuming repos should start with `MODULE_BUILD`.
+5. New module work starts with source-linked native planning information. Use supplemental `MODULE_BUILD` entries only for otherwise unexpressed information; purpose, surfaces, boundaries, tests, rollout, and rollback remain required. Unsupported extraction stays `hmmm`.
 6. Source modules own `CONTRACTS`; test modules own `CHECKS`; do not put test `call:` topology in source contracts.
 7. Do not fork parser dialects; propose an `msdmd` extension instead.
 8. Do not invent undeclared package/build commands for this repo.

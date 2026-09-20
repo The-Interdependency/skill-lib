@@ -236,7 +236,7 @@ def generate(entries: list[Entry], repo_name: str) -> str:
             "## How to Use This Repo with LLMs / Agents",
             usage,
             "",
-            "This file is the single source of truth. If something is not explicitly stated in the files listed above, it does not exist in this repository.",
+            "This file is a generated projection of source LLMS blocks. Owning source declarations remain authoritative. The shipped publisher is block-only; omission here does not establish absence of native information. Unsupported native instruction sources remain hmmm.",
             "",
         ]
     )

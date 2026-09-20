@@ -1,9 +1,32 @@
-# ratios: loc_comments=143:7 imports_exports=6:3 calls_definitions=35:6
+# ratios: loc_comments=143:28 imports_exports=6:3 calls_definitions=35:6
+# === DOCS ===
+# id: msdmd_foundational_contract
+#   source: msdmd/SKILL.md
+#   catalogue: msdmd/references/metadata-conventions.md
+#   summary: Native-first metadata and information-coverage contract; supplemental blocks express otherwise unexpressed information. This source link is not native extraction of the skill or catalogue.
+# === END DOCS ===
+# === CAPABILITIES ===
+# id: repo_collection_generator
+#   exposes: collect, render_typescript
+#   summary: Generates block-only TypeScript collections from lexical source blocks using the canonical parser; not native discovery or identity validation.
+#   runner_scope: msdmd-blocks-only
+#   native_ingestion: contract
+#   unresolved: hmmm: native readers, qualified edge identities, duplicate-ID validation, native-capable schema migration, and executable native acceptance fixtures remain separate implementation work.
+#   limitations: Native files outside COMMENT_MARKERS are uncollected; skip paths and read errors are not inventoried; matching blocks in strings and test fixtures can be collected. Empty gaps without expected_blocks is not complete coverage.
+# === END CAPABILITIES ===
 """Generate repo-level msdmd collection-point TypeScript.
 
 This is a small stdlib helper for consuming repos that want to generate a
 `<reponame>_msdmd.ts` aggregation file from module-local msdmd blocks.
 It uses the universal parser and emits data shaped by `msdmd/collection.ts`.
+
+Usage from this repository root (block-only lexical inventory):
+    python -m msdmd.collect --root . --repo The-Interdependency/skill-lib \
+        --import-path ./msdmd/collection --out skill-lib_msdmd.ts
+    python -m unittest tests.test_msdmd_native_contract_docs
+
+Edit owning source blocks before regeneration. See ORG_DISTRIBUTION.md for
+scope and docs/runner-config-guidance.md for the native discovery contract.
 """
 from __future__ import annotations
 
@@ -174,4 +197,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=143:7 imports_exports=6:3 calls_definitions=35:6
+# ratios: loc_comments=143:28 imports_exports=6:3 calls_definitions=35:6

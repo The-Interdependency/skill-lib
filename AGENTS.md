@@ -117,8 +117,11 @@ propagate from here.
   the triggers explicitly. Do not bury them.
 - Unknown fields are written `hmmm`, not guessed. This applies to any
   metadata block declared via `msdmd`.
-- New module work in any repo should start with a `MODULE_BUILD`
-  block; see `meta-module-build/SKILL.md`.
+- New module work starts with source-linked planning information; consume
+  existing native manifests, schemas, and design records first. Use supplemental
+  `MODULE_BUILD` entries only for otherwise unexpressed information; see
+  `meta-module-build/SKILL.md`. Purpose, surfaces, boundaries, tests, rollout,
+  and rollback remain required. Unsupported extraction stays `hmmm`, not absent.
 - If you are creating or maintaining a root `llms.txt`, load
   `llms-build/SKILL.md`, edit source `LLMS` blocks first, then run
   `python -m llms.build --root . --out llms.txt --apply`.

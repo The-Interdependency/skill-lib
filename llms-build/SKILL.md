@@ -121,11 +121,11 @@ The shipped block runner produces this shape:
 ## How to Use This Repo with LLMs / Agents
 [content from id: usage_rules]
 
-This file is the single source of truth. If something is not explicitly stated in the files listed above, it does not exist in this repository.
+This file is a generated projection of source LLMS blocks. Owning source declarations remain authoritative. The shipped publisher is block-only; omission here does not establish absence of native information. Unsupported native instruction sources remain hmmm.
 ```
 
-That legacy footer is not evidence of an exhaustive native-source inventory;
-source-owned definitions and disclosed reader limitations still govern.
+The footer preserves source authority and discloses the publisher's scope;
+regeneration does not establish an exhaustive native-source inventory.
 
 ## Editing doctrine
 

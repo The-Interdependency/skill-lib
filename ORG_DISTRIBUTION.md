@@ -110,14 +110,32 @@ when the repo can run the collector locally. A provisional hand-seeded collectio
 point is allowed only when it records a `hmmm` gap explaining what local
 generation still needs.
 
-`skill-lib_msdmd.ts` is the root collection point for this canonical repo.
+`skill-lib_msdmd.ts` is the generated root collection point for this canonical
+repo. Regenerate it from owning source blocks, never by editing the projection:
+
+```bash
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --import-path ./msdmd/collection --out skill-lib_msdmd.ts
+python -m unittest tests.test_msdmd_native_contract_docs
+```
+
+The shipped collector is block-only. Its default scan uses the parser's suffix
+registry and skip list; it also collects matching block text inside source
+fixtures because it is not syntax-aware. This is a lexical block inventory,
+not native coverage, identity validation, or evidence that fixture claims hold.
+No expected blocks are requested here, so an empty `gaps` array means no
+block-adoption obligations were evaluated. Deferred limitations are declared in
+the collector's owning metadata; they are not missing-block gaps. The generated
+file and its inputs travel in one Git commit; the replay test checks their bytes.
 
 ## Propagation checklist
 
 Use `docs/propagation-checklist.md` for the concrete source-change →
 target-repo PR sequence. Use `docs/runner-config-guidance.md` before judging
-large or artifact-heavy repos; frozen research artifacts, archives, generated
-trees, and vendored `.agents/skills/` copies should not pollute the denominator.
+coverage. Distinguish block-helper scans from native discovery, including
+manifests, CODEOWNERS, documentation, extensionless and unsupported sources.
+Record every exclusion and its reason, including frozen research artifacts,
+archives, generated trees, and vendored `.agents/skills/` copies. Declared scope
+can exclude them from live-module obligations without hiding them from accounting.
 
 ## Rule
 
@@ -165,8 +183,11 @@ engine, UI panel, migration, or experiment, agents should read:
 .agents/skills/meta-module-build/SKILL.md
 ```
 
-New module work should start with a `MODULE_BUILD` block. Unknown fields
-must be marked `hmmm`, not guessed.
+New module work starts with source-linked planning information from existing
+native manifests, schemas, and design records. Use supplemental `MODULE_BUILD`
+entries only for otherwise unexpressed information; do not demand a second copy.
+Purpose, surfaces, boundaries, tests, rollout, and rollback remain required.
+Unsupported extraction and unknown fields stay `hmmm`, not missing information.
 
 Before creating or maintaining a root `llms.txt`, agents should read:
 
@@ -174,8 +195,10 @@ Before creating or maintaining a root `llms.txt`, agents should read:
 .agents/skills/llms-build/SKILL.md
 ```
 
-Root LLM instructions should be declared in source `LLMS` blocks and generated
-with the llms-build runner, not hand-maintained as separate doctrine.
+Root LLM instructions remain owned by their source declarations. The shipped
+llms-build runner publishes existing source `LLMS` blocks; edit those blocks and
+regenerate their projection. Native instruction readers remain a contract, so
+unsupported native sources stay `hmmm` rather than requiring duplicate blocks.
 
 Before translating raw, recursive, context-heavy, fragmentary, coined, or
 private-language thought for another human audience or public surface, agents

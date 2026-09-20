@@ -8,7 +8,7 @@
     {
       "name": "skill-lib",
       "source": "./",
-      "description": "Portable msdmd governance skills: self-declared module metadata with runnable drift gates (docs, capabilities, dependencies, owners, contracts, ratios, boundaries), plus skill authoring and org-doctrine workflows. Every claim ships with its checker; unknowns stay visible as hmmm.",
+      "description": "Portable governance skills with runnable MSDMD block-only helpers and drift gates, plus a native-first metadata ingestion contract whose native readers remain implementation work. Block syntax supplements metadata already expressed by code, manifests, schemas, documentation, ownership rules, and tooling; unsupported inputs stay visible as hmmm.",
       "skills": ["./"],
       "strict": false,
       "category": "governance",

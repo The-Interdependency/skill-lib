@@ -50,9 +50,15 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("does not edit the source repository's valid prose", self.normalized)
 
     def test_completion_distinguishes_delivery_states(self) -> None:
-        self.assertIn("State `merged`, `released`, and `deployed` separately", self.text)
+        self.assertIn("State `reviewed-at-head`, `merged`, `released`, and `deployed`", self.text)
         self.assertIn("Never infer one from another", self.normalized)
         self.assertIn("authoritative checks settle", self.text)
+
+    def test_merge_admission_is_exact_head_and_fail_closed(self) -> None:
+        self.assertIn("conjunctive exact-head", self.text)
+        self.assertIn("Any head movement invalidates the", self.text)
+        self.assertIn("no unresolved P1/P2 finding", self.text)
+        self.assertIn("expected-head/SHA precondition", self.text)
 
     def test_repo_loto_is_composed_not_required(self) -> None:
         self.assertIn("Use `repo_loto` when available", self.text)

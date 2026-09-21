@@ -148,11 +148,21 @@ repository defects. Reclassify only when new evidence supports the change.
 - Let authoritative CI test the branch where local infrastructure cannot.
 - If CI exposes a real incompatibility, repair the same branch and repeat rather
   than reporting a merely open pull request as completion.
-- If merge is authorized, confirm mergeability and required checks before
-  merging. If deployment or release follows and is in scope, verify the public
-  artifact, version, route, or service identity afterward.
-- State `merged`, `released`, and `deployed` separately. Never infer one from
-  another.
+- If merge is authorized, treat merge admission as a conjunctive exact-head
+  gate, not an impression from green CI. Before invoking merge, record the
+  current PR head SHA and verify all of the following against that same SHA:
+  scope is unambiguous; the required checks are complete and successful; every
+  applicable drift/contract gate passes; no unresolved P1/P2 finding or review
+  thread remains; governing authority is present; the PR is mergeable; and a
+  submitted review required by repository or task policy is anchored to the
+  current head rather than an earlier commit. Any head movement invalidates the
+  admission receipt and requires re-verification/re-review.
+- Use the merge API's expected-head/SHA precondition when available. Never merge
+  first and reconstruct exact-head evidence afterward.
+- If deployment or release follows and is in scope, verify the public artifact,
+  version, route, or service identity afterward.
+- State `reviewed-at-head`, `merged`, `released`, and `deployed`
+  separately. Never infer one from another.
 
 ## Output shape
 
@@ -209,7 +219,9 @@ A correct use demonstrates:
 - repair at the owning layer;
 - deprecated paths removed when replacement is proven;
 - clean repeated gates and artifact hygiene;
-- distinct PR, merge, release, and deployment claims; and
+- exact-head merge admission when merge is authorized, including submitted
+  current-head review when policy requires review;
+- distinct PR, review-at-head, merge, release, and deployment claims; and
 - visible `hmmm` for every unfinished boundary.
 
 ## Anti-patterns
@@ -224,6 +236,8 @@ A correct use demonstrates:
 - Mixing generated audit artifacts into the repair diff.
 - Opening a pull request and calling the repository repaired before its
   authoritative checks settle.
+- Merging from green CI alone when review is required, accepting a review bound
+  to an earlier head, or merging while any P1/P2 finding remains unresolved.
 - Calling a merge a deployment.
 
 ## Canon basis

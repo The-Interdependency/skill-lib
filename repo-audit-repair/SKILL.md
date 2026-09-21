@@ -148,17 +148,26 @@ repository defects. Reclassify only when new evidence supports the change.
 - Let authoritative CI test the branch where local infrastructure cannot.
 - If CI exposes a real incompatibility, repair the same branch and repeat rather
   than reporting a merely open pull request as completion.
-- If merge is authorized, treat merge admission as a conjunctive exact-head
+- If merge is authorized, treat merge admission as a conjunctive exact-revision
   gate, not an impression from green CI. Before invoking merge, record the
-  current PR head SHA and verify all of the following against that same SHA:
-  scope is unambiguous; the required checks are complete and successful; every
-  applicable drift/contract gate passes; no unresolved P1/P2 finding or review
-  thread remains; governing authority is present; the PR is mergeable; and a
-  submitted review required by repository or task policy is anchored to the
-  current head rather than an earlier commit. Any head movement invalidates the
-  admission receipt and requires re-verification/re-review.
-- Use the merge API's expected-head/SHA precondition when available. Never merge
-  first and reconstruct exact-head evidence afterward.
+  current PR head SHA and base SHA, or an immutable validated merge-candidate
+  identity that binds both, and verify all of the following against that same
+  revision pair: scope is unambiguous; the required checks are complete and
+  successful; every applicable drift/contract gate passes; no unresolved
+  merge-blocking finding (including P0/P1/P2 under that severity scheme) or
+  review thread remains; governing authority is present; and the PR is
+  mergeable. A terminal review required by repository or task policy must be
+  anchored to the current head and current base rather than an earlier revision
+  pair. When policy requires approval, require an effective, non-dismissed
+  `APPROVED` review from an eligible reviewer; a `COMMENTED` or
+  `CHANGES_REQUESTED` submission is not approval. Any head or base movement
+  invalidates the admission receipt and requires re-verification/re-review.
+- Merge only through an atomic guard that rejects stale admission. Require an
+  expected-head/SHA precondition plus an equivalent base/merge-candidate guard,
+  or server-side protection that makes base movement invalidate the admitted
+  checks before merge. If the provider cannot guard both sides of the validated
+  revision pair, refuse the merge and retain the boundary as `hmmm`. Never
+  merge first and reconstruct exact-revision evidence afterward.
 - If deployment or release follows and is in scope, verify the public artifact,
   version, route, or service identity afterward.
 - State `reviewed-at-head`, `merged`, `released`, and `deployed`
@@ -189,6 +198,7 @@ For audit-and-repair work, add:
 - owning fault — changed files — regression protection
 
 ## Verification
+- reviewed-at-head — exact head SHA + base SHA/validated merge candidate + review state
 - local checks — CI — merge — release/deployment, each with exact status
 ```
 
@@ -219,8 +229,9 @@ A correct use demonstrates:
 - repair at the owning layer;
 - deprecated paths removed when replacement is proven;
 - clean repeated gates and artifact hygiene;
-- exact-head merge admission when merge is authorized, including submitted
-  current-head review when policy requires review;
+- exact-revision merge admission when merge is authorized, including head/base
+  binding, terminal current-revision review when required, and effective
+  `APPROVED` review when approval is required;
 - distinct PR, review-at-head, merge, release, and deployment claims; and
 - visible `hmmm` for every unfinished boundary.
 
@@ -236,8 +247,10 @@ A correct use demonstrates:
 - Mixing generated audit artifacts into the repair diff.
 - Opening a pull request and calling the repository repaired before its
   authoritative checks settle.
-- Merging from green CI alone when review is required, accepting a review bound
-  to an earlier head, or merging while any P1/P2 finding remains unresolved.
+- Merging from green CI alone when review is required, accepting review bound
+  to an earlier head/base pair, treating `COMMENTED` as required approval,
+  merging with any merge-blocking finding unresolved, or using an unguarded
+  merge endpoint after exact-revision verification.
 - Calling a merge a deployment.
 
 ## Canon basis

@@ -65,8 +65,11 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("Any head or base movement invalidates", self.normalized)
         self.assertIn("expected-head/SHA precondition", self.text)
         self.assertIn("atomically enforces every mutable admission predicate", self.normalized)
-        self.assertIn("required checks", self.normalized)
-        self.assertIn("unresolved-conversation/merge-blocking rules", self.normalized)
+        atomic_start = self.text.index("- Merge only when the server atomically enforces every mutable admission")
+        atomic_end = self.text.index("- If deployment or release follows", atomic_start)
+        atomic_merge = " ".join(self.text[atomic_start:atomic_end].split())
+        self.assertIn("required checks", atomic_merge)
+        self.assertIn("unresolved-conversation/merge-blocking rules", atomic_merge)
         self.assertIn("refuse the merge and retain the boundary as `hmmm`", self.normalized)
         self.assertIn("reviewed-at-head — exact head SHA + base SHA/validated merge candidate", self.text)
 

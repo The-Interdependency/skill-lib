@@ -111,6 +111,29 @@ class PortfolioPlanTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "duplicate repository reports"):
                 portfolio_plan.build_portfolio([(p1, portfolio_plan.load_report(p1)), (p2, portfolio_plan.load_report(p2))])
 
+    def test_next_action_cannot_override_source_repository(self):
+        bad = report("The-Interdependency/a", "f" * 40)
+        bad["next_actions"][0]["repository"] = "The-Interdependency/spoofed"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "bad-action.json"
+            path.write_text(json.dumps(bad), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "next_actions\[0\] has missing or unknown fields"):
+                portfolio_plan.load_report(path)
+
+    def test_relation_extras_cannot_override_derived_endpoints(self):
+        value = report("The-Interdependency/a", "1" * 40, "The-Interdependency/z")
+        value["cross_repository_relations"][0]["from"] = "The-Interdependency/spoofed-from"
+        value["cross_repository_relations"][0]["to"] = "The-Interdependency/spoofed-to"
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "relation.json"
+            path.write_text(json.dumps(value), encoding="utf-8")
+            loaded = portfolio_plan.load_report(path)
+            projection = portfolio_plan.build_portfolio([(path, loaded)])
+            relation = projection["cross_repository_dependencies"][0]
+            self.assertEqual(relation["from"], "The-Interdependency/a")
+            self.assertEqual(relation["to"], "The-Interdependency/z")
+            self.assertNotIn("spoofed", json.dumps(relation))
+
 
 if __name__ == "__main__":
     unittest.main()

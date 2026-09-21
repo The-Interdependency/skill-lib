@@ -54,11 +54,17 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("Never infer one from another", self.normalized)
         self.assertIn("authoritative checks settle", self.text)
 
-    def test_merge_admission_is_exact_head_and_fail_closed(self) -> None:
-        self.assertIn("conjunctive exact-head", self.text)
-        self.assertIn("Any head movement invalidates the", self.text)
-        self.assertIn("no unresolved P1/P2 finding", self.text)
+    def test_merge_admission_is_exact_revision_and_fail_closed(self) -> None:
+        self.assertIn("conjunctive exact-revision", self.text)
+        self.assertIn("current PR head SHA and base SHA", self.normalized)
+        self.assertIn("no unresolved merge-blocking finding", self.normalized)
+        self.assertIn("P0/P1/P2", self.text)
+        self.assertIn("effective, non-dismissed `APPROVED` review", self.normalized)
+        self.assertIn("Any head or base movement invalidates", self.normalized)
         self.assertIn("expected-head/SHA precondition", self.text)
+        self.assertIn("equivalent base/merge-candidate guard", self.normalized)
+        self.assertIn("refuse the merge and retain the boundary as `hmmm`", self.normalized)
+        self.assertIn("reviewed-at-head — exact head SHA + base SHA/validated merge candidate", self.text)
 
     def test_repo_loto_is_composed_not_required(self) -> None:
         self.assertIn("Use `repo_loto` when available", self.text)

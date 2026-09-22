@@ -164,16 +164,23 @@ repository defects. Reclassify only when new evidence supports the change.
   `COMMENTED` or `CHANGES_REQUESTED` submission is not approval. Any head or
   base movement invalidates the admission receipt and requires
   re-verification/re-review.
-- Merge only when the server atomically enforces every mutable admission
-  predicate that could invalidate the receipt between preflight and merge:
-  revision identity, required checks, the complete required approval set,
-  unresolved-conversation/merge-blocking rules, and any other repository policy
-  used by admission. An expected-head/SHA precondition is useful but is not, by
-  itself, a guard for base movement, dismissed reviews, new change requests,
-  reopened threads, or invalidated checks. If server-side enforcement or an
-  equivalent atomic guarded endpoint does not cover every mutable predicate,
-  refuse the merge and retain the boundary as `hmmm`. Never merge first and
-  reconstruct exact-revision evidence afterward.
+- Use the provider's strongest guarded merge path. Server-side enforcement
+  must cover every repository policy the provider declares required at merge
+  time, including protected-branch checks, approvals, conversation resolution,
+  merge-queue policy, or equivalent controls when configured. Do not bypass
+  those controls.
+- Treat task-local admission evidence that the provider does not model — scope
+  judgment, audit severity findings, local drift/contract gates, and advisory
+  checks or reviews — as part of the exact-revision receipt rather than
+  pretending the provider can atomically enforce it. Re-read that receipt
+  immediately before merge and abort on any change. Use an expected-head/SHA
+  precondition whenever the provider exposes one. Where no expected-base guard
+  exists, require the current base SHA or validated merge candidate to match the
+  receipt at the final pre-merge read and require provider mergeability to be
+  recomputed against that same base; the provider's merge transaction is then
+  authoritative for the final base integration. Base movement invalidates the
+  receipt and requires re-verification. Never merge first and reconstruct
+  exact-revision evidence afterward.
 - If deployment or release follows and is in scope, verify the public artifact,
   version, route, or service identity afterward.
 - State `reviewed-at-head`, `merged`, `released`, and `deployed`
@@ -238,7 +245,7 @@ A correct use demonstrates:
 - exact-revision merge admission when merge is authorized, including head/base
   binding, terminal current-revision review when required, the complete
   policy-mandated effective `APPROVED` review set when approval is required,
-  and atomic enforcement of every mutable admission predicate;
+  provider enforcement of configured repository policy, and immediate\n  revalidation of task-local admission evidence;
 - distinct PR, review-at-head, merge, release, and deployment claims; and
 - visible `hmmm` for every unfinished boundary.
 

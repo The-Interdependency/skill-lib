@@ -245,7 +245,8 @@ A correct use demonstrates:
 - exact-revision merge admission when merge is authorized, including head/base
   binding, terminal current-revision review when required, the complete
   policy-mandated effective `APPROVED` review set when approval is required,
-  provider enforcement of configured repository policy, and immediate\n  revalidation of task-local admission evidence;
+  provider enforcement of configured repository policy, and immediate
+  revalidation of task-local admission evidence;
 - distinct PR, review-at-head, merge, release, and deployment claims; and
 - visible `hmmm` for every unfinished boundary.
 
@@ -264,8 +265,8 @@ A correct use demonstrates:
 - Merging from green CI alone when review is required, accepting review bound
   to an earlier head/base pair, accepting an incomplete approval set, treating
   `COMMENTED` as required approval, merging with any merge-blocking finding or
-  unresolved review thread outstanding, or using a merge endpoint that does
-  not atomically enforce every mutable admission predicate.
+  unresolved review thread outstanding, bypassing configured repository
+  protection, or treating task-local admission evidence as provider-enforced.
 - Calling a merge a deployment.
 
 ## Canon basis

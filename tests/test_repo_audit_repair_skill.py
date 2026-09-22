@@ -76,6 +76,8 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("provider mergeability to be recomputed against that same base", guarded_merge)
         self.assertIn("Base movement invalidates the receipt", guarded_merge)
         self.assertIn("Do not bypass those controls", guarded_merge)
+        self.assertIn("treating task-local admission evidence as provider-enforced", self.normalized)
+        self.assertNotIn("\\n", self.text)
         self.assertIn("reviewed-at-head — exact head SHA + base SHA/validated merge candidate", self.text)
 
     def test_repo_loto_is_composed_not_required(self) -> None:

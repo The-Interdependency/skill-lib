@@ -1,0 +1,70 @@
+{
+  "reader_id": "the-interdependency.msdmd.python-ast-tokenize",
+  "reader_version": "1.0.0",
+  "status": "partial",
+  "entry_point": "msdmd/module_projection.py",
+  "output_schema": "msdmd/module-projection.schema.json",
+  "dependencies": [
+    "python-stdlib:ast",
+    "python-stdlib:tokenize"
+  ],
+  "conventions": [
+    "python.ast.declaration",
+    "python.docstring.pep257",
+    "python.line-comment",
+    "python.encoding-cookie",
+    "msdmd.fenced-block",
+    "msdmd.ratios"
+  ],
+  "detection": {
+    "suffixes": [
+      ".py"
+    ],
+    "language_context": "Explicit Python source selection or .py tree discovery.",
+    "ambiguity": "Files without a .py suffix and Python-compatible embedded languages are not guessed."
+  },
+  "supported_subset": [
+    "module, class, function, async-function, method, and async-method AST ownership",
+    "qualified symbol identities and signatures",
+    "decorator spelling recovered with ast.unparse",
+    "module, class, function, and method docstrings",
+    "syntax-aware Python line comments",
+    "leading-trivia and nearest-enclosing-symbol comment attachment",
+    "shebang, encoding-cookie, RATIOS, and MSDMD-fence module conventions",
+    "UTF-8 projection spans over decoded source and raw-source SHA-256",
+    "parse and tokenization diagnostics"
+  ],
+  "limitations": [
+    "imports and dependency edges",
+    "call graphs and runtime behavior",
+    "dynamic exports and evaluated annotations",
+    "Sphinx, Google, and NumPy docstring field parsing",
+    ".pyi-specific semantics",
+    "cross-revision rename identity",
+    "repository discovery and exclusion receipts",
+    "reconciliation with non-Python or MSDMD block collections"
+  ],
+  "attachment": {
+    "native_docstring": "Attach to the AST owner.",
+    "leading_trivia": "Attach a contiguous comment group to the immediately following declaration when lexical columns match.",
+    "nearest_enclosing_symbol": "Attach every other interior comment to the deepest enclosing declaration.",
+    "module_convention": "Keep shebangs, encoding cookies, RATIOS seals, and MSDMD fences at module scope.",
+    "module_scope": "Keep otherwise unattached comments at module scope."
+  },
+  "field_mapping": {
+    "ast_declaration": "symbol",
+    "ast_signature": "symbol.signature",
+    "ast_decorator": "symbol.decorators",
+    "docstring": "metadata:documentation",
+    "line_comment": "metadata:comment"
+  },
+  "unknown_field_policy": "Unsupported semantic parsing is not fabricated; the partial scope remains declared in this manifest and repository guidance.",
+  "failure_behavior": "Invalid syntax or incomplete tokenization emits a diagnostic and causes --check or --write to exit nonzero.",
+  "safety": {
+    "executes_inspected_code": false,
+    "imports_inspected_modules": false,
+    "network_access": false,
+    "follows_external_references": false
+  },
+  "fixtures": "tests/test_module_projection.py"
+}

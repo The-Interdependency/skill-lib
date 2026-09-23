@@ -35,7 +35,7 @@ llms/                  # python -m llms.build reference runner
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. Shipped parsers and collector remain block-only; native readers remain a contract. |
+| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. The collector remains block-only; a separate partial Python reader projects symbols, docstrings, and structurally attached comments to per-module JSONL. |
 | `doc-build/` | metadata-block | `msdmd` | Consumes native documentation at its owning scope; supplemental `DOCS` entries add otherwise unexpressed information. Missing blocks alone do not establish missing documentation. |
 | `cap-build/` | metadata-block | `msdmd` | Consumes native signatures, exports, and API schemas; supplemental `CAPABILITIES` entries add remaining intent. Declared surfaces are not verified behavior. |
 | `deps-build/` | metadata-block | `msdmd` | Consumes native imports, manifests, and build metadata; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
@@ -140,8 +140,11 @@ Two kinds:
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
 `<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
 block-only generator prototype that emits that shape from parsed source text.
-Native readers, qualified edge identities, duplicate-ID validation, and the
-native-capable collection schema remain unimplemented. A zero collection exit
+`msdmd/module_projection.py` is a separate partial Python native reader using
+`msdmd/module-projection.schema.json`; it does not feed the TypeScript collection.
+Readers for broader Python metadata and other conventions, qualified block-edge
+identities, duplicate-ID validation, and the unified native-capable collection
+schema remain unimplemented. A zero collection exit
 does not validate identities or prove complete information coverage. The root
 collection's regeneration command and lexical scan limitations are documented
 in `ORG_DISTRIBUTION.md`; native discovery and exclusions are governed by

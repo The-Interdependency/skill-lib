@@ -30,7 +30,7 @@ is promoted only for an executable reader and its tested subset:
 
 | Reader | Status | Implemented subset | Still `hmmm` |
 |---|---|---|---|
-| `the-interdependency.msdmd.python-ast-tokenize` 1.0.0 (`python-module-reader.json`) | partial | `.py` class/function/method identities and signatures; decorators; module/class/function docstrings; syntax-aware line-comment groups; structural attachment; source/schema/reader/manifest digests; parse diagnostics | Imports and dependency edges, calls, dynamic exports, parsed Sphinx/Google/NumPy docstring fields, type-comment semantics, `.pyi` distinctions, cross-revision rename identity, full discovery ledger |
+| `the-interdependency.msdmd.python-ast-tokenize` 1.0.0 (`python-module-reader.json`) | partial | `.py` class/function/method identities and signatures; decorators; module/class/function docstrings; syntax-aware line-comment groups; structural attachment; source/schema/reader/manifest/runtime binding; parse and malformed-fence diagnostics | Imports and dependency edges, calls, dynamic exports, parsed Sphinx/Google/NumPy docstring fields, type-comment semantics, `.pyi` distinctions, cross-revision rename identity, full discovery ledger |
 | Universal MSDMD block parsers | implemented-and-tested for block grammar only | Registered line-comment markers and supplemental fenced entries | Native declarations, syntax-aware rejection of block-shaped text inside strings, qualified edge validation |
 | Every other catalogue family | specified-only unless another owning skill says otherwise | Discovery and reader requirements below | Extraction, reconciliation, and coverage support |
 

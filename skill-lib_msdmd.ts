@@ -93,7 +93,7 @@ export default defineMsdmdCollection({
       "block": "CONTRACTS",
       "fields": {
         "class": "provenance",
-        "given": "source bytes, schema, reader implementation, or reader support manifest changes",
+        "given": "source bytes, schema, reader implementation, support manifest, or effective Python AST grammar changes",
         "then": "the deterministic projection freshness key changes"
       },
       "file": "msdmd/module_projection.py",

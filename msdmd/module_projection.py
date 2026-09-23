@@ -1,4 +1,4 @@
-# ratios: loc_comments=719:80 imports_exports=13:8 calls_definitions=202:45
+# ratios: loc_comments=833:84 imports_exports=15:9 calls_definitions=228:49
 # === MODULE_BUILD ===
 # id: msdmd_python_module_projection
 #   module_name: module_projection
@@ -34,7 +34,7 @@
 #   class: safety
 #
 # id: module_projection_freshness_binds_source_and_reader
-#   given: source bytes, schema, reader implementation, or reader support manifest changes
+#   given: source bytes, schema, reader implementation, support manifest, or effective Python AST grammar changes
 #   then: the deterministic projection freshness key changes
 #   class: provenance
 # === END CONTRACTS ===
@@ -42,8 +42,9 @@
 
 This runner is the first executable native-reader slice of MSDMD.  Native
 source remains authoritative; generated JSONL files are disposable projections.
-Each projection binds the source digest, reader digest, schema version, symbols,
-docstrings, comments, source spans, and attachment method.
+Each projection binds the source digest, reader digest, schema version, effective
+Python AST grammar, symbols, docstrings, comments, source spans, and attachment
+method.
 
 Usage::
 
@@ -67,11 +68,14 @@ Attachment rules:
 
 * a comment group immediately preceding a declaration at the same lexical
   depth is leading trivia for that declaration;
-* otherwise a comment inside a declaration belongs to the nearest enclosing
-  declaration;
+* otherwise a comment inside a declaration, including trailing indented suite
+  comments before lexical dedent, belongs to the nearest enclosing declaration;
 * headers, MSDMD fences, RATIOS, encoding cookies, and unattached comments stay
   at module scope;
 * native module/class/function docstrings attach directly to their AST owner.
+
+Interrupted or unclosed MSDMD fences produce diagnostics instead of spanning
+intervening code.
 
 Line and byte ranges are navigational facts for the pinned source digest.  They
 never form a symbol identity, so inserting lines cannot change ownership.
@@ -80,6 +84,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import codecs
 from dataclasses import dataclass
 import hashlib
 import io
@@ -87,6 +92,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import tempfile
 import tokenize
 from typing import Iterable, Iterator, Sequence
@@ -112,7 +118,8 @@ DEFAULT_SKIP_DIRS = frozenset(
     }
 )
 
-_ENCODING_RE = re.compile(r"coding[:=]\s*[-\w.]+")
+_COOKIE_RE = re.compile(br"^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)")
+_BLANK_OR_COMMENT_RE = re.compile(br"^[ \t\f]*(?:[#\r\n]|$)")
 _FENCE_RE = re.compile(r"^===\s+(?:END\s+)?[A-Z][A-Z0-9_]*\s+===$")
 
 
@@ -134,6 +141,14 @@ def _schema_sha256() -> str:
 
 def _reader_manifest_sha256() -> str:
     return _sha256(Path(__file__).with_name("python-module-reader.json").read_bytes())
+
+
+def _runtime_identity() -> dict[str, str]:
+    return {
+        "python_implementation": sys.implementation.name,
+        "python_version": ".".join(str(value) for value in sys.version_info[:3]),
+        "ast_feature_version": f"{sys.version_info.major}.{sys.version_info.minor}",
+    }
 
 
 def _line_start_bytes(text: str) -> list[int]:
@@ -255,11 +270,24 @@ class CommentGroup:
         return tuple(values)
 
 
+@dataclass(frozen=True)
+class CommentDiagnostic:
+    code: str
+    message: str
+    line: int | None = None
+
+
 def _signature(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> tuple[str, str]:
+    type_params = [ast.unparse(item) for item in getattr(node, "type_params", [])]
+    type_suffix = f"[{', '.join(type_params)}]" if type_params else ""
     if isinstance(node, ast.ClassDef):
         arguments = [ast.unparse(base) for base in node.bases]
         arguments.extend(ast.unparse(keyword) for keyword in node.keywords)
-        text = f"class {node.name}({', '.join(arguments)})" if arguments else f"class {node.name}"
+        text = (
+            f"class {node.name}{type_suffix}({', '.join(arguments)})"
+            if arguments
+            else f"class {node.name}{type_suffix}"
+        )
         identity_tree = {
             "kind": "class",
             "bases": [ast.dump(base, include_attributes=False) for base in node.bases],
@@ -273,7 +301,7 @@ def _signature(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) -> t
         prefix = "async def" if isinstance(node, ast.AsyncFunctionDef) else "def"
         arguments = ast.unparse(node.args)
         returns = f" -> {ast.unparse(node.returns)}" if node.returns is not None else ""
-        text = f"{prefix} {node.name}({arguments}){returns}"
+        text = f"{prefix} {node.name}{type_suffix}({arguments}){returns}"
         identity_tree = {
             "kind": "async_function" if isinstance(node, ast.AsyncFunctionDef) else "function",
             "arguments": ast.dump(node.args, include_attributes=False),
@@ -302,8 +330,8 @@ def _header_line(node: ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef) ->
 def _discover_symbols(tree: ast.Module, repo: str, source_path: str) -> list[Symbol]:
     discovered: list[tuple[ast.AST, str, str, int, int, str, str, str | None]] = []
 
-    def visit_statement(
-        node: ast.stmt,
+    def visit_node(
+        node: ast.AST,
         names: tuple[str, ...],
         parent_kind: str | None,
         parent_key: str | None,
@@ -318,18 +346,18 @@ def _discover_symbols(tree: ast.Module, repo: str, source_path: str) -> list[Sym
                 (node, qualified, kind, depth, _header_line(node), signature, signature_digest, parent_key)
             )
             for child in node.body:
-                visit_statement(child, (*names, node.name), kind, base, depth + 1)
+                visit_node(child, (*names, node.name), kind, base, depth + 1)
             return
 
-        # Control-flow statements do not create lexical symbol scopes. Walk
-        # their statement children so definitions inside if/try/match blocks
-        # retain the nearest function or class as their structural parent.
+        # Control-flow nodes and their non-statement suite containers do not
+        # create lexical symbol scopes. Recurse through match_case,
+        # ExceptHandler, and equivalent AST nodes while stopping at each
+        # discovered declaration boundary above.
         for child in ast.iter_child_nodes(node):
-            if isinstance(child, ast.stmt):
-                visit_statement(child, names, parent_kind, parent_key, depth)
+            visit_node(child, names, parent_kind, parent_key, depth)
 
     for statement in tree.body:
-        visit_statement(statement, (), None, None, 0)
+        visit_node(statement, (), None, None, 0)
 
     counts: dict[str, int] = {}
     for _, qualified, kind, _, _, _, _, _ in discovered:
@@ -370,15 +398,35 @@ def _discover_symbols(tree: ast.Module, repo: str, source_path: str) -> list[Sym
     return symbols
 
 
-def _comment_groups(source: bytes) -> tuple[list[CommentGroup], str | None]:
+def _encoding_cookie_line(source: bytes) -> int | None:
+    reader = io.BytesIO(source).readline
+    first = reader()
+    if first.startswith(codecs.BOM_UTF8):
+        first = first[len(codecs.BOM_UTF8):]
+    if _COOKIE_RE.match(first):
+        return 1
+    if not _BLANK_OR_COMMENT_RE.match(first):
+        return None
+    return 2 if _COOKIE_RE.match(reader()) else None
+
+
+def _comment_groups(
+    source: bytes,
+    encoding_cookie_line: int | None,
+) -> tuple[list[CommentGroup], list[CommentDiagnostic]]:
+    comments: list[tokenize.TokenInfo] = []
+    diagnostics: list[CommentDiagnostic] = []
     try:
-        comments = [
-            token
-            for token in tokenize.tokenize(io.BytesIO(source).readline)
-            if token.type == tokenize.COMMENT
-        ]
+        for token in tokenize.tokenize(io.BytesIO(source).readline):
+            if token.type == tokenize.COMMENT:
+                comments.append(token)
     except (SyntaxError, tokenize.TokenError) as exc:
-        return [], str(exc)
+        diagnostics.append(
+            CommentDiagnostic(
+                code="python_tokenize_error",
+                message=str(exc),
+            )
+        )
 
     groups: list[list[tokenize.TokenInfo]] = []
     current: list[tokenize.TokenInfo] = []
@@ -397,15 +445,31 @@ def _comment_groups(source: bytes) -> tuple[list[CommentGroup], str | None]:
         is_singleton_convention = (
             payload.startswith("ratios:")
             or (token.start[0] == 1 and token.string.startswith("#!"))
-            or (token.start[0] <= 2 and bool(_ENCODING_RE.search(payload)))
+            or token.start[0] == encoding_cookie_line
         )
 
         if in_msdmd_fence:
-            current.append(token)
-            if is_fence and is_end_fence:
-                flush()
-                in_msdmd_fence = False
-            continue
+            contiguous = (
+                bool(current)
+                and token.start[0] == current[-1].end[0] + 1
+                and token.start[1] == current[-1].start[1]
+            )
+            if contiguous:
+                current.append(token)
+                if is_fence and is_end_fence:
+                    flush()
+                    in_msdmd_fence = False
+                continue
+            start_line = current[0].start[0]
+            diagnostics.append(
+                CommentDiagnostic(
+                    code="msdmd_fence_interrupted",
+                    message=f"MSDMD fence starting on line {start_line} is interrupted or unclosed",
+                    line=start_line,
+                )
+            )
+            flush()
+            in_msdmd_fence = False
         if is_fence and not is_end_fence:
             flush()
             current = [token]
@@ -424,15 +488,27 @@ def _comment_groups(source: bytes) -> tuple[list[CommentGroup], str | None]:
         else:
             flush()
             current = [token]
+    if in_msdmd_fence:
+        start_line = current[0].start[0]
+        diagnostics.append(
+            CommentDiagnostic(
+                code="msdmd_fence_unclosed",
+                message=f"MSDMD fence starting on line {start_line} is unclosed",
+                line=start_line,
+            )
+        )
     flush()
-    return [CommentGroup(tuple(group)) for group in groups], None
+    return [CommentGroup(tuple(group)) for group in groups], diagnostics
 
 
-def _special_comment_kind(group: CommentGroup) -> str | None:
+def _special_comment_kind(
+    group: CommentGroup,
+    encoding_cookie_line: int | None,
+) -> str | None:
     lines = group.text_lines
     if group.start_line == 1 and group.tokens[0].string.startswith("#!"):
         return "shebang"
-    if group.start_line <= 2 and any(_ENCODING_RE.search(line) for line in lines):
+    if group.start_line == encoding_cookie_line:
         return "encoding_cookie"
     if any(line.strip().startswith("ratios:") for line in lines):
         return "msdmd_ratios"
@@ -452,11 +528,33 @@ def _leading_subject(group: CommentGroup, symbols: Sequence[Symbol]) -> Symbol |
     return min(candidates, key=lambda symbol: (symbol.header_line, -symbol.depth))
 
 
-def _enclosing_subject(group: CommentGroup, symbols: Sequence[Symbol]) -> Symbol | None:
+def _lexical_end_line(symbol: Symbol, lines: Sequence[str]) -> int:
+    end_line = symbol.end_line
+    for line_number in range(symbol.end_line + 1, len(lines) + 1):
+        raw = lines[line_number - 1]
+        if not raw.strip():
+            continue
+        indentation = len(raw) - len(raw.lstrip(" \t\f"))
+        if indentation <= symbol.column:
+            break
+        end_line = line_number
+    return end_line
+
+
+def _enclosing_subject(
+    group: CommentGroup,
+    symbols: Sequence[Symbol],
+    lines: Sequence[str],
+) -> Symbol | None:
     candidates = [
         symbol
         for symbol in symbols
-        if symbol.start_line <= group.start_line <= symbol.end_line
+        if symbol.start_line <= group.start_line
+        and group.end_line <= _lexical_end_line(symbol, lines)
+        and (
+            group.start_line <= symbol.end_line
+            or group.start_column > symbol.column
+        )
     ]
     if not candidates:
         return None
@@ -465,6 +563,16 @@ def _enclosing_subject(group: CommentGroup, symbols: Sequence[Symbol]) -> Symbol
 
 def _symbol_record(symbol: Symbol, lines: Sequence[str], starts: Sequence[int]) -> dict:
     decorators = [ast.unparse(item) for item in symbol.node.decorator_list]
+    source_span = _node_span(symbol.node, lines, starts)
+    if symbol.node.decorator_list:
+        source_span["start"] = _span(
+            lines,
+            starts,
+            symbol.header_line,
+            symbol.column,
+            symbol.header_line,
+            symbol.column,
+        )["start"]
     return {
         "record_type": "symbol",
         "id": symbol.identity,
@@ -475,7 +583,7 @@ def _symbol_record(symbol: Symbol, lines: Sequence[str], starts: Sequence[int]) 
         "signature_sha256": symbol.signature_sha256,
         "decorators": decorators,
         "standing": "syntactically_observed",
-        "source_span": _node_span(symbol.node, lines, starts),
+        "source_span": source_span,
     }
 
 
@@ -545,6 +653,7 @@ def _freshness_key(
     schema_sha256: str,
     reader_manifest_sha256: str,
     source_revision: str,
+    runtime_identity: dict[str, str],
 ) -> str:
     identity = {
         "schema": SCHEMA_ID,
@@ -558,6 +667,7 @@ def _freshness_key(
         "reader_sha256": reader_sha256,
         "schema_sha256": schema_sha256,
         "reader_manifest_sha256": reader_manifest_sha256,
+        **runtime_identity,
     }
     return _sha256(_canonical_json(identity).encode("utf-8"))
 
@@ -587,6 +697,7 @@ def project_python_module(
     reader_sha256 = _reader_sha256()
     schema_sha256 = _schema_sha256()
     reader_manifest_sha256 = _reader_manifest_sha256()
+    runtime_identity = _runtime_identity()
     source_revision = revision or "hmmm"
     header = {
         "record_type": "module",
@@ -602,6 +713,7 @@ def project_python_module(
         "reader_version": READER_VERSION,
         "reader_sha256": reader_sha256,
         "reader_manifest_sha256": reader_manifest_sha256,
+        **runtime_identity,
         "freshness_key_sha256": _freshness_key(
             repo,
             relative,
@@ -610,6 +722,7 @@ def project_python_module(
             schema_sha256,
             reader_manifest_sha256,
             source_revision,
+            runtime_identity,
         ),
         "module_id": _module_address(repo, relative),
         "status": "complete",
@@ -620,7 +733,12 @@ def project_python_module(
         source_encoding = tokenize.detect_encoding(io.BytesIO(source).readline)[0]
         header["source_encoding"] = source_encoding
         decoded = source.decode(source_encoding)
-        tree = ast.parse(decoded, filename=relative, type_comments=True)
+        tree = ast.parse(
+            decoded,
+            filename=relative,
+            type_comments=True,
+            feature_version=(sys.version_info.major, sys.version_info.minor),
+        )
     except (SyntaxError, UnicodeDecodeError) as exc:
         header["status"] = "invalid"
         header["hmmm"].append("source could not be parsed as Python")
@@ -656,22 +774,30 @@ def project_python_module(
         if doc is not None:
             records.append(doc)
 
-    groups, token_error = _comment_groups(source)
-    if token_error is not None:
+    encoding_cookie_line = _encoding_cookie_line(source)
+    groups, comment_diagnostics = _comment_groups(source, encoding_cookie_line)
+    for diagnostic in comment_diagnostics:
         header["status"] = "invalid"
-        header["hmmm"].append("comments could not be tokenized completely")
+        hmmm = (
+            "comments could not be tokenized completely"
+            if diagnostic.code == "python_tokenize_error"
+            else "MSDMD comment fence is malformed"
+        )
+        if hmmm not in header["hmmm"]:
+            header["hmmm"].append(hmmm)
         records.append(
             {
                 "record_type": "diagnostic",
-                "code": "python_tokenize_error",
+                "code": diagnostic.code,
                 "severity": "error",
-                "message": token_error,
+                "message": diagnostic.message,
                 "source_path": relative,
+                "line": diagnostic.line,
             }
         )
 
     for group in groups:
-        special = _special_comment_kind(group)
+        special = _special_comment_kind(group, encoding_cookie_line)
         if special is not None:
             records.append(
                 _comment_record(
@@ -699,7 +825,7 @@ def project_python_module(
                 )
             )
             continue
-        enclosing = _enclosing_subject(group, symbols)
+        enclosing = _enclosing_subject(group, symbols, lines)
         if enclosing is not None:
             records.append(
                 _comment_record(
@@ -808,7 +934,8 @@ def write_projections(
     for relative, content in sorted(projections.items()):
         target = _projection_target(out_dir, relative)
         target.parent.mkdir(parents=True, exist_ok=True)
-        if not target.exists() or target.read_text(encoding="utf-8") != content:
+        content_bytes = content.encode("utf-8")
+        if not target.exists() or target.read_bytes() != content_bytes:
             temporary: Path | None = None
             try:
                 with tempfile.NamedTemporaryFile(
@@ -851,7 +978,7 @@ def check_projections(
             findings.append(f"unexpected:{unexpected.relative_to(out_dir).as_posix()}")
     for relative, expected_content in sorted(projections.items()):
         target = _projection_target(out_dir, relative)
-        if target.exists() and target.read_text(encoding="utf-8") != expected_content:
+        if target.exists() and target.read_bytes() != expected_content.encode("utf-8"):
             findings.append(f"stale:{relative}")
         first = json.loads(expected_content.splitlines()[0])
         if first["status"] != "complete":
@@ -914,4 +1041,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=719:80 imports_exports=13:8 calls_definitions=202:45
+# ratios: loc_comments=833:84 imports_exports=15:9 calls_definitions=228:49

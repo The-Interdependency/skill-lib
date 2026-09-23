@@ -76,6 +76,9 @@
         "reader_version",
         "reader_sha256",
         "reader_manifest_sha256",
+        "python_implementation",
+        "python_version",
+        "ast_feature_version",
         "freshness_key_sha256",
         "module_id",
         "status",
@@ -124,6 +127,18 @@
         },
         "reader_manifest_sha256": {
           "$ref": "#/$defs/sha256"
+        },
+        "python_implementation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "python_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "ast_feature_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$"
         },
         "freshness_key_sha256": {
           "$ref": "#/$defs/sha256"

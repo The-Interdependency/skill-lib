@@ -39,7 +39,9 @@ directory, using `msdmd/module-projection.schema.json`. Symbol identities use
 qualified declarations rather than line numbers; leading comments attach to the
 immediately following declaration at the same lexical depth, other interior
 comments attach to the nearest enclosing declaration, and docstrings attach to
-their native AST owner.
+their native AST owner. Trailing indented suite comments remain with that lexical
+owner until dedent. The projection header binds the executing Python version and
+AST grammar; malformed MSDMD fences emit diagnostics rather than spanning code.
 
 ```bash
 python -m msdmd.module_projection --root . --repo example/repo \

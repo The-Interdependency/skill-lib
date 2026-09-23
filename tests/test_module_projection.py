@@ -1,4 +1,4 @@
-# ratios: loc_comments=84:266 imports_exports=8:8 calls_definitions=145:26
+# ratios: loc_comments=97:416 imports_exports=9:8 calls_definitions=210:32
 # === CHECKS ===
 # id: check_module_projection_line_shift_stability
 #   proves: module_projection_line_shift_stability
@@ -30,6 +30,7 @@ Usage: ``python -m unittest tests.test_module_projection``.
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -39,6 +40,7 @@ from unittest import mock
 
 from msdmd.module_projection import (
     SCHEMA_ID,
+    _signature,
     check_projections,
     project_python_module,
     project_tree,
@@ -175,6 +177,12 @@ class Example:
 
             self.assertEqual((symbols["decorated"], "leading_trivia"), metadata["decorated purpose"])
             self.assertEqual((symbols["Example.method"], "leading_trivia"), metadata["method purpose"])
+            decorated = next(
+                record
+                for record in records
+                if record.get("qualified_name") == "decorated"
+            )
+            self.assertEqual(5, decorated["source_span"]["start"]["line"])
 
     def test_definitions_inside_control_flow_keep_their_lexical_owner(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -206,6 +214,70 @@ class Example:
                 metadata["conditional helper"],
             )
 
+    def test_definitions_inside_match_cases_and_except_handlers_are_discovered(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "module.py"
+            source.write_text(
+                '''def outer(value):
+    match value:
+        case 1:
+            # match helper
+            def matched():
+                return True
+    try:
+        raise ValueError
+    except ValueError:
+        # exception helper
+        def handled():
+            return False
+    return matched, handled
+''',
+                encoding="utf-8",
+            )
+
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbols = _symbol_ids(records)
+            metadata = _metadata_subjects(records)
+
+            self.assertIn("outer.matched", symbols)
+            self.assertIn("outer.handled", symbols)
+            self.assertEqual(
+                (symbols["outer.matched"], "leading_trivia"),
+                metadata["match helper"],
+            )
+            self.assertEqual(
+                (symbols["outer.handled"], "leading_trivia"),
+                metadata["exception helper"],
+            )
+
+    def test_trailing_suite_comments_remain_on_the_lexical_owner(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "module.py"
+            source.write_text(
+                '''def function():
+    value = 1
+    # trailing invariant
+
+# module note
+''',
+                encoding="utf-8",
+            )
+
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbols = _symbol_ids(records)
+            metadata = _metadata_subjects(records)
+
+            self.assertEqual(
+                (symbols["function"], "nearest_enclosing_symbol"),
+                metadata["trailing invariant"],
+            )
+            self.assertEqual(
+                (records[0]["module_id"], "module_scope"),
+                metadata["module note"],
+            )
+
     def test_special_file_conventions_remain_module_scoped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -232,6 +304,78 @@ def function():
             self.assertEqual(2, len(special))
             self.assertTrue(all(record["subject"] == module_id for record in special))
             self.assertTrue(all(record["attachment"] == "module_convention" for record in special))
+
+    def test_interrupted_and_unclosed_msdmd_fences_emit_diagnostics(self) -> None:
+        cases = {
+            "interrupted": (
+                "# === DOCS ===\nvalue = 1\n# id: later\n# === END DOCS ===\n",
+                "msdmd_fence_interrupted",
+            ),
+            "unclosed": (
+                "# === DOCS ===\n# id: unfinished\n",
+                "msdmd_fence_unclosed",
+            ),
+        }
+        for name, (text, code) in cases.items():
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "module.py"
+                source.write_text(text, encoding="utf-8")
+
+                records = project_python_module(source, root=root, repo="example/repo")
+                diagnostics = [
+                    record for record in records if record["record_type"] == "diagnostic"
+                ]
+                blocks = [
+                    record["text"]
+                    for record in records
+                    if record["record_type"] == "metadata"
+                    and record["metadata_kind"] == "msdmd_block"
+                ]
+
+                self.assertEqual("invalid", records[0]["status"])
+                self.assertIn(code, {record["code"] for record in diagnostics})
+                self.assertFalse(
+                    any("=== DOCS ===" in block and "=== END DOCS ===" in block for block in blocks)
+                )
+
+    def test_only_python_recognized_encoding_cookie_is_module_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "module.py"
+            source.write_text(
+                "value = 1\n"
+                "# coding: this is a design note\n"
+                "def function():\n"
+                "    return value\n",
+                encoding="utf-8",
+            )
+
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbols = _symbol_ids(records)
+            metadata = _metadata_subjects(records)
+
+            self.assertEqual(
+                (symbols["function"], "leading_trivia"),
+                metadata["coding: this is a design note"],
+            )
+            self.assertNotIn(
+                "encoding_cookie",
+                {
+                    record.get("metadata_kind")
+                    for record in records
+                    if record["record_type"] == "metadata"
+                },
+            )
+
+    def test_generic_type_parameters_are_rendered_in_signatures(self) -> None:
+        function = ast.parse("def ident(value: T) -> T:\n    return value\n").body[0]
+        function.type_params = [ast.Name(id="T")]
+        generic_class = ast.parse("class Box:\n    pass\n").body[0]
+        generic_class.type_params = [ast.Name(id="T")]
+
+        self.assertEqual("def ident[T](value: T) -> T", _signature(function)[0])
+        self.assertEqual("class Box[T]", _signature(generic_class)[0])
 
     def test_projection_does_not_execute_inspected_source(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -261,6 +405,15 @@ def function():
             changed_source = project_python_module(source, root=root, repo="example/repo")[0]
             with mock.patch("msdmd.module_projection._reader_sha256", return_value="f" * 64):
                 changed_reader = project_python_module(source, root=root, repo="example/repo")[0]
+            with mock.patch(
+                "msdmd.module_projection._runtime_identity",
+                return_value={
+                    "python_implementation": "test-python",
+                    "python_version": "99.0.0",
+                    "ast_feature_version": "99.0",
+                },
+            ):
+                changed_runtime = project_python_module(source, root=root, repo="example/repo")[0]
             changed_revision = project_python_module(
                 source,
                 root=root,
@@ -275,11 +428,17 @@ def function():
             )
             self.assertNotEqual(
                 changed_source["freshness_key_sha256"],
+                changed_runtime["freshness_key_sha256"],
+            )
+            self.assertNotEqual(
+                changed_source["freshness_key_sha256"],
                 changed_revision["freshness_key_sha256"],
             )
             self.assertEqual("revision-two", changed_revision["source_revision"])
             self.assertEqual("utf-8", changed_revision["source_encoding"])
             self.assertEqual([], changed_revision["hmmm"])
+            self.assertRegex(changed_revision["python_version"], r"^\d+\.\d+\.\d+$")
+            self.assertRegex(changed_revision["ast_feature_version"], r"^\d+\.\d+$")
             msdmd_dir = Path(__file__).resolve().parents[1] / "msdmd"
             self.assertEqual(
                 hashlib.sha256((msdmd_dir / "module-projection.schema.json").read_bytes()).hexdigest(),
@@ -309,6 +468,23 @@ def function():
             (root / "a.py").write_text("def a():\n    return 2\n", encoding="utf-8")
             stale = project_tree(root, "example/repo")
             self.assertEqual(["stale:a.py.msdmd.jsonl"], check_projections(out, stale))
+
+    def test_corrupt_non_utf8_sidecar_is_stale_and_repairable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            out = Path(tmp) / "generated"
+            root.mkdir()
+            (root / "a.py").write_text("def a():\n    return 1\n", encoding="utf-8")
+            projections = project_tree(root, "example/repo")
+            target = write_projections(out, projections)[0]
+            target.write_bytes(b"\xff\xfe corrupt")
+
+            self.assertEqual(
+                ["stale:a.py.msdmd.jsonl"],
+                check_projections(out, projections),
+            )
+            write_projections(out, projections)
+            self.assertEqual(projections["a.py.msdmd.jsonl"].encode("utf-8"), target.read_bytes())
 
     def test_selected_write_and_check_do_not_prune_or_reject_other_modules(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -395,9 +571,13 @@ def function():
         self.assertEqual("partial", manifest["status"])
         self.assertIn("docstring", " ".join(manifest["supported_subset"]))
         self.assertIn("imports and dependency edges", manifest["limitations"])
+        self.assertEqual(
+            ["python_implementation", "python_version", "ast_feature_version"],
+            manifest["supported_grammar"]["projection_fields"],
+        )
         self.assertFalse(manifest["safety"]["executes_inspected_code"])
 
 
 if __name__ == "__main__":
     unittest.main()
-# ratios: loc_comments=84:266 imports_exports=8:8 calls_definitions=145:26
+# ratios: loc_comments=97:416 imports_exports=9:8 calls_definitions=210:32

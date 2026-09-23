@@ -126,9 +126,9 @@ promised by the full contract. It parses supplied `.py` bytes with `ast` and
 `module-projection.schema.json`; its machine-readable support manifest is
 `python-module-reader.json`. The first record binds repository context, source
 path and digest, optional revision, detected encoding, schema digest, reader
-version, implementation digest, and manifest digest. Remaining records describe
-symbols, native docstrings, comments, source spans, attachment methods, and parse
-diagnostics.
+version, implementation digest, manifest digest, and effective Python/AST grammar.
+Remaining records describe symbols, native docstrings, comments, source spans,
+attachment methods, and parse diagnostics.
 
 Symbol IDs derive from repository, path, kind, and qualified name, with a
 signature-derived disambiguator only for duplicate qualified declarations. Line
@@ -137,11 +137,16 @@ numbers are navigational facts, never identity. Attachment is structural:
 - a contiguous comment group immediately before a declaration at the same
   lexical depth attaches as `leading_trivia` to that declaration, including
   decorated declarations;
-- every other comment inside a declaration attaches to the nearest enclosing
-  symbol;
+- every other comment inside a declaration, including trailing indented suite
+  comments before lexical dedent, attaches to the nearest enclosing symbol;
 - shebangs, encoding cookies, RATIOS seals, MSDMD fences, and otherwise
   unattached comments remain module-scoped; and
 - module, class, function, and method docstrings attach to their AST owner.
+
+Interrupted or unclosed MSDMD fences make the projection invalid and remain
+split rather than silently spanning executable code. Decorated-symbol spans begin
+at the first decorator so normalized decorator facts retain an exact raw-source
+reference through the pinned source digest.
 
 The projection is deterministic and disposable. Complete-tree writes prune stale
 projection files; selected-file writes never prune outside their selection.

@@ -50,9 +50,35 @@ class RepoAuditRepairSkillTest(unittest.TestCase):
         self.assertIn("does not edit the source repository's valid prose", self.normalized)
 
     def test_completion_distinguishes_delivery_states(self) -> None:
-        self.assertIn("State `merged`, `released`, and `deployed` separately", self.text)
+        self.assertIn("State `reviewed-at-head`, `merged`, `released`, and `deployed`", self.text)
         self.assertIn("Never infer one from another", self.normalized)
         self.assertIn("authoritative checks settle", self.text)
+
+    def test_merge_admission_is_exact_revision_and_fail_closed(self) -> None:
+        self.assertIn("conjunctive exact-revision", self.text)
+        self.assertIn("current PR head SHA and base SHA", self.normalized)
+        self.assertIn("no unresolved merge-blocking finding", self.normalized)
+        self.assertIn("no unresolved review thread remains", self.normalized)
+        self.assertIn("P0/P1/P2", self.text)
+        self.assertIn("complete effective, non-dismissed `APPROVED` review set", self.normalized)
+        self.assertIn("approval count, reviewer role, and eligibility constraint", self.normalized)
+        self.assertIn("Any head or base movement invalidates", self.normalized)
+        self.assertIn("expected-head/SHA", self.text)
+        self.assertIn("provider's strongest guarded merge path", self.normalized)
+        merge_start = self.text.index("- Use the provider's strongest guarded merge path")
+        merge_end = self.text.index("- If deployment or release follows", merge_start)
+        guarded_merge = " ".join(self.text[merge_start:merge_end].split())
+        self.assertIn("repository policy the provider declares required", guarded_merge)
+        self.assertIn("protected-branch checks, approvals, conversation resolution", guarded_merge)
+        self.assertIn("task-local admission evidence", guarded_merge)
+        self.assertIn("Re-read that receipt immediately before merge", guarded_merge)
+        self.assertIn("current base SHA or validated merge candidate", guarded_merge)
+        self.assertIn("provider mergeability to be recomputed against that same base", guarded_merge)
+        self.assertIn("Base movement invalidates the receipt", guarded_merge)
+        self.assertIn("Do not bypass those controls", guarded_merge)
+        self.assertIn("treating task-local admission evidence as provider-enforced", self.normalized)
+        self.assertNotIn("\\n", self.text)
+        self.assertIn("reviewed-at-head — exact head SHA + base SHA/validated merge candidate", self.text)
 
     def test_repo_loto_is_composed_not_required(self) -> None:
         self.assertIn("Use `repo_loto` when available", self.text)

@@ -18,7 +18,7 @@ class WebsiteBuilderJournalSkillTest(unittest.TestCase):
         record = next(skill for skill in self.index["skills"] if skill["name"] == "website-builder-journal")
         self.assertEqual(record["path"], "website-builder-journal/SKILL.md")
         self.assertEqual(record["kind"], "procedural")
-        self.assertIn("before any modification to The-Interdependency/The-Interdependency.github.io", record["description"])
+        self.assertIn("Load this when any modification to The-Interdependency/The-Interdependency.github.io is planned or underway", record["description"])
         self.assertIn("Do not load for read-only inspection", record["description"])
 
     def test_contract_is_append_only_and_model_discretionary(self) -> None:

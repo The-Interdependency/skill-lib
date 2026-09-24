@@ -1,6 +1,6 @@
 ---
 name: website-builder-journal
-description: Append-only builder journal contract for interdependentway.org. Load this before any modification to The-Interdependency/The-Interdependency.github.io, including source, content, configuration, tests, workflows, dependencies, generated-contract code, or deployment paths. Every website change transaction must append at least one By the builder entry recording date, time, and the exact runtime model; the model chooses the subject and writes no more than needed to explicate it. Do not load for read-only inspection that changes no website file.
+description: Load this when any modification to The-Interdependency/The-Interdependency.github.io is planned or underway, including source, content, configuration, tests, workflows, dependencies, generated-contract code, or deployment paths. Every website change transaction must append at least one By the builder entry recording date, time, and the exact runtime model; the model chooses the subject and writes no more than needed to explicate it. Do not load for read-only inspection that changes no website file.
 ---
 
 # website-builder-journal — every build leaves a builder trace

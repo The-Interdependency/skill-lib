@@ -46,6 +46,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `stack-update/` — fail-closed structural stack update protocol; keeps authority, relation, lifecycle, provenance, manifests, BASE records, and work-graph identity coherent in one transaction
 * `project-incubation-graduation/` — incubation, qualification, extraction, release, reconsumption, and implementation-authority graduation doctrine
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
+* `website-builder-journal/` — append-only model-attributed By the builder expansion required for every interdependentway.org modification
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
@@ -188,6 +189,14 @@ Before assembling one textbook, report, standard, corpus, archive, or public rea
 ```
 
 Load `interdependent-work-graph` with it. Preserve ordered source identity, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, static reading access, and provenance in the published build artifact.
+
+Before modifying any file in `The-Interdependency/The-Interdependency.github.io`, agents should read:
+
+```text
+.agents/skills/website-builder-journal/SKILL.md
+```
+
+Every website change transaction must append at least one new `By the builder` record containing date, time, and exact runtime model. The model chooses the subject and stops when it has properly explicated it. The journal append satisfies the transaction and does not recursively require another append.
 
 Before creating a new module, route, service, adapter, schema, worker,
 engine, UI panel, migration, or experiment, agents should read:

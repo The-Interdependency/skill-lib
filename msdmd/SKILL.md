@@ -149,8 +149,12 @@ than silently spanning executable code or being accepted as a block:
 interrupted (`msdmd_fence_interrupted`), unclosed (`msdmd_fence_unclosed`),
 closed under a different name or containing a nested opening fence
 (`msdmd_fence_mismatched`), and closed without any opening
-(`msdmd_fence_unmatched_close`). Closing fences orphaned by an already-reported
-mismatch are not reported again, so one malformed fence yields one diagnostic.
+(`msdmd_fence_unmatched_close`). A mismatch (wrong-name close or nested
+opening) yields one diagnostic: one later closing fence per affected block name,
+orphaned by that already-reported mismatch, is suppressed until the next opening
+fence of that name; every other unpaired close is reported. This guarantee does
+not cover interrupted fences, which may also report their later closing fence as
+`msdmd_fence_unmatched_close`.
 This projection is deliberately stricter than the universal block parser
 (`parsers/universal.py`), which matches each requested block name independently
 and silently ignores foreign, nested, or unpaired fences.

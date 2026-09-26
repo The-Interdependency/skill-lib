@@ -1,4 +1,4 @@
-# ratios: loc_comments=903:118 imports_exports=14:9 calls_definitions=255:53
+# ratios: loc_comments=904:124 imports_exports=14:9 calls_definitions=256:53
 # === MODULE_BUILD ===
 # id: msdmd_python_module_projection
 #   module_name: module_projection
@@ -77,8 +77,11 @@ Attachment rules:
 
 Interrupted, unclosed, or name-mismatched MSDMD fences, opening fences inside
 an open block, and closing fences without an opening produce diagnostics instead
-of spanning intervening code or being accepted as a block.  Closes orphaned by
-an already-diagnosed mismatch are not re-reported.  This is stricter than the
+of spanning intervening code or being accepted as a block.  A mismatch
+(wrong-name close or nested opening) yields one diagnostic: one later close per
+affected block name, orphaned by that already-reported mismatch, is suppressed
+until the next opening of that name.  An interrupted fence may also report its
+later closing fence as unmatched.  This is stricter than the
 universal block parser, which matches each requested block name independently.
 
 Source lines are split only at Python newlines (LF, CRLF, and CR); U+2028, NEL,
@@ -489,8 +492,9 @@ def _comment_groups(
     in_msdmd_fence = False
     open_fence_name: str | None = None
     # Closing fences left orphaned by an already-diagnosed mismatch are
-    # follow-on noise: suppress one close per affected block name so a single
-    # malformed fence yields one diagnostic.  The projection remains invalid.
+    # follow-on noise: suppress one close per affected block name, until the
+    # next opening of that name, so a mismatch yields one diagnostic.
+    # Interrupted fences are not covered.  The projection remains invalid.
     suppressed_closes: dict[str, int] = {}
 
     def flush() -> None:
@@ -563,6 +567,9 @@ def _comment_groups(
             current = [token]
             in_msdmd_fence = True
             open_fence_name = fence_name
+            # A new opening of this name ends any suppression left by an
+            # earlier mismatch, so later genuine orphans remain visible.
+            suppressed_closes.pop(fence_name, None)
             continue
         if is_fence and fence_name is not None and suppressed_closes.get(fence_name, 0):
             suppressed_closes[fence_name] -= 1
@@ -1157,4 +1164,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=903:118 imports_exports=14:9 calls_definitions=255:53
+# ratios: loc_comments=904:124 imports_exports=14:9 calls_definitions=256:53

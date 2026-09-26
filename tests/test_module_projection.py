@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:701 imports_exports=9:11 calls_definitions=334:42
+# ratios: loc_comments=97:713 imports_exports=9:11 calls_definitions=334:42
 # === CHECKS ===
 # id: check_module_projection_line_shift_stability
 #   proves: module_projection_line_shift_stability
@@ -654,9 +654,9 @@ class Example:
             )
 
     def test_mismatched_msdmd_fences_emit_diagnostics_and_invalidate(self) -> None:
-        # Each malformed fence yields exactly one diagnostic: closes orphaned by
-        # an already-diagnosed mismatch are suppressed, while a standalone
-        # orphan close is still reported.
+        # A mismatch yields exactly one diagnostic: closes orphaned by an
+        # already-diagnosed mismatch are suppressed until the next opening of
+        # that name, while any other orphan close is still reported.
         cases = {
             "closing_name_differs": (
                 "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n",
@@ -683,6 +683,18 @@ class Example:
                 "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n# === END DOCS ===\n"
                 "value = 1\n# === END DOCS ===\n",
                 [("msdmd_fence_mismatched", 3), ("msdmd_fence_unmatched_close", 6)],
+            ),
+            "orphan_after_reopened_block_is_reported": (
+                "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n\n"
+                "# === DOCS ===\n# id: later\n# === END DOCS ===\n"
+                "value = 1\n# === END DOCS ===\n",
+                [("msdmd_fence_mismatched", 3), ("msdmd_fence_unmatched_close", 9)],
+            ),
+            "nested_orphan_after_reopened_inner_block_is_reported": (
+                "# === DOCS ===\n# === CHECKS ===\n\n"
+                "# === CHECKS ===\n# id: later\n# === END CHECKS ===\n"
+                "value = 1\n# === END CHECKS ===\n",
+                [("msdmd_fence_mismatched", 2), ("msdmd_fence_unmatched_close", 8)],
             ),
         }
         for name, (text, expected_diagnostics) in cases.items():
@@ -890,4 +902,4 @@ class Example:
 
 if __name__ == "__main__":
     unittest.main()
-# ratios: loc_comments=97:701 imports_exports=9:11 calls_definitions=334:42
+# ratios: loc_comments=97:713 imports_exports=9:11 calls_definitions=334:42

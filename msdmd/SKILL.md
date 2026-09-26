@@ -137,20 +137,25 @@ numbers are navigational facts, never identity. Attachment is structural:
 - a contiguous comment group immediately before a declaration at the same
   lexical depth attaches as `leading_trivia` to that declaration, including
   decorated declarations;
-- every other comment inside a declaration, including trailing indented suite
-  comments before lexical dedent, attaches to the nearest enclosing symbol;
+- every other comment inside a declaration, including comments before or
+  between its decorators and trailing indented suite comments before lexical
+  dedent, attaches to the nearest enclosing symbol;
 - shebangs, encoding cookies, RATIOS seals, MSDMD fences, and otherwise
   unattached comments remain module-scoped; and
 - module, class, function, and method docstrings attach to their AST owner.
 
-Interrupted or unclosed MSDMD fences make the projection invalid and remain
-split rather than silently spanning executable code. Decorated-symbol spans begin
+Interrupted, unclosed, or name-mismatched MSDMD fences make the projection
+invalid and remain split rather than silently spanning executable code or being
+accepted as a block. Source lines split only at Python newlines (LF, CRLF, CR),
+so U+2028, form feed, and similar separators never shift spans, and CR-only
+sources keep exact byte offsets. Decorated-symbol spans begin
 at the first decorator so normalized decorator facts retain an exact raw-source
 reference through the pinned source digest.
 
 The projection is deterministic and disposable. Complete-tree writes prune stale
 projection files; selected-file writes never prune outside their selection.
-Writes use same-directory atomic replacement. `--check` recomputes content and
+Writes use same-directory atomic replacement of exact UTF-8 bytes with LF
+record terminators, so write and byte-exact `--check` converge on every platform. `--check` recomputes content and
 fails on missing, stale, invalid, or—during a complete-tree check—unexpected
 sidecars. Supply `--revision` when a repository revision is known; omission is
 preserved as `hmmm` rather than guessed.

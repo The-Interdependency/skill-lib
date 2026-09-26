@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:416 imports_exports=9:8 calls_definitions=210:32
+# ratios: loc_comments=97:629 imports_exports=9:11 calls_definitions=316:41
 # === CHECKS ===
 # id: check_module_projection_line_shift_stability
 #   proves: module_projection_line_shift_stability
@@ -554,6 +554,241 @@ def function():
                 check_projections(out, projections),
             )
 
+    def test_write_emits_exact_lf_utf8_bytes_and_repairs_crlf_sidecars(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            out = Path(tmp) / "generated"
+            root.mkdir()
+            (root / "a.py").write_text(
+                "# café note\ndef a():\n    return 1\n",
+                encoding="utf-8",
+            )
+            projections = project_tree(root, "example/repo")
+            expected = projections["a.py.msdmd.jsonl"].encode("utf-8")
+            real_named_temporary_file = tempfile.NamedTemporaryFile
+
+            def windows_text_translation(*args, **kwargs):
+                # Simulate Windows text-mode newline translation: any text-mode
+                # writer that does not disable translation emits CRLF.
+                mode = kwargs.get("mode", args[0] if args else "w+b")
+                if "b" not in mode and kwargs.get("newline") is None:
+                    kwargs["newline"] = "\r\n"
+                return real_named_temporary_file(*args, **kwargs)
+
+            with mock.patch(
+                "msdmd.module_projection.tempfile.NamedTemporaryFile",
+                side_effect=windows_text_translation,
+            ):
+                target = write_projections(out, projections)[0]
+
+            self.assertEqual(expected, target.read_bytes())
+            self.assertNotIn(b"\r", target.read_bytes())
+            self.assertEqual([], check_projections(out, projections))
+
+            target.write_bytes(expected.replace(b"\n", b"\r\n"))
+            self.assertEqual(["stale:a.py.msdmd.jsonl"], check_projections(out, projections))
+            with mock.patch(
+                "msdmd.module_projection.tempfile.NamedTemporaryFile",
+                side_effect=windows_text_translation,
+            ):
+                write_projections(out, projections)
+            self.assertEqual(expected, target.read_bytes())
+            self.assertEqual([], check_projections(out, projections))
+
+    def test_decorator_region_comments_attach_to_the_decorated_symbol(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "module.py"
+            source.write_text(
+                """def first(value):
+    return value
+
+def second(*args):
+    return lambda value: value
+
+# before decorators
+@first
+# between decorators
+@second(
+    # inside decorator expression
+    1,
+)  # trailing decorator
+def decorated():
+    return None
+
+class Example:
+    # before method decorator
+    @staticmethod
+    # between method decorator and def
+    def method():
+        return None
+""",
+                encoding="utf-8",
+            )
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbols = _symbol_ids(records)
+            metadata = _metadata_subjects(records)
+
+            self.assertEqual("complete", records[0]["status"])
+            self.assertEqual(
+                (symbols["decorated"], "leading_trivia"),
+                metadata["before decorators"],
+            )
+            for text in (
+                "between decorators",
+                "inside decorator expression",
+                "trailing decorator",
+            ):
+                with self.subTest(comment=text):
+                    self.assertEqual(
+                        (symbols["decorated"], "nearest_enclosing_symbol"),
+                        metadata[text],
+                    )
+            self.assertEqual(
+                (symbols["Example.method"], "leading_trivia"),
+                metadata["before method decorator"],
+            )
+            self.assertEqual(
+                (symbols["Example.method"], "nearest_enclosing_symbol"),
+                metadata["between method decorator and def"],
+            )
+
+    def test_mismatched_msdmd_fences_emit_diagnostics_and_invalidate(self) -> None:
+        cases = {
+            "closing_name_differs": (
+                "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n",
+                "msdmd_fence_mismatched",
+            ),
+            "opening_inside_open_block": (
+                "# === DOCS ===\n# === CHECKS ===\n# id: entry\n# === END CHECKS ===\n",
+                "msdmd_fence_mismatched",
+            ),
+            "closing_without_opening": (
+                "value = 1\n# === END DOCS ===\n",
+                "msdmd_fence_unmatched_close",
+            ),
+        }
+        for name, (text, code) in cases.items():
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp) / "repo"
+                out = Path(tmp) / "generated"
+                root.mkdir()
+                (root / "module.py").write_text(text, encoding="utf-8")
+
+                records = project_python_module(root / "module.py", root=root, repo="example/repo")
+                codes = {
+                    record["code"] for record in records if record["record_type"] == "diagnostic"
+                }
+
+                self.assertEqual("invalid", records[0]["status"])
+                self.assertIn(code, codes)
+                self.assertIn("MSDMD comment fence is malformed", records[0]["hmmm"])
+                projections = project_tree(root, "example/repo")
+                write_projections(out, projections)
+                self.assertEqual(
+                    ["invalid:module.py.msdmd.jsonl"],
+                    check_projections(out, projections),
+                )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "module.py").write_text(
+                "# === DOCS ===\n# id: entry\n# === END DOCS ===\n",
+                encoding="utf-8",
+            )
+            records = project_python_module(root / "module.py", root=root, repo="example/repo")
+            self.assertEqual("complete", records[0]["status"])
+            self.assertFalse(any(record["record_type"] == "diagnostic" for record in records))
+
+    def test_unicode_line_separators_do_not_split_python_source_lines(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            out = Path(tmp) / "generated"
+            root.mkdir()
+            source = root / "module.py"
+            source.write_bytes(
+                'NOTE = "a\u2028b\u2029c\x85d\x0ce\x1cf"  # sep\u2028note\n'
+                "\n"
+                "def after():\n"
+                "    # inside after\n"
+                "    return 1\n".encode("utf-8")
+            )
+            raw = source.read_bytes()
+
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbol = next(record for record in records if record.get("qualified_name") == "after")
+            inside = next(record for record in records if record.get("text") == "inside after")
+            trailing = next(record for record in records if record.get("text") == "sep\u2028note")
+
+            self.assertEqual("complete", records[0]["status"])
+            self.assertEqual(3, symbol["source_span"]["start"]["line"])
+            self.assertEqual(raw.index(b"def after"), symbol["source_span"]["start"]["byte"])
+            self.assertEqual(len(raw) - 1, symbol["source_span"]["end"]["byte"])
+            self.assertEqual(4, inside["source_span"]["start"]["line"])
+            self.assertEqual(raw.index(b"# inside after"), inside["source_span"]["start"]["byte"])
+            self.assertEqual(symbol["id"], inside["subject"])
+            self.assertEqual(1, trailing["source_span"]["start"]["line"])
+            self.assertEqual(raw.index(b"# sep"), trailing["source_span"]["start"]["byte"])
+
+            projections = project_tree(root, "example/repo")
+            write_projections(out, projections)
+            self.assertEqual([], check_projections(out, projections))
+
+    def test_cr_only_source_keeps_offsets_attachment_and_convergence(self) -> None:
+        text = (
+            "#!/usr/bin/env python\r"
+            "# -*- coding: utf-8 -*-\r"
+            "# lead for f\r"
+            "def f(x):\r"
+            "    # inside f\r"
+            "    return x\r"
+            "\r"
+            "class C:\r"
+            "    @staticmethod\r"
+            "    # between\r"
+            "    def m():\r"
+            "        return 1\r"
+        )
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            out = Path(tmp) / "generated"
+            root.mkdir()
+            source = root / "module.py"
+            source.write_bytes(text.encode("utf-8"))
+            raw = source.read_bytes()
+
+            records = project_python_module(source, root=root, repo="example/repo")
+            symbols = _symbol_ids(records)
+            metadata = _metadata_subjects(records)
+            by_text = {
+                record["text"]: record for record in records if record["record_type"] == "metadata"
+            }
+            function = next(record for record in records if record.get("qualified_name") == "f")
+            method = next(record for record in records if record.get("qualified_name") == "C.m")
+
+            self.assertEqual("complete", records[0]["status"])
+            self.assertEqual("encoding_cookie", by_text["-*- coding: utf-8 -*-"]["metadata_kind"])
+            self.assertEqual(2, by_text["-*- coding: utf-8 -*-"]["source_span"]["start"]["line"])
+            self.assertEqual((symbols["f"], "leading_trivia"), metadata["lead for f"])
+            self.assertEqual((symbols["f"], "nearest_enclosing_symbol"), metadata["inside f"])
+            self.assertEqual((symbols["C.m"], "nearest_enclosing_symbol"), metadata["between"])
+            self.assertEqual(4, function["source_span"]["start"]["line"])
+            self.assertEqual(raw.index(b"def f"), function["source_span"]["start"]["byte"])
+            self.assertEqual(raw.index(b"    @staticmethod") + 4, method["source_span"]["start"]["byte"])
+            self.assertEqual(len(raw) - 1, method["source_span"]["end"]["byte"])
+            for comment, needle in (("inside f", b"# inside f"), ("between", b"# between")):
+                with self.subTest(comment=comment):
+                    self.assertEqual(
+                        raw.index(needle),
+                        by_text[comment]["source_span"]["start"]["byte"],
+                    )
+
+            projections = project_tree(root, "example/repo")
+            write_projections(out, projections)
+            self.assertEqual([], check_projections(out, projections))
+            write_projections(out, project_tree(root, "example/repo"))
+            self.assertEqual([], check_projections(out, project_tree(root, "example/repo")))
+
     def test_projection_schema_declares_all_record_types(self) -> None:
         schema_path = Path(__file__).resolve().parents[1] / "msdmd" / "module-projection.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -580,4 +815,4 @@ def function():
 
 if __name__ == "__main__":
     unittest.main()
-# ratios: loc_comments=97:416 imports_exports=9:8 calls_definitions=210:32
+# ratios: loc_comments=97:629 imports_exports=9:11 calls_definitions=316:41

@@ -41,7 +41,10 @@ immediately following declaration at the same lexical depth, other interior
 comments attach to the nearest enclosing declaration, and docstrings attach to
 their native AST owner. Trailing indented suite comments remain with that lexical
 owner until dedent. The projection header binds the executing Python version and
-AST grammar; malformed MSDMD fences emit diagnostics rather than spanning code.
+AST grammar; malformed MSDMD fences, including name-mismatched fences, emit
+diagnostics rather than spanning code. Decorator-region comments attach to the
+decorated declaration, source lines split only at Python newlines, and sidecars
+are written as exact LF-terminated UTF-8 bytes.
 
 ```bash
 python -m msdmd.module_projection --root . --repo example/repo \

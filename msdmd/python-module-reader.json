@@ -38,10 +38,11 @@
     "decorator spelling recovered with ast.unparse and source_span extended across decorator syntax",
     "module, class, function, and method docstrings",
     "syntax-aware Python line comments",
-    "leading-trivia and nearest-enclosing-symbol comment attachment, including trailing suite comments before lexical dedent",
+    "leading-trivia and nearest-enclosing-symbol comment attachment, including decorator-region comments and trailing suite comments before lexical dedent",
     "shebang, encoding-cookie, RATIOS, and MSDMD-fence module conventions",
-    "UTF-8 projection spans over decoded source and raw-source SHA-256",
-    "parse, tokenization, and malformed MSDMD-fence diagnostics"
+    "UTF-8 projection spans over decoded source split only at Python newlines (LF, CRLF, CR), including CR-only sources, and raw-source SHA-256",
+    "projection files written as exact UTF-8 bytes with LF record terminators on every platform",
+    "parse, tokenization, and malformed MSDMD-fence diagnostics, including interrupted, unclosed, and name-mismatched fences"
   ],
   "limitations": [
     "imports and dependency edges",
@@ -56,7 +57,7 @@
   "attachment": {
     "native_docstring": "Attach to the AST owner.",
     "leading_trivia": "Attach a contiguous comment group to the immediately following declaration when lexical columns match.",
-    "nearest_enclosing_symbol": "Attach every other interior comment to the deepest enclosing declaration, extending through trailing indented comments until lexical dedent.",
+    "nearest_enclosing_symbol": "Attach every other interior comment to the deepest enclosing declaration, whose region begins at its first decorator and extends through trailing indented comments until lexical dedent.",
     "module_convention": "Keep shebangs, encoding cookies, RATIOS seals, and MSDMD fences at module scope.",
     "module_scope": "Keep otherwise unattached comments at module scope."
   },
@@ -68,7 +69,7 @@
     "line_comment": "metadata:comment"
   },
   "unknown_field_policy": "Unsupported semantic parsing is not fabricated; the partial scope remains declared in this manifest and repository guidance.",
-  "failure_behavior": "Invalid syntax, incomplete tokenization, or an interrupted/unclosed MSDMD fence emits a diagnostic and causes --check or --write to exit nonzero.",
+  "failure_behavior": "Invalid syntax, incomplete tokenization, or an interrupted, unclosed, or name-mismatched MSDMD fence emits a diagnostic and causes --check or --write to exit nonzero.",
   "safety": {
     "executes_inspected_code": false,
     "imports_inspected_modules": false,

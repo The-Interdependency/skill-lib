@@ -1,4 +1,4 @@
-# ratios: loc_comments=833:84 imports_exports=15:9 calls_definitions=228:49
+# ratios: loc_comments=893:110 imports_exports=14:9 calls_definitions=251:53
 # === MODULE_BUILD ===
 # id: msdmd_python_module_projection
 #   module_name: module_projection
@@ -68,17 +68,22 @@ Attachment rules:
 
 * a comment group immediately preceding a declaration at the same lexical
   depth is leading trivia for that declaration;
-* otherwise a comment inside a declaration, including trailing indented suite
-  comments before lexical dedent, belongs to the nearest enclosing declaration;
+* otherwise a comment inside a declaration, including comments before or
+  between its decorators and trailing indented suite comments before lexical
+  dedent, belongs to the nearest enclosing declaration;
 * headers, MSDMD fences, RATIOS, encoding cookies, and unattached comments stay
   at module scope;
 * native module/class/function docstrings attach directly to their AST owner.
 
-Interrupted or unclosed MSDMD fences produce diagnostics instead of spanning
-intervening code.
+Interrupted, unclosed, or name-mismatched MSDMD fences produce diagnostics
+instead of spanning intervening code or being accepted as a block.
 
+Source lines are split only at Python newlines (LF, CRLF, and CR); U+2028, NEL,
+form feed, and other Unicode separators remain inside their physical line.
 Line and byte ranges are navigational facts for the pinned source digest.  They
 never form a symbol identity, so inserting lines cannot change ownership.
+Projection files are written as exact UTF-8 bytes with LF record terminators on
+every platform.
 """
 from __future__ import annotations
 
@@ -87,7 +92,6 @@ import ast
 import codecs
 from dataclasses import dataclass
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
@@ -120,7 +124,12 @@ DEFAULT_SKIP_DIRS = frozenset(
 
 _COOKIE_RE = re.compile(br"^[ \t\f]*#.*?coding[:=][ \t]*([-_.a-zA-Z0-9]+)")
 _BLANK_OR_COMMENT_RE = re.compile(br"^[ \t\f]*(?:[#\r\n]|$)")
-_FENCE_RE = re.compile(r"^===\s+(?:END\s+)?[A-Z][A-Z0-9_]*\s+===$")
+_FENCE_RE = re.compile(r"^===\s+(END\s+)?([A-Z][A-Z0-9_]*)\s+===$")
+# Python recognizes only LF, CRLF, and CR as source newlines.  str.splitlines()
+# additionally splits on U+2028, U+2029, NEL, form feed, and other separators,
+# which would desynchronize line indexes from AST and tokenize positions.
+_PYTHON_NEWLINE_RE = re.compile(r"\r\n|\r|\n")
+_PYTHON_NEWLINE_BYTES_RE = re.compile(br"\r\n|\r|\n")
 
 
 def _sha256(data: bytes) -> str:
@@ -151,10 +160,47 @@ def _runtime_identity() -> dict[str, str]:
     }
 
 
-def _line_start_bytes(text: str) -> list[int]:
+def _python_source_lines(text: str) -> list[str]:
+    """Split decoded source at Python newlines only, keeping line endings."""
+
+    lines: list[str] = []
+    start = 0
+    for match in _PYTHON_NEWLINE_RE.finditer(text):
+        lines.append(text[start:match.end()])
+        start = match.end()
+    if start < len(text):
+        lines.append(text[start:])
+    return lines
+
+
+def _python_source_byte_lines(source: bytes) -> list[bytes]:
+    """Split raw source bytes at Python newlines only, keeping line endings."""
+
+    lines: list[bytes] = []
+    start = 0
+    for match in _PYTHON_NEWLINE_BYTES_RE.finditer(source):
+        lines.append(source[start:match.end()])
+        start = match.end()
+    if start < len(source):
+        lines.append(source[start:])
+    return lines
+
+
+def _byte_line_reader(source: bytes):
+    """Return a readline callable that yields Python-newline-delimited lines."""
+
+    iterator = iter(_python_source_byte_lines(source))
+
+    def readline() -> bytes:
+        return next(iterator, b"")
+
+    return readline
+
+
+def _line_start_bytes(lines: Sequence[str]) -> list[int]:
     offsets = [0]
     total = 0
-    for line in text.splitlines(keepends=True):
+    for line in lines:
         total += len(line.encode("utf-8"))
         offsets.append(total)
     return offsets
@@ -399,7 +445,7 @@ def _discover_symbols(tree: ast.Module, repo: str, source_path: str) -> list[Sym
 
 
 def _encoding_cookie_line(source: bytes) -> int | None:
-    reader = io.BytesIO(source).readline
+    reader = _byte_line_reader(source)
     first = reader()
     if first.startswith(codecs.BOM_UTF8):
         first = first[len(codecs.BOM_UTF8):]
@@ -411,13 +457,18 @@ def _encoding_cookie_line(source: bytes) -> int | None:
 
 
 def _comment_groups(
-    source: bytes,
+    lines: Sequence[str],
     encoding_cookie_line: int | None,
 ) -> tuple[list[CommentGroup], list[CommentDiagnostic]]:
     comments: list[tokenize.TokenInfo] = []
     diagnostics: list[CommentDiagnostic] = []
+    # Tokenize the decoded Python-newline line map with each terminator
+    # normalized to LF.  A raw byte readline would deliver a CR-only file as one
+    # line, desynchronizing comment positions from AST line numbers.  Line
+    # numbers and in-line columns are unchanged by terminator normalization.
+    normalized = iter(_PYTHON_NEWLINE_RE.sub("\n", line) for line in lines)
     try:
-        for token in tokenize.tokenize(io.BytesIO(source).readline):
+        for token in tokenize.generate_tokens(lambda: next(normalized, "")):
             if token.type == tokenize.COMMENT:
                 comments.append(token)
     except (SyntaxError, tokenize.TokenError) as exc:
@@ -431,6 +482,7 @@ def _comment_groups(
     groups: list[list[tokenize.TokenInfo]] = []
     current: list[tokenize.TokenInfo] = []
     in_msdmd_fence = False
+    open_fence_name: str | None = None
 
     def flush() -> None:
         nonlocal current
@@ -440,8 +492,10 @@ def _comment_groups(
 
     for token in comments:
         payload = token.string[1:].lstrip()
-        is_fence = bool(_FENCE_RE.match(payload))
-        is_end_fence = payload.startswith("=== END ")
+        fence = _FENCE_RE.match(payload)
+        is_fence = fence is not None
+        is_end_fence = bool(fence and fence.group(1))
+        fence_name = fence.group(2) if fence else None
         is_singleton_convention = (
             payload.startswith("ratios:")
             or (token.start[0] == 1 and token.string.startswith("#!"))
@@ -456,9 +510,29 @@ def _comment_groups(
             )
             if contiguous:
                 current.append(token)
-                if is_fence and is_end_fence:
+                if is_fence and (not is_end_fence or fence_name != open_fence_name):
+                    # A closing fence must name the open block; an opening
+                    # fence inside an open block is equally unpaired.  Neither
+                    # may be accepted as a well-formed MSDMD block.
+                    start_line = current[0].start[0]
+                    closing = "closing" if is_end_fence else "opening"
+                    diagnostics.append(
+                        CommentDiagnostic(
+                            code="msdmd_fence_mismatched",
+                            message=(
+                                f"MSDMD fence {open_fence_name} starting on line {start_line} "
+                                f"meets {closing} fence {fence_name} on line {token.start[0]}"
+                            ),
+                            line=token.start[0],
+                        )
+                    )
                     flush()
                     in_msdmd_fence = False
+                    open_fence_name = None
+                elif is_fence:
+                    flush()
+                    in_msdmd_fence = False
+                    open_fence_name = None
                 continue
             start_line = current[0].start[0]
             diagnostics.append(
@@ -470,10 +544,26 @@ def _comment_groups(
             )
             flush()
             in_msdmd_fence = False
+            open_fence_name = None
         if is_fence and not is_end_fence:
             flush()
             current = [token]
             in_msdmd_fence = True
+            open_fence_name = fence_name
+            continue
+        if is_fence:
+            diagnostics.append(
+                CommentDiagnostic(
+                    code="msdmd_fence_unmatched_close",
+                    message=(
+                        f"MSDMD closing fence {fence_name} on line {token.start[0]} "
+                        "has no matching opening fence"
+                    ),
+                    line=token.start[0],
+                )
+            )
+            flush()
+            groups.append([token])
             continue
         if is_singleton_convention:
             flush()
@@ -546,10 +636,13 @@ def _enclosing_subject(
     symbols: Sequence[Symbol],
     lines: Sequence[str],
 ) -> Symbol | None:
+    # A declaration's lexical region begins at its first decorator, so comments
+    # before or between decorators (and inside decorator expressions) belong to
+    # the decorated declaration rather than drifting to an outer scope.
     candidates = [
         symbol
         for symbol in symbols
-        if symbol.start_line <= group.start_line
+        if symbol.header_line <= group.start_line
         and group.end_line <= _lexical_end_line(symbol, lines)
         and (
             group.start_line <= symbol.end_line
@@ -730,7 +823,7 @@ def project_python_module(
     }
 
     try:
-        source_encoding = tokenize.detect_encoding(io.BytesIO(source).readline)[0]
+        source_encoding = tokenize.detect_encoding(_byte_line_reader(source))[0]
         header["source_encoding"] = source_encoding
         decoded = source.decode(source_encoding)
         tree = ast.parse(
@@ -753,8 +846,8 @@ def project_python_module(
         }
         return [header, diagnostic]
 
-    lines = decoded.splitlines(keepends=True) or [""]
-    starts = _line_start_bytes(decoded)
+    lines = _python_source_lines(decoded) or [""]
+    starts = _line_start_bytes(lines)
     module_id = header["module_id"]
     symbols = _discover_symbols(tree, repo, relative)
     records: list[dict] = [header]
@@ -775,7 +868,7 @@ def project_python_module(
             records.append(doc)
 
     encoding_cookie_line = _encoding_cookie_line(source)
-    groups, comment_diagnostics = _comment_groups(source, encoding_cookie_line)
+    groups, comment_diagnostics = _comment_groups(lines, encoding_cookie_line)
     for diagnostic in comment_diagnostics:
         header["status"] = "invalid"
         hmmm = (
@@ -855,7 +948,11 @@ def project_python_module(
 
 
 def render_jsonl(records: Sequence[dict]) -> str:
-    """Render records as deterministic UTF-8 JSON Lines text."""
+    """Render records as deterministic JSON Lines text with LF terminators.
+
+    Callers persist ``content.encode("utf-8")`` exactly; see
+    ``write_projections``.
+    """
 
     return "".join(f"{_canonical_json(record)}\n" for record in records)
 
@@ -938,15 +1035,16 @@ def write_projections(
         if not target.exists() or target.read_bytes() != content_bytes:
             temporary: Path | None = None
             try:
+                # Binary mode: text mode would translate LF to os.linesep
+                # (CRLF on Windows) and break byte-exact write/check convergence.
                 with tempfile.NamedTemporaryFile(
-                    mode="w",
-                    encoding="utf-8",
+                    mode="wb",
                     dir=target.parent,
                     prefix=f".{target.name}.",
                     suffix=".tmp",
                     delete=False,
                 ) as stream:
-                    stream.write(content)
+                    stream.write(content_bytes)
                     stream.flush()
                     os.fsync(stream.fileno())
                     temporary = Path(stream.name)
@@ -980,7 +1078,7 @@ def check_projections(
         target = _projection_target(out_dir, relative)
         if target.exists() and target.read_bytes() != expected_content.encode("utf-8"):
             findings.append(f"stale:{relative}")
-        first = json.loads(expected_content.splitlines()[0])
+        first = json.loads(expected_content.split("\n", 1)[0])
         if first["status"] != "complete":
             findings.append(f"invalid:{relative}")
     return findings
@@ -1020,7 +1118,7 @@ def main(argv: list[str] | None = None) -> int:
         invalid = [
             relative
             for relative, content in projections.items()
-            if json.loads(content.splitlines()[0])["status"] != "complete"
+            if json.loads(content.split("\n", 1)[0])["status"] != "complete"
         ]
         print(f"msdmd module projections: wrote {len(written)}")
         for relative in invalid:
@@ -1041,4 +1139,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=833:84 imports_exports=15:9 calls_definitions=228:49
+# ratios: loc_comments=893:110 imports_exports=14:9 calls_definitions=251:53

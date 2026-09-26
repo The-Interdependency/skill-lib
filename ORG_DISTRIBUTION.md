@@ -29,6 +29,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `canon/` — canonical-source and doctrine maintenance
 * `domain-claims/` — domain-first lexical standing, collision checks, and semantic provenance gating
 * `visitor-intro/` — onboarding tour for newcomers landing at any org repo
+* `adaptive-elicitation/` — context-first, one-question-at-a-time interviewing for missing task information
 * `char-compress/` — skill-lib-owned bone/flesh context compression for handoffs and skill writing; historical notation is not current UCNS mathematics
 * `agent-instantiation/` — a0/a0ucns agent spawn/fork/merge lifecycle methodology
 * `a0p-instancing/` — a0-betatest (a0p) per-user CRUD + native-ZFAE instancing methodology

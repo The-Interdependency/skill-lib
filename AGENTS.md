@@ -79,7 +79,7 @@ the rest. Treat it as the public contract.
    `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
    `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
    modules declare inside their own source files. Other skills (currently
-   `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `agent-instantiation`,
+   `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
    `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
@@ -137,6 +137,8 @@ propagate from here.
   bones, transforms, and `hmmm`; drop only safely regenerable scaffold.
 - If you are an agent introducing a newcomer to the org, load
   `visitor-intro/SKILL.md` and follow its output rubric.
+- If a task requires recovering several missing user-supplied facts, especially when prior context or source material may already answer some of them, load
+  `adaptive-elicitation/SKILL.md`; harvest known context first, ask exactly one highest-value unresolved question per turn, consume volunteered facts, and recompute the remaining gaps before asking again.
 - If you are instantiating, forking, merging, or retiring an agent or
   sub-agent in `a0` / `a0ucns`, load `agent-instantiation/SKILL.md` and
   follow its instantiation sequence. For `a0-betatest` (a0p), whose model

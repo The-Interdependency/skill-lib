@@ -1,4 +1,4 @@
-# ratios: loc_comments=893:110 imports_exports=14:9 calls_definitions=251:53
+# ratios: loc_comments=903:118 imports_exports=14:9 calls_definitions=255:53
 # === MODULE_BUILD ===
 # id: msdmd_python_module_projection
 #   module_name: module_projection
@@ -75,13 +75,18 @@ Attachment rules:
   at module scope;
 * native module/class/function docstrings attach directly to their AST owner.
 
-Interrupted, unclosed, or name-mismatched MSDMD fences produce diagnostics
-instead of spanning intervening code or being accepted as a block.
+Interrupted, unclosed, or name-mismatched MSDMD fences, opening fences inside
+an open block, and closing fences without an opening produce diagnostics instead
+of spanning intervening code or being accepted as a block.  Closes orphaned by
+an already-diagnosed mismatch are not re-reported.  This is stricter than the
+universal block parser, which matches each requested block name independently.
 
 Source lines are split only at Python newlines (LF, CRLF, and CR); U+2028, NEL,
 form feed, and other Unicode separators remain inside their physical line.
 Line and byte ranges are navigational facts for the pinned source digest.  They
-never form a symbol identity, so inserting lines cannot change ownership.
+never form a symbol identity, so inserting lines cannot change ownership.  Byte
+offsets index the UTF-8 re-encoding of the decoded source text, so they differ
+from raw file offsets for BOM-prefixed or non-UTF-8 sources.
 Projection files are written as exact UTF-8 bytes with LF record terminators on
 every platform.
 """
@@ -483,6 +488,10 @@ def _comment_groups(
     current: list[tokenize.TokenInfo] = []
     in_msdmd_fence = False
     open_fence_name: str | None = None
+    # Closing fences left orphaned by an already-diagnosed mismatch are
+    # follow-on noise: suppress one close per affected block name so a single
+    # malformed fence yields one diagnostic.  The projection remains invalid.
+    suppressed_closes: dict[str, int] = {}
 
     def flush() -> None:
         nonlocal current
@@ -526,6 +535,10 @@ def _comment_groups(
                             line=token.start[0],
                         )
                     )
+                    affected = [open_fence_name] if is_end_fence else [open_fence_name, fence_name]
+                    for name in affected:
+                        if name is not None:
+                            suppressed_closes[name] = suppressed_closes.get(name, 0) + 1
                     flush()
                     in_msdmd_fence = False
                     open_fence_name = None
@@ -550,6 +563,11 @@ def _comment_groups(
             current = [token]
             in_msdmd_fence = True
             open_fence_name = fence_name
+            continue
+        if is_fence and fence_name is not None and suppressed_closes.get(fence_name, 0):
+            suppressed_closes[fence_name] -= 1
+            flush()
+            groups.append([token])
             continue
         if is_fence:
             diagnostics.append(
@@ -1139,4 +1157,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=893:110 imports_exports=14:9 calls_definitions=251:53
+# ratios: loc_comments=903:118 imports_exports=14:9 calls_definitions=255:53

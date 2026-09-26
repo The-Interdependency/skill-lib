@@ -30,10 +30,47 @@ python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 These commands implement neither the native discovery contract below nor a
 complete compliance verdict. Unsupported required scope stays `hmmm`.
 
+## Shipped Python module-projection scope
+
+`python -m msdmd.module_projection` is a separate, partial native reader for
+Python source. It uses `ast` and `tokenize` without importing inspected modules.
+It emits one deterministic `.msdmd.jsonl` sidecar per `.py` file under the output
+directory, using `msdmd/module-projection.schema.json`. Symbol identities use
+qualified declarations rather than line numbers; leading comments attach to the
+immediately following declaration at the same lexical depth, other interior
+comments attach to the nearest enclosing declaration, and docstrings attach to
+their native AST owner. Trailing indented suite comments remain with that lexical
+owner until dedent. The projection header binds the executing Python version and
+AST grammar; malformed MSDMD fences, including name-mismatched fences, emit
+diagnostics rather than spanning code. Decorator-region comments attach to the
+decorated declaration, source lines split only at Python newlines, and sidecars
+are written as exact LF-terminated UTF-8 bytes.
+
+```bash
+python -m msdmd.module_projection --root . --repo example/repo \
+  --revision <exact-revision> --out-dir .msdmd/modules --write
+python -m msdmd.module_projection --root . --repo example/repo \
+  --revision <exact-revision> --out-dir .msdmd/modules --check
+```
+
+Complete-tree writes/checks own the entire output directory and therefore prune
+or reject unexpected projection files. A run with one or more repeatable
+`--source` arguments owns only those selected sidecars and leaves all others
+alone. Writes publish each file by atomic replacement. An omitted revision is
+recorded as `hmmm`; syntax or tokenization failures produce diagnostics and make
+the check fail.
+
+This runner does not parse imports, call graphs, dynamic exports, docstring field
+dialects, manifests, CODEOWNERS, non-Python files, or the complete discovery and
+exclusion denominator. It does not feed the legacy TypeScript collection or
+visualizer. Treat its output as a source-bound per-module projection, not as a
+repository-wide coverage verdict.
+
 ## Native discovery contract
 
 A native-capable consumer must inventory the declared repository scope before
-choosing readers. This is a contract for implementation, not a shipped command.
+choosing readers. The complete form remains a contract for implementation, not
+a capability of the partial Python command.
 Inventory eligible inputs even when no line-comment marker or reader exists:
 
 - source files and tests, including signatures, docstrings, and annotations;
@@ -117,8 +154,9 @@ as block-projection consistency, separately from native-reader acceptance.
 
 ## hmmm
 
-Native readers, native-capable schema migration, qualified edge identities,
-duplicate-ID validation, syntax-aware extraction, discovery/exclusion receipts,
-and executable native acceptance fixtures remain separate implementation work.
-This policy is not an executable configuration format. Existing block helpers
-remain usable within their disclosed scope.
+Readers beyond the partial Python slice, unified native-capable schema migration,
+qualified block-edge identities, duplicate-ID validation, full discovery and
+exclusion receipts, and broader executable acceptance fixtures remain separate
+implementation work. This policy is not an executable configuration format.
+Existing block helpers and the Python projection remain usable only within their
+disclosed scopes.

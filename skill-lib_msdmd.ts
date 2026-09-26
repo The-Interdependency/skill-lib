@@ -35,7 +35,7 @@ export default defineMsdmdCollection({
     {
       "block": "LLMS",
       "fields": {
-        "msdmd": "Module Self-Declared Metadata in Markdown \u2014 native-first collection of existing code, documentation, manifest, schema, tooling and evidence metadata; MSDMD blocks supply otherwise unexpressed information. The shipped collector remains block-only."
+        "msdmd": "Module Self-Declared Metadata in Markdown \u2014 native-first collection of existing code, documentation, manifest, schema, tooling and evidence metadata; MSDMD blocks supply otherwise unexpressed information. The collector remains block-only; a separate partial Python reader projects symbols, docstrings and structurally attached comments."
       },
       "file": "llms/metadata.py",
       "id": "key_definitions"
@@ -78,6 +78,67 @@ export default defineMsdmdCollection({
       },
       "file": "msdmd/collect.py",
       "id": "msdmd_foundational_contract"
+    },
+    {
+      "block": "CAPABILITIES",
+      "fields": {
+        "exposes": "deterministic JSONL projection, Python symbol identities, native docstrings, structurally attached comments, freshness key",
+        "limitations": "Python source only; call graphs, runtime behavior, cross-revision rename identity, and non-Python readers remain hmmm",
+        "summary": "creates one generated metadata sidecar per Python module while keeping source locations navigational rather than identity-bearing"
+      },
+      "file": "msdmd/module_projection.py",
+      "id": "python_module_metadata_projection"
+    },
+    {
+      "block": "CONTRACTS",
+      "fields": {
+        "class": "provenance",
+        "given": "source bytes, schema, reader implementation, support manifest, or effective Python AST grammar changes",
+        "then": "the deterministic projection freshness key changes"
+      },
+      "file": "msdmd/module_projection.py",
+      "id": "module_projection_freshness_binds_source_and_reader"
+    },
+    {
+      "block": "CONTRACTS",
+      "fields": {
+        "class": "identity",
+        "given": "blank or comment lines are inserted without changing declaration structure",
+        "then": "metadata remains attached to the same qualified symbol identity after regeneration"
+      },
+      "file": "msdmd/module_projection.py",
+      "id": "module_projection_line_shift_stability"
+    },
+    {
+      "block": "CONTRACTS",
+      "fields": {
+        "class": "safety",
+        "given": "inspected Python source contains executable top-level code",
+        "then": "projection parses bytes without importing or executing the inspected module"
+      },
+      "file": "msdmd/module_projection.py",
+      "id": "module_projection_never_executes_source"
+    },
+    {
+      "block": "MODULE_BUILD",
+      "fields": {
+        "admin_only": "false",
+        "auth_boundary": "none",
+        "internal_surface": "Python symbol discovery, comment grouping, structural attachment, freshness computation",
+        "module_kind": "instrument",
+        "module_name": "module_projection",
+        "network_boundary": "none",
+        "owner": "The Interdependency skill-lib",
+        "public_surface": "project_python_module, render_jsonl, project_tree, write_projections, check_projections",
+        "rollback": "remove the runner and generated projection directories; native sources remain authoritative",
+        "rollout": "explicit python -m msdmd.module_projection --write invocation",
+        "storage_boundary": "write",
+        "summary": "derives deterministic per-module JSONL metadata with structural symbol attachment from Python source without executing it",
+        "tests": "tests/test_module_projection.py",
+        "user_data_boundary": "read"
+      },
+      "file": "msdmd/module_projection.py",
+      "id": "msdmd_python_module_projection"
     },
     {
       "block": "CONTRACTS",
@@ -301,6 +362,53 @@ export default defineMsdmdCollection({
       },
       "file": "tests/test_llms_build.py",
       "id": "project_overview"
+    },
+    {
+      "block": "CHECKS",
+      "fields": {
+        "call": "self::test_freshness_key_changes_with_source_or_reader",
+        "cleanup": "tempdir_teardown",
+        "mutates": "filesystem",
+        "proves": "module_projection_freshness_binds_source_and_reader",
+        "requires": "python3",
+        "timeout": "10"
+      },
+      "file": "tests/test_module_projection.py",
+      "id": "check_module_projection_freshness_binds_source_and_reader"
+    },
+    {
+      "block": "CHECKS",
+      "fields": {
+        "call": "self::test_line_insertions_preserve_symbol_identity_and_attachment",
+        "cleanup": "tempdir_teardown",
+        "mutates": "filesystem",
+        "proves": "module_projection_line_shift_stability",
+        "requires": "python3",
+        "timeout": "10"
+      },
+      "file": "tests/test_module_projection.py",
+      "id": "check_module_projection_line_shift_stability"
+    },
+    {
+      "block": "CHECKS",
+      "fields": {
+        "call": "self::test_projection_does_not_execute_inspected_source",
+        "cleanup": "tempdir_teardown",
+        "mutates": "filesystem",
+        "proves": "module_projection_never_executes_source",
+        "requires": "python3",
+        "timeout": "10"
+      },
+      "file": "tests/test_module_projection.py",
+      "id": "check_module_projection_never_executes_source"
+    },
+    {
+      "block": "DOCS",
+      "fields": {
+        "summary": "module documentation"
+      },
+      "file": "tests/test_module_projection.py",
+      "id": "module_docs"
     },
     {
       "block": "CHECKS",
@@ -1173,6 +1281,41 @@ export default defineMsdmdCollection({
       "to": "skill-lib vm-mcp maintainers"
     },
     {
+      "from": "python_module_metadata_projection",
+      "kind": "exposes",
+      "source_block": "CAPABILITIES",
+      "source_id": "python_module_metadata_projection",
+      "to": "Python symbol identities"
+    },
+    {
+      "from": "python_module_metadata_projection",
+      "kind": "exposes",
+      "source_block": "CAPABILITIES",
+      "source_id": "python_module_metadata_projection",
+      "to": "deterministic JSONL projection"
+    },
+    {
+      "from": "python_module_metadata_projection",
+      "kind": "exposes",
+      "source_block": "CAPABILITIES",
+      "source_id": "python_module_metadata_projection",
+      "to": "freshness key"
+    },
+    {
+      "from": "python_module_metadata_projection",
+      "kind": "exposes",
+      "source_block": "CAPABILITIES",
+      "source_id": "python_module_metadata_projection",
+      "to": "native docstrings"
+    },
+    {
+      "from": "python_module_metadata_projection",
+      "kind": "exposes",
+      "source_block": "CAPABILITIES",
+      "source_id": "python_module_metadata_projection",
+      "to": "structurally attached comments"
+    },
+    {
       "from": "repo_collection_generator",
       "kind": "exposes",
       "source_block": "CAPABILITIES",
@@ -1289,6 +1432,69 @@ export default defineMsdmdCollection({
       "kind": "requires",
       "source_block": "CHECKS",
       "source_id": "check_latest_test_wins",
+      "to": "python3"
+    },
+    {
+      "from": "check_module_projection_freshness_binds_source_and_reader",
+      "kind": "calls",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_freshness_binds_source_and_reader",
+      "to": "self::test_freshness_key_changes_with_source_or_reader"
+    },
+    {
+      "from": "check_module_projection_freshness_binds_source_and_reader",
+      "kind": "claims_proves",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_freshness_binds_source_and_reader",
+      "to": "module_projection_freshness_binds_source_and_reader"
+    },
+    {
+      "from": "check_module_projection_freshness_binds_source_and_reader",
+      "kind": "requires",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_freshness_binds_source_and_reader",
+      "to": "python3"
+    },
+    {
+      "from": "check_module_projection_line_shift_stability",
+      "kind": "calls",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_line_shift_stability",
+      "to": "self::test_line_insertions_preserve_symbol_identity_and_attachment"
+    },
+    {
+      "from": "check_module_projection_line_shift_stability",
+      "kind": "claims_proves",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_line_shift_stability",
+      "to": "module_projection_line_shift_stability"
+    },
+    {
+      "from": "check_module_projection_line_shift_stability",
+      "kind": "requires",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_line_shift_stability",
+      "to": "python3"
+    },
+    {
+      "from": "check_module_projection_never_executes_source",
+      "kind": "calls",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_never_executes_source",
+      "to": "self::test_projection_does_not_execute_inspected_source"
+    },
+    {
+      "from": "check_module_projection_never_executes_source",
+      "kind": "claims_proves",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_never_executes_source",
+      "to": "module_projection_never_executes_source"
+    },
+    {
+      "from": "check_module_projection_never_executes_source",
+      "kind": "requires",
+      "source_block": "CHECKS",
+      "source_id": "check_module_projection_never_executes_source",
       "to": "python3"
     },
     {
@@ -1934,6 +2140,13 @@ export default defineMsdmdCollection({
       "source_block": "MODULE_BUILD",
       "source_id": "interdependent_work_graph_portfolio_plan",
       "to": "The-Interdependency/skill-lib maintainers"
+    },
+    {
+      "from": "msdmd_python_module_projection",
+      "kind": "owns",
+      "source_block": "MODULE_BUILD",
+      "source_id": "msdmd_python_module_projection",
+      "to": "The Interdependency skill-lib"
     },
     {
       "from": "msdmd_python_reference_parser",

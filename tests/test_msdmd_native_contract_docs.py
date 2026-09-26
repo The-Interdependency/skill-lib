@@ -1,4 +1,4 @@
-"""Regression checks for native-first contracts, not native-reader execution.
+"""Regression checks for native-first contracts and bounded reader disclosure.
 
 Usage: python -m unittest discover -s tests -p 'test_msdmd_native_contract_docs.py'
 The complete repository suite and generated-file gates remain separate checks.
@@ -74,12 +74,21 @@ class NativeContractDocsTests(unittest.TestCase):
                 with self.subTest(skill=name, phrase=phrase):
                     self.assertNotIn(phrase, text)
 
-    def test_block_runner_remains_discoverable_without_native_support_claim(self) -> None:
+    def test_block_runner_and_partial_python_reader_have_distinct_scopes(self) -> None:
         entry = self.entries["msdmd"]
         self.assertEqual(entry["status"], "runnable")
         self.assertEqual(entry["runner"], "msdmd/collect.py")
         self.assertEqual(entry["runner_scope"], "msdmd-blocks-only")
-        self.assertEqual(entry["native_ingestion"], {"status": "contract", "runner": None})
+        self.assertEqual(
+            entry["native_ingestion"],
+            {
+                "status": "partial",
+                "runner": "msdmd/module_projection.py",
+                "scope": "python-symbol-signature-docstring-comment-projection",
+                "schema": "msdmd/module-projection.schema.json",
+                "manifest": "msdmd/python-module-reader.json",
+            },
+        )
 
     def test_helper_identity_limitations_are_explicit(self) -> None:
         text = (ROOT / "msdmd/SKILL.md").read_text(encoding="utf-8")
@@ -99,7 +108,8 @@ class NativeContractDocsTests(unittest.TestCase):
         entries = build.parse_text(source, source=Path("llms/metadata.py"))
         definitions = next(entry.fields for entry in entries if entry.id == "key_definitions")
         self.assertIn("native-first", definitions["msdmd"])
-        self.assertIn("shipped collector remains block-only", definitions["msdmd"])
+        self.assertIn("collector remains block-only", definitions["msdmd"])
+        self.assertIn("partial Python reader", definitions["msdmd"])
         self.assertNotIn("each source module declares", source)
         generated = build.generate(build.collect(ROOT), self.index["repo"].split("/")[-1])
         self.assertEqual((ROOT / "llms.txt").read_text(encoding="utf-8"), generated)

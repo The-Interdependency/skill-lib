@@ -7,7 +7,7 @@
 #     It provides msdmd-based metadata skills, procedural skills, pure-stdlib helper tools, and propagation guidance for consuming repositories.
 #
 # id: key_definitions
-#   msdmd: Module Self-Declared Metadata in Markdown — native-first collection of existing code, documentation, manifest, schema, tooling and evidence metadata; MSDMD blocks supply otherwise unexpressed information. The shipped collector remains block-only.
+#   msdmd: Module Self-Declared Metadata in Markdown — native-first collection of existing code, documentation, manifest, schema, tooling and evidence metadata; MSDMD blocks supply otherwise unexpressed information. The collector remains block-only; a separate partial Python reader projects symbols, docstrings and structurally attached comments.
 #   char-compress: Skill-lib-owned character-based context compression for agent handoff and skill writing; its historical bone/flesh and text-stack notation is not current UCNS mathematics.
 #   llms-build: LLM instruction publication from owning metadata; the shipped runner generates root llms.txt from LLMS blocks, while native-reader integration remains a contract.
 #

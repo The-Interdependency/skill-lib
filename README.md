@@ -26,7 +26,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The shipped collector remains block-only pending native-reader implementation. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The block collector remains block-only; a separate partial Python reader emits deterministic per-module symbol/docstring/comment projections. |
 | [`doc-build/`](doc-build/SKILL.md) | Applies native-first msdmd to documentation comments and source-linked documents; supplemental `DOCS` entries cover remaining obligations. Reader support and missing information stay distinct. |
 | [`cap-build/`](cap-build/SKILL.md) | Consumes native signatures, exports and API schemas; supplemental `CAPABILITIES` entries add otherwise unexpressed intent. Declared surfaces are not verified behavior. |
 | [`deps-build/`](deps-build/SKILL.md) | Consumes native imports, manifests and build metadata at their owning scopes; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
@@ -184,8 +184,9 @@ statuses, secrets, `hmmm`, and unearned theorem/status leakage. The llms-build
 runner generates the root `llms.txt` from `LLMS` blocks and can fail on drift in
 `--check` mode.
 
-|∆|Implementation status: this repo ships the universal msdmd parsers, skill
-specifications, selected pure-stdlib helper tools, and the `llms-build` runner.
+|∆|Implementation status: this repo ships the universal msdmd parsers, a partial
+Python per-module metadata reader, skill specifications, selected pure-stdlib
+helper tools, and the `llms-build` runner.
 Most other application skills define runner contracts for consuming repos; they
 do not ship standalone executors here unless a helper file exists in that skill
 directory or package.| ∆|
@@ -204,12 +205,15 @@ conflicting declarations, and unverified behavior remain separate findings.
 The affected application skills and their load-bearing descriptions apply the
 same native-first coverage rule without removing their semantic obligations.
 
-The current universal parsers and `msdmd/collect.py` remain block readers.
-Native ingestion and the versioned native-capable collection schema are explicit
-implementation work; the skill revision alone does not implement them.
+The universal parsers and `msdmd/collect.py` remain block readers. The separate
+`msdmd/module_projection.py` runner implements a bounded native slice for Python
+symbols, signatures, decorators, docstrings, and structurally attached comments,
+using the versioned `msdmd/module-projection.schema.json` JSONL format. Broader
+native ingestion and the unified native-capable collection schema remain
+implementation work.
 `skills.json` keeps the shipped collector discoverable as `runnable`, with
 `runner_scope: msdmd-blocks-only`, while `native_ingestion` is separately marked
-`contract` with no runner. The generic collector still lacks qualified edge
+`partial` with its exact Python scope. The generic collector still lacks qualified edge
 identities and duplicate-ID diagnostics; its prototype graph is not an identity
 validation result. See the [helper limitations](msdmd/SKILL.md#shipped-helper-limitations).
 
@@ -295,6 +299,8 @@ behavior, and parser ratio bookends.
   consuming repos can import or copy it for `<reponame>_msdmd.ts`.
 - A stdlib collection generator prototype lives at `msdmd/collect.py` and
   can emit `<reponame>_msdmd.ts` from parsed module-local blocks.
+- A stdlib Python native reader lives at `msdmd/module_projection.py` and emits
+  deterministic per-module `.msdmd.jsonl` sidecars without executing source.
 - A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and
   can render collection edges and gaps.
 - The `llms-build` runner lives at `llms/build.py` and can generate or check

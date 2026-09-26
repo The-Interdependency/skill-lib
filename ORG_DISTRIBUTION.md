@@ -128,6 +128,19 @@ block-adoption obligations were evaluated. Deferred limitations are declared in
 the collector's owning metadata; they are not missing-block gaps. The generated
 file and its inputs travel in one Git commit; the replay test checks their bytes.
 
+Python repositories may additionally generate source-bound per-module sidecars:
+
+```bash
+python -m msdmd.module_projection --root . --repo <repo> --revision <exact-revision> --out-dir .msdmd/modules --write
+python -m msdmd.module_projection --root . --repo <repo> --revision <exact-revision> --out-dir .msdmd/modules --check
+```
+
+This partial reader covers Python declarations, signatures, decorators,
+docstrings, and structurally attached line comments. It neither replaces nor
+feeds `<reponame>_msdmd.ts`, and it is not a repository-wide native coverage
+verdict. Keep generated sidecars with the exact source and reader identity that
+their headers record.
+
 ## Propagation checklist
 
 Use `docs/propagation-checklist.md` for the concrete source-change →

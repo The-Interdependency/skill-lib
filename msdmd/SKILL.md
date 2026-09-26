@@ -21,12 +21,15 @@ This is the foundational metadata-block skill, expanded to native-first
 interoperability; it owns the common ingestion contract, not every language's
 syntax. Ordinary prose editing with no metadata contract is a non-trigger.
 
-**Implementation boundary:** at the reviewed source revision
-`22c2c5702d14fb4b0faeb717777ecab2665770a1`, `collect.py` implements MSDMD-block
-collection and `collection.ts` represents block-origin declarations. The native
-reader, provenance, conflict, and information-coverage requirements below are
-contracts for implementation, not capabilities supplied by this document.
-Existing helpers remain useful for their narrower, explicitly named purpose.
+**Implementation boundary:** `collect.py` still implements MSDMD-block collection
+and `collection.ts` still represents block-origin declarations. The separate
+`module_projection.py` runner now implements a partial Python native-reader slice:
+AST symbols and signatures, decorators, docstrings, and structurally attached
+line comments are projected to versioned per-module JSONL. It does not integrate
+those facts into `collection.ts`, interpret every Python metadata convention, or
+establish repository-wide information coverage. The broader provenance,
+conflict, reconciliation, discovery, and multi-language requirements below
+remain contracts for implementation.
 
 ## Doctrine
 
@@ -114,6 +117,62 @@ non-block convention. Introduce a versioned native-capable collection schema
 with explicit migration and consumer negotiation. The existing `MsdmdCollection`
 remains a block-only format until that implementation lands. Refuse silent
 projection when an old consumer would lose required information.
+
+### Python per-module projection
+
+`module_projection.py` is a bounded native reader, not the universal collection
+promised by the full contract. It parses supplied `.py` bytes with `ast` and
+`tokenize` and never imports the inspected module. Its JSONL schema is
+`module-projection.schema.json`; its machine-readable support manifest is
+`python-module-reader.json`. The first record binds repository context, source
+path and digest, optional revision, detected encoding, schema digest, reader
+version, implementation digest, manifest digest, and effective Python/AST grammar.
+Remaining records describe symbols, native docstrings, comments, source spans,
+attachment methods, and parse diagnostics.
+
+Symbol IDs derive from repository, path, kind, and qualified name, with a
+signature-derived disambiguator only for duplicate qualified declarations. Line
+numbers are navigational facts, never identity. Attachment is structural:
+
+- a contiguous comment group immediately before a declaration at the same
+  lexical depth attaches as `leading_trivia` to that declaration, including
+  decorated declarations;
+- every other comment inside a declaration, including comments before or
+  between its decorators and trailing indented suite comments before lexical
+  dedent, attaches to the nearest enclosing symbol;
+- shebangs, encoding cookies, RATIOS seals, MSDMD fences, and otherwise
+  unattached comments remain module-scoped; and
+- module, class, function, and method docstrings attach to their AST owner.
+
+Interrupted, unclosed, or name-mismatched MSDMD fences make the projection
+invalid and remain split rather than silently spanning executable code or being
+accepted as a block. Source lines split only at Python newlines (LF, CRLF, CR),
+so U+2028, form feed, and similar separators never shift spans, and CR-only
+sources keep exact byte offsets. Decorated-symbol spans begin
+at the first decorator so normalized decorator facts retain an exact raw-source
+reference through the pinned source digest.
+
+The projection is deterministic and disposable. Complete-tree writes prune stale
+projection files; selected-file writes never prune outside their selection.
+Writes use same-directory atomic replacement of exact UTF-8 bytes with LF
+record terminators, so write and byte-exact `--check` converge on every platform. `--check` recomputes content and
+fails on missing, stale, invalid, or—during a complete-tree check—unexpected
+sidecars. Supply `--revision` when a repository revision is known; omission is
+preserved as `hmmm` rather than guessed.
+
+```bash
+python -m msdmd.module_projection --root . --repo example/repo \
+  --revision <exact-revision> --out-dir .msdmd/modules --write
+python -m msdmd.module_projection --root . --repo example/repo \
+  --revision <exact-revision> --out-dir .msdmd/modules --check
+```
+
+Use repeatable `--source path/to/module.py` arguments for an incremental subset.
+Current non-goals include import/dependency extraction, call graphs, dynamic
+exports, docstring-dialect field parsing, `.pyi` semantics, cross-revision rename
+mapping, other languages, and integration with the block collection/visualizer.
+Those unsupported surfaces remain `hmmm`; the presence of this reader does not
+upgrade them.
 
 ## The runner protocol
 
@@ -227,8 +286,10 @@ blocks need to be inserted. The return annotation is a declaration, not a test
 result. CODEOWNERS review responsibility is not automatically authorship,
 operational ownership, or proof of a team's live permissions.
 
-With only the currently shipped block collector, this repository cannot receive
-a native-information coverage verdict. Report that reader gap explicitly.
+The partial Python projection can recover the example function signature and
+docstring. It cannot yet recover the TOML package fields or CODEOWNERS rule, and
+neither it nor the block collector can issue a repository-wide native-information
+coverage verdict. Report those reader gaps explicitly.
 
 ## Repo collection point and visualizer
 
@@ -236,8 +297,9 @@ a native-information coverage verdict. Report that reader gap explicitly.
 
 `skills.json` retains `status: runnable` and `runner: msdmd/collect.py` for
 shipped block collection. `runner_scope: msdmd-blocks-only` bounds that capability;
-`native_ingestion.status: contract` with no runner separates the unimplemented
-native-reader contract. Neither index field upgrades helper behavior.
+`native_ingestion.status: partial` points to the separate Python module-projection
+runner and names its bounded scope. Neither index field upgrades the other
+helper's behavior.
 
 These commands collect and visualize **MSDMD blocks only**:
 
@@ -250,7 +312,8 @@ The existing collection's `gaps` field records expected-block gaps only.
 `--expected-block` measures block presence, not native metadata completeness.
 Do not use its output as the new information-coverage gate. Repo-level collection
 points such as `<reponame>_msdmd.ts` remain generated consumers of owning sources,
-not editable replacements for them. No native-ingestion command is claimed here.
+not editable replacements for them. The separate Python command above emits
+`.msdmd.jsonl` sidecars and does not alter that TypeScript collection.
 
 ### Shipped helper limitations
 
@@ -310,9 +373,11 @@ remove superseded routes rather than leaving contradictory active defaults.
 
 ## hmmm
 
-The skill now requires native-first ingestion across all applicable conventions.
-The reviewed collector and collection schema still implement the narrower block
-path without qualified edge identities or duplicate-ID diagnostics. Native
-readers, identity validation, the versioned collection migration and their
-executable acceptance fixtures remain to be implemented and verified. Unknown conventions
-remain visible extensions of scope, not imaginary completed support.
+The skill requires native-first ingestion across all applicable conventions.
+The block collector and collection schema still implement their narrower path
+without qualified edge identities or duplicate-ID diagnostics. One partial
+Python reader now has executable fixtures, but import/dependency facts, docstring
+dialects, other languages, repository discovery and exclusion receipts, conflict
+handling, identity validation, and the unified collection migration remain to
+be implemented and verified. Unknown conventions remain visible extensions of
+scope, not imaginary completed support.

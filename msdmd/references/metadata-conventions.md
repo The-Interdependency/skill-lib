@@ -23,6 +23,23 @@ data without being recommended for new authoring.
 
 ## Convention catalogue
 
+### Shipped reader status
+
+The catalogue is deliberately larger than the current implementation. Support
+is promoted only for an executable reader and its tested subset:
+
+| Reader | Status | Implemented subset | Still `hmmm` |
+|---|---|---|---|
+| `the-interdependency.msdmd.python-ast-tokenize` 1.0.0 (`python-module-reader.json`) | partial | `.py` class/function/method identities and signatures; decorators; module/class/function docstrings; syntax-aware line-comment groups; structural attachment; source/schema/reader/manifest/runtime binding; parse and malformed-fence diagnostics | Imports and dependency edges, calls, dynamic exports, parsed Sphinx/Google/NumPy docstring fields, type-comment semantics, `.pyi` distinctions, cross-revision rename identity, full discovery ledger |
+| Universal MSDMD block parsers | implemented-and-tested for block grammar only | Registered line-comment markers and supplemental fenced entries | Native declarations, syntax-aware rejection of block-shaped text inside strings, qualified edge validation |
+| Every other catalogue family | specified-only unless another owning skill says otherwise | Discovery and reader requirements below | Extraction, reconciliation, and coverage support |
+
+The Python reader emits the separate
+`urn:the-interdependency:msdmd:module-projection:1` JSONL format. That projection
+is useful for per-module documentation and metadata-to-symbol assignment, but it
+is not the unified native-capable repository collection described later in this
+reference.
+
 ### Language, symbol, and documentation metadata
 
 | Family | Explicit conventions and sources to inspect | Preservation / interpretation boundary |
@@ -97,9 +114,9 @@ source references and diagnostics. Do not impose a fictitious callable signature
 on helpers that have not been implemented. Keep discovery, extraction, semantic
 mapping, policy evaluation and execution evidence separate and composable.
 
-### Minimum native-capable fact shape
+### Minimum unified native-capable fact shape
 
-The future versioned collection must be able to express:
+The future unified collection must be able to express:
 
 | Information | Requirement |
 |---|---|

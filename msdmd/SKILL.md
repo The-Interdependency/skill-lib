@@ -144,11 +144,27 @@ numbers are navigational facts, never identity. Attachment is structural:
   unattached comments remain module-scoped; and
 - module, class, function, and method docstrings attach to their AST owner.
 
-Interrupted, unclosed, or name-mismatched MSDMD fences make the projection
-invalid and remain split rather than silently spanning executable code or being
-accepted as a block. Source lines split only at Python newlines (LF, CRLF, CR),
-so U+2028, form feed, and similar separators never shift spans, and CR-only
-sources keep exact byte offsets. Decorated-symbol spans begin
+Malformed MSDMD fences make the projection invalid and remain split rather
+than silently spanning executable code or being accepted as a block:
+interrupted (`msdmd_fence_interrupted`), unclosed (`msdmd_fence_unclosed`),
+closed under a different name or containing a nested opening fence
+(`msdmd_fence_mismatched`), and closed without any opening
+(`msdmd_fence_unmatched_close`). A mismatch (wrong-name close or nested
+opening) yields one diagnostic: one later closing fence per affected block name,
+orphaned by that already-reported mismatch, is suppressed until the next opening
+fence of that name; every other unpaired close is reported. This guarantee does
+not cover interrupted fences, which may also report their later closing fence as
+`msdmd_fence_unmatched_close`.
+This projection is deliberately stricter than the universal block parser
+(`parsers/universal.py`), which matches each requested block name independently
+and silently ignores foreign, nested, or unpaired fences.
+
+Source lines split only at Python newlines (LF, CRLF, CR), so U+2028, form feed,
+and similar separators never shift spans, and CR-only sources keep line numbers
+and offsets aligned with the AST. Byte offsets index the UTF-8 re-encoding of the
+decoded source text, not the raw file: for a BOM-prefixed or non-UTF-8 source
+(for example a latin-1 file with a coding cookie) they differ from raw file byte
+offsets; `source_sha256` identifies the raw bytes. Decorated-symbol spans begin
 at the first decorator so normalized decorator facts retain an exact raw-source
 reference through the pinned source digest.
 

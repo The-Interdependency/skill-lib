@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:629 imports_exports=9:11 calls_definitions=316:41
+# ratios: loc_comments=97:713 imports_exports=9:11 calls_definitions=334:42
 # === CHECKS ===
 # id: check_module_projection_line_shift_stability
 #   proves: module_projection_line_shift_stability
@@ -654,21 +654,50 @@ class Example:
             )
 
     def test_mismatched_msdmd_fences_emit_diagnostics_and_invalidate(self) -> None:
+        # A mismatch yields exactly one diagnostic: closes orphaned by an
+        # already-diagnosed mismatch are suppressed until the next opening of
+        # that name, while any other orphan close is still reported.
         cases = {
             "closing_name_differs": (
                 "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n",
-                "msdmd_fence_mismatched",
+                [("msdmd_fence_mismatched", 3)],
+            ),
+            "closing_name_differs_then_outer_close": (
+                "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n# === END DOCS ===\n",
+                [("msdmd_fence_mismatched", 3)],
             ),
             "opening_inside_open_block": (
                 "# === DOCS ===\n# === CHECKS ===\n# id: entry\n# === END CHECKS ===\n",
-                "msdmd_fence_mismatched",
+                [("msdmd_fence_mismatched", 2)],
+            ),
+            "nested_block_with_both_closes": (
+                "# === DOCS ===\n# === CHECKS ===\n# id: entry\n"
+                "# === END CHECKS ===\n# === END DOCS ===\n",
+                [("msdmd_fence_mismatched", 2)],
             ),
             "closing_without_opening": (
                 "value = 1\n# === END DOCS ===\n",
-                "msdmd_fence_unmatched_close",
+                [("msdmd_fence_unmatched_close", 2)],
+            ),
+            "second_orphan_after_suppressed_close": (
+                "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n# === END DOCS ===\n"
+                "value = 1\n# === END DOCS ===\n",
+                [("msdmd_fence_mismatched", 3), ("msdmd_fence_unmatched_close", 6)],
+            ),
+            "orphan_after_reopened_block_is_reported": (
+                "# === DOCS ===\n# id: entry\n# === END CHECKS ===\n\n"
+                "# === DOCS ===\n# id: later\n# === END DOCS ===\n"
+                "value = 1\n# === END DOCS ===\n",
+                [("msdmd_fence_mismatched", 3), ("msdmd_fence_unmatched_close", 9)],
+            ),
+            "nested_orphan_after_reopened_inner_block_is_reported": (
+                "# === DOCS ===\n# === CHECKS ===\n\n"
+                "# === CHECKS ===\n# id: later\n# === END CHECKS ===\n"
+                "value = 1\n# === END CHECKS ===\n",
+                [("msdmd_fence_mismatched", 2), ("msdmd_fence_unmatched_close", 8)],
             ),
         }
-        for name, (text, code) in cases.items():
+        for name, (text, expected_diagnostics) in cases.items():
             with self.subTest(case=name), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp) / "repo"
                 out = Path(tmp) / "generated"
@@ -676,12 +705,14 @@ class Example:
                 (root / "module.py").write_text(text, encoding="utf-8")
 
                 records = project_python_module(root / "module.py", root=root, repo="example/repo")
-                codes = {
-                    record["code"] for record in records if record["record_type"] == "diagnostic"
-                }
+                diagnostics = [
+                    (record["code"], record["line"])
+                    for record in records
+                    if record["record_type"] == "diagnostic"
+                ]
 
                 self.assertEqual("invalid", records[0]["status"])
-                self.assertIn(code, codes)
+                self.assertEqual(expected_diagnostics, diagnostics)
                 self.assertIn("MSDMD comment fence is malformed", records[0]["hmmm"])
                 projections = project_tree(root, "example/repo")
                 write_projections(out, projections)
@@ -789,6 +820,62 @@ class Example:
             write_projections(out, project_tree(root, "example/repo"))
             self.assertEqual([], check_projections(out, project_tree(root, "example/repo")))
 
+    def test_cr_only_latin1_encoding_cookie_follows_python_line_rules(self) -> None:
+        cases = {
+            # Python honors a coding cookie on line 1 or 2 only; CR-only line
+            # endings must be split before encoding detection.
+            "cookie_on_line_2_is_honored": (
+                "#!/usr/bin/env python\r"
+                "# -*- coding: latin-1 -*-\r"
+                "NAME = 'caf\xe9'\r"
+                "# \xe9 note\r"
+                "def f():\r"
+                "    return NAME\r",
+                True,
+            ),
+            "cookie_on_line_5_is_ignored": (
+                "# one\r"
+                "# two\r"
+                "# three\r"
+                "# four\r"
+                "# coding: latin-1\r"
+                "NAME = 'caf\xe9'\r",
+                False,
+            ),
+        }
+        for name, (text, honored) in cases.items():
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "module.py"
+                raw = text.encode("latin-1")
+                source.write_bytes(raw)
+
+                records = project_python_module(source, root=root, repo="example/repo")
+                codes = [
+                    record["code"] for record in records if record["record_type"] == "diagnostic"
+                ]
+
+                # CPython's own compiler is the oracle (compile does not execute).
+                if honored:
+                    compile(raw, "module.py", "exec")
+                    self.assertEqual("complete", records[0]["status"])
+                    self.assertEqual("iso-8859-1", records[0]["source_encoding"])
+                    self.assertNotIn("python_parse_error", codes)
+                    by_text = {
+                        record["text"]: record
+                        for record in records
+                        if record["record_type"] == "metadata"
+                    }
+                    self.assertEqual("encoding_cookie", by_text["-*- coding: latin-1 -*-"]["metadata_kind"])
+                    self.assertEqual(4, by_text["\xe9 note"]["source_span"]["start"]["line"])
+                    self.assertIn("f", _symbol_ids(records))
+                else:
+                    with self.assertRaises(SyntaxError):
+                        compile(raw, "module.py", "exec")
+                    self.assertEqual("invalid", records[0]["status"])
+                    self.assertEqual("utf-8", records[0]["source_encoding"])
+                    self.assertEqual(["python_parse_error"], codes)
+
     def test_projection_schema_declares_all_record_types(self) -> None:
         schema_path = Path(__file__).resolve().parents[1] / "msdmd" / "module-projection.schema.json"
         schema = json.loads(schema_path.read_text(encoding="utf-8"))
@@ -815,4 +902,4 @@ class Example:
 
 if __name__ == "__main__":
     unittest.main()
-# ratios: loc_comments=97:629 imports_exports=9:11 calls_definitions=316:41
+# ratios: loc_comments=97:713 imports_exports=9:11 calls_definitions=334:42

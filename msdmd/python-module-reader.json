@@ -42,7 +42,7 @@
     "shebang, encoding-cookie, RATIOS, and MSDMD-fence module conventions",
     "UTF-8 projection spans over decoded source split only at Python newlines (LF, CRLF, CR), including CR-only sources, and raw-source SHA-256",
     "projection files written as exact UTF-8 bytes with LF record terminators on every platform",
-    "parse, tokenization, and malformed MSDMD-fence diagnostics, including interrupted, unclosed, and name-mismatched fences"
+    "parse, tokenization, and malformed MSDMD-fence diagnostics: interrupted, unclosed, name-mismatched or nested-opening (msdmd_fence_mismatched), and unmatched-close (msdmd_fence_unmatched_close) fences, where a mismatch yields one diagnostic because one later close per affected block name, orphaned by that reported mismatch, is suppressed until the next opening of that name (an interrupted fence may also report its later close as msdmd_fence_unmatched_close); stricter than the universal block parser, which matches each block name independently"
   ],
   "limitations": [
     "imports and dependency edges",
@@ -52,7 +52,8 @@
     ".pyi-specific semantics",
     "cross-revision rename identity",
     "repository discovery and exclusion receipts",
-    "reconciliation with non-Python or MSDMD block collections"
+    "reconciliation with non-Python or MSDMD block collections",
+    "raw-file byte offsets: span byte offsets index the UTF-8 re-encoding of the decoded source text and differ from raw file offsets for BOM-prefixed or non-UTF-8 sources"
   ],
   "attachment": {
     "native_docstring": "Attach to the AST owner.",
@@ -69,7 +70,7 @@
     "line_comment": "metadata:comment"
   },
   "unknown_field_policy": "Unsupported semantic parsing is not fabricated; the partial scope remains declared in this manifest and repository guidance.",
-  "failure_behavior": "Invalid syntax, incomplete tokenization, or an interrupted, unclosed, or name-mismatched MSDMD fence emits a diagnostic and causes --check or --write to exit nonzero.",
+  "failure_behavior": "Invalid syntax, incomplete tokenization, or a malformed MSDMD fence (interrupted, unclosed, name-mismatched, nested opening, or unmatched close) emits a diagnostic and causes --check or --write to exit nonzero. Fence validation is stricter than the universal block parser.",
   "safety": {
     "executes_inspected_code": false,
     "imports_inspected_modules": false,

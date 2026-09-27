@@ -41,8 +41,12 @@ immediately following declaration at the same lexical depth, other interior
 comments attach to the nearest enclosing declaration, and docstrings attach to
 their native AST owner. Trailing indented suite comments remain with that lexical
 owner until dedent. The projection header binds the executing Python version and
-AST grammar; malformed MSDMD fences, including name-mismatched fences, emit
-diagnostics rather than spanning code. Decorator-region comments attach to the
+AST grammar; malformed MSDMD fences (interrupted, unclosed, name-mismatched or
+nested-opening `msdmd_fence_mismatched`, and unmatched-close
+`msdmd_fence_unmatched_close`) emit diagnostics rather than spanning code. This
+fence validation is stricter than the universal block parser, which matches each
+block name independently. Span byte offsets index the UTF-8 re-encoding of the
+decoded text and differ from raw file offsets for BOM or non-UTF-8 sources. Decorator-region comments attach to the
 decorated declaration, source lines split only at Python newlines, and sidecars
 are written as exact LF-terminated UTF-8 bytes.
 

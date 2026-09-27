@@ -5,10 +5,14 @@ Third-party skills vendored into this library, with provenance and license.
 ## anthropics/knowledge-work-plugins
 
 - Source commit: `94e1a089d28d3e0c2ad9af696f8499cd8c6f7205`
-- License: Apache-2.0. The full text is in
-  [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt) (the canonical text from
-  https://www.apache.org/licenses/LICENSE-2.0.txt). Upstream ships no `NOTICE`
-  file at this commit.
+- License: Apache-2.0. The governing text is upstream `data/LICENSE` at
+  `94e1a08`, which sits beside the imported `data/skills/` and is byte-identical
+  to https://www.apache.org/licenses/LICENSE-2.0.txt. A copy is in
+  [`LICENSES/Apache-2.0.txt`](LICENSES/Apache-2.0.txt).
+  The upstream root `LICENSE` has the same Apache-2.0 text followed by 10 lines
+  of unrelated text that third-party PR #193 (anthropics/knowledge-work-plugins,
+  merged 2026-04-27 PT) appended. Those lines are not a `NOTICE` and are not
+  reproduced here. Upstream ships no `NOTICE` file at this commit.
 - Imported paths (upstream `data/skills/<name>/` → repo root `<name>/`):
 
   - `sql-queries/`

@@ -15,7 +15,7 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
-from msdmd.formats import parse_json, parse_yaml, parse_xml
+from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml
 
 
 def pointer(*parts: Any) -> str:
@@ -120,7 +120,7 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                             raise ValueError('OpenAPI operation must be a mapping')
                         emit('openapi.document', version, 'api-operation', pointer(section, route, method), operation,
                             scope='operation', identity=f'{section}:{method.upper()} {route}', native_id=operation.get('operationId'))
-    elif '$schema' in value and 'json-schema.org' in str(value['$schema']):
+    elif is_json_schema_uri(value.get('$schema')):
         version = str(value['$schema'])
         emit('json.schema', version, 'schema-description', '', value, scope='schema', native_id=value.get('$id', value.get('id')))
         if not re.fullmatch(r'https?://json-schema\.org/(?:draft/(?:2020-12|2019-09)|draft-0[467])/schema#?', version):

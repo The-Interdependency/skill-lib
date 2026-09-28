@@ -1,4 +1,4 @@
-# ratios: loc_comments=133:8 imports_exports=7:4 calls_definitions=71:9
+# ratios: loc_comments=142:14 imports_exports=8:5 calls_definitions=74:10
 """Bounded, non-executing parsers shared by the native metadata adapters.
 
 Usage: parse_json(bytes), parse_yaml(bytes), parse_xml(bytes). No includes,
@@ -14,6 +14,24 @@ import math
 import re
 import xml.etree.ElementTree as ET
 from typing import Any
+from urllib.parse import urlsplit
+
+def is_json_schema_uri(value: Any) -> bool:
+    """Recognize the exact JSON Schema URI authority without fetching it.
+
+    Usage: pass a native $schema value, without coercing its type. This
+    recognizes the owning namespace, not a supported draft or trusted URL.
+    Userinfo, explicit ports, lookalike hosts and control characters are
+    outside this recognition subset and remain unclassified source data.
+    """
+    if not isinstance(value, str) or any(ord(char) <= 32 or ord(char) == 127 for char in value):
+        return False
+    try:
+        uri = urlsplit(value)
+    except ValueError:
+        return False
+    return uri.scheme in {'http', 'https'} and uri.netloc.lower() == 'json-schema.org'
+
 
 MAX_NODES = 100_000
 MAX_DEPTH = 128
@@ -158,4 +176,4 @@ def parse_xml(data: bytes) -> ET.Element:
             raise ValueError('XML exceeds node/depth limit')
         stack.extend((child, depth + 1) for child in node)
     return root
-# ratios: loc_comments=133:8 imports_exports=7:4 calls_definitions=71:9
+# ratios: loc_comments=142:14 imports_exports=8:5 calls_definitions=74:10

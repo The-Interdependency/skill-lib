@@ -53,7 +53,7 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_ratios, ratios_placement
-from msdmd.formats import parse_json, parse_yaml
+from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml
 from msdmd.grammar_code import read_grammar
 from msdmd.native_code import read_python as _read_python, read_typescript as _read_typescript
 from msdmd.standards import read_standards
@@ -527,7 +527,7 @@ def _read_json(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[d
     value, redacted = _redact_sensitive(value)
     if path.name == "package.json":
         convention = "npm.package-json"
-    elif path.name.endswith(".schema.json") or (isinstance(value, dict) and "json-schema.org" in str(value.get("$schema", ""))):
+    elif path.name.endswith(".schema.json") or (isinstance(value, dict) and is_json_schema_uri(value.get("$schema"))):
         convention = "json.schema"
         context["convention_version"] = str(value.get("$schema", "hmmm")) if isinstance(value, dict) else "hmmm"
     elif isinstance(value, dict) and "openapi" in value:

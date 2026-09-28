@@ -1,0 +1,35 @@
+# Temporary recovery evidence; remove from the final repair tree.
+# Usage: pushes to the isolated repair branch produce exact, tracked-source
+# archives for local integration tests. This job has no repository write access.
+name: msdmd-native-recovery
+on:
+  push:
+    branches: [repair/msdmd-native-readers-20260928]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Archive exact public source revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/msdmd-recovery"
+          git archive --format=tar --prefix=current/ e6e3e5cd2886eb2c4cf43744a9ed6b6f7ab3b535 > "$RUNNER_TEMP/msdmd-recovery/current.tar"
+          git archive --format=tar --prefix/native/ 3bb5bfe94f7e4502f9b4afa6f1ac7dbfe69051f5 > "$RUNNER_TEMP/msdmd-recovery/native.tar"
+          git archive --format=tar --prefix/base/ dd5027d99516831c0dcb83a176a67140d3819b66 > "$RUNNER_TEMP/msdmd-recovery/base.tar"
+          git diff dd5027d99516831c0dcb83a176a67140d3819b66 3bb5bfe94f7e4502f9b4afa6f1ac7dbfe69051f5 --binary > "$RUNNER_TEMP/msdmd-recovery/native.patch"
+          git ls-tree -r e6e3e5cd2886eb2c4cf43744a9ed6b6f7ab3b535 > "$RUNNER_TEMP/msdmd-recovery/current-tree.txt"
+          cd "$RUNNER_TEMP/msdmd-recovery"
+          sha256sum current.tar native.tar base.tar native.patch current-tree.txt > SHA256SUMS
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: msdmd-recovery-sources
+          path: ${{ runner.temp }}/msdmd-recovery/
+          retention-days: 3
+          if-no-files-found: error

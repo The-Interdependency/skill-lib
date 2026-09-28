@@ -1,4 +1,4 @@
-# ratios: loc_comments=884:46 imports_exports=22:5 calls_definitions=265:28
+# ratios: loc_comments=889:48 imports_exports=22:5 calls_definitions=267:28
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -769,6 +769,13 @@ def _read_gitignore(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
     facts: list[dict] = []
     order = 0
     for line_number, raw in enumerate(text.splitlines(), start=1):
+        # Git ignores unescaped trailing spaces. Count backslash parity so
+        # an escaped space survives, including before later unescaped spaces.
+        while raw.endswith(' '):
+            prefix = raw[:-1]
+            if (len(prefix) - len(prefix.rstrip('\\'))) % 2:
+                break
+            raw = prefix
         if not raw or raw.startswith("#"):
             continue
         order += 1
@@ -890,11 +897,11 @@ def _read_llms_text(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
 @lru_cache(maxsize=1)
 def implementation_digest() -> str:
     """Identity of all executable reader inputs, independent of inspected files."""
-    names = ("readers.py", "native_code.py", "grammar_code.py", "formats.py", "standards.py", "module_projection.py", "typescript-reader.cjs", "requirements.txt", "package.json", "package-lock.json", "module-projection.schema.json", "python-module-reader.json")
+    names = ("readers.py", "native_code.py", "grammar_code.py", "formats.py", "standards.py", "module_projection.py", "typescript-reader.cjs", "requirements.txt", "package.json", "package-lock.json", "module-projection.schema.json", "python-module-reader.json", "parsers/universal.py")
     digest = hashlib.sha256()
     for name in names:
         digest.update(name.encode())
-        digest.update(Path(__file__).with_name(name).read_bytes())
+        digest.update((Path(__file__).parent / name).read_bytes())
     return digest.hexdigest()
 
 
@@ -999,4 +1006,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and any(f["native"]["value"] == root["native"]["value"] for root in roots))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=884:46 imports_exports=22:5 calls_definitions=265:28
+# ratios: loc_comments=889:48 imports_exports=22:5 calls_definitions=267:28

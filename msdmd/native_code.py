@@ -1,4 +1,4 @@
-# ratios: loc_comments=178:10 imports_exports=15:3 calls_definitions=73:3
+# ratios: loc_comments=195:14 imports_exports=15:3 calls_definitions=83:3
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -95,12 +95,12 @@ def read_python(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list,
         fact['source']['location']['span'] = record['source_span']
         facts.append(fact)
         if kind == 'comment':
-            for line in record['text'].splitlines():
+            for line_ordinal, line in enumerate(record['text'].splitlines()):
                 for tag in ('SPDX-License-Identifier', 'SPDX-FileCopyrightText'):
                     if tag + ':' in line:
                         facts.append(_fact(context, reader_id=rid, kind='license-declaration', scope=scope,
                             identity=identity, location=location(record), value={'tag': tag, 'value': line.split(tag + ':', 1)[1].strip()},
-                            native_id=f'{tag}:{ordinal}', convention='spdx.file-header', standing='declared'))
+                            native_id=f'{tag}:{ordinal}:{line_ordinal}', convention='spdx.file-header', standing='declared'))
     if header['status'] == 'invalid':
         return facts, edges, diagnostics
     encoding = tokenize.detect_encoding(_byte_line_reader(data))[0]
@@ -126,17 +126,35 @@ def read_python(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list,
             fact['address'] = fact['subject']['address'] + f'/fact/import/{ordinal}'
             facts.append(fact)
             edges.append(_edge(fact['subject']['address'], 'python-module:' + module, 'imports'))
+    # A literal initializer is not a complete export set after another write,
+    # mutation, conditional assignment, or escape through an alias/call.
+    # Only one simple module-level literal assignment with no subsequent uses
+    # earns static standing. Other syntax remains visible without execution.
+    assignments = []
+    allowed_names: set[int] = set()
     for node in tree.body:
         targets = node.targets if isinstance(node, ast.Assign) else [node.target] if isinstance(node, ast.AnnAssign) else []
-        if any(isinstance(t, ast.Name) and t.id == '__all__' for t in targets):
-            value = node.value
-            if isinstance(value, (ast.List, ast.Tuple)) and all(isinstance(i, ast.Constant) and isinstance(i.value, str) for i in value.elts):
-                facts.append(_fact(context, reader_id=rid, kind='exports', scope='module', identity=context['file'],
-                    location={'start_line': node.lineno, 'end_line': node.end_lineno}, native_id='__all__',
-                    value={'names': [i.value for i in value.elts], 'resolution': 'static'}))
-            else:
-                diagnostics.append(_diagnostic(context, reader_id=rid, code='dynamic_python_exports',
-                    message='__all__ is not a literal sequence of strings', status='dynamic-unresolved'))
+        if len(targets) == 1 and isinstance(targets[0], ast.Name) and targets[0].id == '__all__':
+            assignments.append(node)
+            allowed_names.add(id(targets[0]))
+    export_uses = [node for node in ast.walk(tree) if isinstance(node, ast.Name) and node.id == '__all__']
+    unresolved = len(assignments) != 1 or any(id(node) not in allowed_names for node in export_uses)
+    if assignments:
+        node = assignments[-1]
+        value = node.value
+        literal = isinstance(value, (ast.List, ast.Tuple)) and all(
+            isinstance(item, ast.Constant) and isinstance(item.value, str) for item in value.elts)
+        unresolved = unresolved or not literal
+        names = [item.value for item in value.elts] if literal else None
+        facts.append(_fact(context, reader_id=rid, kind='exports', scope='module', identity=context['file'],
+            location={'start_line': node.lineno, 'end_line': node.end_lineno}, native_id='__all__',
+            value={'names': names if not unresolved else None,
+                   'declared_names': names,
+                   'resolution': 'dynamic-unresolved' if unresolved else 'static'}))
+    if export_uses and unresolved:
+        diagnostics.append(_diagnostic(context, reader_id=rid, code='dynamic_python_exports',
+            message='__all__ has a nonliteral, repeated, conditional, mutated or escaped declaration; final exports not inferred',
+            status='dynamic-unresolved'))
     return facts, edges, diagnostics
 
 
@@ -161,7 +179,7 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         location={'start_line': d['start_line'], 'end_line': d['end_line']}) for d in parsed['diagnostics']]
     for index, item in enumerate(parsed['declarations']):
         fact = _fact(context, reader_id=rid, kind='exported-declaration' if item['exported'] else 'symbol-declaration',
-            scope='symbol', identity=item['identity'], native_id=item['qualified_name'], value=item,
+            scope='symbol', identity=item['identity'], native_id=None if item.get('anonymous') else item['qualified_name'], value=item,
             location={'start_line': item['start_line'], 'end_line': item['end_line']})
         fact['address'] = fact['subject']['address'] + '/fact/declaration'
         facts.append(fact)
@@ -174,13 +192,15 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         fact['address'] = fact['subject']['address'] + f'/fact/documentation/{index}'
         facts.append(fact)
     for index, item in enumerate(sorted(parsed['comments'], key=lambda c: c['start_line'])):
-        fact = _fact(context, reader_id=rid, kind='comment', scope='module', identity=context['file'],
+        scope = 'symbol' if item.get('identity') else 'module'
+        identity = item.get('identity') or context['file']
+        fact = _fact(context, reader_id=rid, kind='comment', scope=scope, identity=identity,
             value=item, location={'start_line': item['start_line'], 'end_line': item['end_line']}, native_id=str(index))
         facts.append(fact)
         for tag in ('SPDX-License-Identifier', 'SPDX-FileCopyrightText'):
-            for match in re.finditer(re.escape(tag) + r':\s*([^\r\n]*?)(?:\*/|$)', item['text'], re.M):
+            for match_ordinal, match in enumerate(re.finditer(re.escape(tag) + r':\s*([^\r\n]*?)(?:\*/|$)', item['text'], re.M)):
                 facts.append(_fact(context, reader_id=rid, kind='license-declaration', scope='module', identity=context['file'],
-                    value={'tag': tag, 'value': match[1].strip()}, native_id=f'{tag}:{index}',
+                    value={'tag': tag, 'value': match[1].strip()}, native_id=f'{tag}:{index}:{match_ordinal}',
                     location={'start_line': item['start_line'], 'end_line': item['end_line']}, convention='spdx.file-header', standing='declared'))
     for index, item in enumerate(parsed['imports']):
         fact = _fact(context, reader_id=rid, kind='dependency', scope='module', identity=context['file'],
@@ -193,7 +213,8 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         fact['address'] = fact['subject']['address'] + f'/fact/local-export/{index}'
         facts.append(fact)
         targets = [_subject_address(context, 'symbol', identity) for identity in item['declaration_identities']]
-        for target in targets or ['ecma-local:' + item['local_name']]:
+        fallback = 'ecma-local:' + item['local_name'] if item.get('local_name') else fact['address']
+        for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=178:10 imports_exports=15:3 calls_definitions=73:3
+# ratios: loc_comments=195:14 imports_exports=15:3 calls_definitions=83:3

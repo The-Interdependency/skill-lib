@@ -1,4 +1,4 @@
-# ratios: loc_comments=235:11 imports_exports=8:2 calls_definitions=137:5
+# ratios: loc_comments=254:13 imports_exports=8:2 calls_definitions=146:5
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -49,6 +49,29 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
     if suffix == '.xml':
         root = parse_xml(data)
         local = lambda node: node.tag.rsplit('}', 1)[-1]
+        xml_redacted = False
+
+        def scrub_xml(node: Any) -> None:
+            # Redact in the XML name domain, before names become generic tag/text keys.
+            # Scrub the parsed tree once so every later semantic projection is safe too.
+            nonlocal xml_redacted
+            if _redact_sensitive({local(node): ''})[1]:
+                node.text = '[redacted]'
+                node.attrib.clear()
+                node[:] = []
+                xml_redacted = True
+                return
+            for name in list(node.attrib):
+                if _redact_sensitive({name.rsplit('}', 1)[-1]: ''})[1]:
+                    node.set(name, '[redacted]')
+                    xml_redacted = True
+            for child in node:
+                scrub_xml(child)
+
+        scrub_xml(root)
+        if xml_redacted:
+            diagnostics.append(_diagnostic(context, reader_id=rid, code='sensitive_fields_redacted',
+                message='sensitive XML element or attribute content withheld before projection', status='redacted'))
         def element_value(node: Any) -> dict:
             return {'tag': node.tag, 'attributes': dict(node.attrib), 'text': node.text,
                     'tail': node.tail, 'children': [element_value(child) for child in node]}
@@ -258,4 +281,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=235:11 imports_exports=8:2 calls_definitions=137:5
+# ratios: loc_comments=254:13 imports_exports=8:2 calls_definitions=146:5

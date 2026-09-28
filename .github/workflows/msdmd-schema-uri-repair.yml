@@ -1,0 +1,176 @@
+# Temporary, exact-base repair executor; removed after successful publication.
+name: msdmd-schema-uri-repair
+on:
+  push:
+    branches: [repair/msdmd-native-readers-20260928]
+    paths: [.github/workflows/msdmd-schema-uri-repair.yml]
+permissions:
+  contents: write
+jobs:
+  repair-and-verify:
+    if: github.repository == 'The-Interdependency/skill-lib' && github.ref == 'refs/heads/repair/msdmd-native-readers-20260928'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24.15.0'
+      - name: Apply guarded source repair and regression fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+          base = 'a101f8ee46821a1c72ab7a5170565d6c81c79c3f'
+          temporary = '.github/workflows/msdmd-schema-uri-repair.yml'
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD^'], text=True).strip() == base
+          assert subprocess.check_output(['git', 'diff', '--name-only', base, 'HEAD'], text=True).splitlines() == [temporary]
+          def replace(path, old, new):
+              target = Path(path)
+              text = target.read_text()
+              assert text.count(old) == 1, (path, old)
+              target.write_text(text.replace(old, new))
+          replace('msdmd/formats.py', 'from typing import Any\n', 'from typing import Any\nfrom urllib.parse import urlsplit\n')
+          helper = '''def is_json_schema_uri(value: Any) -> bool:
+              """Recognize the exact JSON Schema URI authority without fetching it.
+
+              Usage: pass a native $schema value, without coercing its type. This
+              recognizes the owning namespace, not a supported draft or trusted URL.
+              Userinfo, explicit ports, lookalike hosts and control characters are
+              outside this recognition subset and remain unclassified source data.
+              """
+              if not isinstance(value, str) or any(ord(char) <= 32 or ord(char) == 127 for char in value):
+                  return False
+              try:
+                  uri = urlsplit(value)
+              except ValueError:
+                  return False
+              return uri.scheme in {'http', 'https'} and uri.netloc.lower() == 'json-schema.org'
+
+
+          '''
+          replace('msdmd/formats.py', 'MAX_NODES = 100_000\n', helper + 'MAX_NODES = 100_000\n')
+          replace('msdmd/readers.py', 'from msdmd.formats import parse_json, parse_yaml\n', 'from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml\n')
+          replace('msdmd/readers.py', '"json-schema.org" in str(value.get("$schema", ""))', 'is_json_schema_uri(value.get("$schema"))')
+          replace('msdmd/standards.py', 'from msdmd.formats import parse_json, parse_yaml, parse_xml\n', 'from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml\n')
+          replace('msdmd/standards.py', "'$schema' in value and 'json-schema.org' in str(value['$schema'])", "is_json_schema_uri(value.get('$schema'))")
+          test = Path('tests/test_schema_uri_detection.py')
+          assert not test.exists()
+          test.write_text('''"""URI recognition regressions: python -m unittest tests.test_schema_uri_detection."""
+          import json
+          from pathlib import Path
+          import tempfile
+          import unittest
+
+          from msdmd.collect import collect, collection_errors
+          from msdmd.formats import is_json_schema_uri
+
+
+          class SchemaUriDetectionTests(unittest.TestCase):
+              def collection(self, schema, **options):
+                  with tempfile.TemporaryDirectory() as temp:
+                      root = Path(temp)
+                      (root / 'sample.json').write_text(json.dumps({'$schema': schema, 'x-custom': [1, True]}))
+                      return collect(root, 'fixture', source_commit='a' * 40, **options)
+
+              def test_exact_authority_and_canonical_drafts(self):
+                  for uri in ('http://json-schema.org/draft-04/schema#',
+                              'https://json-schema.org/draft/2020-12/schema',
+                              'https://JSON-SCHEMA.ORG/draft/2020-12/schema'):
+                      with self.subTest(uri=uri):
+                          self.assertTrue(is_json_schema_uri(uri))
+
+              def test_host_lookalikes_userinfo_controls_and_nonstrings_rejected(self):
+                  for uri in ('https://json-schema.org.attacker.invalid/schema',
+                              'https://attacker.invalid/json-schema.org/schema',
+                              'https://attacker.invalid/?next=https://json-schema.org/schema',
+                              'https://json-schema.org@attacker.invalid/schema',
+                              'https://user@json-schema.org/schema',
+                              'https://json-schema.org:443/schema',
+                              '//json-schema.org/schema', 'ftp://json-schema.org/schema',
+                              ' https://json-schema.org/schema',
+                              'https://json-schema.org/\\nschema', 'https://[invalid/schema',
+                              None, True, 42, ['https://json-schema.org/schema'],
+                              {'uri': 'https://json-schema.org/schema'}):
+                      with self.subTest(uri=uri):
+                          self.assertFalse(is_json_schema_uri(uri))
+
+              def test_collection_preserves_lookalikes_without_schema_classification(self):
+                  for uri in ('https://attacker.invalid/json-schema.org/schema',
+                              'https://json-schema.org.attacker.invalid/schema',
+                              ['https://json-schema.org/draft/2020-12/schema']):
+                      with self.subTest(uri=uri):
+                          result = self.collection(uri)
+                          self.assertFalse(collection_errors(result))
+                          self.assertFalse(any(f['convention']['namespace'] == 'json.schema' for f in result['facts']))
+                          docs = [f for f in result['facts'] if f['kind'] == 'structured-document']
+                          self.assertTrue(any(f['native']['value']['$schema'] == uri for f in docs))
+
+              def test_supported_draft_and_unknown_fields_still_collected(self):
+                  result = self.collection('https://json-schema.org/draft/2020-12/schema')
+                  self.assertFalse(collection_errors(result))
+                  schemas = [f for f in result['facts'] if f['kind'] == 'schema-description']
+                  self.assertEqual(1, len(schemas))
+                  self.assertEqual([1, True], schemas[0]['native']['value']['x-custom'])
+
+              def test_unknown_canonical_draft_is_unresolved_required_scope(self):
+                  result = self.collection('https://json-schema.org/draft/future/schema', required_sources=['sample.json'])
+                  self.assertTrue(collection_errors(result))
+                  self.assertIn('unsupported_json_schema_draft', {d['code'] for d in result['diagnostics']})
+          ''')
+          Path(temporary).unlink()
+          PY
+      - name: Install declared parser runtimes
+        run: |
+          python -m pip install -r msdmd/requirements.txt
+          npm ci --ignore-scripts --prefix msdmd
+      - name: Recompute affected seals and generated collection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          from ratios.ratios_check import COMPUTERS
+          for name in ('formats.py', 'readers.py', 'standards.py'):
+              path = Path('msdmd') / name
+              text = path.read_text()
+              seal = '# ratios: ' + ' '.join(f'{key}={compute(text)}' for key, compute in COMPUTERS.items())
+              path.write_text(re.sub(r'^# ratios:.*$', seal, text, flags=re.MULTILINE))
+          PY
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+          node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+      - name: Replay complete acceptance gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests
+          bash tools/check_gonol_authority.sh
+          python tools/check_skill_lib_drift.py --warnings-fail
+          python tools/check_skill_compliance.py --warnings-fail
+          python tools/build_codex_plugin_skills.py --check
+          python ratios/ratios_check.py --strict
+          python -m llms.build --root . --out llms.txt --check
+          python tests/test_repo_loto.py --audit
+          python -u tests/test_repo_loto.py
+      - name: Publish verified source changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -- msdmd/formats.py msdmd/readers.py msdmd/standards.py tests/test_schema_uri_detection.py skill-lib_msdmd.ts
+          cp .git/index "$RUNNER_TEMP/msdmd-uri-final-index"
+          GIT_INDEX_FILE="$RUNNER_TEMP/msdmd-uri-final-index" git update-index --force-remove .github/workflows/msdmd-schema-uri-repair.yml
+          tested_tree=$(GIT_INDEX_FILE="$RUNNER_TEMP/msdmd-uri-final-index" git write-tree)
+          echo "Validated final tree after temporary workflow removal: $tested_tree"
+          sha256sum skill-lib_msdmd.ts
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(msdmd): match schema URI authorities exactly and regress lookalikes'
+          git push origin HEAD:refs/heads/repair/msdmd-native-readers-20260928

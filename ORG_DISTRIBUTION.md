@@ -59,7 +59,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `statistical-analysis/` — statistical methods doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `explore-data/` — dataset profiling doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
 * `validate-data/` — analysis QA doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
-* `data-visualization/` — chart-building doctrine (imported, Apache-2.0 — see `ATTRIBUTION.md`)
+* `data-visualization/` — chart-building doctrine (`SKILL.md` imported and, with its local additions, entirely Apache-2.0; the four extension files from `868de86` original, MPL-2.0 — see `ATTRIBUTION.md`)
 
 ## Target repos
 

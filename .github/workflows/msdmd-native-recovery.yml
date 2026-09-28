@@ -29,7 +29,15 @@ jobs:
           import base64, hashlib, json, subprocess, zlib
           from pathlib import Path, PurePosixPath
           parts = [Path(f'.github/msdmd-transfer-{i}.b64') for i in range(1, 7)]
-          encoded = ''.join(p.read_text().strip() for p in parts)
+          corrections = {3: [(4244, 4246, 'Db', 'C'), (4822, 4823, '3', '6')], 4: [(470, 471, '8', ''), (2448, 2449, '5', '3')]}
+          chunks = []
+          for number, path in enumerate(parts, 1):
+              text = path.read_text().strip()
+              for start, end, old, new in reversed(corrections.get(number, [])):
+                  assert text[start:end] == old
+                  text = text[:start] + new + text[end:]
+              chunks.append(text)
+          encoded = ''.join(chunks)
           compressed = base64.b64decode(encoded, validate=True)
           assert hashlib.sha256(compressed).hexdigest() == 'e56489583a735259668aae59d6bdcce13a3ed937fd62caf1bee4d510710cb834'
           raw = zlib.decompress(compressed)

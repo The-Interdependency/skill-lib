@@ -910,17 +910,17 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
             continue
         reader_ids.append(reader_id)
         local_context = dict(context)
-        if reader_id == "msdmd-ratios" and path.suffix.lower() in _TYPESCRIPT_SUFFIXES | {".rs", ".java", ".c", ".cc", ".cpp", ".cxx", ".hpp", ".hxx", ".h"}:
-            lines = [""] * len(data.decode("utf-8-sig").split("\n"))
-            for f in facts:
-                if f["kind"] == "comment" and f["extraction"]["reader_id"] in {"typescript-compiler", "native-grammars"}:
-                    for offset, line in enumerate(f["native"]["value"]["text"].split("\n")):
-                        index = f["source"]["location"]["start_line"] - 1 + offset
-                        if index < len(lines):
-                            lines[index] = line
-            local_context["comment_source"] = "\n".join(lines)
-        local_context["configuration_sha256"] = _digest(json.dumps({"reader_id": reader_id, "reader_version": _MANIFESTS[reader_id]["version"]}, sort_keys=True))
         try:
+            if reader_id == "msdmd-ratios" and path.suffix.lower() in _TYPESCRIPT_SUFFIXES | {".rs", ".java", ".c", ".cc", ".cpp", ".cxx", ".hpp", ".hxx", ".h"}:
+                lines = [""] * len(data.decode("utf-8-sig").split("\n"))
+                for f in facts:
+                    if f["kind"] == "comment" and f["extraction"]["reader_id"] in {"typescript-compiler", "native-grammars"}:
+                        for offset, line in enumerate(f["native"]["value"]["text"].split("\n")):
+                            index = f["source"]["location"]["start_line"] - 1 + offset
+                            if index < len(lines):
+                                lines[index] = line
+                local_context["comment_source"] = "\n".join(lines)
+            local_context["configuration_sha256"] = _digest(json.dumps({"reader_id": reader_id, "reader_version": _MANIFESTS[reader_id]["version"]}, sort_keys=True))
             reader_facts, reader_edges, reader_diagnostics = reader(path, data, local_context)
         except (ImportError, FileNotFoundError) as exc:
             reader_facts, reader_edges = [], []

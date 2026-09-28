@@ -1,23 +1,105 @@
-# Temporary read-only recovery job; removed from the final repair tree.
+# Temporary exact-source transfer and validation job; removed before PR admission.
+# Usage: write the ready marker after all six hash-bound transfer parts exist.
 name: msdmd-native-recovery
 on:
   push:
     branches: [repair/msdmd-native-readers-20260928]
+    paths: [.github/msdmd-transfer-ready]
 permissions:
-  contents: read
+  contents: write
 jobs:
-  snapshot:
+  validate-and-publish:
+    if: github.repository == 'The-Interdependency/skill-lib' && github.ref == 'refs/heads/repair/msdmd-native-readers-20260928'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
-      - name: Download pinned syntax parser wheels
-        run: |
-          python -m pip download --only-binary=:all: --no-deps tree-sitter==0.26.0 tree-sitter-rust==0.24.2 tree-sitter-java==0.23.5 tree-sitter-c==0.24.2 tree-sitter-cpp==0.23.4 --dest "$RUNNER_TEMP/grammar-wheels"
-      - uses: actions/upload-artifact@v7.0.1
+      - uses: actions/setup-node@v6
         with:
-          name: msdmd-grammar-wheels
-          path: ${{ runner.temp }}/grammar-wheels/
-          retention-days: 3
-          if-no-files-found: error
+          node-version: '24.15.0'
+      - name: Apply hash-bound edits to exact public source bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, hashlib, json, subprocess, zlib
+          from pathlib import Path, PurePosixPath
+          parts = [Path(f'.github/msdmd-transfer-{i}.b64') for i in range(1, 7)]
+          encoded = ''.join(p.read_text().strip() for p in parts)
+          compressed = base64.b64decode(encoded, validate=True)
+          assert hashlib.sha256(compressed).hexdigest() == 'e56489583a735259668aae59d6bdcce13a3ed937fd62caf1bee4d510710cb834'
+          raw = zlib.decompress(compressed)
+          assert hashlib.sha256(raw).hexdigest() == 'eb5fd70494c143d1228992530583ea38871dfa9de78b9b3812e881484bea1f9f'
+          records = json.loads(raw)
+          assert len(records) == 34
+          bases = {'e6e3e5cd2886eb2c4cf43744a9ed6b6f7ab3b535', '3bb5bfe94f7e4502f9b4afa6f1ac7dbfe69051f5'}
+          for record in records:
+              relative = PurePosixPath(record['path'])
+              assert not relative.is_absolute() and '..' not in relative.parts and '.git' not in relative.parts
+              assert relative.parts[:2] != ('.github', 'workflows')
+              base = record['base']
+              assert base is None or base in bases
+              original = subprocess.check_output(['git', 'show', f'{base}:{relative}']) if base else b''
+              assert hashlib.sha256(original).hexdigest() == record['base_sha256'], str(relative)
+              lines = original.decode('utf-8').splitlines(keepends=True)
+              for start, end, replacement in reversed(record['edits']):
+                  assert 0 <= start <= end <= len(lines)
+                  lines[start:end] = [replacement]
+              content = ''.join(lines).encode('utf-8')
+              assert hashlib.sha256(content).hexdigest() == record['final_sha256'], str(relative)
+              path = Path(relative)
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(content)
+          for path in parts + [Path('.github/msdmd-transfer-ready'), Path('.github/workflows/msdmd-native-recovery.yml')]:
+              path.unlink()
+          print('All 34 source edits matched their exact final digests.')
+          PY
+      - name: Install pinned parser runtimes
+        run: |
+          python -m pip install -r msdmd/requirements.txt
+          npm ci --ignore-scripts --prefix msdmd
+      - name: Generate and verify exact schema-2 collection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+          echo 'fa44f346c146613d4c607b3a4432fbf2c1162ea135dd388562e98190aaa67ac2  skill-lib_msdmd.ts' | sha256sum --check
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+          node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+      - name: Run all repository acceptance gates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests
+          bash tools/check_gonol_authority.sh
+          python tools/check_skill_lib_drift.py --warnings-fail
+          python tools/check_skill_compliance.py --warnings-fail
+          python tools/build_codex_plugin_skills.py --check
+          python ratios/ratios_check.py --strict
+          python -m llms.build --root . --out llms.txt --check
+          python tests/test_repo_loto.py --audit
+          python -u tests/test_repo_loto.py
+      - name: Publish verified product changes without workflow mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A -- . ':!.github/workflows/msdmd-native-recovery.yml'
+          cp .git/index "$RUNNER_TEMP/msdmd-final-index"
+          GIT_INDEX_FILE="$RUNNER_TEMP/msdmd-final-index" git update-index --force-remove .github/workflows/msdmd-native-recovery.yml
+          tested_tree=$(GIT_INDEX_FILE="$RUNNER_TEMP/msdmd-final-index" git write-tree)
+          test "$tested_tree" = '4fbfe1b0a3ade05ea47c70bd74942ff9d9febb7d'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(msdmd): integrate native standards readers and fail-closed coverage'
+          git push origin HEAD:refs/heads/repair/msdmd-native-readers-20260928
+          {
+            echo '## Verified native-reader repair'
+            echo "Product commit: $(git rev-parse HEAD)"
+            echo "Tested final tree after temporary workflow removal: $tested_tree"
+            echo 'Generated collection SHA-256: fa44f346c146613d4c607b3a4432fbf2c1162ea135dd388562e98190aaa67ac2'
+            echo 'All repository gates completed successfully. Temporary workflow removal remains a connector-side finalization step; main remains unchanged.'
+          } >> "$GITHUB_STEP_SUMMARY"

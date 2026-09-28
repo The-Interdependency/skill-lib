@@ -1,4 +1,4 @@
-# ratios: loc_comments=839:42 imports_exports=22:5 calls_definitions=249:27
+# ratios: loc_comments=884:46 imports_exports=22:5 calls_definitions=265:28
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -53,7 +53,7 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_ratios, ratios_placement
-from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml
+from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml
 from msdmd.grammar_code import read_grammar
 from msdmd.native_code import read_python as _read_python, read_typescript as _read_typescript
 from msdmd.standards import read_standards
@@ -665,6 +665,49 @@ def _read_shell(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
     return facts, [], []
 
 
+def _redact_systemd_environment(value: str) -> tuple[str, bool, bool]:
+    """Redact every assignment in the supported, non-escaped word subset.
+
+    Unknown quoting/escaping withholds the entire value rather than
+    applying shell rules to systemd syntax or publishing possible secrets.
+    """
+    parts: list[str] = []
+    position = 0
+    redacted = False
+    while position < len(value):
+        start = position
+        while position < len(value) and value[position].isspace():
+            position += 1
+        parts.append(value[start:position])
+        if position == len(value):
+            break
+        start = position
+        quote_char = value[position] if value[position] in (chr(34), chr(39)) else ''
+        if quote_char:
+            end = value.find(quote_char, position + 1)
+            if end < 0 or (end + 1 < len(value) and not value[end + 1].isspace()):
+                return '<redacted>', True, True
+            word = value[position + 1:end]
+            position = end + 1
+        else:
+            while position < len(value) and not value[position].isspace():
+                position += 1
+            word = value[start:position]
+            if chr(34) in word or chr(39) in word:
+                return '<redacted>', True, True
+        if chr(92) in word:
+            return '<redacted>', True, True
+        name, separator, assigned = word.partition('=')
+        if not separator or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name):
+            return '<redacted>', True, True
+        if _SENSITIVE_KEY_RE.search(name):
+            parts.append(quote_char + name + '=<redacted>' + quote_char)
+            redacted = True
+        else:
+            parts.append(value[start:position])
+    return ''.join(parts), redacted, False
+
+
 def _read_systemd(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[dict], list[dict], list[dict]]:
     reader_id = "systemd-unit"
     context = dict(context, convention_version="systemd.syntax current documented grammar", dialect=path.suffix.lstrip("."))
@@ -680,13 +723,14 @@ def _read_systemd(path: Path, data: bytes, context: dict[str, Any]) -> tuple[lis
     occurrence: dict[tuple[str, str], int] = {}
     for number, raw in enumerate(text.splitlines(), start=1):
         stripped = raw.strip()
-        if not logical and (not stripped or stripped.startswith(("#", ";"))):
+        if not stripped or stripped.startswith(("#", ";")):
             continue
         if not logical:
             logical_start = number
-        logical += raw.rstrip("\\").strip()
-        if raw.rstrip().endswith("\\"):
+        if stripped.endswith(chr(92)):
+            logical += stripped[:-1] + ' '
             continue
+        logical += stripped
         line = logical
         logical = ""
         if line.startswith("[") and line.endswith("]"):
@@ -695,13 +739,17 @@ def _read_systemd(path: Path, data: bytes, context: dict[str, Any]) -> tuple[lis
         if "=" not in line:
             diagnostics.append(_diagnostic(context, reader_id=reader_id, code="invalid_systemd_directive", message="expected key=value", status="invalid", severity="error", location={"start_line": logical_start, "end_line": number}))
             continue
-        key, value = line.split("=", 1)
+        key, value = (part.strip() for part in line.split("=", 1))
         published_value = value
-        if key.lower() == "environment" and "=" in value:
-            environment_name = value.split("=", 1)[0].strip('"\'')
-            if _SENSITIVE_KEY_RE.search(environment_name):
-                published_value = f"{environment_name}=<redacted>"
-                diagnostics.append(_diagnostic(context, reader_id=reader_id, code="sensitive_fields_redacted", message="withheld sensitive systemd Environment value", status="redacted", severity="warning", location={"start_line": logical_start, "end_line": number}))
+        if key.lower() == 'environment':
+            published_value, redacted, unsupported = _redact_systemd_environment(value)
+            location = {'start_line': logical_start, 'end_line': number}
+            if redacted:
+                diagnostics.append(_diagnostic(context, reader_id=reader_id, code='sensitive_fields_redacted',
+                    message='withheld potentially sensitive systemd Environment values', status='redacted', location=location))
+            if unsupported:
+                diagnostics.append(_diagnostic(context, reader_id=reader_id, code='unsupported_systemd_environment_syntax',
+                    message='Environment quoting or escaping is outside the supported subset; value withheld', status='unsupported', location=location))
         identity_key = (section, key)
         occurrence[identity_key] = occurrence.get(identity_key, 0) + 1
         identity = f"{section}.{key}[{occurrence[identity_key]}]"
@@ -754,6 +802,10 @@ def _read_requirements(path: Path, data: bytes, context: dict[str, Any]) -> tupl
         if published != stripped:
             diagnostics.append(_diagnostic(context, reader_id=reader_id, code="sensitive_fields_redacted", message="withheld requirement URL credentials", status="redacted", severity="warning", location={"start_line": line_number, "end_line": line_number}))
         if published.startswith("-"):
+            if published.startswith(('-r', '-c')) or re.match(r'^--(?:requirement|constraint)(?:[=\s]|$)', published):
+                diagnostics.append(_diagnostic(context, reader_id=reader_id, code='unresolved_requirement_include',
+                    message='included requirements/constraints are declared but not resolved', status='dynamic-unresolved',
+                    location={'start_line': line_number, 'end_line': line_number}))
             facts.append(_fact(context, reader_id=reader_id, kind="requirements-option", scope="requirements-document", identity=f"option:{order}", location={"start_line": line_number, "end_line": line_number}, value={"text": published, "order": order}, native_id=f"option:{order}", convention="python.requirements-file", standing="declared"))
             continue
         match = _REQUIREMENT_NAME_RE.match(published)
@@ -787,27 +839,27 @@ def _read_license(path: Path, data: bytes, context: dict[str, Any]) -> tuple[lis
 
 
 def _read_svg(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[dict], list[dict], list[dict]]:
-    reader_id = "svg-metadata"
-    context = dict(context, convention_version="SVG document subset v1", dialect="xml")
-    if b"<!DOCTYPE" in data.upper() or b"<!ENTITY" in data.upper():
-        return [], [], [_diagnostic(context, reader_id=reader_id, code="unsafe_xml_declaration", message="DTD/entity declarations are unsupported", status="unsupported", severity="warning")]
+    reader_id = 'svg-metadata'
+    context = dict(context, convention_version='SVG document subset v1', dialect='xml')
     try:
-        root = ET.fromstring(data)
-    except ET.ParseError as exc:
-        return [], [], [_diagnostic(context, reader_id=reader_id, code="invalid_svg_xml", message=str(exc), status="invalid", severity="error")]
-    local_name = root.tag.rsplit("}", 1)[-1]
-    if local_name != "svg":
-        return [], [], [_diagnostic(context, reader_id=reader_id, code="unexpected_svg_root", message=f"root element is {local_name!r}", status="invalid", severity="error")]
+        root = parse_xml(data)
+    except (UnicodeDecodeError, ValueError, ET.ParseError) as exc:
+        return [], [], [_diagnostic(context, reader_id=reader_id, code='invalid_svg_xml',
+            message=type(exc).__name__ + '; SVG rejected by bounded XML parser', status='invalid', severity='error')]
+    if root.tag.rsplit('}', 1)[-1] != 'svg':
+        return [], [], [_diagnostic(context, reader_id=reader_id, code='unexpected_svg_root',
+            message='expected svg root', status='invalid', severity='error')]
     title = None
     description = None
     for child in root:
-        child_name = child.tag.rsplit("}", 1)[-1]
-        if child_name == "title" and title is None:
-            title = "".join(child.itertext()).strip()
-        elif child_name == "desc" and description is None:
-            description = "".join(child.itertext()).strip()
-    value = {"attributes": dict(root.attrib), "title": title, "description": description}
-    return [_fact(context, reader_id=reader_id, kind="document-metadata", scope="document", identity=context["file"], location={"pointer": "/svg"}, value=value, convention="svg.document-metadata")], [], []
+        child_name = child.tag.rsplit('}', 1)[-1]
+        if child_name == 'title' and title is None:
+            title = ''.join(child.itertext()).strip()
+        elif child_name == 'desc' and description is None:
+            description = ''.join(child.itertext()).strip()
+    value = {'attributes': dict(root.attrib), 'title': title, 'description': description}
+    return [_fact(context, reader_id=reader_id, kind='document-metadata', scope='document', identity=context['file'],
+        location={'pointer': '/svg'}, value=value, convention='svg.document-metadata')], [], []
 
 
 _LLMS_HEADING_RE = re.compile(r"^(?P<marks>#{1,6})\s+(?P<title>.+?)\s*$")
@@ -947,4 +999,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and any(f["native"]["value"] == root["native"]["value"] for root in roots))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=839:42 imports_exports=22:5 calls_definitions=249:27
+# ratios: loc_comments=884:46 imports_exports=22:5 calls_definitions=265:28

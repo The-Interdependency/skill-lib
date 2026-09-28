@@ -1,4 +1,4 @@
-# ratios: loc_comments=170:10 imports_exports=15:3 calls_definitions=68:3
+# ratios: loc_comments=178:10 imports_exports=15:3 calls_definitions=73:3
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -187,5 +187,13 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
             value=item, native_id=str(index), location={'start_line': item['start_line'], 'end_line': item['end_line']})
         facts.append(fact)
         edges.append(_edge(fact['subject']['address'], 'ecma-module:' + item['module'], item['kind']))
+    for index, item in enumerate(parsed.get('exports', [])):
+        fact = _fact(context, reader_id=rid, kind='local-export', scope='module', identity=context['file'],
+            value=item, native_id=item['exported_name'], location={'start_line': item['start_line'], 'end_line': item['end_line']})
+        fact['address'] = fact['subject']['address'] + f'/fact/local-export/{index}'
+        facts.append(fact)
+        targets = [_subject_address(context, 'symbol', identity) for identity in item['declaration_identities']]
+        for target in targets or ['ecma-local:' + item['local_name']]:
+            edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=170:10 imports_exports=15:3 calls_definitions=68:3
+# ratios: loc_comments=178:10 imports_exports=15:3 calls_definitions=73:3

@@ -1,4 +1,4 @@
-# ratios: loc_comments=230:11 imports_exports=8:2 calls_definitions=136:5
+# ratios: loc_comments=235:11 imports_exports=8:2 calls_definitions=137:5
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -57,6 +57,11 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
             'doxygen': 'doxygen.xml', 'doxygenindex': 'doxygen.xml', 'doc': 'dotnet.xml-doc',
             'project': 'maven.pom'}
         convention = conventions.get(root_name, 'xml.document')
+        maven_namespace = 'http://maven.apache.org/POM/4.0.0'
+        maven_identity = root.tag == '{' + maven_namespace + '}project' or (root.tag == 'project' and
+            any(child.tag == 'modelVersion' and (child.text or '').strip() == '4.0.0' for child in root))
+        if convention == 'maven.pom' and not maven_identity:
+            convention = 'xml.document'
         emit(convention, root.get('version', 'unspecified-producer-dialect'), 'structured-document', '', element_value(root),
             standing='reported-evidence' if convention == 'junit.xml' else 'declared')
         def walk(node: Any, loc: str) -> None:
@@ -253,4 +258,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=230:11 imports_exports=8:2 calls_definitions=136:5
+# ratios: loc_comments=235:11 imports_exports=8:2 calls_definitions=137:5

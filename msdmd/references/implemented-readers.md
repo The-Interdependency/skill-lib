@@ -64,3 +64,16 @@ not another catalogue entry or a guessed universal mapping. Source extraction
 and application semantics remain separate. Necessary additional policy includes
 path applicability for ownership, cross-source semantic conflicts, build-context
 resolution, arbitrary-language support and independent evidence verification.
+
+## Regression-qualified boundaries
+
+`tests/test_native_review_regressions.py` exercises these acceptance cases:
+
+- When a native comment parser is missing or ambiguous, block-shaped candidates survive in source-qualified diagnostics with unverified standing. They are not promoted to declarations; strict collection fails instead of silently dropping them.
+- JSON numeric values outside safe integer/exact binary64 representation use `{ "$type": "json-number", "lexeme": "..." }`, preserving the original numeric lexeme across TypeScript/JavaScript. Nonfinite overflow remains rejected. This is an explicit tagged representation, not a claim that JavaScript arithmetic is exact.
+- Systemd continuation backslashes become spaces and intervening comments are ignored. Environment assignments are checked individually. Plain words and whole-word quotes are supported; unimplemented escaping/quoting withholds the entire value and reports partial scope. No systemd expansion is executed.
+- Requirements include/constraint directives remain source-owned records and are explicitly unresolved; required-source coverage fails until their information obligation is satisfied.
+- TypeScript local export lists retain public aliases, type-only flags and source-local declaration links. Compiler/build-context resolution remains out of scope.
+- Maven XML recognition requires its POM namespace or an unnamespaced project with modelVersion 4.0.0. Other project XML stays generic XML.
+- SVG uses the same bounded, UTF-8, DTD/entity-rejecting parser as other XML inputs.
+- Explicit YAML `!!float 1` is supported and is a regression control, not an outstanding defect.

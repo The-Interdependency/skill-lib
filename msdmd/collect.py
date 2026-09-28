@@ -1,4 +1,4 @@
-# ratios: loc_comments=694:54 imports_exports=17:5 calls_definitions=208:21
+# ratios: loc_comments=706:54 imports_exports=17:5 calls_definitions=213:21
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -61,7 +61,7 @@ from typing import Any, Iterable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_text
-from msdmd.readers import READER_MANIFESTS, read_native
+from msdmd.readers import READER_MANIFESTS, _redact_sensitive, read_native
 
 SCHEMA_ID = "the-interdependency.msdmd-collection"
 SCHEMA_VERSION = "2.0.0"
@@ -523,6 +523,18 @@ def collect(
             continue
         block_text = _block_source_text(relative_path, text)
         if include_native and relative_path.suffix.lower() in {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".mts", ".cts", ".rs", ".java", ".c", ".cpp", ".cc", ".cxx", ".hpp", ".hxx", ".h"}:
+            comments_available = any(f['kind'] == 'comment' and f['extraction']['reader_id'] in {'typescript-compiler', 'native-grammars'} for f in file_facts)
+            if not comments_available and file_statuses & {'unsupported', 'ambiguous', 'invalid'}:
+                candidates = []
+                for candidate_block in block_names:
+                    for entry in parse_text(text, candidate_block, marker):
+                        candidate, _ = _redact_sensitive({'block': candidate_block, 'entry': entry})
+                        candidates.append(candidate)
+                if candidates:
+                    diagnostics.append({'code': 'supplemental_comment_extraction_unavailable', 'severity': 'error', 'status': 'unsupported',
+                        'message': 'block-shaped candidates retained without certifying comment origin; install or select the native parser',
+                        'source': {'file': relative, 'content_sha256': item['content_sha256'], 'candidate_standing': 'unverified', 'candidate_blocks': candidates},
+                        'reader_id': 'msdmd-block'})
             lines = [""] * len(text.split("\n"))
             for fact in file_facts:
                 if fact["kind"] == "comment" and fact["extraction"]["reader_id"] in {"typescript-compiler", "native-grammars"}:
@@ -805,4 +817,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=694:54 imports_exports=17:5 calls_definitions=208:21
+# ratios: loc_comments=706:54 imports_exports=17:5 calls_definitions=213:21

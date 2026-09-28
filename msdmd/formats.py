@@ -1,4 +1,4 @@
-# ratios: loc_comments=142:14 imports_exports=8:5 calls_definitions=74:10
+# ratios: loc_comments=151:14 imports_exports=9:5 calls_definitions=78:11
 """Bounded, non-executing parsers shared by the native metadata adapters.
 
 Usage: parse_json(bytes), parse_yaml(bytes), parse_xml(bytes). No includes,
@@ -10,6 +10,7 @@ are errors, never silently flattened. XML supports UTF-8, without DTD/entities.
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 import math
 import re
 import xml.etree.ElementTree as ET
@@ -63,13 +64,22 @@ def parse_json(data: bytes) -> Any:
     def constant(value: str) -> Any:
         raise ValueError('non-finite JSON number')
 
-    def number(value: str) -> float:
+    def integer(value: str) -> Any:
+        result = int(value)
+        if abs(result) > 2 ** 53 - 1 or value == '-0':
+            return {'$type': 'json-number', 'lexeme': value}
+        return result
+
+    def number(value: str) -> Any:
         result = float(value)
         if not math.isfinite(result):
             raise ValueError('JSON number exceeds finite numeric representation')
+        original = Decimal(value)
+        if original != Decimal.from_float(result) or (result == 0 and original.is_signed()):
+            return {'$type': 'json-number', 'lexeme': value}
         return result
 
-    return check_tree(json.loads(data, object_pairs_hook=pairs, parse_constant=constant, parse_float=number))
+    return check_tree(json.loads(data, object_pairs_hook=pairs, parse_constant=constant, parse_int=integer, parse_float=number))
 
 
 def parse_yaml(data: bytes) -> Any:
@@ -176,4 +186,4 @@ def parse_xml(data: bytes) -> ET.Element:
             raise ValueError('XML exceeds node/depth limit')
         stack.extend((child, depth + 1) for child in node)
     return root
-# ratios: loc_comments=142:14 imports_exports=8:5 calls_definitions=74:10
+# ratios: loc_comments=151:14 imports_exports=9:5 calls_definitions=78:11

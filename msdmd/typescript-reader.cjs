@@ -9,7 +9,7 @@ const ts = require('typescript');
 const input = JSON.parse(fs.readFileSync(0, 'utf8'));
 if (typeof input.path !== 'string' || typeof input.text !== 'string') throw new Error('Invalid reader input');
 const sf = ts.createSourceFile(input.path, input.text, ts.ScriptTarget.Latest, true);
-const result = {version: ts.version, declarations: [], imports: [], docs: [], comments: [], diagnostics: []};
+const result = {version: ts.version, declarations: [], imports: [], exports: [], docs: [], comments: [], diagnostics: []};
 const span = n => ({start_line: sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1,
                     end_line: sf.getLineAndCharacterOfPosition(n.getEnd()).line + 1});
 const text = n => n ? n.getText(sf) : null;
@@ -30,6 +30,12 @@ function visit(node, owner = '') {
     if (node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) {
       result.imports.push({module: node.moduleSpecifier.text, kind: ts.isImportDeclaration(node) ? 'import' : 'reexport',
         declaration: text(node), owner, ...span(node)});
+    } else if (ts.isExportDeclaration(node) && node.exportClause && ts.isNamedExports(node.exportClause)) {
+      for (const item of node.exportClause.elements) {
+        result.exports.push({kind: 'local-export', local_name: (item.propertyName || item.name).text,
+          exported_name: item.name.text, type_only: !!node.isTypeOnly || !!item.isTypeOnly,
+          declaration: text(node), owner, ...span(item)});
+      }
     }
   }
   if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
@@ -66,6 +72,15 @@ function visit(node, owner = '') {
   ts.forEachChild(node, child => visit(child, localOwner));
 }
 visit(sf);
+for (const binding of result.exports) {
+  const qualified = qualify(binding.owner, binding.local_name);
+  const declarations = result.declarations.filter(item => item.qualified_name === qualified);
+  binding.declaration_identities = declarations.map(item => item.identity);
+  for (const declaration of declarations) {
+    declaration.exported = true;
+    declaration.export_names = [...new Set([...(declaration.export_names || []), binding.exported_name])];
+  }
+}
 for (const d of sf.parseDiagnostics) result.diagnostics.push({code: `typescript_${d.code}`, status: 'invalid',
   message: ts.flattenDiagnosticMessageText(d.messageText, '\n'),
   start_line: sf.getLineAndCharacterOfPosition(d.start || 0).line + 1,

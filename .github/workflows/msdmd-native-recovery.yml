@@ -14,7 +14,8 @@ jobs:
         with:
           python-version: '3.13'
       - name: Download pinned parser wheel without executing it
-        run: python -m pip download --only-binary=:all: --no-deps docstring-parser==0.18.0 --dest "$RUNNER_TEMP/parser-wheel"
+        run: |
+          python -m pip download --only-binary=:all: --no-deps docstring-parser==0.18.0 --dest "$RUNNER_TEMP/parser-wheel"
       - uses: actions/upload-artifact@v7.0.1
         with:
           name: msdmd-parser-wheel

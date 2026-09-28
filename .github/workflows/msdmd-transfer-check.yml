@@ -1,0 +1,22 @@
+# Temporary transport verification, removed before acceptance run.
+name: msdmd-transfer-check
+on:
+  push:
+    branches: [repair/msdmd-native-readers-20260928]
+    paths: [.github/workflows/msdmd-transfer-check.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: msdmd-transport-check
+          path: .github/msdmd-transfer-*.b64
+          include-hidden-files: true
+          retention-days: 1
+          if-no-files-found: error

@@ -19,13 +19,25 @@ Third-party skills vendored into this library, with provenance and license.
   - `statistical-analysis/`
   - `explore-data/`
   - `validate-data/`
-  - `data-visualization/`
+  - `data-visualization/SKILL.md` only (upstream
+    `data/skills/data-visualization/` contains no other file at `94e1a08`)
 
 Local modifications to imported files: frontmatter trigger phrasing
 normalized to skill-lib convention (`Use this when`), Cowork-only
 frontmatter keys removed, and a Workflow/Anti-patterns/Provenance/hmmm
 bookend appended per `skill-build` compliance. Upstream bodies are
-otherwise unmodified. This repository is MPL-2.0 (`LICENSE`); imported files remain
+otherwise unmodified. `data-visualization/SKILL.md` additionally carries a
+locally appended, clearly marked The Interdependency information-design
+extension (skill-lib `868de86`).
+
+Local files in imported skill directories: `data-visualization/examples/`,
+`data-visualization/references/`,
+`data-visualization/information_design_audit.py`, and
+`data-visualization/visual-grammar.json` were not supplied by upstream. They
+were added in skill-lib `868de86` and are original to skill-lib under MPL-2.0
+(`LICENSE`).
+
+This repository is MPL-2.0 (`LICENSE`); imported files remain
 available under Apache-2.0 (`LICENSES/Apache-2.0.txt`) as noted per file.
 
 Usage: if you redistribute any of the imported skills, include

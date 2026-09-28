@@ -1,5 +1,4 @@
 # Temporary read-only recovery job; removed from the final repair tree.
-# Usage: run on isolated repair-branch pushes to obtain a pinned parser wheel.
 name: msdmd-native-recovery
 on:
   push:
@@ -13,12 +12,12 @@ jobs:
       - uses: actions/setup-python@v7.0.0
         with:
           python-version: '3.13'
-      - name: Download pinned parser wheel without executing it
+      - name: Download pinned syntax parser wheels
         run: |
-          python -m pip download --only-binary=:all: --no-deps docstring-parser==0.18.0 --dest "$RUNNER_TEMP/parser-wheel"
+          python -m pip download --only-binary=:all: --no-deps tree-sitter==0.26.0 tree-sitter-rust==0.24.2 tree-sitter-java==0.23.5 tree-sitter-c==0.24.2 tree-sitter-cpp==0.23.4 --dest "$RUNNER_TEMP/grammar-wheels"
       - uses: actions/upload-artifact@v7.0.1
         with:
-          name: msdmd-parser-wheel
-          path: ${{ runner.temp }}/parser-wheel/
+          name: msdmd-grammar-wheels
+          path: ${{ runner.temp }}/grammar-wheels/
           retention-days: 3
           if-no-files-found: error

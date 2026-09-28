@@ -21,15 +21,23 @@ This is the foundational metadata-block skill, expanded to native-first
 interoperability; it owns the common ingestion contract, not every language's
 syntax. Ordinary prose editing with no metadata contract is a non-trigger.
 
-**Implementation boundary:** `collect.py` still implements MSDMD-block collection
-and `collection.ts` still represents block-origin declarations. The separate
-`module_projection.py` runner now implements a partial Python native-reader slice:
-AST symbols and signatures, decorators, docstrings, and structurally attached
-line comments are projected to versioned per-module JSONL. It does not integrate
-those facts into `collection.ts`, interpret every Python metadata convention, or
-establish repository-wide information coverage. The broader provenance,
-conflict, reconciliation, discovery, and multi-language requirements below
-remain contracts for implementation.
+**Implemented boundary:** `collect.py` defaults to schema 2 and integrates native
+facts and supplemental blocks in `collection.ts`. The registry in `readers.py`
+declares each shipped extraction subset. Python uses the same syntax-aware
+attachment implementation as `module_projection.py`; TypeScript uses its compiler
+API; Rust, Java, C and C++ use pinned syntax grammars. Structured standards feed
+this same collector, not separate disconnected reports. See the executable
+[reader support matrix](references/implemented-readers.md) before asserting coverage.
+
+Install the declared parser runtimes once:
+
+```bash
+python -m pip install -r msdmd/requirements.txt
+npm ci --ignore-scripts --prefix msdmd
+```
+
+Missing dependencies become unsupported-reader diagnostics, never empty success.
+The universal MSDMD block parsers themselves remain dependency-free.
 
 ## Doctrine
 
@@ -113,15 +121,16 @@ source. Sensitive material stays access-controlled or explicitly redacted;
 source preservation does not require publishing credentials or private content.
 
 Do not repurpose `MsdmdDeclaration.block` to mean JSDoc, TOML, or any other
-non-block convention. Introduce a versioned native-capable collection schema
+non-block convention. `MsdmdCollectionV2` provides the native-capable schema
 with explicit migration and consumer negotiation. The existing `MsdmdCollection`
-remains a block-only format until that implementation lands. Refuse silent
+name remains a schema-1 compatibility type, never a native-fact container. Refuse silent
 projection when an old consumer would lose required information.
 
 ### Python per-module projection
 
-`module_projection.py` is a bounded native reader, not the universal collection
-promised by the full contract. It parses supplied `.py` bytes with `ast` and
+`module_projection.py` owns the shared Python attachment reader. The schema-2
+collector invokes `project_python_bytes` on its bounded source buffer; the
+standalone sidecar CLI remains an optional view of the same attachment facts. It parses supplied `.py` bytes with `ast` and
 `tokenize` and never imports the inspected module. Its JSONL schema is
 `module-projection.schema.json`; its machine-readable support manifest is
 `python-module-reader.json`. The first record binds repository context, source
@@ -184,11 +193,11 @@ python -m msdmd.module_projection --root . --repo example/repo \
 ```
 
 Use repeatable `--source path/to/module.py` arguments for an incremental subset.
-Current non-goals include import/dependency extraction, call graphs, dynamic
-exports, docstring-dialect field parsing, `.pyi` semantics, cross-revision rename
-mapping, other languages, and integration with the block collection/visualizer.
-Those unsupported surfaces remain `hmmm`; the presence of this reader does not
-upgrade them.
+The standalone sidecar schema remains focused on attachment. The integrated
+Python reader additionally extracts imports, literal exports, SPDX headers and
+ReST/Google/NumPy docstring fields. Neither path supplies a call graph, evaluated
+dynamic exports, cross-revision rename mapping or runtime proof. Stub syntax is
+parsed without claiming complete `.pyi` semantics.
 
 ## The runner protocol
 
@@ -248,12 +257,11 @@ IDs to be unique within one block type in one owning file; multiple matching
 blocks concatenate. A conforming identity validator must diagnose conflicting
 IDs and qualify collection addresses by repository, file, block and entry.
 
-**That validation is not implemented by the shipped helpers.** The generic
-collector does not diagnose duplicate IDs, and its edge `from` and `source_id`
-values are bare entry IDs. The visualizer can merge distinct declarations when
-IDs are reused across files or block types. Do not treat a successful collection
-exit or its graph as evidence of identity validity. See the
-[shipped helper limitations](#shipped-helper-limitations).
+The schema-2 collector diagnoses duplicate IDs within one file/block, qualifies
+addresses by repository/revision/file/block/id and qualifies edge endpoints.
+Ambiguous references remain unresolved with all candidate witnesses. The
+visualizer uses those qualified addresses instead of collapsing same-name nodes.
+The universal text parser alone still only parses syntax; it is not a validator.
 
 Use the helpers' matching `COMMENT_MARKERS` registries for supported repeated
 line-comment syntax; do not duplicate their language lists in runners. Native
@@ -302,49 +310,73 @@ blocks need to be inserted. The return annotation is a declaration, not a test
 result. CODEOWNERS review responsibility is not automatically authorship,
 operational ownership, or proof of a team's live permissions.
 
-The partial Python projection can recover the example function signature and
-docstring. It cannot yet recover the TOML package fields or CODEOWNERS rule, and
-neither it nor the block collector can issue a repository-wide native-information
-coverage verdict. Report those reader gaps explicitly.
+The integrated collector recovers all three native sources in this example.
+Required information still needs an explicit policy; signatures, review rules
+and package identity do not imply complete behavioral or operational coverage.
 
 ## Repo collection point and visualizer
 
-### Existing helper usage
+### Native-capable runner usage
 
-`skills.json` retains `status: runnable` and `runner: msdmd/collect.py` for
-shipped block collection. `runner_scope: msdmd-blocks-only` bounds that capability;
-`native_ingestion.status: partial` points to the separate Python module-projection
-runner and names its bounded scope. Neither index field upgrades the other
-helper's behavior.
-
-These commands collect and visualize **MSDMD blocks only**:
+`skills.json` identifies `msdmd/collect.py` as the native-and-supplemental runner.
+The generated `<reponame>_msdmd.ts` is disposable, never manually maintained.
+Its `gaps` records supplemental block adoption, not native-information absence.
+Every output includes the registry manifests, source digests, reader runs,
+discovery ledger, facts, declarations, qualified edges, conflicts and diagnostics.
 
 ```bash
-python -m msdmd.collect --root . --repo example --out example_msdmd.ts
+python -m msdmd.collect --root . --repo example --out example_msdmd.ts --strict
 python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 ```
 
-The existing collection's `gaps` field records expected-block gaps only.
-`--expected-block` measures block presence, not native metadata completeness.
-Do not use its output as the new information-coverage gate. Repo-level collection
-points such as `<reponame>_msdmd.ts` remain generated consumers of owning sources,
-not editable replacements for them. The separate Python command above emits
-`.msdmd.jsonl` sidecars and does not alter that TypeScript collection.
+For a checked-in reproducible collection, use `--snapshot-identity` to bind facts
+to the exact configured source-byte snapshot rather than the commit containing
+the generated output. Excluded subtree rules, rather than transient cache
+directory presence, are recorded in this snapshot mode. `--check` recomputes and compares bytes without writing:
 
-### Shipped helper limitations
+```bash
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib \
+  --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib \
+  --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+```
 
-The declarations preserve `file`, `block` and `id`, but the current edge format
-omits source-file identity and uses bare IDs; the Mermaid view can collapse
-cross-file or cross-block identities. Duplicate IDs inside one file/block are
-emitted without diagnostics. Qualified addresses and duplicate-ID validation
-are required future validator behavior, not shipped guarantees.
+Source revision, worktree state and byte digests remain separate. A snapshot is
+not producer authentication. Excluded output paths are configured even before
+their first write, preventing generation from changing its own source identity.
 
-Until implemented and tested with an explicit compatible schema/consumer
-transition, use these helpers only for the disclosed inventory/prototype scope.
-An identity-sensitive audit needs an independent, capable validator and an
-unambiguous target-resolution policy. Without them, that required scope is
-`hmmm`; a zero exit code cannot make it pass. This skill revision does not repair
-the collector or visualizer runtime.
+### Required information and disclosure
+
+`--expected-block` measures block adoption only. `--require-source GLOB` demands
+complete extraction for each matching file. Repeat `--require-fact` to require
+source-linked witnesses from a named native convention and kind:
+
+```bash
+python -m msdmd.collect --root . --repo example --json --strict \
+  --require-source 'package.json' \
+  --require-fact 'package.json::npm.package-json::dependency'
+```
+
+With a required policy, no matches, invalid sources, missing runtimes, ambiguous
+syntax or unresolved extraction fail strict mode. Without a policy, optional
+unknowns remain visible; a successful inventory is not a full-coverage verdict.
+Parse errors and identity conflicts always invalidate strict collection. Native
+facts and blocks remain separate; no universal precedence overwrites disagreements.
+
+Directory-descriptor discovery does not follow symlinks. It accounts for ignored
+subtrees, unsupported inputs, byte limits and read errors. This safety path
+requires POSIX no-follow directory-descriptor support. Secret-named files are
+excluded; sensitive structured fields and URL credentials are redacted. This is
+not a complete secret detector: public release still requires audience review.
+The configured denominator never implies that excluded subtrees were inspected.
+
+### Consumer transition
+
+Schema 2 is the default. `--legacy-blocks-only` explicitly requests schema 1 for
+existing block-only consumers; native requirements are rejected with that flag.
+No native data is silently flattened into legacy block fields. The visualizer
+supports both versions. Application-specific documentation renderers, ownership
+policy and runtime witnesses retain their own semantics and acceptance gates.
 
 ## Validation and acceptance
 
@@ -381,19 +413,14 @@ ratios/LLMS/frontend skill; preserve that application's semantic obligations.
 
 ## Versioning and migration
 
-This revision supersedes the block-only ingestion/coverage doctrine, not the
-stable block grammar. Keep native-reader versions, convention versions, collection
-schema versions, and application versions distinct. Ship schema migration,
-consumer updates, and tests together when native ingestion is implemented;
-remove superseded routes rather than leaving contradictory active defaults.
+The stable supplemental block grammar is unchanged. Native readers, schema,
+projection mappings and dependencies have explicit versions. Schema-1 output is
+an intentional compatibility operation, not a second default scanner.
 
 ## hmmm
 
-The skill requires native-first ingestion across all applicable conventions.
-The block collector and collection schema still implement their narrower path
-without qualified edge identities or duplicate-ID diagnostics. One partial
-Python reader now has executable fixtures, but import/dependency facts, docstring
-dialects, other languages, repository discovery and exclusion receipts, conflict
-handling, identity validation, and the unified collection migration remain to
-be implemented and verified. Unknown conventions remain visible extensions of
-scope, not imaginary completed support.
+The shipped matrix defines extraction subsets, not every metadata standard.
+Unimplemented conventions remain visible in discovery. `.h` language ambiguity,
+macro/build/configuration expansion, full TSDoc validation, cross-source semantic
+conflict resolution, ownership applicability and independent attestation/runtime
+verification require their owning policies. None is inferred from a clean parse.

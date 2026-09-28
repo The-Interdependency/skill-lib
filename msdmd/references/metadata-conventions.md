@@ -23,22 +23,17 @@ data without being recommended for new authoring.
 
 ## Convention catalogue
 
-### Shipped reader status
+### Shipped implementation and catalogue boundary
 
-The catalogue is deliberately larger than the current implementation. Support
-is promoted only for an executable reader and its tested subset:
+The integrated schema-2 implementation and fixture-backed extraction subsets are
+listed in [implemented-readers.md](implemented-readers.md). `readers.py` emits its
+machine manifests in every collection. The Python attachment reader is shared
+with the per-module projection; it is no longer disconnected from collection.
 
-| Reader | Status | Implemented subset | Still `hmmm` |
-|---|---|---|---|
-| `the-interdependency.msdmd.python-ast-tokenize` 1.0.0 (`python-module-reader.json`) | partial | `.py` class/function/method identities and signatures; decorators; module/class/function docstrings; syntax-aware line-comment groups; structural attachment; source/schema/reader/manifest/runtime binding; parse and malformed-fence diagnostics | Imports and dependency edges, calls, dynamic exports, parsed Sphinx/Google/NumPy docstring fields, type-comment semantics, `.pyi` distinctions, cross-revision rename identity, full discovery ledger |
-| Universal MSDMD block parsers | implemented-and-tested for block grammar only | Registered line-comment markers and supplemental fenced entries | Native declarations, syntax-aware rejection of block-shaped text inside strings, qualified edge validation |
-| Every other catalogue family | specified-only unless another owning skill says otherwise | Discovery and reader requirements below | Extraction, reconciliation, and coverage support |
+The families below remain a discovery catalogue, not a blanket implementation
+claim. An unlisted or unsupported format remains visible as `hmmm`, and required
+coverage cannot pass without a capable reader and source-linked witnesses.
 
-The Python reader emits the separate
-`urn:the-interdependency:msdmd:module-projection:1` JSONL format. That projection
-is useful for per-module documentation and metadata-to-symbol assignment, but it
-is not the unified native-capable repository collection described later in this
-reference.
 
 ### Language, symbol, and documentation metadata
 

@@ -74,42 +74,30 @@ class NativeContractDocsTests(unittest.TestCase):
                 with self.subTest(skill=name, phrase=phrase):
                     self.assertNotIn(phrase, text)
 
-    def test_block_runner_and_partial_python_reader_have_distinct_scopes(self) -> None:
+    def test_native_runner_and_shared_python_reader_have_explicit_scopes(self) -> None:
         entry = self.entries["msdmd"]
         self.assertEqual(entry["status"], "runnable")
         self.assertEqual(entry["runner"], "msdmd/collect.py")
-        self.assertEqual(entry["runner_scope"], "msdmd-blocks-only")
-        self.assertEqual(
-            entry["native_ingestion"],
-            {
-                "status": "partial",
-                "runner": "msdmd/module_projection.py",
-                "scope": "python-symbol-signature-docstring-comment-projection",
-                "schema": "msdmd/module-projection.schema.json",
-                "manifest": "msdmd/python-module-reader.json",
-            },
-        )
+        self.assertEqual(entry["runner_scope"], "native-and-supplemental")
+        self.assertEqual(entry["native_ingestion"]["runner"], "msdmd/collect.py")
+        self.assertEqual(entry["native_ingestion"]["manifest"], "msdmd/readers.py")
+        self.assertIn("project_python_bytes", (ROOT / "msdmd/native_code.py").read_text())
 
-    def test_helper_identity_limitations_are_explicit(self) -> None:
+    def test_helper_identity_and_extraction_limits_are_explicit(self) -> None:
         text = (ROOT / "msdmd/SKILL.md").read_text(encoding="utf-8")
-        for statement in (
-            "does not diagnose duplicate IDs",
-            "edge `from` and `source_id`",
-            "bare entry IDs",
-            "### Shipped helper limitations",
-            "emitted without diagnostics",
-            "does not repair\nthe collector or visualizer runtime",
-        ):
+        for statement in ("schema 2", "qualified addresses", "duplicate IDs", "--require-fact",
+                          "--snapshot-identity", "not a complete secret detector", "full TSDoc validation"):
             self.assertIn(statement, text)
-        self.assertNotIn("collection addresses additionally\nqualify", text)
+        self.assertNotIn("does not diagnose duplicate IDs", text)
+        self.assertTrue((ROOT / "msdmd/references/implemented-readers.md").is_file())
 
     def test_llm_publication_matches_owning_sources(self) -> None:
         source = (ROOT / "llms/metadata.py").read_text(encoding="utf-8")
         entries = build.parse_text(source, source=Path("llms/metadata.py"))
         definitions = next(entry.fields for entry in entries if entry.id == "key_definitions")
         self.assertIn("native-first", definitions["msdmd"])
-        self.assertIn("collector remains block-only", definitions["msdmd"])
-        self.assertIn("partial Python reader", definitions["msdmd"])
+        self.assertIn("schema-2 collector integrates", definitions["msdmd"])
+        self.assertIn("shared Python comment attachment", definitions["msdmd"])
         self.assertNotIn("each source module declares", source)
         generated = build.generate(build.collect(ROOT), self.index["repo"].split("/")[-1])
         self.assertEqual((ROOT / "llms.txt").read_text(encoding="utf-8"), generated)
@@ -130,7 +118,7 @@ class NativeContractDocsTests(unittest.TestCase):
     def test_repository_collection_replays_from_owning_blocks(self) -> None:
         path = ROOT / "skill-lib_msdmd.ts"
         generated = render_typescript(
-            collect(ROOT, self.index["repo"]), import_path="./msdmd/collection",
+            collect(ROOT, self.index["repo"], snapshot_identity=True), import_path="./msdmd/collection",
         )
         self.assertEqual(path.read_text(encoding="utf-8"), generated)
         collection = load_collection(path)

@@ -26,7 +26,7 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 | Skill | Purpose |
 |---|---|
-| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The block collector remains block-only; a separate partial Python reader emits deterministic per-module symbol/docstring/comment projections. |
+| [`msdmd/`](msdmd/SKILL.md) | The foundational native-first metadata contract: convention discovery, provenance, conflicts, information coverage, and supplemental block syntax. The schema-2 collector integrates native source/document readers with qualified identities, required-fact policies and explicit unknowns; Python module projections share its attachment reader. |
 | [`doc-build/`](doc-build/SKILL.md) | Applies native-first msdmd to documentation comments and source-linked documents; supplemental `DOCS` entries cover remaining obligations. Reader support and missing information stay distinct. |
 | [`cap-build/`](cap-build/SKILL.md) | Consumes native signatures, exports and API schemas; supplemental `CAPABILITIES` entries add otherwise unexpressed intent. Declared surfaces are not verified behavior. |
 | [`deps-build/`](deps-build/SKILL.md) | Consumes native imports, manifests and build metadata at their owning scopes; supplemental `DEPENDENCIES` entries add remaining architectural intent. |

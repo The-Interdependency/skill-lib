@@ -1,4 +1,4 @@
-# ratios: loc_comments=904:124 imports_exports=14:9 calls_definitions=256:53
+# ratios: loc_comments=910:128 imports_exports=14:10 calls_definitions=259:54
 # === MODULE_BUILD ===
 # id: msdmd_python_module_projection
 #   module_name: module_projection
@@ -810,7 +810,20 @@ def project_python_module(
     except ValueError as exc:
         raise ValueError(f"source escapes root: {path}") from exc
 
-    source = resolved.read_bytes()
+    return project_python_bytes(resolved.read_bytes(), source_path=relative, repo=repo, revision=revision)
+
+
+def project_python_bytes(
+    source: bytes, *, source_path: str, repo: str, revision: str | None = None,
+) -> list[dict]:
+    """Project an already-bounded immutable buffer; never reopen the inspected file.
+
+    The path is provenance only. Both the standalone file runner and unified
+    collector call this same syntax/attachment implementation.
+    """
+    relative = Path(source_path).as_posix()
+    if Path(relative).is_absolute() or ".." in Path(relative).parts:
+        raise ValueError("source_path must be repository-relative")
     source_sha256 = _sha256(source)
     reader_sha256 = _reader_sha256()
     schema_sha256 = _schema_sha256()
@@ -1164,4 +1177,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=904:124 imports_exports=14:9 calls_definitions=256:53
+# ratios: loc_comments=910:128 imports_exports=14:10 calls_definitions=259:54

@@ -13,3 +13,6 @@ __pycache__/
 
 # Local secrets
 .env
+
+# Pinned native parser runtime; install with npm ci --prefix msdmd
+msdmd/node_modules/

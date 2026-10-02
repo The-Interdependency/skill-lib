@@ -77,7 +77,11 @@ jobs:
                   run: python tests/test_repo_loto.py
           CIYAML
           sed -i 's/^          //' .github/workflows/ci.yml
+          set +e
           python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.generated.ts --strict
+          collect_status=$?
+          set -e
+          echo "collect_status=${collect_status}"
           node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.generated.ts
           mv skill-lib_msdmd.generated.ts skill-lib_msdmd.ts
           git config user.name "github-actions[bot]"

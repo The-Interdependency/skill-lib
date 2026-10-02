@@ -23,25 +23,65 @@ jobs:
         run: |
           python -m pip install -r msdmd/requirements.txt
           npm ci --ignore-scripts --prefix msdmd
-      - name: Native collection drift and TypeScript schema
+      - name: Diagnose canonical collection drift
         run: |
-          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
-          node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+          cat > .github/workflows/ci.yml <<'CIYAML'
+          name: skill-lib-ci
+
+          on:
+            pull_request:
+            push:
+              branches: [main]
+
+          permissions:
+            contents: read
+
+          jobs:
+            checks:
+              runs-on: ubuntu-latest
+              steps:
+                - uses: actions/checkout@v7.0.1
+                - uses: actions/setup-python@v7.0.0
+                  with:
+                    python-version: "3.13"
+                - uses: actions/setup-node@v6
+                  with:
+                    node-version: "24.15.0"
+                - name: Install pinned native-reader runtimes
+                  run: |
+                    python -m pip install -r msdmd/requirements.txt
+                    npm ci --ignore-scripts --prefix msdmd
+                - name: Native collection drift and TypeScript schema
+                  run: |
+                    python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+                    node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+                - name: Unit tests
+                  run: python -m unittest discover -s tests
+                - name: Gonol authority gate
+                  run: bash tools/check_gonol_authority.sh
+                - name: Skill library drift
+                  run: python tools/check_skill_lib_drift.py --warnings-fail
+                - name: Skill compliance
+                  run: python tools/check_skill_compliance.py --warnings-fail
+                - name: Codex plugin adapter drift
+                  run: python tools/build_codex_plugin_skills.py --check
+                - name: Ratios strict gate
+                  run: python ratios/ratios_check.py --strict
+                - name: llms-build drift
+                  run: python -m llms.build --root . --out llms.txt --check
+                - name: RepoLOTO audit
+                  run: python tests/test_repo_loto.py --audit
+                - name: RepoLOTO checks
+                  run: python tests/test_repo_loto.py
+          CIYAML
+          sed -i 's/^          //' .github/workflows/ci.yml
+          echo workflow_sha=$(sha256sum .github/workflows/ci.yml | cut -d' ' -f1)
+          set +e
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+          collect_status=$?
+          set -e
+          echo collect_status=${collect_status}
+          git diff -- .github/workflows/ci.yml skill-lib_msdmd.ts | sed -n '1,260p'
+          exit 1
       - name: Unit tests
         run: python -m unittest discover -s tests
-      - name: Gonol authority gate
-        run: bash tools/check_gonol_authority.sh
-      - name: Skill library drift
-        run: python tools/check_skill_lib_drift.py --warnings-fail
-      - name: Skill compliance
-        run: python tools/check_skill_compliance.py --warnings-fail
-      - name: Codex plugin adapter drift
-        run: python tools/build_codex_plugin_skills.py --check
-      - name: Ratios strict gate
-        run: python ratios/ratios_check.py --strict
-      - name: llms-build drift
-        run: python -m llms.build --root . --out llms.txt --check
-      - name: RepoLOTO audit
-        run: python tests/test_repo_loto.py --audit
-      - name: RepoLOTO checks
-        run: python tests/test_repo_loto.py

@@ -6,8 +6,11 @@ native code, documentation, manifests, schemas, tooling, and evidence formats;
 its own comment blocks supplement information not already expressed adequately.
 The [foundational skill](msdmd/SKILL.md) and
 [convention catalogue](msdmd/references/metadata-conventions.md) define the
-native-first contract. The shipped collector currently implements the narrower
-MSDMD-block path; listed conventions are not claims of implemented readers.
+native-first contract. The schema-2 collector now integrates supported native
+source/document readers through the versioned reader registry, while the
+universal MSDMD-block parser remains available for supplemental declarations.
+Unsupported conventions stay visible as explicit unknowns rather than being
+treated as implemented readers.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a
@@ -184,12 +187,12 @@ statuses, secrets, `hmmm`, and unearned theorem/status leakage. The llms-build
 runner generates the root `llms.txt` from `LLMS` blocks and can fail on drift in
 `--check` mode.
 
-|∆|Implementation status: this repo ships the universal msdmd parsers, a partial
-Python per-module metadata reader, skill specifications, selected pure-stdlib
-helper tools, and the `llms-build` runner.
-Most other application skills define runner contracts for consuming repos; they
-do not ship standalone executors here unless a helper file exists in that skill
-directory or package.| ∆|
+|∆|Implementation status: this repo ships the universal msdmd parsers, the
+schema-2 native-and-supplemental collector, a partial Python per-module metadata
+reader, skill specifications, selected pure-stdlib helper tools, and the
+`llms-build` runner. Most other application skills define runner contracts for
+consuming repos; they do not ship standalone executors here unless a helper file
+exists in that skill directory or package.| ∆|
 
 ## The core idea
 
@@ -205,17 +208,19 @@ conflicting declarations, and unverified behavior remain separate findings.
 The affected application skills and their load-bearing descriptions apply the
 same native-first coverage rule without removing their semantic obligations.
 
-The universal parsers and `msdmd/collect.py` remain block readers. The separate
-`msdmd/module_projection.py` runner implements a bounded native slice for Python
-symbols, signatures, decorators, docstrings, and structurally attached comments,
-using the versioned `msdmd/module-projection.schema.json` JSONL format. Broader
-native ingestion and the unified native-capable collection schema remain
-implementation work.
+The universal parsers remain block readers for supplemental MSDMD blocks.
+`msdmd/collect.py` defaults to schema 2 and integrates native source/document
+facts through `msdmd/readers.py` while preserving unsupported conventions and
+unknown fields as visible findings. The separate `msdmd/module_projection.py`
+runner implements a bounded native slice for Python symbols, signatures,
+decorators, docstrings, and structurally attached comments, using the versioned
+`msdmd/module-projection.schema.json` JSONL format.
 `skills.json` keeps the shipped collector discoverable as `runnable`, with
-`runner_scope: msdmd-blocks-only`, while `native_ingestion` is separately marked
-`partial` with its exact Python scope. The generic collector still lacks qualified edge
-identities and duplicate-ID diagnostics; its prototype graph is not an identity
-validation result. See the [helper limitations](msdmd/SKILL.md#shipped-helper-limitations).
+`runner_scope: native-and-supplemental`, while `native_ingestion` is separately
+marked `implemented-subsets` with its exact supported scope. Cross-source
+semantic reconciliation, build/compiler context, arbitrary language completeness,
+and independent signature/evidence verification remain implementation work. See
+the [helper limitations](msdmd/SKILL.md#shipped-helper-limitations).
 
 ## Supplemental block syntax (universal)
 
@@ -297,8 +302,8 @@ behavior, and parser ratio bookends.
   pure-stdlib dependencies; you can copy them anywhere.
 - The repo-level collection point shape lives at `msdmd/collection.ts`;
   consuming repos can import or copy it for `<reponame>_msdmd.ts`.
-- A stdlib collection generator prototype lives at `msdmd/collect.py` and
-  can emit `<reponame>_msdmd.ts` from parsed module-local blocks.
+- A stdlib collection generator lives at `msdmd/collect.py` and can emit
+  `<reponame>_msdmd.ts` from supported native facts and supplemental blocks.
 - A stdlib Python native reader lives at `msdmd/module_projection.py` and emits
   deterministic per-module `.msdmd.jsonl` sidecars without executing source.
 - A minimal Mermaid visualizer prototype lives at `msdmd/visualize.py` and

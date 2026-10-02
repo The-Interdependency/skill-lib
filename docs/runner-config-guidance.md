@@ -1,34 +1,42 @@
 # msdmd runner configuration guidance
 
 Use this guidance before adding a collector, visualizer, or compliance gate.
-Read `msdmd/SKILL.md` and `msdmd/references/metadata-conventions.md`; evaluate
-required information at its owning scope without requiring duplicate blocks.
+Read `msdmd/SKILL.md`, `msdmd/readers.py`, and
+`msdmd/references/metadata-conventions.md`; evaluate required information at
+its owning scope without requiring duplicate blocks.
 
-## Shipped block-helper scope
+## Shipped schema-2 collector scope
 
-`python -m msdmd.collect` is a runnable **block-only** helper. It uses
-`msdmd/parsers/universal.py`'s `COMMENT_MARKERS` registry and default directory
-skips. Inspect those definitions at the pinned commit; do not maintain a second
-extension list. The CLI accepts `--block` and `--expected-block`, but does not
-accept `--config`, per-repo skip lists, or ratio dialect configuration.
+`python -m msdmd.collect` defaults to the schema-2 native-and-supplemental
+collector. It reads supported native conventions through the versioned reader
+registry in `msdmd/readers.py`, also consumes supplemental MSDMD blocks, and
+emits the `msdmd/collection.ts` shape. It never imports inspected code, executes
+scripts, loads plugins, follows network references, or treats declarations as
+verified behavior.
 
-The helper does not discover native metadata in manifests, CODEOWNERS, Markdown,
-or extensionless files. It does not publish an exclusion/read-failure ledger,
-validate duplicate IDs, qualify edge identities, or distinguish block examples
-inside strings from real source comments. Its output is a lexical block
-inventory; graphs remain prototypes. `--expected-block` measures block adoption
-within this filtered scan, not missing required native information. Without
-that option, an empty `gaps` array establishes no coverage result.
+The explicit legacy/block path remains available for old consumers and for an
+explicit block-adoption inventory. Legacy/block output cannot silently represent
+native facts. Inspect the reader registry and default directory skips at the
+pinned commit; do not maintain a second extension list.
 
-Usage for an explicitly block-scoped inventory:
+The implemented schema-2 subset includes fixture-backed readers for source and
+structured standards, including language-aware source/comment attachment,
+structured docstrings, manifests and lockfiles, CODEOWNERS, SPDX/REUSE/CITATION,
+OpenAPI/JSON Schema, SARIF/JUnit, SBOM, and in-toto/DSSE evidence surfaces.
+Unsupported, ambiguous, unreadable, invalid, dynamic, or out-of-scope inputs must
+remain visible findings rather than being converted into missing-block gaps.
+
+Usage for a schema-2 collection:
 
 ```bash
 python -m msdmd.collect --root . --repo example --out example_msdmd.ts
 python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 ```
 
-These commands implement neither the native discovery contract below nor a
-complete compliance verdict. Unsupported required scope stays `hmmm`.
+These commands implement the shipped reader matrix, not every possible metadata
+standard. A complete compliance verdict still depends on the declared repository
+scope, required facts, supported readers, unresolved inputs, exclusions, and
+consumer-specific obligations.
 
 ## Shipped Python module-projection scope
 
@@ -46,9 +54,10 @@ nested-opening `msdmd_fence_mismatched`, and unmatched-close
 `msdmd_fence_unmatched_close`) emit diagnostics rather than spanning code. This
 fence validation is stricter than the universal block parser, which matches each
 block name independently. Span byte offsets index the UTF-8 re-encoding of the
-decoded text and differ from raw file offsets for BOM or non-UTF-8 sources. Decorator-region comments attach to the
-decorated declaration, source lines split only at Python newlines, and sidecars
-are written as exact LF-terminated UTF-8 bytes.
+decoded text and differ from raw file offsets for BOM or non-UTF-8 sources.
+Decorator-region comments attach to the decorated declaration, source lines split
+only at Python newlines, and sidecars are written as exact LF-terminated UTF-8
+bytes.
 
 ```bash
 python -m msdmd.module_projection --root . --repo example/repo \
@@ -66,15 +75,15 @@ the check fail.
 
 This runner does not parse imports, call graphs, dynamic exports, docstring field
 dialects, manifests, CODEOWNERS, non-Python files, or the complete discovery and
-exclusion denominator. It does not feed the legacy TypeScript collection or
-visualizer. Treat its output as a source-bound per-module projection, not as a
-repository-wide coverage verdict.
+exclusion denominator. It does not replace the schema-2 collection point. Treat
+its output as a source-bound per-module projection, not as a repository-wide
+coverage verdict.
 
 ## Native discovery contract
 
 A native-capable consumer must inventory the declared repository scope before
-choosing readers. The complete form remains a contract for implementation, not
-a capability of the partial Python command.
+choosing readers. The shipped collector implements supported subsets; it does not
+license a silent complete-coverage claim over unsupported standards.
 Inventory eligible inputs even when no line-comment marker or reader exists:
 
 - source files and tests, including signatures, docstrings, and annotations;
@@ -114,7 +123,7 @@ obligations while still having documentation, ownership, or other obligations;
 do not label the entire repository N/A merely because it contains no code.
 
 Example exclusion record for a consuming implementation (illustrative policy
-data, **not** input accepted by the current collector):
+data, not input accepted as a coverage claim by itself):
 
 ```json
 {
@@ -154,13 +163,14 @@ projection as a second doctrine owner. A provisional seed must retain its
 For skill-lib's exact command and replay check, see
 `ORG_DISTRIBUTION.md#collection-points`. Bind source and generator identities to
 the resulting Git commit and compare a fresh render byte-for-byte. Report this
-as block-projection consistency, separately from native-reader acceptance.
+as schema-2 projection consistency, separately from native-reader acceptance
+outside the implemented subset.
 
 ## hmmm
 
-Readers beyond the partial Python slice, unified native-capable schema migration,
-qualified block-edge identities, duplicate-ID validation, full discovery and
-exclusion receipts, and broader executable acceptance fixtures remain separate
-implementation work. This policy is not an executable configuration format.
-Existing block helpers and the Python projection remain usable only within their
-disclosed scopes.
+Cross-source semantic reconciliation, build/compiler context, arbitrary language
+completeness, independent signature verification, full discovery and exclusion
+receipts beyond the implemented subset, and broader executable acceptance
+fixtures remain separate implementation work. This policy is not an executable
+configuration format. The schema-2 collector and Python projection remain usable
+only within their disclosed scopes.

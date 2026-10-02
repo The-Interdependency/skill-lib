@@ -3675,14 +3675,6 @@ export default defineMsdmdCollectionV2({
     {
       "content_sha256": "hmmm",
       "entry_kind": "output",
-      "file": "skill-lib_msdmd.generated.ts",
-      "reader_ids": [],
-      "reason": "generated-collection-output",
-      "status": "excluded"
-    },
-    {
-      "content_sha256": "hmmm",
-      "entry_kind": "output",
       "file": "skill-lib_msdmd.ts",
       "reader_ids": [],
       "reason": "generated-collection-output",
@@ -163279,6 +163271,6 @@ export default defineMsdmdCollectionV2({
     "revision_kind": "content-snapshot",
     "scope": "configured in-scope files; excluded subtrees are reported without traversing",
     "snapshot_complete": true,
-    "snapshot_sha256": "d7e34f074148a2539252a15f14cb16b74a20baeed5c9f5d7f2cdbb44c214b1a9"
+    "snapshot_sha256": "ee2fdd176fba4b382c4fd9866ac32591f6e5bb87990b588ada1ddeaa4b684bd7"
   }
 });

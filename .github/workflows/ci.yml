@@ -86,13 +86,13 @@ jobs:
           mv skill-lib_msdmd.generated.ts skill-lib_msdmd.ts
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/ci.yml skill-lib_msdmd.ts
+          git add skill-lib_msdmd.ts
           if git diff --cached --quiet; then
             echo "collection already fresh"
           else
-            git commit -m "chore(msdmd): refresh collection after workflow restore"
+            git commit -m "chore(msdmd): refresh collection for restored workflow"
             git push origin "HEAD:${GITHUB_HEAD_REF}"
-            echo "collection drift repaired; rerun required on pushed head"
+            echo "collection refreshed against final workflow; restore workflow next"
             exit 1
           fi
       - name: Unit tests

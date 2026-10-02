@@ -139,19 +139,26 @@ Two kinds:
 | `__init__.py` | — | Package marker / docstring. |
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
-`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
-schema-2 collector that reads supported native conventions through
-`msdmd/readers.py` and supplemental MSDMD blocks through the universal parser
-path. Its explicit legacy/block mode is compatibility-only and cannot silently
-stand in for native facts.
+`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is the schema-2
+collector; its core is stdlib, while the complete shipped native-reader matrix
+requires the pinned Python packages in `msdmd/requirements.txt` and the
+TypeScript runtime in `msdmd/package.json`. Install them with
+`python -m pip install -r msdmd/requirements.txt` and
+`npm ci --ignore-scripts --prefix msdmd` before full native-reader validation.
+The collector reads supported native conventions through `msdmd/readers.py` and
+supplemental MSDMD blocks through the universal parser path. Its explicit
+legacy/block mode is compatibility-only and cannot silently stand in for native
+facts.
 
 `msdmd/module_projection.py` is a separate partial Python native reader using
 `msdmd/module-projection.schema.json`; it emits source-bound per-module JSONL
 sidecars and shares the syntax-aware attachment discipline. Unsupported
 standards, ambiguous source, build/compiler context, cross-source semantic
 reconciliation, and independent signature/evidence verification remain visible
-`hmmm` rather than block-helper gaps. A zero collection exit validates only the
-implemented scope for that run; it does not prove complete information coverage.
+`hmmm` rather than block-helper gaps. With `--strict`, a zero collection exit validates only the implemented required
+scope for that run; without `--strict`, zero means rendering completed and the
+reported diagnostics and requirements still determine whether coverage is
+incomplete. Neither mode proves complete information coverage.
 The root collection's regeneration command and lexical scan limitations are
 documented in `ORG_DISTRIBUTION.md`; native discovery and exclusions are
 governed by `docs/runner-config-guidance.md`.

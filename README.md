@@ -9,8 +9,9 @@ The [foundational skill](msdmd/SKILL.md) and
 native-first contract. The schema-2 collector now integrates supported native
 source/document readers through the versioned reader registry, while the
 universal MSDMD-block parser remains available for supplemental declarations.
-Unsupported conventions stay visible as explicit unknowns rather than being
-treated as implemented readers.
+Recognized unsupported inputs stay visible as explicit unknowns rather than being
+treated as implemented readers. Unrecognized metadata dialects are not evidence of
+complete inspection.
 
 Licensed under MPL-2.0 (relicensed from MIT; weak copyleft — embed anywhere,
 changes to these files must be published). The canonical install path inside a

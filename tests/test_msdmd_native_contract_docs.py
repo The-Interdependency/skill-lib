@@ -143,5 +143,25 @@ class NativeContractDocsTests(unittest.TestCase):
         self.assertEqual([], collection["gaps"])
 
 
+    def test_public_maintenance_contract_is_replayable_and_bounded(self) -> None:
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Unrecognized metadata dialects are not evidence of", readme)
+
+        distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
+        self.assertIn("--snapshot-identity", distribution)
+        self.assertIn("--strict", distribution)
+        self.assertIn("expected-block adoption result", distribution)
+        self.assertIn("requirements` and diagnostics", distribution)
+        self.assertIn("--legacy-blocks-only", distribution)
+        self.assertIn("lexical rather than", distribution)
+        self.assertIn("Target-repo propagation is not complete", distribution)
+
+        claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+        self.assertIn("msdmd/requirements.txt", claude)
+        self.assertIn("msdmd/package.json", claude)
+        self.assertIn("With `--strict`", claude)
+        self.assertIn("without `--strict`", claude)
+
+
 if __name__ == "__main__":
     unittest.main()

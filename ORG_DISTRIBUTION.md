@@ -112,21 +112,26 @@ point is allowed only when it records a `hmmm` gap explaining what local
 generation still needs.
 
 `skill-lib_msdmd.ts` is the generated root collection point for this canonical
-repo. Regenerate it from owning source blocks, never by editing the projection:
+repo. Regenerate it from owning native and supplemental sources, never by editing
+the projection:
 
 ```bash
 python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --import-path ./msdmd/collection --out skill-lib_msdmd.ts
 python -m unittest tests.test_msdmd_native_contract_docs
 ```
 
-The shipped collector is block-only. Its default scan uses the parser's suffix
-registry and skip list; it also collects matching block text inside source
-fixtures because it is not syntax-aware. This is a lexical block inventory,
-not native coverage, identity validation, or evidence that fixture claims hold.
-No expected blocks are requested here, so an empty `gaps` array means no
-block-adoption obligations were evaluated. Deferred limitations are declared in
-the collector's owning metadata; they are not missing-block gaps. The generated
-file and its inputs travel in one Git commit; the replay test checks their bytes.
+The shipped collector defaults to schema 2. It integrates supported native facts
+through `msdmd/readers.py` and supplemental MSDMD blocks through the universal
+parser path. Its legacy/block-only output remains available only as an explicit
+compatibility path and cannot silently represent native facts.
+
+The schema-2 reader matrix is implemented in bounded subsets rather than as a
+claim to every metadata convention. Unsupported, ambiguous, unreadable,
+dynamic, or out-of-scope inputs remain visible findings; an empty `gaps` array
+means only that the declared obligations for that run were satisfied. Deferred
+limitations are declared in the collector's owning metadata; they are not
+missing-block gaps. The generated file and its inputs travel in one Git commit;
+the replay test checks their bytes.
 
 Python repositories may additionally generate source-bound per-module sidecars:
 
@@ -136,20 +141,21 @@ python -m msdmd.module_projection --root . --repo <repo> --revision <exact-revis
 ```
 
 This partial reader covers Python declarations, signatures, decorators,
-docstrings, and structurally attached line comments. It neither replaces nor
-feeds `<reponame>_msdmd.ts`, and it is not a repository-wide native coverage
-verdict. Keep generated sidecars with the exact source and reader identity that
-their headers record.
+docstrings, and structurally attached line comments. It does not replace
+`<reponame>_msdmd.ts` and is not a repository-wide native coverage verdict. Keep
+generated sidecars with the exact source and reader identity that their headers
+record.
 
 ## Propagation checklist
 
 Use `docs/propagation-checklist.md` for the concrete source-change →
 target-repo PR sequence. Use `docs/runner-config-guidance.md` before judging
-coverage. Distinguish block-helper scans from native discovery, including
-manifests, CODEOWNERS, documentation, extensionless and unsupported sources.
-Record every exclusion and its reason, including frozen research artifacts,
-archives, generated trees, and vendored `.agents/skills/` copies. Declared scope
-can exclude them from live-module obligations without hiding them from accounting.
+coverage. Distinguish schema-2 supported readers, legacy block-helper scans,
+unsupported native discovery, including manifests, CODEOWNERS, documentation,
+extensionless and unsupported sources. Record every exclusion and its reason,
+including frozen research artifacts, archives, generated trees, and vendored
+`.agents/skills/` copies. Declared scope can exclude them from live-module
+obligations without hiding them from accounting.
 
 ## Rule
 
@@ -197,133 +203,3 @@ Before modifying any file in `The-Interdependency/The-Interdependency.github.io`
 ```
 
 Every website change transaction must append at least one new `By the builder` record containing date, time, and exact runtime model. The model chooses the subject and stops when it has properly explicated it. The journal append satisfies the transaction and does not recursively require another append.
-
-Before creating a new module, route, service, adapter, schema, worker,
-engine, UI panel, migration, or experiment, agents should read:
-
-```text
-.agents/skills/meta-module-build/SKILL.md
-```
-
-New module work starts with source-linked planning information from existing
-native manifests, schemas, and design records. Use supplemental `MODULE_BUILD`
-entries only for otherwise unexpressed information; do not demand a second copy.
-Purpose, surfaces, boundaries, tests, rollout, and rollback remain required.
-Unsupported extraction and unknown fields stay `hmmm`, not missing information.
-
-Before creating or maintaining a root `llms.txt`, agents should read:
-
-```text
-.agents/skills/llms-build/SKILL.md
-```
-
-Root LLM instructions remain owned by their source declarations. The shipped
-llms-build runner publishes existing source `LLMS` blocks; edit those blocks and
-regenerate their projection. Native instruction readers remain a contract, so
-unsupported native sources stay `hmmm` rather than requiring duplicate blocks.
-
-Before translating raw, recursive, context-heavy, fragmentary, coined, or
-private-language thought for another human audience or public surface, agents
-should read:
-
-```text
-.agents/skills/thought-lens/SKILL.md
-```
-
-Recover and freeze the claim kernel before changing vocabulary. Reduce the
-context required from the reader without strengthening, flattening, or silently
-completing the thought; use `hmmm` where a bridge remains unresolved. Use
-`plain-lens` instead when the source is already a stable dense document.
-
-Before promoting a word or phrase into canon, a theorem, schema, ontology, encoding,
-or other semantic control surface, agents should read:
-
-```text
-.agents/skills/domain-claims/SKILL.md
-```
-
-Establish the applicable domain-qualified sense and resolve collisions before
-attaching provenance or authorizing structure.
-
-Before constructing, reviewing, replaying, or extending UCNS gonols, agents should read:
-
-```text
-.agents/skills/gonol-build/SKILL.md
-```
-
-Resolve the current UCNS source and evidence identities first. Preserve closure and
-atomic promotion, require explicit occurrence-addressed function plans, and do not
-restore the superseded `gonal-morphology` language model.
-
-Before selecting among UCNS options or declaring a scoped winner, agents should read:
-
-```text
-.agents/skills/ucns-option-selection/SKILL.md
-```
-
-Freeze scope, candidates, hard gates, evidence, policies, authority, and
-ratification before outcome comparison. Do not let scores compensate for failed gates
-or transfer a scoped result into universal UCNS canon.
-
-Before selecting an EPAC artifact and representation for a human-facing or
-WebMCP display, agents should read:
-
-```text
-.agents/skills/epac-selection-display/SKILL.md
-```
-
-Pin the provisional EPAC source, exact target, receipt, and available renderer;
-preserve research standings, nonclaims, sealed-comparison boundaries, and `hmmm`;
-and keep the WebMCP server a read-only registry/handoff rather than an EPAC
-executor.
-
-Before choosing between the smallest decisive action and a maximal coherent program,
-selecting the highest-leverage next step under constrained time, attention, money,
-compute, or coordination, or deciding whether a bounded falsifier should precede a
-full build, agents should read:
-
-```text
-.agents/skills/action-calibration/SKILL.md
-```
-
-Name the decision, preserve load-bearing invariants, compare complete cost vectors,
-freeze outcome-conditioned escalation rules, and let `loop-eng` execute the selected
-bounded loop.
-
-Before auditing or auditing and repairing an existing repository, agents should read:
-
-```text
-.agents/skills/repo-audit-repair/SKILL.md
-```
-
-Resolve exact repository identity and authority first; select checks from actual
-repository claims; classify defects separately from environment, external service,
-policy, and `hmmm`; repair only the owning layer under the user's authorization; and
-verify merge, release, and deployment as distinct terminal states when applicable.
-
-Before writing, reviewing, or troubleshooting repeatable SSH automation or a
-large terminal paste that contains SSH, agents should read:
-
-```text
-.agents/skills/ssh-automation/SKILL.md
-```
-
-Fail closed on endpoint identity and host-key trust, preserve local/remote shell
-boundaries, and keep bulk pasted error handling inside a child shell.
-
-Before giving an MCP-capable agent operational contact with a private VM, agents should read:
-
-```text
-.agents/skills/vm-mcp/SKILL.md
-```
-
-Keep SSH/OS Login credentials outside the model path, install the service loopback-only and non-root, establish private authenticated transport, prove read-only contact before enabling shell execution, and add privileged administration only as named bounded capabilities rather than a generic root shell.
-
-Existing files are not retroactively noncompliant merely because they predate
-this skill.
-
-## hmmm
-
-Target-repo propagation is not complete just because `skill-lib` is updated.
-Each target repo still needs a repo-local propagation PR, source commit SHA,
-collection point, and local verification record.

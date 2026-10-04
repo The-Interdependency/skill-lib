@@ -35,7 +35,7 @@ llms/                  # python -m llms.build reference runner
 
 | Skill | Kind | Depends on | Purpose |
 |---|---|---|---|
-| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. The collector remains block-only; a separate partial Python reader projects symbols, docstrings, and structurally attached comments to per-module JSONL. |
+| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. The schema-2 collector integrates supported native source/document readers with supplemental blocks; unsupported conventions remain explicit unknowns. Python module projections share its syntax-aware attachment discipline. |
 | `doc-build/` | metadata-block | `msdmd` | Consumes native documentation at its owning scope; supplemental `DOCS` entries add otherwise unexpressed information. Missing blocks alone do not establish missing documentation. |
 | `cap-build/` | metadata-block | `msdmd` | Consumes native signatures, exports, and API schemas; supplemental `CAPABILITIES` entries add remaining intent. Declared surfaces are not verified behavior. |
 | `deps-build/` | metadata-block | `msdmd` | Consumes native imports, manifests, and build metadata; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
@@ -139,17 +139,29 @@ Two kinds:
 | `__init__.py` | — | Package marker / docstring. |
 
 `msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
-`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is a stdlib
-block-only generator prototype that emits that shape from parsed source text.
+`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is the schema-2
+collector; its core is stdlib, while the complete shipped native-reader matrix
+requires the pinned Python packages in `msdmd/requirements.txt` and the
+TypeScript runtime in `msdmd/package.json`. Install them with
+`python -m pip install -r msdmd/requirements.txt` and
+`npm ci --ignore-scripts --prefix msdmd` before full native-reader validation.
+The collector reads supported native conventions through `msdmd/readers.py` and
+supplemental MSDMD blocks through the universal parser path. Its explicit
+legacy/block mode is compatibility-only and cannot silently stand in for native
+facts.
+
 `msdmd/module_projection.py` is a separate partial Python native reader using
-`msdmd/module-projection.schema.json`; it does not feed the TypeScript collection.
-Readers for broader Python metadata and other conventions, qualified block-edge
-identities, duplicate-ID validation, and the unified native-capable collection
-schema remain unimplemented. A zero collection exit
-does not validate identities or prove complete information coverage. The root
-collection's regeneration command and lexical scan limitations are documented
-in `ORG_DISTRIBUTION.md`; native discovery and exclusions are governed by
-`docs/runner-config-guidance.md`.
+`msdmd/module-projection.schema.json`; it emits source-bound per-module JSONL
+sidecars and shares the syntax-aware attachment discipline. Unsupported
+standards, ambiguous source, build/compiler context, cross-source semantic
+reconciliation, and independent signature/evidence verification remain visible
+`hmmm` rather than block-helper gaps. With `--strict`, a zero collection exit validates only the implemented required
+scope for that run; without `--strict`, zero means rendering completed and the
+reported diagnostics and requirements still determine whether coverage is
+incomplete. Neither mode proves complete information coverage.
+The root collection's regeneration command and lexical scan limitations are
+documented in `ORG_DISTRIBUTION.md`; native discovery and exclusions are
+governed by `docs/runner-config-guidance.md`.
 `msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
 TypeScript collection points.
 

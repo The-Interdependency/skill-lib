@@ -112,19 +112,33 @@ point is allowed only when it records a `hmmm` gap explaining what local
 generation still needs.
 
 `skill-lib_msdmd.ts` is the generated root collection point for this canonical
-repo. Regenerate it from owning source blocks, never by editing the projection:
+repo. Regenerate it from owning native and supplemental sources, never by editing
+the projection:
 
 ```bash
-python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --import-path ./msdmd/collection --out skill-lib_msdmd.ts
+python -m pip install -r msdmd/requirements.txt
+npm ci --ignore-scripts --prefix msdmd
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
 python -m unittest tests.test_msdmd_native_contract_docs
 ```
 
-The shipped collector is block-only. Its default scan uses the parser's suffix
-registry and skip list; it also collects matching block text inside source
-fixtures because it is not syntax-aware. This is a lexical block inventory,
-not native coverage, identity validation, or evidence that fixture claims hold.
-No expected blocks are requested here, so an empty `gaps` array means no
-block-adoption obligations were evaluated. Deferred limitations are declared in
+The shipped collector defaults to schema 2. It integrates supported native facts
+through `msdmd/readers.py` and supplemental MSDMD blocks through the universal
+parser path. Its legacy/block-only output remains available only as an explicit
+compatibility path and cannot silently represent native facts. In
+`--legacy-blocks-only` mode the universal parser is lexical rather than
+syntax-aware: block-shaped text in source strings or fixtures can be promoted
+when it matches the selected line-comment fence syntax. Treat that output as a
+block inventory only, not native coverage, identity validation, or behavioral
+evidence.
+
+The schema-2 reader matrix is implemented in bounded subsets rather than as a
+claim to every metadata convention. Recognized unsupported, ambiguous,
+unreadable, dynamic, or out-of-scope inputs remain visible findings. `gaps` is
+only the expected-block adoption result: an empty `gaps` array means there are no
+requested `--expected-block` adoption gaps. Native `--require-fact` obligations
+are reported through `requirements` and diagnostics, and `--strict` makes
+unresolved required scope fail the command. Deferred limitations are declared in
 the collector's owning metadata; they are not missing-block gaps. The generated
 file and its inputs travel in one Git commit; the replay test checks their bytes.
 
@@ -136,20 +150,21 @@ python -m msdmd.module_projection --root . --repo <repo> --revision <exact-revis
 ```
 
 This partial reader covers Python declarations, signatures, decorators,
-docstrings, and structurally attached line comments. It neither replaces nor
-feeds `<reponame>_msdmd.ts`, and it is not a repository-wide native coverage
-verdict. Keep generated sidecars with the exact source and reader identity that
-their headers record.
+docstrings, and structurally attached line comments. It does not replace
+`<reponame>_msdmd.ts` and is not a repository-wide native coverage verdict. Keep
+generated sidecars with the exact source and reader identity that their headers
+record.
 
 ## Propagation checklist
 
 Use `docs/propagation-checklist.md` for the concrete source-change →
 target-repo PR sequence. Use `docs/runner-config-guidance.md` before judging
-coverage. Distinguish block-helper scans from native discovery, including
-manifests, CODEOWNERS, documentation, extensionless and unsupported sources.
-Record every exclusion and its reason, including frozen research artifacts,
-archives, generated trees, and vendored `.agents/skills/` copies. Declared scope
-can exclude them from live-module obligations without hiding them from accounting.
+coverage. Distinguish schema-2 supported readers, legacy block-helper scans,
+unsupported native discovery, including manifests, CODEOWNERS, documentation,
+extensionless and unsupported sources. Record every exclusion and its reason,
+including frozen research artifacts, archives, generated trees, and vendored
+`.agents/skills/` copies. Declared scope can exclude them from live-module
+obligations without hiding them from accounting.
 
 ## Rule
 

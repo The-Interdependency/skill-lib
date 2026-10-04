@@ -1,0 +1,39 @@
+name: one-off-regenerate-msdmd
+
+on:
+  push:
+    branches: [repair/adaptive-elicitation-reconcile]
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: repair/adaptive-elicitation-reconcile
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: "3.13"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24.15.0"
+      - name: Install pinned native-reader runtimes
+        run: |
+          python -m pip install -r msdmd/requirements.txt
+          npm ci --ignore-scripts --prefix msdmd
+      - name: Regenerate native collection
+        run: python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+      - name: Commit generated projection if changed
+        run: |
+          if git diff --quiet -- skill-lib_msdmd.ts; then
+            echo "projection already fresh"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skill-lib_msdmd.ts
+          git commit -m "Regenerate MSDMD projection for adaptive elicitation"
+          git push origin HEAD:repair/adaptive-elicitation-reconcile

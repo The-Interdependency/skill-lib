@@ -26,16 +26,20 @@ Local modifications to imported files: frontmatter trigger phrasing
 normalized to skill-lib convention (`Use this when`), Cowork-only
 frontmatter keys removed, and a Workflow/Anti-patterns/Provenance/hmmm
 bookend appended per `skill-build` compliance. Upstream bodies are
-otherwise unmodified. `data-visualization/SKILL.md` additionally carries a
-locally appended, clearly marked The Interdependency information-design
-extension (skill-lib `868de86`).
+otherwise unmodified. `data-visualization/SKILL.md` also has a clearly marked
+information-design extension appended locally (skill-lib `868de86`). These
+local additions to `data-visualization/SKILL.md` are contributed under
+Apache-2.0, so the whole file stays under a single license. Other local files in
+that directory remain MPL-2.0 as listed below.
 
-Local files in imported skill directories: `data-visualization/examples/`,
-`data-visualization/references/`,
-`data-visualization/information_design_audit.py`, and
-`data-visualization/visual-grammar.json` were not supplied by upstream. They
-were added in skill-lib `868de86` and are original to skill-lib under MPL-2.0
-(`LICENSE`).
+Local files in imported skill directories: these files were not supplied by
+upstream. They were added in skill-lib `868de86` and are original to skill-lib
+under MPL-2.0 (`LICENSE`):
+
+- `data-visualization/examples/information-design-manifest.json`
+- `data-visualization/references/information-design-evidence.md`
+- `data-visualization/information_design_audit.py`
+- `data-visualization/visual-grammar.json`
 
 This repository is MPL-2.0 (`LICENSE`); imported files remain
 available under Apache-2.0 (`LICENSES/Apache-2.0.txt`) as noted per file.

@@ -77,3 +77,11 @@ resolution, arbitrary-language support and independent evidence verification.
 - Maven XML recognition requires its POM namespace or an unnamespaced project with modelVersion 4.0.0. Other project XML stays generic XML.
 - SVG uses the same bounded, UTF-8, DTD/entity-rejecting parser as other XML inputs.
 - Explicit YAML `!!float 1` is supported and is a regression control, not an outstanding defect.
+
+`tests/test_msdmd_consumer_review.py` closes consumer-review findings:
+
+- Candidate and verifier renders written beside the artifact under different temporary names are byte-identical; neither name nor a redirected stdout file enters discovery or worktree state.
+- Git-ignored files are not read. Retained reader bytes have an aggregate budget.
+- camelCase/PascalCase secret keys, systemd URL credentials and `SetCredential` data, SVG metadata and raw DSSE payloads are redacted.
+- Direct URL, VCS and path requirements keep an unresolved name and no package edge; backslash continuations form one requirement.
+- Missing reader runtimes are errors; a schema-1 target helper is refused; the generator identity covers the TypeScript worker and lock file.

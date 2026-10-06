@@ -146,7 +146,7 @@ export interface MsdmdReaderRun {
   reader_id: string;
   reader_version: string;
   support: MsdmdReaderManifest["support"];
-  status: "applied" | "not-applicable";
+  status: "applied" | "not-applicable" | "runtime-unavailable";
   files_matched: number;
   facts_emitted: number;
 }

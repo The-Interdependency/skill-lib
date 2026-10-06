@@ -55,8 +55,18 @@ Minimum target checks:
 
 ```bash
 python .agents/skills/manifest/generate.py --check
+python -m pip install -r .agents/skills/msdmd/requirements.txt
+npm ci --ignore-scripts --prefix .agents/skills/msdmd
 python -m msdmd.collect --root . --repo <repo> --out <repo>_msdmd.ts
 ```
+
+Exit 3 means a native reader runtime is missing (install the two runtimes
+above; `--allow-missing-reader-runtimes` writes incomplete, flagged output).
+Exit 4 means the target's `.agents/skills/msdmd/collection.ts` helper is older
+than the schema-2 output (`MSDMD_COLLECTION_HELPER_VERSION`); propagate the
+current msdmd skill, or use `--legacy-blocks-only` for explicit schema-1 output.
+Nothing is written on exit 3 or 4. Runners that fingerprint freshness should use
+`python -m msdmd.collect --print-generator-identity`.
 
 Run any target-local checks named in `CLAUDE.md`, `AGENTS.md`, or
 `.agents/skills/README.md`.

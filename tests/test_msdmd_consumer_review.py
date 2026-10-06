@@ -165,6 +165,9 @@ class GeneratorIdentityTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp) / "msdmd"
             shutil.copytree(ROOT / "msdmd", base, ignore=shutil.ignore_patterns("node_modules", "__pycache__"))
+            if (ROOT / "msdmd" / "node_modules").is_dir():
+                # The runtime part records the TypeScript version the worker resolves from base.
+                (base / "node_modules").symlink_to(ROOT / "msdmd" / "node_modules", target_is_directory=True)
             original = generator_identity(base)
             self.assertEqual(original, generator_identity(ROOT / "msdmd"))
             for name in ("typescript-reader.cjs", "package-lock.json", "package.json", "module-projection.schema.json", "requirements.txt", "collect.py"):
@@ -174,8 +177,8 @@ class GeneratorIdentityTests(unittest.TestCase):
                 self.assertNotEqual(original, generator_identity(base), name)
                 path.write_bytes(saved)
             (base / "references" / "metadata-conventions.md").write_text("docs only", encoding="utf-8")
-            (base / "node_modules").mkdir()
-            (base / "node_modules" / "x.js").write_text("installed", encoding="utf-8")
+            (base / "cache" / "node_modules").mkdir(parents=True)
+            (base / "cache" / "node_modules" / "x.json").write_text("{}", encoding="utf-8")
             self.assertEqual(original, generator_identity(base))
         cli = run_cli("--print-generator-identity")
         self.assertEqual(0, cli.returncode, cli.stderr)
@@ -259,7 +262,9 @@ class RedactionTests(unittest.TestCase):
         withheld = {"accessToken": "S1", "authToken": "S2", "secretKey": "S3", "databasePassword": "S4",
                     "refreshToken": "S5", "githubToken": "S6", "signingPrivateKey": "S7", "apiKey": "S8",
                     "ClientSecret": "S9"}
-        keep = {"maxTokens": 7, "tokenizer": "bpe", "passwordPolicyUrl": "https://example.com/p"}
+        withheld.update({"Authorization": "S10", "proxyAuthorization": "S11"})
+        keep = {"maxTokens": 7, "tokenizer": "bpe", "passwordPolicyUrl": "https://example.com/p", "tokenUrl": "https://example.com/t",
+                "passwordHash": "argon2-kept", "apiKeyPrefix": "pk_kept", "tokenCount": 3, "secretName": "db-kept", "privateKeyPath": "/k/kept"}
         json_doc = json.dumps(dict(withheld, **keep))
         yaml_doc = "".join(f"{k}: {v}-yaml\n" for k, v in withheld.items())
         toml_doc = "".join(f'{k} = "{v}-toml"\n' for k, v in withheld.items())
@@ -268,8 +273,8 @@ class RedactionTests(unittest.TestCase):
             self.assertNotIn(f'"{value}"', text)
             self.assertNotIn(f"{value}-yaml", text)
             self.assertNotIn(f"{value}-toml", text)
-        self.assertIn('"maxTokens": 7', text)
-        self.assertIn('"tokenizer": "bpe"', text)
+        for key, value in keep.items():
+            self.assertIn(f'"{key}": {json.dumps(value)}', text, key)
 
     def test_systemd_url_credentials_and_credential_data_are_withheld(self) -> None:
         unit = ("[Service]\n"

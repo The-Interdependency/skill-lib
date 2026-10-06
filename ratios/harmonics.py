@@ -1,4 +1,4 @@
-# ratios: loc_comments=281:35 imports_exports=10:8 calls_definitions=122:15
+# ratios: loc_comments=285:37 imports_exports=10:8 calls_definitions=124:15
 """Explore harmonic structure in msdmd RATIOS without changing the RATIOS seal.
 
 Usage:
@@ -115,6 +115,12 @@ def semantic_file_graph(collection: dict, root: Path, eligible: Iterable[str]) -
     for edge in collection.get("edges", []):
         source_id = str(edge.get("source_id") or edge.get("from") or "")
         target_id = str(edge.get("to") or "")
+        if edge.get("target_resolution") in {"ambiguous", "external-or-unresolved"}:
+            # The collector could not pick one owning declaration; a short id
+            # matching several files must not be counted as resolved.
+            if source_id and target_id:
+                unresolved.append(f"{source_id}->{target_id}")
+            continue
         sources = owners(source_id)
         targets = owners(target_id)
         if not sources or not targets:
@@ -359,4 +365,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=281:35 imports_exports=10:8 calls_definitions=122:15
+# ratios: loc_comments=285:37 imports_exports=10:8 calls_definitions=124:15

@@ -39,6 +39,7 @@ npm ci --ignore-scripts --prefix msdmd
 A missing runtime is an error diagnostic and marks the reader run
 `runtime-unavailable`; it never yields empty success. The CLI exits 3 without
 writing unless `--allow-missing-reader-runtimes` is given, which still warns.
+Other TypeScript worker failures are `typescript_reader_failed` errors.
 The universal MSDMD block parsers themselves remain dependency-free.
 
 ## Doctrine
@@ -350,10 +351,18 @@ The collector never reads its own output: the `--out` path, its hidden
 `.<name>.*` siblings, any `.*_msdmd.ts.*` candidate and a shell-redirected
 stdout file are skipped and unrecorded, so differently named temporaries render
 identical bytes. Only the stable `<repo>_msdmd.ts` name is recorded. Git-ignored
-files are never read in a Git checkout. `--print-generator-identity` prints a
-digest of every collector file that can change output, including the TypeScript
-worker and its lock file. A relative schema helper lacking the imported schema-2
-exports stops the CLI with exit 4; use `--legacy-blocks-only` or propagate it.
+files are never read in a Git checkout; if git cannot list files there, or the
+root is ignored by an enclosing repository, an error marks the snapshot
+incomplete instead of reading ignored files. A git submodule is never read: it
+is an `excluded` ledger entry (`entry_kind: submodule`, `reason: git-submodule`)
+carrying the pinned `commit`, which snapshot identities include.
+`--print-generator-identity` prints a digest of every collector file that can
+change output (TypeScript worker and lock file included) plus the Python minor,
+reader package, Node and TypeScript versions; add `--json` for the parts. A
+schema-2 artifact needs a helper exporting `MSDMD_COLLECTION_HELPER_VERSION` at
+least the collector's; an older helper stops the CLI with exit 4 before writing.
+Propagate the skill or use `--legacy-blocks-only`. Exit 3 and 4 problems are
+reported together; 3 wins.
 
 ### Required information and disclosure
 
@@ -376,7 +385,8 @@ facts and blocks remain separate; no universal precedence overwrites disagreemen
 Directory-descriptor discovery does not follow symlinks. It accounts for ignored
 subtrees, unsupported inputs, byte limits and read errors. Bytes no reader can
 consume are hashed but not retained; retained bytes have an aggregate bound
-(`--max-total-bytes`, default 256 MiB) whose overflow is an error. This safety path
+(`--max-total-bytes`, default 256 MiB) whose overflow is an error and a CLI
+warning. This safety path
 requires POSIX no-follow directory-descriptor support. Secret-named files are
 excluded; sensitive structured fields and URL credentials are redacted. This is
 not a complete secret detector: public release still requires audience review.

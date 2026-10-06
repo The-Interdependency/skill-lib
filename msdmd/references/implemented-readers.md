@@ -85,3 +85,13 @@ resolution, arbitrary-language support and independent evidence verification.
 - camelCase/PascalCase secret keys, systemd URL credentials and `SetCredential` data, SVG metadata and raw DSSE payloads are redacted.
 - Direct URL, VCS and path requirements keep an unresolved name and no package edge; backslash continuations form one requirement.
 - Missing reader runtimes are errors; a schema-1 target helper is refused; the generator identity covers the TypeScript worker and lock file.
+
+`tests/test_msdmd_review_followup.py` closes the follow-up review:
+
+- A comment line ending in a backslash never continues; a trailing continuation at end of file is diagnosed; Windows paths are unnamed requirements.
+- A git listing failure, broken `.git` marker or root ignored by an enclosing repository is an error with an incomplete snapshot; submodules are excluded ledger entries with their pinned commit.
+- Schema-2 output requires `MSDMD_COLLECTION_HELPER_VERSION`; runtime and helper problems are reported together; only a missing `typescript` package is a missing TypeScript runtime.
+- The generator identity includes Python minor, reader package, Node and TypeScript versions.
+- A DSSE payload that is not an in-toto Statement is diagnosed and kept as a decoded `signed-payload` fact.
+- camelCase names are secret-bearing only when the final word is sensitive; `authorization` is sensitive.
+- ratios semantic graphs do not resolve ambiguous targets; worktree renames in either porcelain column are parsed.

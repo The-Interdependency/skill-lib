@@ -25,6 +25,21 @@ class ConsumerMatrixTests(unittest.TestCase):
         )
         self.assertIn("ptcna", consumers)
 
+    def test_documented_active_list_matches_the_drift_matrix(self) -> None:
+        distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
+        active = distribution.split("**Targets not in the drift matrix**", maxsplit=1)[0]
+        active = active.split("**Active vendoring consumers**", maxsplit=1)[1]
+        documented = set(re.findall(r"^\* `The-Interdependency/([A-Za-z0-9_.-]+)`$", active, re.MULTILINE))
+        workflow = (
+            ROOT / ".github" / "workflows" / "consumer-drift.yml"
+        ).read_text(encoding="utf-8")
+        consumers = set(
+            re.findall(r"^\s{10}- ([A-Za-z0-9_.-]+)$", workflow, re.MULTILINE)
+        )
+        self.assertEqual(documented, consumers)
+        for repo in ("uchc", "tiwcg", "The-Interdependency.github.io"):
+            self.assertIn(repo, consumers)
+
     def test_archived_edcmbone_is_not_an_active_drift_consumer(self) -> None:
         distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
         active, excluded = distribution.split(

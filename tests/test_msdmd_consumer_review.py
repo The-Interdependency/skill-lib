@@ -256,15 +256,15 @@ class RedactionTests(unittest.TestCase):
         return collect(root, "fixture")
 
     def test_camel_and_pascal_case_secret_keys_are_redacted(self) -> None:
-        secrets = {"accessToken": "S1", "authToken": "S2", "secretKey": "S3", "databasePassword": "S4",
-                   "refreshToken": "S5", "githubToken": "S6", "signingPrivateKey": "S7", "apiKey": "S8",
-                   "ClientSecret": "S9"}
+        withheld = {"accessToken": "S1", "authToken": "S2", "secretKey": "S3", "databasePassword": "S4",
+                    "refreshToken": "S5", "githubToken": "S6", "signingPrivateKey": "S7", "apiKey": "S8",
+                    "ClientSecret": "S9"}
         keep = {"maxTokens": 7, "tokenizer": "bpe", "passwordPolicyUrl": "https://example.com/p"}
-        json_doc = json.dumps(dict(secrets, **keep))
-        yaml_doc = "".join(f"{k}: {v}-yaml\n" for k, v in secrets.items())
-        toml_doc = "".join(f'{k} = "{v}-toml"\n' for k, v in secrets.items())
+        json_doc = json.dumps(dict(withheld, **keep))
+        yaml_doc = "".join(f"{k}: {v}-yaml\n" for k, v in withheld.items())
+        toml_doc = "".join(f'{k} = "{v}-toml"\n' for k, v in withheld.items())
         text = json.dumps(self.collection({"a.json": json_doc, "b.yaml": yaml_doc, "c.toml": toml_doc}))
-        for value in secrets.values():
+        for value in withheld.values():
             self.assertNotIn(f'"{value}"', text)
             self.assertNotIn(f"{value}-yaml", text)
             self.assertNotIn(f"{value}-toml", text)

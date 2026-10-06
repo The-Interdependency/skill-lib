@@ -1,4 +1,4 @@
-# ratios: loc_comments=200:16 imports_exports=15:3 calls_definitions=84:3
+# ratios: loc_comments=219:26 imports_exports=16:4 calls_definitions=88:4
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -13,6 +13,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -158,14 +159,47 @@ def read_python(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list,
     return facts, edges, diagnostics
 
 
+# V8's JIT needs pages that are writable and then executable, which systemd
+# MemoryDenyWriteExecute=yes forbids: node then dies with a V8 fatal error
+# (SIGTRAP) before running anything. Interpreter-only output is byte-identical,
+# so the trusted worker and the identity probe always run without a JIT.
+NODE_ARGV = ('node', '--jitless')
+
+
+def node_signal(returncode: int) -> str | None:
+    """Name the signal that ended a node process, or None for an ordinary exit.
+
+    Python reports a signal death as ``-N``; a shell or version-manager shim in
+    front of node reports it as ``128 + N``.
+    """
+    if returncode < 0:
+        try:
+            return signal.Signals(-returncode).name
+        except ValueError:
+            return f'signal {-returncode}'
+    if returncode > 128:
+        try:
+            return signal.Signals(returncode - 128).name
+        except ValueError:
+            return None
+    return None
+
+
 def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list, list, list]:
     from msdmd.readers import _fact, _diagnostic, _edge, _subject_address
     rid = 'typescript-compiler'
     helper = Path(__file__).with_name('typescript-reader.cjs')
     env = {key: value for key, value in os.environ.items() if key not in {'NODE_OPTIONS', 'NODE_PATH'}}
     # Package resolution is rooted at the trusted helper, never the inspected repo.
-    result = subprocess.run(['node', str(helper)], input=json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')}),
+    result = subprocess.run([*NODE_ARGV, str(helper)], input=json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')}),
         capture_output=True, text=True, cwd=helper.parent, env=env, check=False)
+    killed = node_signal(result.returncode)
+    if killed:
+        # A signal death means node cannot run here (for example a sandbox that
+        # V8 refuses), not that this input is malformed: a missing runtime.
+        return [], [], [_diagnostic(context, reader_id=rid, code='node_runtime_unavailable',
+            message=f'trusted Node worker was killed by {killed}; Node cannot run in this environment; input not extracted',
+            status='unsupported')]
     if result.returncode:
         if "Cannot find module 'typescript'" in result.stderr:
             return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_unavailable',
@@ -224,4 +258,4 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=200:16 imports_exports=15:3 calls_definitions=84:3
+# ratios: loc_comments=219:26 imports_exports=16:4 calls_definitions=88:4

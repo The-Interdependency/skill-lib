@@ -39,6 +39,9 @@ npm ci --ignore-scripts --prefix msdmd
 A missing runtime is an error diagnostic and marks the reader run
 `runtime-unavailable`; it never yields empty success. The CLI exits 3 without
 writing unless `--allow-missing-reader-runtimes` is given, which still warns.
+Node always runs with `--jitless` (byte-identical output, slower), so the
+worker starts under systemd `MemoryDenyWriteExecute=yes`. A Node worker killed
+by a signal is `node_runtime_unavailable` and also exits 3.
 Other TypeScript worker failures are `typescript_reader_failed` errors.
 The universal MSDMD block parsers themselves remain dependency-free.
 
@@ -360,7 +363,9 @@ carrying the pinned `commit`, which snapshot identities include.
 `--print-generator-identity` prints a digest of every collector file that can
 change output (TypeScript worker and lock file included), the Python minor,
 reader package, Node and TypeScript versions, and digests of the reader modules
-that actually resolve on `sys.path`; add `--json` for the parts. A schema-2
+that actually resolve on `sys.path`; add `--json` for the parts. Node missing
+from PATH is recorded as `absent`; a Node probe that is killed by a signal,
+exits nonzero or prints unexpected output exits 3 with no identity. A schema-2
 artifact needs a helper exporting `MSDMD_COLLECTION_HELPER_VERSION` at least the
 collector's; an older helper stops the CLI with exit 4 before writing. When
 `--out` is outside the root, the helper is located from the root. Propagate the

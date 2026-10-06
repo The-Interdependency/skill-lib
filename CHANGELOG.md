@@ -3,7 +3,26 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
-## Unreleased: msdmd collector consumer review (skill-lib #118)
+## Unreleased: msdmd Node runs jitless; signal deaths exit 3
+
+Consumers re-syncing past `38c6433` get:
+
+- **Node always runs with `--jitless`** in the TypeScript worker and in the
+  generator-identity probe. V8's JIT needs writable-then-executable memory,
+  which systemd `MemoryDenyWriteExecute=yes` forbids; Node then died with a V8
+  fatal error (SIGTRAP, shell exit 133). Output is byte-identical; extraction
+  is slower. Sandboxed workers can keep `MemoryDenyWriteExecute=yes`.
+- **A Node worker killed by a signal is a missing runtime.** It yields the
+  `node_runtime_unavailable` diagnostic, so the CLI exits **3** and writes
+  nothing (opt-out unchanged: `--allow-missing-reader-runtimes`). Before, it
+  was a `typescript_reader_failed` error that exited 0 without `--strict`, so
+  TypeScript facts silently went missing.
+- **`--print-generator-identity` exits 3 with no output** when its Node probe
+  is killed by a signal, exits nonzero, cannot be spawned, or prints
+  unexpected output. Before, it reported Node and TypeScript as `absent` and
+  exited 0. Node missing from PATH is still recorded as `absent`.
+  Runners must treat a nonzero exit as "no identity", never as an empty one.
+
 
 Consumers re-syncing past `9867ab3` must:
 

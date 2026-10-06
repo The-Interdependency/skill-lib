@@ -95,3 +95,5 @@ resolution, arbitrary-language support and independent evidence verification.
 - A DSSE payload that is not an in-toto Statement is diagnosed and kept as a decoded `signed-payload` fact.
 - camelCase names are secret-bearing only when the final word is sensitive; `authorization` is sensitive.
 - ratios semantic graphs do not resolve ambiguous targets; worktree renames in either porcelain column are parsed.
+- Git visibility failures (no git on PATH, ignored root) stop the CLI with exit 5 without writing; `--check` reports 5, not drift.
+- With `--out` outside the repository, the schema helper is located from the root; reader module files that actually resolve are part of the generator identity.

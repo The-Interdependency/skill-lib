@@ -351,18 +351,21 @@ The collector never reads its own output: the `--out` path, its hidden
 `.<name>.*` siblings, any `.*_msdmd.ts.*` candidate and a shell-redirected
 stdout file are skipped and unrecorded, so differently named temporaries render
 identical bytes. Only the stable `<repo>_msdmd.ts` name is recorded. Git-ignored
-files are never read in a Git checkout; if git cannot list files there, or the
-root is ignored by an enclosing repository, an error marks the snapshot
-incomplete instead of reading ignored files. A git submodule is never read: it
+files are never read in a Git checkout; if git cannot list files there (for
+example, git is not on PATH), or the root is ignored by an enclosing repository,
+the CLI prints an ERROR and exits 5 without writing (`--check` reports 5, not
+drift) instead of reading ignored files. A git submodule is never read: it
 is an `excluded` ledger entry (`entry_kind: submodule`, `reason: git-submodule`)
 carrying the pinned `commit`, which snapshot identities include.
 `--print-generator-identity` prints a digest of every collector file that can
-change output (TypeScript worker and lock file included) plus the Python minor,
-reader package, Node and TypeScript versions; add `--json` for the parts. A
-schema-2 artifact needs a helper exporting `MSDMD_COLLECTION_HELPER_VERSION` at
-least the collector's; an older helper stops the CLI with exit 4 before writing.
-Propagate the skill or use `--legacy-blocks-only`. Exit 3 and 4 problems are
-reported together; 3 wins.
+change output (TypeScript worker and lock file included), the Python minor,
+reader package, Node and TypeScript versions, and digests of the reader modules
+that actually resolve on `sys.path`; add `--json` for the parts. A schema-2
+artifact needs a helper exporting `MSDMD_COLLECTION_HELPER_VERSION` at least the
+collector's; an older helper stops the CLI with exit 4 before writing. When
+`--out` is outside the root, the helper is located from the root. Propagate the
+skill or use `--legacy-blocks-only`. Exit 3, 4 and 5 problems are reported
+together, with precedence 5, then 3, then 4.
 
 ### Required information and disclosure
 

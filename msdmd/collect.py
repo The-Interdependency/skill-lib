@@ -1,4 +1,4 @@
-# ratios: loc_comments=1012:117 imports_exports=20:9 calls_definitions=345:32
+# ratios: loc_comments=1064:134 imports_exports=21:9 calls_definitions=374:33
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -40,9 +40,11 @@ Usage guidance:
 
 Exit status: 1 drift under --check, 2 strict diagnostics, 3 missing native
 reader runtime (unless --allow-missing-reader-runtimes), 4 schema helper
-older than the rendered output (MSDMD_COLLECTION_HELPER_VERSION). Exit 3 and
-4 problems are both reported before exiting; 3 takes precedence. Nothing is
-written on exit 3 or 4.
+older than the rendered output (MSDMD_COLLECTION_HELPER_VERSION), 5 git
+could not list visible files or the root is git-ignored by an enclosing
+repository. Exit 3, 4 and 5 problems are all reported before exiting, with
+precedence 5, then 3, then 4. Nothing is written or compared (--check never
+reports them as drift) on exit 3, 4 or 5.
 
 The default schema-2 path statically reads supported native conventions and
 supplemental MSDMD blocks. It never imports inspected code, executes scripts,
@@ -84,6 +86,9 @@ RUNTIME_UNAVAILABLE_CODES = frozenset({
     "typescript_reader_unavailable",
     "reader_dependency_unavailable",
 })
+# Git could not establish which files are visible, or the root is ignored by
+# an enclosing repository: the CLI exits 5 without writing.
+VISIBILITY_FAILURE_CODES = frozenset({"git_visibility_unavailable", "root_git_ignored"})
 # tempfile.mkstemp(prefix=".msdmd-") names written by this CLI.
 _COLLECTOR_TEMP_RE = re.compile(r"\.msdmd-[a-z0-9_]{8}")
 # Hidden sibling temporaries/candidates of any collection artifact, such as
@@ -951,6 +956,58 @@ _NODE_PROBE = ("let t='absent';try{t=require('typescript/package.json').version}
                "process.stdout.write(JSON.stringify({node:process.version,typescript:t}))")
 
 
+# Import names that cannot be derived from a distribution name.
+_DISTRIBUTION_MODULES = {"pyyaml": ("yaml",)}
+
+
+def _resolved_reader_modules(distributions: list[str], metadata: Any) -> dict[str, str]:
+    """Digest the files each reader distribution's import names resolve to.
+
+    Resolution uses ``importlib.util.find_spec`` on the live ``sys.path``
+    without importing the module, so the digest reflects what the readers
+    would actually import, including a shadowing module earlier on the path.
+    """
+    import importlib.util
+
+    try:
+        provided = metadata.packages_distributions()
+    except Exception:  # pragma: no cover - metadata backends vary
+        provided = {}
+    by_distribution: dict[str, set[str]] = defaultdict(set)
+    for module, owners in provided.items():
+        for owner in owners:
+            by_distribution[re.sub(r"[-_.]+", "-", owner).lower()].add(module)
+    resolved: dict[str, str] = {}
+    for distribution in distributions:
+        key = re.sub(r"[-_.]+", "-", distribution).lower()
+        names = set(_DISTRIBUTION_MODULES.get(key, ())) | {key.replace("-", "_")}
+        names |= {name for name in by_distribution.get(key, ()) if name.isidentifier() and not name.startswith("_")}
+        for name in sorted(names):
+            try:
+                spec = importlib.util.find_spec(name)
+            except (ImportError, ValueError):
+                spec = None
+            if spec is None or not spec.origin or not os.path.isfile(spec.origin):
+                resolved[name] = "absent"
+                continue
+            if spec.submodule_search_locations:
+                roots = [Path(location) for location in spec.submodule_search_locations]
+                files = sorted(path for location in roots for path in location.rglob("*")
+                               if path.is_file() and "__pycache__" not in path.parts)
+            else:
+                roots = [Path(spec.origin).parent]
+                files = [Path(spec.origin)]
+            digest = hashlib.sha256()
+            for path in files:
+                owner = next((location for location in roots if path.is_relative_to(location)), path.parent)
+                digest.update(path.relative_to(owner).as_posix().encode("utf-8"))
+                digest.update(b"\0")
+                digest.update(path.read_bytes())
+                digest.update(b"\0")
+            resolved[name] = "sha256:" + digest.hexdigest()
+    return resolved
+
+
 def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
     """Return every collector input that can change output bytes.
 
@@ -958,8 +1015,11 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
     worker, its npm manifest and lock file, reader schema assets and the pinned
     Python requirements (docs and installed trees excluded). The runtime part
     records the Python minor version, the installed version of each pinned
-    reader package, the Node version and the TypeScript version that the
-    worker resolves from ``base``; a missing runtime is recorded as ``absent``.
+    reader package, a digest of the module files each of those packages
+    actually resolves to on ``sys.path`` (so a shadowing module on PYTHONPATH
+    changes the identity even when metadata versions do not), the Node version
+    and the TypeScript version that the worker resolves from ``base``; a
+    missing runtime is recorded as ``absent``.
     """
     from importlib import metadata
 
@@ -986,6 +1046,7 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
                     packages[match.group(1)] = metadata.version(match.group(1))
                 except metadata.PackageNotFoundError:
                     packages[match.group(1)] = "absent"
+    modules = _resolved_reader_modules(list(packages), metadata)
     node = {"node": "absent", "typescript": "absent"}
     env = {key: value for key, value in os.environ.items() if key not in {"NODE_OPTIONS", "NODE_PATH"}}
     try:
@@ -998,6 +1059,7 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
         "source_sha256": digest.hexdigest(),
         "python": f"{sys.version_info.major}.{sys.version_info.minor}",
         "python_packages": packages,
+        "python_modules": modules,
         "node": node["node"],
         "typescript": node["typescript"],
     }
@@ -1015,7 +1077,7 @@ REQUIRED_HELPER_VERSION = 1
 _HELPER_VERSION_RE = re.compile(r"^export const MSDMD_COLLECTION_HELPER_VERSION\s*(?::\s*number\s*)?=\s*(\d+)\s*;", re.MULTILINE)
 
 
-def helper_incompatibility(out: Path, import_path: str, rendered: str) -> tuple[str | None, bool]:
+def helper_incompatibility(out: Path, import_path: str, rendered: str, root: Path | None = None) -> tuple[str | None, bool]:
     """Check that the target's schema helper can type-check ``rendered``.
 
     Schema-2 output requires the helper's exported
@@ -1023,6 +1085,9 @@ def helper_incompatibility(out: Path, import_path: str, rendered: str) -> tuple[
     ``REQUIRED_HELPER_VERSION``; helpers without it (schema 1, or schema 2
     from before the constant) are refused. Schema-1 output only needs
     ``defineMsdmdCollection``. ``out`` is resolved to an absolute path first.
+    When ``out`` lies outside ``root`` (for example a CI scratch file under
+    /tmp), the helper is located from ``root``, where the in-tree artifact and
+    its configured or default helper live, so the version check still runs.
     Returns ``(problem, found)``. Bare module specifiers are not resolved.
     """
     if not import_path.startswith((".", "/")):
@@ -1033,7 +1098,10 @@ def helper_incompatibility(out: Path, import_path: str, rendered: str) -> tuple[
         return None, False
     names = [name.strip() for name in match.group(1).split(",") if name.strip()]
     out = out.resolve()
-    base = (out.parent / import_path) if not import_path.startswith("/") else Path(import_path)
+    anchor = out.parent
+    if root is not None and not out.is_relative_to(root.resolve()):
+        anchor = root.resolve()
+    base = (anchor / import_path) if not import_path.startswith("/") else Path(import_path)
     candidates = [base.with_name(base.name + ".ts"), base.with_name(base.name + ".d.ts"), base / "index.ts"]
     if base.suffix == ".ts":
         candidates.insert(0, base)
@@ -1167,6 +1235,13 @@ def main() -> int:
     rendered = json.dumps(collection, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n" if args.json else render_typescript(collection, import_path=args.import_path)
     # Report every blocking problem from one run before choosing an exit status.
     exit_status = 0
+    visibility = (_git_visibility(args.root.resolve())[2] if args.legacy_blocks_only
+                  else [item for item in collection.get("diagnostics", []) if item.get("code") in VISIBILITY_FAILURE_CODES])
+    for item in visibility:
+        print(f"msdmd: ERROR: {item['code']}: {item['message']}", file=sys.stderr)
+    if visibility:
+        # A collection that could not see the source tree is never written or compared.
+        exit_status = 5
     missing_runtimes = [] if args.legacy_blocks_only else runtime_unavailable(collection)
     if missing_runtimes:
         readers = sorted({str(item.get("reader_id")) for item in missing_runtimes})
@@ -1179,14 +1254,14 @@ def main() -> int:
         if args.allow_missing_reader_runtimes:
             print("msdmd: WARNING: --allow-missing-reader-runtimes set; writing incomplete output.", file=sys.stderr)
         else:
-            exit_status = 3
+            exit_status = exit_status or 3
     if args.out and not args.json:
-        problem, found = helper_incompatibility(args.out, args.import_path, rendered)
+        problem, found = helper_incompatibility(args.out, args.import_path, rendered, args.root)
         if problem:
             print("msdmd: ERROR: " + problem, file=sys.stderr)
             exit_status = exit_status or 4
         elif not found and args.import_path.startswith("."):
-            print(f"msdmd: WARNING: schema helper {args.import_path} not found relative to {args.out.resolve()}", file=sys.stderr)
+            print(f"msdmd: WARNING: schema helper {args.import_path} not found", file=sys.stderr)
     if exit_status:
         return exit_status
     budget = [item for item in collection.get("diagnostics", []) if item.get("code") == "aggregate_size_limit"]
@@ -1217,4 +1292,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1012:117 imports_exports=20:9 calls_definitions=345:32
+# ratios: loc_comments=1064:134 imports_exports=21:9 calls_definitions=374:33

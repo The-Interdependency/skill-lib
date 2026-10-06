@@ -40,7 +40,10 @@ Runners must install both native runtimes first. Exit codes: 1 drift under
 (opt-out `--allow-missing-reader-runtimes`, which writes `runtime-unavailable`
 output and warns); 4 schema helper older than the output
 (`MSDMD_COLLECTION_HELPER_VERSION`; propagate the skill or opt out with
-`--legacy-blocks-only`). Exits 3 and 4 write nothing and are reported together.
+`--legacy-blocks-only`); 5 git cannot list visible files (git missing from
+PATH, corrupt index, broken `.git`) or the root is git-ignored by an enclosing
+repository (no opt-out; `--check` reports 5, not drift). Exits 3, 4 and 5 write
+nothing and are reported together, with precedence 5, then 3, then 4.
 Use `--print-generator-identity` as the generator fingerprint.
 
 These commands implement the shipped reader matrix, not every possible metadata

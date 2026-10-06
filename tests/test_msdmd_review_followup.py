@@ -346,5 +346,86 @@ class RenameDetectionTests(unittest.TestCase):
             self.assertTrue(collect(root, "fixture", generated_outputs=["collection.json"])["source"]["dirty_worktree"])
 
 
+class VisibilityExitTests(unittest.TestCase):
+    """Review P2 (collect.py ~284-300, main): visibility errors stop the CLI with exit 5."""
+
+    def test_no_git_on_path_exits_5_without_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            root.mkdir()
+            committed_repo(root, {"a.json": '{"a": 1}\n'})
+            empty = Path(tmp) / "empty-bin"
+            empty.mkdir()
+            env = dict(os.environ, PATH=str(empty))
+            out = root / "repo_msdmd.ts"
+            for extra in ((), ("--legacy-blocks-only",)):
+                result = run_cli("--root", str(root), "--repo", "repo", "--out", str(out), *extra, env=env)
+                self.assertEqual(5, result.returncode, (extra, result.stderr))
+                self.assertIn("msdmd: ERROR: git_visibility_unavailable", result.stderr)
+                self.assertFalse(out.exists())
+
+    def test_ignored_root_exits_5_and_check_is_not_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            outer = Path(tmp)
+            committed_repo(outer, {".gitignore": "scratch/\n", "README.md": "outer\n"})
+            stage = outer / "scratch" / "stage"
+            stage.mkdir(parents=True)
+            (stage / "a.json").write_text('{"a": 1}', encoding="utf-8")
+            out = stage / "stage_msdmd.ts"
+            base = ["--root", str(stage), "--repo", "stage", "--out", str(out)]
+            written = run_cli(*base)
+            self.assertEqual(5, written.returncode, written.stderr)
+            self.assertIn("msdmd: ERROR: root_git_ignored", written.stderr)
+            self.assertFalse(out.exists())
+            strict = run_cli(*base, "--strict")
+            self.assertEqual(5, strict.returncode, strict.stderr)
+            check = run_cli(*base, "--check")
+            self.assertEqual(5, check.returncode, check.stdout + check.stderr)
+            self.assertNotIn("collection drift", check.stdout)
+
+
+class OutOfTreeHelperTests(unittest.TestCase):
+    """Review 11d: --out outside the tree still checks the in-tree helper."""
+
+    def test_helper_is_found_from_root_when_out_is_outside(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp, tempfile.TemporaryDirectory() as scratch:
+            root = Path(tmp)
+            committed_repo(root, {"a.json": "{}\n", ".agents/skills/msdmd/collection.ts": unversioned_schema_two_helper()})
+            out = Path(scratch) / "fixture_msdmd.ts"
+            refused = run_cli("--root", str(root), "--repo", "fixture", "--out", str(out))
+            self.assertEqual(4, refused.returncode, refused.stderr)
+            self.assertIn(str(root.resolve() / ".agents/skills/msdmd/collection.ts"), refused.stderr)
+            self.assertFalse(out.exists())
+            (root / ".agents/skills/msdmd/collection.ts").write_text(current_helper(), encoding="utf-8")
+            git(root, "commit", "-qam", "current helper")
+            accepted = run_cli("--root", str(root), "--repo", "fixture", "--out", str(out))
+            self.assertEqual(0, accepted.returncode, accepted.stderr)
+            self.assertNotIn("not found", accepted.stderr)
+
+
+class ShadowedReaderModuleTests(unittest.TestCase):
+    """Review B (collect.py ~986): resolved reader module files are part of the identity."""
+
+    def test_shadowing_module_changes_identity_but_not_metadata_versions(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            shim = Path(tmp) / "shim"
+            shim.mkdir()
+            (shim / "docstring_parser.py").write_text("def parse(text):\n    raise ValueError('shadow')\n", encoding="utf-8")
+            plain = run_cli("--print-generator-identity", "--json")
+            shadowed = run_cli("--print-generator-identity", "--json",
+                               env=dict(os.environ, PYTHONPATH=os.pathsep.join([str(shim), str(ROOT)])))
+            plain_id = run_cli("--print-generator-identity")
+            shadowed_id = run_cli("--print-generator-identity",
+                                  env=dict(os.environ, PYTHONPATH=os.pathsep.join([str(shim), str(ROOT)])))
+        for result in (plain, shadowed, plain_id, shadowed_id):
+            self.assertEqual(0, result.returncode, result.stderr)
+        before, after = json.loads(plain.stdout), json.loads(shadowed.stdout)
+        self.assertEqual(before["python_packages"], after["python_packages"])
+        self.assertTrue(before["python_modules"]["docstring_parser"].startswith("sha256:"))
+        self.assertNotEqual(before["python_modules"]["docstring_parser"], after["python_modules"]["docstring_parser"])
+        self.assertIn("yaml", before["python_modules"])
+        self.assertNotEqual(plain_id.stdout.strip(), shadowed_id.stdout.strip())
+
+
 if __name__ == "__main__":
     unittest.main()

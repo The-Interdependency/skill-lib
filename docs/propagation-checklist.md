@@ -65,7 +65,10 @@ above; `--allow-missing-reader-runtimes` writes incomplete, flagged output).
 Exit 4 means the target's `.agents/skills/msdmd/collection.ts` helper is older
 than the schema-2 output (`MSDMD_COLLECTION_HELPER_VERSION`); propagate the
 current msdmd skill, or use `--legacy-blocks-only` for explicit schema-1 output.
-Nothing is written on exit 3 or 4. Runners that fingerprint freshness should use
+Exit 5 means git could not list the visible files (git missing from PATH, a
+corrupt index or broken `.git`) or the root is git-ignored by an enclosing
+repository; run in a readable checkout (no opt-out). `--check` reports 5, not
+drift. Nothing is written on exit 3, 4 or 5. Runners that fingerprint freshness should use
 `python -m msdmd.collect --print-generator-identity`.
 
 Run any target-local checks named in `CLAUDE.md`, `AGENTS.md`, or

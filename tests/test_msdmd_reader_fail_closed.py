@@ -136,11 +136,12 @@ class GeneratorIdentityProbeFailClosedTests(unittest.TestCase):
 
     @staticmethod
     def restore(tmp: Path) -> None:
+        # Owner-only modes: CodeQL flags world-readable chmod in tests too.
         for directory, dirnames, _ in os.walk(tmp):
             for name in dirnames:
-                os.chmod(os.path.join(directory, name), 0o755)
+                os.chmod(os.path.join(directory, name), 0o700)
         for path in tmp.rglob("package.json"):
-            path.chmod(0o644)
+            path.chmod(0o600)
 
     def test_untraversable_typescript_directory_raises_not_permission_error(self) -> None:
         if shutil.which("node") is None:
@@ -150,7 +151,7 @@ class GeneratorIdentityProbeFailClosedTests(unittest.TestCase):
         base = self.base_with_typescript()
         self.assertEqual("9.9.9", generator_identity_components(base)["typescript"])
         for locked, mode in ((base / "node_modules" / "typescript", 0o000), (base / "node_modules", 0o000),
-                             (base / "node_modules" / "typescript", 0o644), (base / "node_modules" / "typescript" / "package.json", 0o000)):
+                             (base / "node_modules" / "typescript", 0o600), (base / "node_modules" / "typescript" / "package.json", 0o000)):
             with self.subTest(locked=str(locked.relative_to(base)), mode=oct(mode)):
                 locked.chmod(mode)
                 try:

@@ -69,7 +69,8 @@ Exit 5 means git could not list the visible files (git missing from PATH, a
 corrupt index or broken `.git`) or the root is git-ignored by an enclosing
 repository; run in a readable checkout (no opt-out). `--check` reports 5, not
 drift. Nothing is written on exit 3, 4 or 5. Runners that fingerprint freshness should use
-`python -m msdmd.collect --print-generator-identity`.
+`python -m msdmd.collect --print-generator-identity` (exit 3 and no output when
+its Node probe is killed by a signal or fails).
 
 Run any target-local checks named in `CLAUDE.md`, `AGENTS.md`, or
 `.agents/skills/README.md`.

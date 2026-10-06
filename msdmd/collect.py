@@ -1,4 +1,4 @@
-# ratios: loc_comments=1064:134 imports_exports=21:9 calls_definitions=374:33
+# ratios: loc_comments=1089:146 imports_exports=22:10 calls_definitions=385:36
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -26,7 +26,7 @@
 #   network_boundary: none
 #   user_data_boundary: read
 #   admin_only: false
-#   tests: tests/test_collect.py, tests/test_native_collection.py, tests/test_msdmd_consumer_review.py, tests/test_msdmd_review_followup.py
+#   tests: tests/test_collect.py, tests/test_native_collection.py, tests/test_msdmd_consumer_review.py, tests/test_msdmd_review_followup.py, tests/test_msdmd_node_sandbox.py
 #   rollout: schema 2 is the default CLI output; --legacy-blocks-only keeps explicit schema 1 compatibility
 #   rollback: use --legacy-blocks-only while preserving schema incompatibility visibility
 # === END MODULE_BUILD ===
@@ -39,7 +39,9 @@ Usage guidance:
     python -m msdmd.collect --print-generator-identity
 
 Exit status: 1 drift under --check, 2 strict diagnostics, 3 missing native
-reader runtime (unless --allow-missing-reader-runtimes), 4 schema helper
+reader runtime (unless --allow-missing-reader-runtimes; a Node worker killed
+by a signal counts, and --print-generator-identity exits 3 with no output when
+its Node probe fails), 4 schema helper
 older than the rendered output (MSDMD_COLLECTION_HELPER_VERSION), 5 git
 could not list visible files or the root is git-ignored by an enclosing
 repository. Exit 3, 4 and 5 problems are all reported before exiting, with
@@ -71,6 +73,7 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import quote
 
+from msdmd.native_code import NODE_ARGV, node_signal
 from msdmd.parsers.universal import marker_for, parse_text
 from msdmd.readers import READER_MANIFESTS, _redact_sensitive, read_native, readers_for
 
@@ -84,6 +87,7 @@ DEFAULT_MAX_TOTAL_BYTES = 256 * 1024 * 1024
 RUNTIME_UNAVAILABLE_CODES = frozenset({
     "missing_docstring_parser",
     "typescript_reader_unavailable",
+    "node_runtime_unavailable",
     "reader_dependency_unavailable",
 })
 # Git could not establish which files are visible, or the root is ignored by
@@ -952,6 +956,10 @@ def runtime_unavailable(collection: dict[str, Any]) -> list[dict[str, Any]]:
     return [item for item in collection.get("diagnostics", []) if item.get("code") in RUNTIME_UNAVAILABLE_CODES]
 
 
+class GeneratorIdentityError(RuntimeError):
+    """The Node runtime probe failed, so no trustworthy identity exists."""
+
+
 _NODE_PROBE = ("let t='absent';try{t=require('typescript/package.json').version}catch(e){}"
                "process.stdout.write(JSON.stringify({node:process.version,typescript:t}))")
 
@@ -1047,14 +1055,7 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
                 except metadata.PackageNotFoundError:
                     packages[match.group(1)] = "absent"
     modules = _resolved_reader_modules(list(packages), metadata)
-    node = {"node": "absent", "typescript": "absent"}
-    env = {key: value for key, value in os.environ.items() if key not in {"NODE_OPTIONS", "NODE_PATH"}}
-    try:
-        probe = subprocess.run(["node", "-e", _NODE_PROBE], cwd=base, env=env, capture_output=True, text=True, check=False)
-        if probe.returncode == 0:
-            node = {key: str(value) for key, value in json.loads(probe.stdout).items()}
-    except (OSError, ValueError):
-        pass
+    node = _probe_node(base)
     return {
         "source_sha256": digest.hexdigest(),
         "python": f"{sys.version_info.major}.{sys.version_info.minor}",
@@ -1065,9 +1066,42 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
     }
 
 
+def _probe_node(base: Path) -> dict[str, str]:
+    """Return the Node and TypeScript versions the trusted worker would use.
+
+    Node missing from PATH is recorded as ``absent``. A node that starts but is
+    killed by a signal (V8 refusing a sandbox such as MemoryDenyWriteExecute),
+    exits nonzero, cannot be spawned, or prints something unparseable raises
+    :class:`GeneratorIdentityError`: a failed probe is never reported as an
+    absent runtime.
+    """
+    env = {key: value for key, value in os.environ.items() if key not in {"NODE_OPTIONS", "NODE_PATH"}}
+    try:
+        probe = subprocess.run([*NODE_ARGV, "-e", _NODE_PROBE], cwd=base, env=env, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        return {"node": "absent", "typescript": "absent"}
+    except OSError as exc:
+        raise GeneratorIdentityError(f"node probe could not start ({type(exc).__name__})") from exc
+    killed = node_signal(probe.returncode)
+    if killed:
+        raise GeneratorIdentityError(f"node probe was killed by {killed}; Node cannot run in this environment")
+    if probe.returncode:
+        raise GeneratorIdentityError(f"node probe exited with status {probe.returncode}")
+    try:
+        parsed = json.loads(probe.stdout)
+    except ValueError:
+        parsed = None
+    if not isinstance(parsed, dict) or set(parsed) != {"node", "typescript"} or not all(isinstance(v, str) and v for v in parsed.values()):
+        raise GeneratorIdentityError("node probe printed unexpected output")
+    return parsed
+
+
 def generator_identity(base: Path | None = None) -> str:
     """Return ``sha256:<hex>`` over :func:`generator_identity_components`."""
-    components = generator_identity_components(base)
+    return _identity_digest(generator_identity_components(base))
+
+
+def _identity_digest(components: dict[str, Any]) -> str:
     return "sha256:" + _sha256(json.dumps(components, sort_keys=True, separators=(",", ":")))
 
 
@@ -1184,10 +1218,17 @@ def main() -> int:
     parser.add_argument("--print-generator-identity", action="store_true", help="print the collector identity (sources plus Python, reader package, Node and TypeScript versions) and exit; add --json for components")
     args = parser.parse_args()
     if args.print_generator_identity:
+        try:
+            components = generator_identity_components()
+        except GeneratorIdentityError as exc:
+            # An identity computed without a working runtime would key fresh
+            # output that the same environment cannot produce.
+            print(f"msdmd: ERROR: native reader runtime unavailable: {exc}; no generator identity printed.", file=sys.stderr)
+            return 3
         if args.json:
-            print(json.dumps(generator_identity_components(), indent=2, sort_keys=True))
+            print(json.dumps(components, indent=2, sort_keys=True))
         else:
-            print(generator_identity())
+            print(_identity_digest(components))
         return 0
     if not args.repo:
         parser.error("--repo is required")
@@ -1251,6 +1292,9 @@ def main() -> int:
               f"the collection is incomplete. Install with: python -m pip install -r {os.path.join(skill, 'requirements.txt')} "
               f"&& npm ci --ignore-scripts --prefix {skill} (Node required). To write incomplete output anyway, "
               "pass --allow-missing-reader-runtimes.", file=sys.stderr)
+        killed = sorted({str(item.get("message")) for item in missing_runtimes if item.get("code") == "node_runtime_unavailable"})
+        for message in killed:
+            print(f"msdmd: ERROR: {message}; check the sandbox and resource limits of the process running the collector.", file=sys.stderr)
         if args.allow_missing_reader_runtimes:
             print("msdmd: WARNING: --allow-missing-reader-runtimes set; writing incomplete output.", file=sys.stderr)
         else:
@@ -1292,4 +1336,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1064:134 imports_exports=21:9 calls_definitions=374:33
+# ratios: loc_comments=1089:146 imports_exports=22:10 calls_definitions=385:36

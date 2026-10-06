@@ -44,7 +44,11 @@ output and warns); 4 schema helper older than the output
 PATH, corrupt index, broken `.git`) or the root is git-ignored by an enclosing
 repository (no opt-out; `--check` reports 5, not drift). Exits 3, 4 and 5 write
 nothing and are reported together, with precedence 5, then 3, then 4.
-Use `--print-generator-identity` as the generator fingerprint.
+Use `--print-generator-identity` as the generator fingerprint; it exits 3 with
+no identity when its Node probe is killed by a signal or fails. Node always runs
+with `--jitless`, so sandboxes with systemd `MemoryDenyWriteExecute=yes` work;
+a Node worker killed by a signal is a missing runtime (exit 3), never an empty
+TypeScript extraction.
 
 These commands implement the shipped reader matrix, not every possible metadata
 standard. A complete compliance verdict still depends on the declared repository

@@ -1,4 +1,4 @@
-# ratios: loc_comments=219:26 imports_exports=16:4 calls_definitions=88:4
+# ratios: loc_comments=258:35 imports_exports=17:5 calls_definitions=101:8
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -185,14 +185,63 @@ def node_signal(returncode: int) -> str | None:
     return None
 
 
+# Seconds one trusted TypeScript worker (or the identity probe) may run. A
+# worker that hangs never yields partial success: it is killed and the file is
+# a reader failure. The CLI sets this from --typescript-timeout.
+TYPESCRIPT_TIMEOUT_SECONDS = 120.0
+
+# Worker output keys and their types; anything else is not a worker result.
+_WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'diagnostics')
+
+
+def node_rejected_flag(stderr: str) -> bool:
+    """True when node refused a command-line option (for example an old node without --jitless)."""
+    return 'bad option' in stderr
+
+
+def _worker_result(stdout: str) -> dict[str, Any] | None:
+    """Parse worker stdout, or None when it is not a complete worker result."""
+    try:
+        parsed = json.loads(stdout)
+    except ValueError:
+        return None
+    if not isinstance(parsed, dict) or not isinstance(parsed.get('version'), str):
+        return None
+    if not all(isinstance(parsed.get(key), list) for key in _WORKER_LISTS):
+        return None
+    if not isinstance(parsed.get('exports', []), list):
+        return None
+    return parsed
+
+
 def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list, list, list]:
-    from msdmd.readers import _fact, _diagnostic, _edge, _subject_address
+    from msdmd.readers import _diagnostic
     rid = 'typescript-compiler'
     helper = Path(__file__).with_name('typescript-reader.cjs')
     env = {key: value for key, value in os.environ.items() if key not in {'NODE_OPTIONS', 'NODE_PATH'}}
+
+    def failed(message: str) -> tuple[list, list, list]:
+        # Fail closed: the CLI exits 3 and writes nothing, as for a missing
+        # runtime. Worker stderr is never published because it can quote
+        # inspected source text.
+        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_failed',
+            message=message + '; input not extracted', status='unsupported', severity='error')]
+
+    # Undecodable input is an input error for read_native, not a worker failure.
+    request = json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')})
     # Package resolution is rooted at the trusted helper, never the inspected repo.
-    result = subprocess.run([*NODE_ARGV, str(helper)], input=json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')}),
-        capture_output=True, text=True, cwd=helper.parent, env=env, check=False)
+    try:
+        result = subprocess.run([*NODE_ARGV, str(helper)], input=request,
+            capture_output=True, text=True, encoding='utf-8', cwd=helper.parent, env=env, check=False,
+            timeout=TYPESCRIPT_TIMEOUT_SECONDS)
+    except FileNotFoundError:
+        raise  # node absent from PATH: reader_dependency_unavailable
+    except subprocess.TimeoutExpired:
+        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_timeout',
+            message=f'trusted TypeScript worker exceeded {TYPESCRIPT_TIMEOUT_SECONDS:g}s and was killed; input not extracted',
+            status='unsupported', severity='error')]
+    except (OSError, UnicodeDecodeError) as exc:
+        return failed(f'trusted TypeScript worker could not run ({type(exc).__name__})')
     killed = node_signal(result.returncode)
     if killed:
         # A signal death means node cannot run here (for example a sandbox that
@@ -205,12 +254,22 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
             return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_unavailable',
                 message='TypeScript compiler package not installed for the trusted worker; run npm ci --prefix <msdmd skill dir>',
                 status='unsupported')]
-        # Any other worker failure is a reader error, not a missing runtime. Worker
-        # stderr is not published because it can quote inspected source text.
-        return [], [], [_diagnostic(context, reader_id=rid, code='typescript_reader_failed',
-            message=f'trusted TypeScript worker exited with status {result.returncode}; input not extracted',
-            status='invalid', severity='error')]
-    parsed = json.loads(result.stdout)
+        if node_rejected_flag(result.stderr):
+            return failed(f'node rejected {" ".join(NODE_ARGV[1:])} (exit status {result.returncode}); Node is too old for the trusted worker')
+        return failed(f'trusted TypeScript worker exited with status {result.returncode}')
+    parsed = _worker_result(result.stdout)
+    if parsed is None:
+        return failed('trusted TypeScript worker exited 0 without a complete JSON result')
+    try:
+        return _typescript_facts(parsed, context)
+    except (KeyError, TypeError, AttributeError, ValueError):
+        return failed('trusted TypeScript worker exited 0 with a malformed result')
+
+
+def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[list, list, list]:
+    """Project one validated worker result onto collection facts."""
+    from msdmd.readers import _fact, _diagnostic, _edge, _subject_address
+    rid = 'typescript-compiler'
     context = dict(context, convention_version=parsed['version'], dialect='typescript-compiler-jsdoc')
     facts: list = []
     edges: list = []
@@ -258,4 +317,4 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=219:26 imports_exports=16:4 calls_definitions=88:4
+# ratios: loc_comments=258:35 imports_exports=17:5 calls_definitions=101:8

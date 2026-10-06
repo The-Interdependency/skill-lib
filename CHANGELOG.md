@@ -3,6 +3,29 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: msdmd TypeScript reader failures fail closed
+
+Consumers re-syncing past `3fa40b9` get:
+
+- **Every TypeScript worker failure exits 3** and writes nothing (opt-out
+  unchanged: `--allow-missing-reader-runtimes`). A nonzero exit, exit 0
+  without a complete JSON result, or node rejecting `--jitless` (Node too old)
+  is `typescript_reader_failed`; before, these were error diagnostics that
+  exited 0 without `--strict`, or a `native_reader_error`, so TypeScript facts
+  could silently go missing. Worker stderr is still never published.
+- **New `--typescript-timeout SECONDS`** (default 120, positive and finite)
+  bounds each worker and the identity probe. A worker past it is killed and
+  reported as `typescript_reader_timeout` (exit 3); a probe past it exits 3
+  with no identity.
+- **`--print-generator-identity` exits 3, not a `PermissionError`
+  traceback,** when the collector sources or a typescript package on the
+  worker's resolution path (`node_modules` from the skill directory upward)
+  cannot be read. Before, an untraversable `node_modules/typescript` crashed
+  the probe, and an untraversable `node_modules` reported TypeScript as
+  `absent`. Installed trees (`node_modules`, `__pycache__`, `references`) are
+  no longer walked for the source digest; the identity bytes are unchanged
+  for the same sources.
+
 ## Unreleased: msdmd Node runs jitless; signal deaths exit 3
 
 Consumers re-syncing past `38c6433` get:

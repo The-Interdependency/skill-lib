@@ -1,4 +1,4 @@
-# ratios: loc_comments=1089:146 imports_exports=22:10 calls_definitions=385:36
+# ratios: loc_comments=1143:160 imports_exports=23:10 calls_definitions=408:39
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -73,7 +73,8 @@ from pathlib import Path
 from typing import Any, Iterable
 from urllib.parse import quote
 
-from msdmd.native_code import NODE_ARGV, node_signal
+from msdmd import native_code
+from msdmd.native_code import NODE_ARGV, node_rejected_flag, node_signal
 from msdmd.parsers.universal import marker_for, parse_text
 from msdmd.readers import READER_MANIFESTS, _redact_sensitive, read_native, readers_for
 
@@ -83,13 +84,18 @@ LEGACY_SCHEMA_VERSION = "1.0.0"
 DEFAULT_MAX_FILE_BYTES = 2 * 1024 * 1024
 # Aggregate bound on source bytes retained for readers during one scan.
 DEFAULT_MAX_TOTAL_BYTES = 256 * 1024 * 1024
-# Native reader runtimes whose absence makes extraction incomplete.
+# A native reader worker that exited nonzero, printed no complete result, was
+# refused by node (unsupported flag) or timed out: extraction is incomplete for
+# a reason in this environment, so it fails closed like a missing runtime.
+READER_FAILURE_CODES = frozenset({"typescript_reader_failed", "typescript_reader_timeout"})
+# Native reader runtimes whose absence (or failure) makes extraction
+# incomplete; the CLI exits 3 without writing.
 RUNTIME_UNAVAILABLE_CODES = frozenset({
     "missing_docstring_parser",
     "typescript_reader_unavailable",
     "node_runtime_unavailable",
     "reader_dependency_unavailable",
-})
+}) | READER_FAILURE_CODES
 # Git could not establish which files are visible, or the root is ignored by
 # an enclosing repository: the CLI exits 5 without writing.
 VISIBILITY_FAILURE_CODES = frozenset({"git_visibility_unavailable", "root_git_ignored"})
@@ -960,7 +966,18 @@ class GeneratorIdentityError(RuntimeError):
     """The Node runtime probe failed, so no trustworthy identity exists."""
 
 
-_NODE_PROBE = ("let t='absent';try{t=require('typescript/package.json').version}catch(e){}"
+# Node resolves typescript from the msdmd directory upward and silently skips a
+# node_modules or typescript directory it cannot traverse, so the probe checks
+# that chain (module.paths, not global folders) and fails instead of reporting
+# an unreadable package as absent.
+_PROBE_PREFIX = "msdmd-probe: "
+_NODE_PROBE = ("const fs=require('fs'),path=require('path');let t='absent';"
+               "try{t=require('typescript/package.json').version}catch(e){"
+               f"if(e.code!=='MODULE_NOT_FOUND'){{process.stderr.write('{_PROBE_PREFIX}typescript package could not be loaded ('+e.code+')\\n');process.exit(2)}}"
+               "for(const d of module.paths){const p=path.join(d,'typescript');"
+               "for(const f of [p,path.join(p,'package.json')]){try{fs.accessSync(f,fs.constants.R_OK)}catch(x){"
+               "if(x.code==='EACCES'||x.code==='EPERM'){"
+               f"process.stderr.write('{_PROBE_PREFIX}typescript package is not readable: '+f+'\\n');process.exit(2)}}}}}}}}}}"
                "process.stdout.write(JSON.stringify({node:process.version,typescript:t}))")
 
 
@@ -1032,18 +1049,16 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
     from importlib import metadata
 
     base = (base or Path(__file__).parent).resolve()
-    files = sorted(
-        path for path in base.rglob("*")
-        if path.is_file()
-        and not {"node_modules", "__pycache__", "references"} & set(path.relative_to(base).parts)
-        and (path.suffix in {".py", ".cjs", ".json"} or path.name == "requirements.txt")
-    )
-    digest = hashlib.sha256()
-    for path in files:
-        digest.update(path.relative_to(base).as_posix().encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(path.read_bytes())
-        digest.update(b"\0")
+    try:
+        files = _identity_source_files(base)
+        digest = hashlib.sha256()
+        for path in files:
+            digest.update(path.relative_to(base).as_posix().encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(path.read_bytes())
+            digest.update(b"\0")
+    except OSError as exc:
+        raise GeneratorIdentityError(f"collector sources are not readable ({type(exc).__name__}: {exc.filename})") from exc
     packages: dict[str, str] = {}
     requirements = base / "requirements.txt"
     if requirements.is_file():
@@ -1066,26 +1081,65 @@ def generator_identity_components(base: Path | None = None) -> dict[str, Any]:
     }
 
 
+_IDENTITY_SKIPPED_DIRS = frozenset({"node_modules", "__pycache__", "references"})
+
+
+def _identity_source_files(base: Path) -> list[Path]:
+    """Collector source files under ``base``, never descending into installed trees.
+
+    Excluded directories are pruned before they are entered, and any directory
+    or file that cannot be listed or examined raises ``OSError`` rather than
+    being silently skipped.
+    """
+    def fail(error: OSError) -> None:
+        raise error
+
+    files = []
+    for directory, dirnames, filenames in os.walk(base, onerror=fail):
+        dirnames[:] = [name for name in dirnames if name not in _IDENTITY_SKIPPED_DIRS]
+        for name in filenames:
+            path = Path(directory, name)
+            if not (path.suffix in {".py", ".cjs", ".json"} or name == "requirements.txt"):
+                continue
+            try:
+                if stat.S_ISREG(os.stat(path).st_mode):
+                    files.append(path)
+            except FileNotFoundError:
+                continue  # dangling symlink: not a source file
+    return sorted(files)
+
+
 def _probe_node(base: Path) -> dict[str, str]:
     """Return the Node and TypeScript versions the trusted worker would use.
 
     Node missing from PATH is recorded as ``absent``. A node that starts but is
     killed by a signal (V8 refusing a sandbox such as MemoryDenyWriteExecute),
-    exits nonzero, cannot be spawned, or prints something unparseable raises
+    rejects a flag, exits nonzero, times out, cannot be spawned, finds a
+    typescript package it cannot read, or prints something unparseable raises
     :class:`GeneratorIdentityError`: a failed probe is never reported as an
     absent runtime.
     """
     env = {key: value for key, value in os.environ.items() if key not in {"NODE_OPTIONS", "NODE_PATH"}}
+    timeout = native_code.TYPESCRIPT_TIMEOUT_SECONDS
     try:
-        probe = subprocess.run([*NODE_ARGV, "-e", _NODE_PROBE], cwd=base, env=env, capture_output=True, text=True, check=False)
+        probe = subprocess.run([*NODE_ARGV, "-e", _NODE_PROBE], cwd=base, env=env, capture_output=True, text=True,
+                               encoding="utf-8", errors="replace", check=False, timeout=timeout)
     except FileNotFoundError:
         return {"node": "absent", "typescript": "absent"}
+    except subprocess.TimeoutExpired as exc:
+        raise GeneratorIdentityError(f"node probe exceeded {timeout:g}s and was killed") from exc
     except OSError as exc:
         raise GeneratorIdentityError(f"node probe could not start ({type(exc).__name__})") from exc
     killed = node_signal(probe.returncode)
     if killed:
         raise GeneratorIdentityError(f"node probe was killed by {killed}; Node cannot run in this environment")
     if probe.returncode:
+        reported = [line[len(_PROBE_PREFIX):] for line in probe.stderr.splitlines() if line.startswith(_PROBE_PREFIX)]
+        if reported:
+            raise GeneratorIdentityError(f"node probe: {reported[0]}")
+        if node_rejected_flag(probe.stderr):
+            raise GeneratorIdentityError(f"node rejected {' '.join(NODE_ARGV[1:])} (exit status {probe.returncode}); "
+                                         "Node is too old for the trusted worker")
         raise GeneratorIdentityError(f"node probe exited with status {probe.returncode}")
     try:
         parsed = json.loads(probe.stdout)
@@ -1187,6 +1241,16 @@ def _positive_int(value: str) -> int:
     return number
 
 
+def _positive_seconds(value: str) -> float:
+    try:
+        number = float(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError("must be a positive number of seconds") from None
+    if not (number > 0 and number != float("inf")):
+        raise argparse.ArgumentTypeError("must be a positive number of seconds")
+    return number
+
+
 def _skill_dir_hint() -> str:
     """Return where this skill actually lives, relative to the working directory when possible."""
     here = Path(__file__).resolve().parent
@@ -1215,8 +1279,11 @@ def main() -> int:
     parser.add_argument("--strict", action="store_true", help="exit nonzero after rendering if invalid identity or syntax diagnostics exist")
     parser.add_argument("--max-total-bytes", type=_positive_int, default=DEFAULT_MAX_TOTAL_BYTES, help="aggregate bound on source bytes retained for readers")
     parser.add_argument("--allow-missing-reader-runtimes", action="store_true", help="write incomplete output when native reader runtimes are absent (still warns)")
+    parser.add_argument("--typescript-timeout", type=_positive_seconds, default=native_code.TYPESCRIPT_TIMEOUT_SECONDS,
+                        help="seconds each trusted TypeScript worker (and the identity probe) may run before it is killed and the run exits 3")
     parser.add_argument("--print-generator-identity", action="store_true", help="print the collector identity (sources plus Python, reader package, Node and TypeScript versions) and exit; add --json for components")
     args = parser.parse_args()
+    native_code.TYPESCRIPT_TIMEOUT_SECONDS = args.typescript_timeout
     if args.print_generator_identity:
         try:
             components = generator_identity_components()
@@ -1285,13 +1352,22 @@ def main() -> int:
         exit_status = 5
     missing_runtimes = [] if args.legacy_blocks_only else runtime_unavailable(collection)
     if missing_runtimes:
-        readers = sorted({str(item.get("reader_id")) for item in missing_runtimes})
-        files = {str(item.get("source", {}).get("file")) for item in missing_runtimes}
-        skill = _skill_dir_hint()
-        print(f"msdmd: ERROR: native reader runtime unavailable ({', '.join(readers)}) for {len(files)} file(s); "
-              f"the collection is incomplete. Install with: python -m pip install -r {os.path.join(skill, 'requirements.txt')} "
-              f"&& npm ci --ignore-scripts --prefix {skill} (Node required). To write incomplete output anyway, "
-              "pass --allow-missing-reader-runtimes.", file=sys.stderr)
+        failures = [item for item in missing_runtimes if item.get("code") in READER_FAILURE_CODES]
+        absent = [item for item in missing_runtimes if item.get("code") not in READER_FAILURE_CODES]
+        if absent:
+            readers = sorted({str(item.get("reader_id")) for item in absent})
+            files = {str(item.get("source", {}).get("file")) for item in absent}
+            skill = _skill_dir_hint()
+            print(f"msdmd: ERROR: native reader runtime unavailable ({', '.join(readers)}) for {len(files)} file(s); "
+                  f"the collection is incomplete. Install with: python -m pip install -r {os.path.join(skill, 'requirements.txt')} "
+                  f"&& npm ci --ignore-scripts --prefix {skill} (Node required). To write incomplete output anyway, "
+                  "pass --allow-missing-reader-runtimes.", file=sys.stderr)
+        by_message: dict[str, set[str]] = defaultdict(set)
+        for item in failures:
+            by_message[str(item.get("message"))].add(str(item.get("source", {}).get("file")))
+        for message, files in sorted(by_message.items()):
+            print(f"msdmd: ERROR: native reader failed: {message} ({len(files)} file(s), first {sorted(files)[0]}); "
+                  "the collection is incomplete and was not written.", file=sys.stderr)
         killed = sorted({str(item.get("message")) for item in missing_runtimes if item.get("code") == "node_runtime_unavailable"})
         for message in killed:
             print(f"msdmd: ERROR: {message}; check the sandbox and resource limits of the process running the collector.", file=sys.stderr)
@@ -1336,4 +1412,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1089:146 imports_exports=22:10 calls_definitions=385:36
+# ratios: loc_comments=1143:160 imports_exports=23:10 calls_definitions=408:39

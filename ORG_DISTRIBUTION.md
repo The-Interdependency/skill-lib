@@ -127,7 +127,8 @@ Native reader runtimes must be installed where the collector runs, from the
 skill's own directory (`msdmd/` here, `.agents/skills/msdmd/` in consumers):
 `python -m pip install -r <skill>/requirements.txt` and
 `npm ci --ignore-scripts --prefix <skill>` (Node required). The collector exits
-**3** without writing when a runtime is missing (opt-out:
+**3** without writing when a runtime is missing or a native reader worker
+fails, prints no complete result or times out (opt-out:
 `--allow-missing-reader-runtimes`, which writes output marked
 `runtime-unavailable` and still warns) and **4** without writing when the
 `--import-path` helper is older than the schema-2 output

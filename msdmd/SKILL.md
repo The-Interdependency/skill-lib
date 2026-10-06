@@ -41,8 +41,11 @@ A missing runtime is an error diagnostic and marks the reader run
 writing unless `--allow-missing-reader-runtimes` is given, which still warns.
 Node always runs with `--jitless` (byte-identical output, slower), so the
 worker starts under systemd `MemoryDenyWriteExecute=yes`. A Node worker killed
-by a signal is `node_runtime_unavailable` and also exits 3.
-Other TypeScript worker failures are `typescript_reader_failed` errors.
+by a signal is `node_runtime_unavailable` and also exits 3. Any other
+TypeScript worker failure also fails closed with exit 3: a nonzero exit, exit
+0 without a complete JSON result, or node rejecting `--jitless` is
+`typescript_reader_failed`, and a worker running past `--typescript-timeout`
+seconds (default 120) is killed as `typescript_reader_timeout`.
 The universal MSDMD block parsers themselves remain dependency-free.
 
 ## Doctrine

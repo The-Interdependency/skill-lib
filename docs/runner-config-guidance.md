@@ -29,9 +29,22 @@ remain visible findings rather than being converted into missing-block gaps.
 Usage for a schema-2 collection:
 
 ```bash
+python -m pip install -r .agents/skills/msdmd/requirements.txt
+npm ci --ignore-scripts --prefix .agents/skills/msdmd
 python -m msdmd.collect --root . --repo example --out example_msdmd.ts
 python -m msdmd.visualize example_msdmd.ts --out example_msdmd.mmd
 ```
+
+Runners must install both native runtimes first. Exit codes: 1 drift under
+`--check`; 2 error diagnostics under `--strict`; 3 missing native reader runtime
+(opt-out `--allow-missing-reader-runtimes`, which writes `runtime-unavailable`
+output and warns); 4 schema helper older than the output
+(`MSDMD_COLLECTION_HELPER_VERSION`; propagate the skill or opt out with
+`--legacy-blocks-only`); 5 git cannot list visible files (git missing from
+PATH, corrupt index, broken `.git`) or the root is git-ignored by an enclosing
+repository (no opt-out; `--check` reports 5, not drift). Exits 3, 4 and 5 write
+nothing and are reported together, with precedence 5, then 3, then 4.
+Use `--print-generator-identity` as the generator fingerprint.
 
 These commands implement the shipped reader matrix, not every possible metadata
 standard. A complete compliance verdict still depends on the declared repository

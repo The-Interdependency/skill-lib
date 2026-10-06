@@ -123,6 +123,21 @@ python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot
 python -m unittest tests.test_msdmd_native_contract_docs
 ```
 
+Native reader runtimes must be installed where the collector runs, from the
+skill's own directory (`msdmd/` here, `.agents/skills/msdmd/` in consumers):
+`python -m pip install -r <skill>/requirements.txt` and
+`npm ci --ignore-scripts --prefix <skill>` (Node required). The collector exits
+**3** without writing when a runtime is missing (opt-out:
+`--allow-missing-reader-runtimes`, which writes output marked
+`runtime-unavailable` and still warns) and **4** without writing when the
+`--import-path` helper is older than the schema-2 output
+(`MSDMD_COLLECTION_HELPER_VERSION`; fix by propagating the current skill, or
+opt out with `--legacy-blocks-only`). It exits **5** without writing when git
+cannot list the visible files (for example git missing from PATH) or the root
+is ignored by an enclosing repository; there is no opt-out, so run it in a
+readable git checkout. `--check` reports 5, not drift. All three are reported in
+one run, with precedence 5, then 3, then 4.
+
 The shipped collector defaults to schema 2. It integrates supported native facts
 through `msdmd/readers.py` and supplemental MSDMD blocks through the universal
 parser path. Its legacy/block-only output remains available only as an explicit

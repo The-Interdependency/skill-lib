@@ -1,4 +1,4 @@
-# ratios: loc_comments=258:35 imports_exports=17:5 calls_definitions=101:8
+# ratios: loc_comments=256:35 imports_exports=17:5 calls_definitions=100:8
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -191,7 +191,7 @@ def node_signal(returncode: int) -> str | None:
 TYPESCRIPT_TIMEOUT_SECONDS = 120.0
 
 # Worker output keys and their types; anything else is not a worker result.
-_WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'diagnostics')
+_WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'exports', 'diagnostics')
 
 
 def node_rejected_flag(stderr: str) -> bool:
@@ -208,8 +208,6 @@ def _worker_result(stdout: str) -> dict[str, Any] | None:
     if not isinstance(parsed, dict) or not isinstance(parsed.get('version'), str):
         return None
     if not all(isinstance(parsed.get(key), list) for key in _WORKER_LISTS):
-        return None
-    if not isinstance(parsed.get('exports', []), list):
         return None
     return parsed
 
@@ -307,7 +305,7 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
             value=item, native_id=str(index), location={'start_line': item['start_line'], 'end_line': item['end_line']})
         facts.append(fact)
         edges.append(_edge(fact['subject']['address'], 'ecma-module:' + item['module'], item['kind']))
-    for index, item in enumerate(parsed.get('exports', [])):
+    for index, item in enumerate(parsed['exports']):
         fact = _fact(context, reader_id=rid, kind='local-export', scope='module', identity=context['file'],
             value=item, native_id=item['exported_name'], location={'start_line': item['start_line'], 'end_line': item['end_line']})
         fact['address'] = fact['subject']['address'] + f'/fact/local-export/{index}'
@@ -317,4 +315,4 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=258:35 imports_exports=17:5 calls_definitions=101:8
+# ratios: loc_comments=256:35 imports_exports=17:5 calls_definitions=100:8

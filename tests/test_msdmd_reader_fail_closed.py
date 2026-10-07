@@ -1,9 +1,10 @@
 """A TypeScript reader or identity probe that cannot finish fails closed (exit 3).
 
 Usage: python -m unittest tests.test_msdmd_reader_fail_closed
-Covers nonzero worker exits, exit 0 without a complete JSON result, node
-rejecting --jitless, the worker timeout, and an untraversable typescript
-package seen by the generator-identity probe. Fake ``node`` scripts stand in
+Covers nonzero worker exits, required exports, truthful opt-out diagnostics,
+exit 0 without a complete JSON result, node rejecting --jitless, the worker
+timeout, and an untraversable typescript package seen by the generator-identity
+probe. Fake ``node`` scripts stand in
 for broken runtimes; permission cases skip when run as root.
 """
 from __future__ import annotations
@@ -76,6 +77,17 @@ class TypeScriptReaderFailClosedTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):  # read_native: reader_dependency_unavailable
                 read_typescript(Path("a.ts"), SOURCE, CONTEXT)
 
+    def test_worker_result_requires_an_explicit_exports_list(self) -> None:
+        missing_exports = dict(VALID)
+        del missing_exports["exports"]
+        cases = [missing_exports, *(dict(VALID, exports=value) for value in (None, {}, "", 0, False))]
+        for result in cases:
+            with self.subTest(result=result):
+                stdout = json.dumps(result)
+                self.assertIsNone(native_code._worker_result(stdout))
+                self.assert_fails_closed(worker(0, stdout=stdout))
+        self.assertEqual(VALID, native_code._worker_result(json.dumps(VALID)))
+
     def test_worker_timeout_kills_and_fails_closed(self) -> None:
         with patch("msdmd.native_code.subprocess.run", side_effect=subprocess.TimeoutExpired(["node"], 120)) as run:
             failure = self.assert_fails_closed(read_typescript(Path("a.ts"), SOURCE, CONTEXT)[2], "typescript_reader_timeout")
@@ -84,22 +96,29 @@ class TypeScriptReaderFailClosedTests(unittest.TestCase):
 
 
 class CliReaderFailureTests(unittest.TestCase):
-    def run_repo(self, body: str, *extra: str) -> tuple[subprocess.CompletedProcess, Path]:
+    def repo(self, body: str) -> tuple[Path, Path, dict[str, str]]:
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp)
         root = tmp / "repo"
         ts_repo(root)
         out = root / "repo_msdmd.ts"
         out.write_text("previous good artifact\n", encoding="utf-8")
-        result = run_cli("--root", str(root), "--repo", "repo", "--out", str(out), *extra, env=fake_node(tmp / "bin", body))
+        return root, out, fake_node(tmp / "bin", body)
+
+    def run_repo(self, body: str, *extra: str) -> tuple[subprocess.CompletedProcess, Path]:
+        root, out, env = self.repo(body)
+        result = run_cli("--root", str(root), "--repo", "repo", "--out", str(out), *extra, env=env)
         self.assertEqual("previous good artifact\n", out.read_text(encoding="utf-8"))
         self.assertEqual(["a.ts", "repo_msdmd.ts"], sorted(p.name for p in root.iterdir() if p.name != ".git"))
         return result, out
 
     def test_cli_exits_3_and_writes_nothing(self) -> None:
+        missing_exports = dict(VALID)
+        del missing_exports["exports"]
         cases = {
             "exit 1": ("echo 'RangeError (secret-source-line)' >&2; exit 1", "exited with status 1"),
             "non-JSON on exit 0": ("cat >/dev/null; echo not-json", "without a complete JSON result"),
+            "missing exports": (f"cat >/dev/null; echo '{json.dumps(missing_exports)}'", "without a complete JSON result"),
             "unsupported flag": ("echo 'node: bad option: --jitless' >&2; exit 9", "rejected --jitless"),
             "timeout": ("exec sleep 30", "exceeded 0.5s"),
         }
@@ -109,8 +128,46 @@ class CliReaderFailureTests(unittest.TestCase):
                 self.assertEqual(3, result.returncode, result.stderr)
                 self.assertIn("native reader failed: ", result.stderr)
                 self.assertIn(expected, result.stderr)
+                self.assertIn("was not written", result.stderr)
                 self.assertNotIn("secret-source-line", result.stderr)
                 self.assertNotIn("Traceback", result.stderr)
+
+    def test_cli_opt_out_reports_written_incomplete_output(self) -> None:
+        for destination in ("file", "stdout"):
+            for strict in (False, True):
+                with self.subTest(destination=destination, strict=strict):
+                    root, out, env = self.repo("exit 1")
+                    extra = ["--out", str(out)] if destination == "file" else []
+                    if strict:
+                        extra.append("--strict")
+                    result = run_cli("--root", str(root), "--repo", "repo", "--json",
+                                     "--allow-missing-reader-runtimes", *extra, env=env)
+                    self.assertEqual(2 if strict else 0, result.returncode, result.stderr)
+                    rendered = out.read_text(encoding="utf-8") if destination == "file" else result.stdout
+                    collection = json.loads(rendered)
+                    self.assertIn("typescript_reader_failed", [d["code"] for d in collection["diagnostics"]])
+                    self.assertIn("wrote incomplete output", result.stderr)
+                    self.assertNotIn("was not written", result.stderr)
+                    if destination == "stdout":
+                        self.assertEqual("previous good artifact\n", out.read_text(encoding="utf-8"))
+
+    def test_cli_opt_out_check_reports_no_write(self) -> None:
+        result, _ = self.run_repo("exit 1", "--allow-missing-reader-runtimes", "--json", "--check")
+        self.assertEqual(1, result.returncode, result.stderr)
+        self.assertIn("checking incomplete output without writing", result.stderr)
+        self.assertNotIn("writing incomplete output", result.stderr)
+        self.assertNotIn("wrote incomplete output", result.stderr)
+
+    def test_cli_opt_out_does_not_claim_a_write_when_helper_blocks(self) -> None:
+        root, out, env = self.repo("exit 1")
+        (root / "old-collection.ts").write_text("export const MSDMD_COLLECTION_HELPER_VERSION = 0;\n", encoding="utf-8")
+        result = run_cli("--root", str(root), "--repo", "repo", "--out", str(out),
+                         "--import-path", "./old-collection", "--allow-missing-reader-runtimes", env=env)
+        self.assertEqual(4, result.returncode, result.stderr)
+        self.assertEqual("previous good artifact\n", out.read_text(encoding="utf-8"))
+        self.assertIn("was not written", result.stderr)
+        self.assertNotIn("writing incomplete output", result.stderr)
+        self.assertNotIn("wrote incomplete output", result.stderr)
 
     def test_timeout_must_be_positive_and_finite(self) -> None:
         for value in ("0", "-1", "nan", "inf", "soon"):

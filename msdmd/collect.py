@@ -1,4 +1,4 @@
-# ratios: loc_comments=1143:160 imports_exports=23:10 calls_definitions=408:39
+# ratios: loc_comments=1147:162 imports_exports=23:10 calls_definitions=410:39
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -38,8 +38,8 @@ Usage guidance:
     python -m msdmd.collect --root . --repo owner/repo --legacy-blocks-only
     python -m msdmd.collect --print-generator-identity
 
-Exit status: 1 drift under --check, 2 strict diagnostics, 3 missing native
-reader runtime (unless --allow-missing-reader-runtimes; a Node worker killed
+Exit status: 1 drift under --check, 2 strict diagnostics, 3 failed native
+reader or missing runtime (unless --allow-missing-reader-runtimes; a Node worker killed
 by a signal counts, and --print-generator-identity exits 3 with no output when
 its Node probe fails), 4 schema helper
 older than the rendered output (MSDMD_COLLECTION_HELPER_VERSION), 5 git
@@ -47,6 +47,8 @@ could not list visible files or the root is git-ignored by an enclosing
 repository. Exit 3, 4 and 5 problems are all reported before exiting, with
 precedence 5, then 3, then 4. Nothing is written or compared (--check never
 reports them as drift) on exit 3, 4 or 5.
+The opt-out reports incomplete output only after writing it; --check reports
+comparison without writing, and blocking errors preserve the previous output.
 
 The default schema-2 path statically reads supported native conventions and
 supplemental MSDMD blocks. It never imports inspected code, executes scripts,
@@ -1367,13 +1369,11 @@ def main() -> int:
             by_message[str(item.get("message"))].add(str(item.get("source", {}).get("file")))
         for message, files in sorted(by_message.items()):
             print(f"msdmd: ERROR: native reader failed: {message} ({len(files)} file(s), first {sorted(files)[0]}); "
-                  "the collection is incomplete and was not written.", file=sys.stderr)
+                  "the collection is incomplete.", file=sys.stderr)
         killed = sorted({str(item.get("message")) for item in missing_runtimes if item.get("code") == "node_runtime_unavailable"})
         for message in killed:
             print(f"msdmd: ERROR: {message}; check the sandbox and resource limits of the process running the collector.", file=sys.stderr)
-        if args.allow_missing_reader_runtimes:
-            print("msdmd: WARNING: --allow-missing-reader-runtimes set; writing incomplete output.", file=sys.stderr)
-        else:
+        if not args.allow_missing_reader_runtimes:
             exit_status = exit_status or 3
     if args.out and not args.json:
         problem, found = helper_incompatibility(args.out, args.import_path, rendered, args.root)
@@ -1383,6 +1383,8 @@ def main() -> int:
         elif not found and args.import_path.startswith("."):
             print(f"msdmd: WARNING: schema helper {args.import_path} not found", file=sys.stderr)
     if exit_status:
+        if missing_runtimes:
+            print("msdmd: ERROR: the collection is incomplete and was not written.", file=sys.stderr)
         return exit_status
     budget = [item for item in collection.get("diagnostics", []) if item.get("code") == "aggregate_size_limit"]
     if budget:
@@ -1390,6 +1392,8 @@ def main() -> int:
     if args.check:
         if not args.out:
             parser.error("--check requires --out")
+        if missing_runtimes:
+            print("msdmd: WARNING: --allow-missing-reader-runtimes set; checking incomplete output without writing.", file=sys.stderr)
         if not args.out.exists() or args.out.read_bytes() != rendered.encode("utf-8"):
             print("collection drift: " + str(args.out))
             return 1
@@ -1405,6 +1409,8 @@ def main() -> int:
                 os.unlink(temporary)
     else:
         print(rendered, end="")
+    if missing_runtimes and not args.check:
+        print("msdmd: WARNING: --allow-missing-reader-runtimes set; wrote incomplete output.", file=sys.stderr)
     if args.strict and not args.legacy_blocks_only and collection_errors(collection):
         return 2
     return 0
@@ -1412,4 +1418,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1143:160 imports_exports=23:10 calls_definitions=408:39
+# ratios: loc_comments=1147:162 imports_exports=23:10 calls_definitions=410:39

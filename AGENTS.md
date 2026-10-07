@@ -17,7 +17,8 @@ copies are propagated from.
 
 At **every agent instantiation**, before that agent may reason about or execute
 org work, resolve the available skill-lib entrypoint/index and the governing
-repository instructions. At **the start of every unit of work**, reevaluate the
+repository instructions. Load `wdll/SKILL.md` for any nontrivial spawned or
+newly-scoped work whose target state, scope, or proof is not already explicit. At **the start of every unit of work**, reevaluate the
 current request against skill descriptions and read every applicable `SKILL.md`
 before acting. A child/sub-agent inherits the parent's already-resolved
 repository identities, governing contracts, and applicable skill context, then
@@ -81,7 +82,7 @@ the rest. Treat it as the public contract.
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `repo-audit-repair`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -178,6 +179,7 @@ propagate from here.
   `fresh-making/SKILL.md`; bind exact inputs and generator/verifier identities,
   rebuild only the affected closure, and accept freshness only after verification.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
+- If a spawn or newly-scoped unit of work must choose consequential work, define scope/completion, or advance through uncertainty, load `wdll/SKILL.md` before execution. It owns job selection and falsifiable completion; domain skills own their own doctrine.
 - If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
 - If you are giving an MCP-capable agent operational contact with a private VM,
   load `vm-mcp/SKILL.md`; keep credentials outside the model path and choose

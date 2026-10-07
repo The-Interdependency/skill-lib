@@ -1,4 +1,4 @@
-# ratios: loc_comments=1147:162 imports_exports=23:10 calls_definitions=410:39
+# ratios: loc_comments=1078:263 imports_exports=23:10 calls_definitions=421:39
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -973,14 +973,45 @@ class GeneratorIdentityError(RuntimeError):
 # that chain (module.paths, not global folders) and fails instead of reporting
 # an unreadable package as absent.
 _PROBE_PREFIX = "msdmd-probe: "
-_NODE_PROBE = ("const fs=require('fs'),path=require('path');let t='absent';"
-               "try{t=require('typescript/package.json').version}catch(e){"
-               f"if(e.code!=='MODULE_NOT_FOUND'){{process.stderr.write('{_PROBE_PREFIX}typescript package could not be loaded ('+e.code+')\\n');process.exit(2)}}"
-               "for(const d of module.paths){const p=path.join(d,'typescript');"
-               "for(const f of [p,path.join(p,'package.json')]){try{fs.accessSync(f,fs.constants.R_OK)}catch(x){"
-               "if(x.code==='EACCES'||x.code==='EPERM'){"
-               f"process.stderr.write('{_PROBE_PREFIX}typescript package is not readable: '+f+'\\n');process.exit(2)}}}}}}}}}}"
-               "process.stdout.write(JSON.stringify({node:process.version,typescript:t}))")
+_NODE_PROBE = f"""
+const fs = require('fs'), path = require('path');
+const fail = message => {{
+  process.stderr.write('{_PROBE_PREFIX}' + message + '\\n');
+  process.exit(2);
+}};
+let entry, t = 'absent';
+try {{
+  entry = require.resolve('typescript');
+}} catch (e) {{
+  let installed = false;
+  for (const d of module.paths) {{
+    const p = path.join(d, 'typescript');
+    for (const f of [p, path.join(p, 'package.json')]) {{
+      try {{ fs.accessSync(f, fs.constants.R_OK); installed = true; }}
+      catch (x) {{
+        if (x.code === 'EACCES' || x.code === 'EPERM')
+          fail('typescript package is not readable: ' + f);
+        if (x.code !== 'ENOENT' && x.code !== 'ENOTDIR')
+          fail('typescript package could not be examined (' + x.code + ')');
+      }}
+    }}
+  }}
+  if (installed || e.code !== 'MODULE_NOT_FOUND')
+    fail('typescript compiler could not be resolved (' + e.code + ')');
+}}
+if (entry) {{
+  try {{
+    const compiler = require(entry);
+    if (typeof compiler.version !== 'string' || !compiler.version ||
+        typeof compiler.createSourceFile !== 'function')
+      fail('typescript compiler exports are invalid');
+    t = compiler.version;
+  }} catch (e) {{
+    fail('typescript compiler could not be loaded (' + (e.code || e.name) + ')');
+  }}
+}}
+process.stdout.write(JSON.stringify({{node: process.version, typescript: t}}));
+"""
 
 
 # Import names that cannot be derived from a distribution name.
@@ -1117,7 +1148,8 @@ def _probe_node(base: Path) -> dict[str, str]:
     Node missing from PATH is recorded as ``absent``. A node that starts but is
     killed by a signal (V8 refusing a sandbox such as MemoryDenyWriteExecute),
     rejects a flag, exits nonzero, times out, cannot be spawned, finds a
-    typescript package it cannot read, or prints something unparseable raises
+    typescript package it cannot read or load through its compiler entry point,
+    or prints something unparseable raises
     :class:`GeneratorIdentityError`: a failed probe is never reported as an
     absent runtime.
     """
@@ -1418,4 +1450,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1147:162 imports_exports=23:10 calls_definitions=410:39
+# ratios: loc_comments=1078:263 imports_exports=23:10 calls_definitions=421:39

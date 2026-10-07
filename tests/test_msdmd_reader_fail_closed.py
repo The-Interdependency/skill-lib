@@ -10,21 +10,28 @@ for broken runtimes; permission cases skip when run as root.
 from __future__ import annotations
 
 import json
+import copy
+import io
 import os
 import shutil
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
 from msdmd import native_code
+from msdmd import collect as collect_module
 from msdmd.collect import GeneratorIdentityError, generator_identity_components, runtime_unavailable
 from msdmd.native_code import read_typescript
 from tests.test_msdmd_node_sandbox import CONTEXT, ROOT, run_cli, ts_repo
 
 SOURCE = b"export const a = 1;\n"
 VALID = {"version": "5.0.0", "declarations": [], "imports": [], "exports": [], "docs": [], "comments": [], "diagnostics": []}
+MALFORMED_EXPORT = {"kind": "local-export", "local_name": "a", "exported_name": "a", "type_only": False,
+                    "declaration": "export {a};", "owner": "", "start_line": 1, "end_line": 1,
+                    "declaration_identities": "abc"}
 
 
 def fake_node(directory: Path, body: str) -> dict[str, str]:
@@ -94,6 +101,67 @@ class TypeScriptReaderFailClosedTests(unittest.TestCase):
         self.assertEqual(native_code.TYPESCRIPT_TIMEOUT_SECONDS, run.call_args.kwargs["timeout"])
         self.assertIn("120s", failure["message"])
 
+    def test_nested_export_identities_cannot_fabricate_symbol_edges(self) -> None:
+        completed = subprocess.CompletedProcess(["node"], 0, json.dumps(dict(VALID, exports=[MALFORMED_EXPORT])), "")
+        with patch("msdmd.native_code.subprocess.run", return_value=completed):
+            facts, edges, diagnostics = read_typescript(Path("a.ts"), SOURCE, CONTEXT)
+        self.assertEqual([], facts)
+        self.assertEqual([], edges)
+        self.assert_fails_closed(diagnostics)
+
+    def test_nested_worker_records_are_validated_before_projection(self) -> None:
+        if shutil.which("node") is None or not (ROOT / "msdmd/node_modules/typescript/package.json").exists():
+            self.skipTest("installed TypeScript worker required")
+        source = '''import {remote} from "./dep";
+/** Add one. @param n Input number. */
+function inc(n: number = 1): number { /* inside */ return n + 1; }
+export {inc as answer};
+export default inc;
+void import("./dynamic");
+'''
+        completed = subprocess.run([*native_code.NODE_ARGV, str(ROOT / "msdmd/typescript-reader.cjs")],
+                                   input=json.dumps({"path": "a.ts", "text": source}), text=True,
+                                   capture_output=True, check=True)
+        valid = json.loads(completed.stdout)
+        self.assertEqual(valid, native_code._worker_result(completed.stdout))
+        optional = {("declarations", "export_names"), ("exports", "expression"), ("diagnostics", "message")}
+        for section, records in valid.items():
+            if section == "version":
+                continue
+            self.assertTrue(records, section)
+            for replacement in (None, [], "record"):
+                broken = copy.deepcopy(valid)
+                broken[section][0] = replacement
+                with self.subTest(section=section, replacement=replacement):
+                    self.assert_fails_closed(worker(0, json.dumps(broken)))
+            for field, value in valid[section][0].items():
+                # Every field the real worker emitted must retain its native type.
+                broken = copy.deepcopy(valid)
+                broken[section][0][field] = {} if value is not None else 123
+                with self.subTest(section=section, field=field):
+                    self.assert_fails_closed(worker(0, json.dumps(broken)))
+                if (section, field) not in optional:
+                    del broken[section][0][field]
+                    with self.subTest(section=section, missing=field):
+                        self.assert_fails_closed(worker(0, json.dumps(broken)))
+        mutations = [
+            ("exports", "declaration_identities", [123]),
+            ("exports", "declaration_identities", ["unknown-symbol"]),
+            ("declarations", "exported", "false"),
+            ("declarations", "parameters", [dict(valid["declarations"][0]["parameters"][0], optional="false")]),
+            ("declarations", "decorators", [123]),
+            ("docs", "tags", [dict(valid["docs"][0]["tags"][0], tag=False)]),
+            ("comments", "start_line", True),
+            ("comments", "end_line", 0),
+            ("imports", "module", 123),
+            ("diagnostics", "status", "made-up"),
+        ]
+        for section, field, value in mutations:
+            broken = copy.deepcopy(valid)
+            broken[section][0][field] = value
+            with self.subTest(section=section, field=field, value=value):
+                self.assert_fails_closed(worker(0, json.dumps(broken)))
+
 
 class CliReaderFailureTests(unittest.TestCase):
     def repo(self, body: str) -> tuple[Path, Path, dict[str, str]]:
@@ -119,6 +187,7 @@ class CliReaderFailureTests(unittest.TestCase):
             "exit 1": ("echo 'RangeError (secret-source-line)' >&2; exit 1", "exited with status 1"),
             "non-JSON on exit 0": ("cat >/dev/null; echo not-json", "without a complete JSON result"),
             "missing exports": (f"cat >/dev/null; echo '{json.dumps(missing_exports)}'", "without a complete JSON result"),
+            "malformed export identities": (f"cat >/dev/null; echo '{json.dumps(dict(VALID, exports=[MALFORMED_EXPORT]))}'", "without a complete JSON result"),
             "unsupported flag": ("echo 'node: bad option: --jitless' >&2; exit 9", "rejected --jitless"),
             "timeout": ("exec sleep 30", "exceeded 0.5s"),
         }
@@ -186,10 +255,63 @@ class GeneratorIdentityProbeFailClosedTests(unittest.TestCase):
         shutil.copy(ROOT / "msdmd" / "collect.py", base / "collect.py")
         package = base / "node_modules" / "typescript"
         package.mkdir(parents=True)
-        (package / "package.json").write_text('{"name":"typescript","version":"9.9.9"}', encoding="utf-8")
+        (package / "package.json").write_text('{"name":"typescript","version":"9.9.9","main":"lib/typescript.js"}', encoding="utf-8")
+        (package / "lib").mkdir()
+        (package / "lib/typescript.js").write_text('module.exports = {version: "9.9.9", createSourceFile() {}};', encoding="utf-8")
         (base / "node_modules" / ".bin").mkdir()
         (base / "node_modules" / ".bin" / "tsc").symlink_to("../typescript/bin/tsc")
         return base
+
+    def test_probe_loads_the_compiler_not_only_its_package_metadata(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node is required")
+        base = self.base_with_typescript()
+        entry = base / "node_modules/typescript/lib/typescript.js"
+        entry.write_text('module.exports = {version: "8.8.8", createSourceFile() {}};', encoding="utf-8")
+        self.assertEqual("8.8.8", generator_identity_components(base)["typescript"])
+        for body in (None, 'throw new Error("secret-source-line");', 'require("missing-compiler-dependency");', 'module.exports = {};'):
+            if body is None:
+                entry.unlink()
+            else:
+                entry.write_text(body, encoding="utf-8")
+            with self.subTest(body=body), self.assertRaises(GeneratorIdentityError) as raised:
+                generator_identity_components(base)
+            self.assertIn("typescript compiler", str(raised.exception))
+            self.assertNotIn("secret-source-line", str(raised.exception))
+
+    def test_cli_missing_compiler_exits_3_without_an_identity(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node is required")
+        base = self.base_with_typescript()
+        (base / "node_modules/typescript/lib/typescript.js").unlink()
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with patch.object(collect_module, "__file__", str(base / "collect.py")), \
+             patch("sys.argv", ["msdmd.collect", "--print-generator-identity", "--typescript-timeout", "120"]), \
+             redirect_stdout(stdout), redirect_stderr(stderr):
+            result = collect_module.main()
+        self.assertEqual(3, result)
+        self.assertEqual("", stdout.getvalue())
+        self.assertIn("typescript compiler", stderr.getvalue())
+        self.assertNotIn("Traceback", stderr.getvalue())
+
+    def test_missing_typescript_is_still_reported_as_absent(self) -> None:
+        if shutil.which("node") is None:
+            self.skipTest("node is required")
+        base = self.base_with_typescript()
+        shutil.rmtree(base / "node_modules/typescript")
+        self.assertEqual("absent", generator_identity_components(base)["typescript"])
+
+    def test_unreadable_compiler_fails_closed(self) -> None:
+        if shutil.which("node") is None or os.geteuid() == 0:
+            self.skipTest("node and a non-root user are required")
+        base = self.base_with_typescript()
+        entry = base / "node_modules/typescript/lib/typescript.js"
+        entry.chmod(0o000)
+        try:
+            with self.assertRaises(GeneratorIdentityError):
+                generator_identity_components(base)
+        finally:
+            entry.chmod(0o600)
 
     @staticmethod
     def restore(tmp: Path) -> None:

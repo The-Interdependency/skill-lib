@@ -1,10 +1,12 @@
-# ratios: loc_comments=256:35 imports_exports=17:5 calls_definitions=100:8
+# ratios: loc_comments=306:40 imports_exports=17:5 calls_definitions=117:9
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
 Python delegates symbol/comment attachment to module_projection. The TypeScript
 compiler is a library worker, not the inspected program. Neither reader resolves
 imports, loads target configuration, or establishes runtime behavior.
+Worker records and symbol references are validated before projection; malformed
+results produce a reader failure without partial facts or guessed edges.
 """
 from __future__ import annotations
 
@@ -192,6 +194,44 @@ TYPESCRIPT_TIMEOUT_SECONDS = 120.0
 
 # Worker output keys and their types; anything else is not a worker result.
 _WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'exports', 'diagnostics')
+_WORKER_SPAN = {'start_line': int, 'end_line': int}
+_NULLABLE_TEXT = (str, type(None))
+# The trusted worker owns this wire shape. Validate before projecting any facts;
+# extra fields stay preserved, but known fields never acquire guessed types.
+_WORKER_RECORDS = {
+    'declarations': {**_WORKER_SPAN, 'name': _NULLABLE_TEXT, 'qualified_name': str,
+        'identity': str, 'kind': str, 'exported': bool, 'anonymous': bool,
+        'parameters': [{'name': str, 'type': _NULLABLE_TEXT, 'optional': bool,
+                        'rest': bool, 'default': _NULLABLE_TEXT}],
+        'returns': _NULLABLE_TEXT, 'decorators': [str]},
+    'docs': {**_WORKER_SPAN, 'identity': str, 'owner': str, 'text': str,
+        'description': str, 'tags': [{'tag': str, 'text': str, 'name': _NULLABLE_TEXT,
+                                    'type': _NULLABLE_TEXT, 'comment': _NULLABLE_TEXT}]},
+    'comments': {**_WORKER_SPAN, 'text': str, 'identity': _NULLABLE_TEXT,
+        'owner': _NULLABLE_TEXT, 'attachment': str},
+    'imports': {**_WORKER_SPAN, 'module': str, 'kind': str, 'declaration': str, 'owner': str},
+    'exports': {**_WORKER_SPAN, 'kind': str, 'local_name': _NULLABLE_TEXT,
+        'exported_name': str, 'type_only': bool, 'declaration': str, 'owner': str,
+        'declaration_identities': [str]},
+    'diagnostics': {**_WORKER_SPAN, 'code': str, 'status': str},
+}
+_WORKER_OPTIONAL_FIELDS = {
+    'declarations': {'export_names': [str]},
+    'exports': {'expression': str},
+    'diagnostics': {'message': str},
+}
+
+
+def _worker_value(value: Any, schema: Any) -> bool:
+    """Check required record fields, array elements and exact JSON scalar types."""
+    if isinstance(schema, dict):
+        return isinstance(value, dict) and all(key in value and _worker_value(value[key], child)
+                                              for key, child in schema.items())
+    if isinstance(schema, list):
+        return isinstance(value, list) and all(_worker_value(item, schema[0]) for item in value)
+    if isinstance(schema, tuple):
+        return type(value) in schema
+    return type(value) is schema  # bool is not a source-line integer
 
 
 def node_rejected_flag(stderr: str) -> bool:
@@ -203,11 +243,28 @@ def _worker_result(stdout: str) -> dict[str, Any] | None:
     """Parse worker stdout, or None when it is not a complete worker result."""
     try:
         parsed = json.loads(stdout)
-    except ValueError:
+    except (ValueError, RecursionError):
         return None
-    if not isinstance(parsed, dict) or not isinstance(parsed.get('version'), str):
+    if not isinstance(parsed, dict) or not isinstance(parsed.get('version'), str) or not parsed['version']:
         return None
     if not all(isinstance(parsed.get(key), list) for key in _WORKER_LISTS):
+        return None
+    for section, schema in _WORKER_RECORDS.items():
+        for item in parsed[section]:
+            if not _worker_value(item, schema) or not 0 < item['start_line'] <= item['end_line']:
+                return None
+            if any(key in item and not _worker_value(item[key], child)
+                   for key, child in _WORKER_OPTIONAL_FIELDS.get(section, {}).items()):
+                return None
+    identities = {item['identity'] for item in parsed['declarations']}
+    if '' in identities or len(identities) != len(parsed['declarations']):
+        return None
+    for section in ('docs', 'comments'):
+        if any(item['identity'] is not None and item['identity'] not in identities for item in parsed[section]):
+            return None
+    if any(identity not in identities for item in parsed['exports'] for identity in item['declaration_identities']):
+        return None
+    if any(item['status'] not in {'invalid', 'dynamic-unresolved'} for item in parsed['diagnostics']):
         return None
     return parsed
 
@@ -315,4 +372,4 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=256:35 imports_exports=17:5 calls_definitions=100:8
+# ratios: loc_comments=306:40 imports_exports=17:5 calls_definitions=117:9

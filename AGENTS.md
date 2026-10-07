@@ -69,6 +69,8 @@ description: <one paragraph; ends with explicit "Load this when …" triggers>
 The `description` is what your harness uses to decide whether to load
 the rest. Treat it as the public contract.
 
+When creating or revising any skill narrative, load `skill-build/SKILL.md` and apply its narrative compression invariant: one authoritative home per concept, one semantic job per clause, and repetition only when it changes execution. This applies to every skill kind.
+
 ## How to load a skill
 
 1. Walk the configured skills root (commonly `.agents/skills/` in

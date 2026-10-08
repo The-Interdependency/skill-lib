@@ -1156,8 +1156,8 @@ def _probe_node(base: Path) -> dict[str, str]:
     env = {key: value for key, value in os.environ.items() if key not in {"NODE_OPTIONS", "NODE_PATH"}}
     timeout = native_code.TYPESCRIPT_TIMEOUT_SECONDS
     try:
-        probe = subprocess.run([*NODE_ARGV, "-e", _NODE_PROBE], cwd=base, env=env, capture_output=True, text=True,
-                               encoding="utf-8", errors="replace", check=False, timeout=timeout)
+        probe = native_code.run_node([*NODE_ARGV, "-e", _NODE_PROBE], cwd=base, env=env,
+                                     errors="replace", timeout=timeout)
     except FileNotFoundError:
         return {"node": "absent", "typescript": "absent"}
     except subprocess.TimeoutExpired as exc:

@@ -1,4 +1,4 @@
-# ratios: loc_comments=306:40 imports_exports=17:5 calls_definitions=117:9
+# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -192,6 +192,50 @@ def node_signal(returncode: int) -> str | None:
 # a reader failure. The CLI sets this from --typescript-timeout.
 TYPESCRIPT_TIMEOUT_SECONDS = 120.0
 
+_POSIX = os.name == 'posix'
+
+
+def _kill_process_group(process: subprocess.Popen) -> None:
+    """Kill ``process`` and, on POSIX, every process in its session's group."""
+    if _POSIX:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)  # start_new_session: pgid == pid
+        except (ProcessLookupError, PermissionError):
+            pass
+    try:
+        process.kill()
+    except ProcessLookupError:
+        pass
+
+
+def run_node(argv: list[str], *, input: str | None = None, timeout: float, cwd: Path | str,
+             env: dict[str, str], encoding: str = 'utf-8', errors: str = 'strict') -> subprocess.CompletedProcess:
+    """Run a node command like ``subprocess.run(..., capture_output=True, text=True)``.
+
+    On POSIX the command starts in its own session, and a timeout (or any
+    interruption) kills the whole process group, not just the direct child: a
+    version-manager shim (nvm, volta, asdf) may run the real node as a
+    grandchild that would otherwise keep running and holding the pipes.
+    Raises ``subprocess.TimeoutExpired`` after the group is killed.
+    """
+    with subprocess.Popen(argv, stdin=subprocess.PIPE if input is not None else subprocess.DEVNULL,
+                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, env=env,
+                          text=True, encoding=encoding, errors=errors, start_new_session=_POSIX) as process:
+        try:
+            stdout, stderr = process.communicate(input, timeout=timeout)
+        except BaseException:
+            _kill_process_group(process)
+            process.wait()
+            raise
+    return subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+
+
+# Per-file worker diagnostic for valid input nested too deeply for the
+# recursive compiler/visitor stack (smaller under --jitless). The file is not
+# extracted (an error diagnostic, so --strict exits 2), but the run continues;
+# it is not a missing runtime and never exits 3.
+TOO_DEEP_CODE = 'typescript_input_too_deep'
+
 # Worker output keys and their types; anything else is not a worker result.
 _WORKER_LISTS = ('declarations', 'docs', 'comments', 'imports', 'exports', 'diagnostics')
 _WORKER_SPAN = {'start_line': int, 'end_line': int}
@@ -264,7 +308,8 @@ def _worker_result(stdout: str) -> dict[str, Any] | None:
             return None
     if any(identity not in identities for item in parsed['exports'] for identity in item['declaration_identities']):
         return None
-    if any(item['status'] not in {'invalid', 'dynamic-unresolved'} for item in parsed['diagnostics']):
+    if any(item['status'] not in {'invalid', 'dynamic-unresolved'}
+           and (item['status'], item['code']) != ('unsupported', TOO_DEEP_CODE) for item in parsed['diagnostics']):
         return None
     return parsed
 
@@ -286,8 +331,7 @@ def read_typescript(path: Path, data: bytes, context: dict[str, Any]) -> tuple[l
     request = json.dumps({'path': str(path), 'text': data.decode('utf-8-sig')})
     # Package resolution is rooted at the trusted helper, never the inspected repo.
     try:
-        result = subprocess.run([*NODE_ARGV, str(helper)], input=request,
-            capture_output=True, text=True, encoding='utf-8', cwd=helper.parent, env=env, check=False,
+        result = run_node([*NODE_ARGV, str(helper)], input=request, cwd=helper.parent, env=env,
             timeout=TYPESCRIPT_TIMEOUT_SECONDS)
     except FileNotFoundError:
         raise  # node absent from PATH: reader_dependency_unavailable
@@ -330,7 +374,7 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
     edges: list = []
     diagnostics = [_diagnostic(context, reader_id=rid, code=d['code'],
         message=d.get('message', 'dynamic module loading is not resolved'), status=d['status'],
-        severity='error' if d['status'] == 'invalid' else 'warning',
+        severity='error' if d['status'] == 'invalid' or d['code'] == TOO_DEEP_CODE else 'warning',
         location={'start_line': d['start_line'], 'end_line': d['end_line']}) for d in parsed['diagnostics']]
     for index, item in enumerate(parsed['declarations']):
         fact = _fact(context, reader_id=rid, kind='exported-declaration' if item['exported'] else 'symbol-declaration',
@@ -372,4 +416,4 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=306:40 imports_exports=17:5 calls_definitions=117:9
+# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11

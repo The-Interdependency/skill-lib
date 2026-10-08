@@ -16,7 +16,16 @@ Consumers re-syncing past `3fa40b9` get:
 - **New `--typescript-timeout SECONDS`** (default 120, positive and finite)
   bounds each worker and the identity probe. A worker past it is killed and
   reported as `typescript_reader_timeout` (exit 3); a probe past it exits 3
-  with no identity.
+  with no identity. On POSIX the worker and probe run in their own session
+  and a timeout kills the whole process group, so a version-manager shim
+  (nvm, volta, asdf) cannot leave the real node running.
+- **Deep valid input is a per-file diagnostic, not exit 3.** A file whose
+  nesting exhausts the compiler/visitor stack under `--jitless` (for example
+  thousands of chained `+` terms, or hundreds of nested `if` blocks, object or
+  array literals) gets `typescript_input_too_deep` (error severity, no facts);
+  other files are still collected, and the run exits 0 (2 under `--strict`).
+  Only a call-stack `RangeError` is treated this way; every other worker crash
+  still exits 3.
 - **`--print-generator-identity` exits 3, not a `PermissionError`
   traceback,** when the collector sources or a typescript package on the
   worker's resolution path (`node_modules` from the skill directory upward)

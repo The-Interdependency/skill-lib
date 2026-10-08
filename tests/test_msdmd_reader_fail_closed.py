@@ -45,7 +45,7 @@ def fake_node(directory: Path, body: str) -> dict[str, str]:
 
 def worker(returncode: int, stdout: str = "", stderr: str = "") -> list[dict]:
     completed = subprocess.CompletedProcess(args=["node"], returncode=returncode, stdout=stdout, stderr=stderr)
-    with patch("msdmd.native_code.subprocess.run", return_value=completed):
+    with patch("msdmd.native_code.run_node", return_value=completed):
         return read_typescript(Path("a.ts"), SOURCE, CONTEXT)[2]
 
 
@@ -78,9 +78,9 @@ class TypeScriptReaderFailClosedTests(unittest.TestCase):
         self.assertEqual([], worker(0, stdout=json.dumps(VALID)))  # a complete empty result is still fine
 
     def test_spawn_errors_other_than_missing_node_fail_closed(self) -> None:
-        with patch("msdmd.native_code.subprocess.run", side_effect=PermissionError(13, "denied")):
+        with patch("msdmd.native_code.run_node", side_effect=PermissionError(13, "denied")):
             self.assert_fails_closed(read_typescript(Path("a.ts"), SOURCE, CONTEXT)[2])
-        with patch("msdmd.native_code.subprocess.run", side_effect=FileNotFoundError("node")):
+        with patch("msdmd.native_code.run_node", side_effect=FileNotFoundError("node")):
             with self.assertRaises(FileNotFoundError):  # read_native: reader_dependency_unavailable
                 read_typescript(Path("a.ts"), SOURCE, CONTEXT)
 
@@ -96,14 +96,14 @@ class TypeScriptReaderFailClosedTests(unittest.TestCase):
         self.assertEqual(VALID, native_code._worker_result(json.dumps(VALID)))
 
     def test_worker_timeout_kills_and_fails_closed(self) -> None:
-        with patch("msdmd.native_code.subprocess.run", side_effect=subprocess.TimeoutExpired(["node"], 120)) as run:
+        with patch("msdmd.native_code.run_node", side_effect=subprocess.TimeoutExpired(["node"], 120)) as run:
             failure = self.assert_fails_closed(read_typescript(Path("a.ts"), SOURCE, CONTEXT)[2], "typescript_reader_timeout")
         self.assertEqual(native_code.TYPESCRIPT_TIMEOUT_SECONDS, run.call_args.kwargs["timeout"])
         self.assertIn("120s", failure["message"])
 
     def test_nested_export_identities_cannot_fabricate_symbol_edges(self) -> None:
         completed = subprocess.CompletedProcess(["node"], 0, json.dumps(dict(VALID, exports=[MALFORMED_EXPORT])), "")
-        with patch("msdmd.native_code.subprocess.run", return_value=completed):
+        with patch("msdmd.native_code.run_node", return_value=completed):
             facts, edges, diagnostics = read_typescript(Path("a.ts"), SOURCE, CONTEXT)
         self.assertEqual([], facts)
         self.assertEqual([], edges)
@@ -365,7 +365,7 @@ class GeneratorIdentityProbeFailClosedTests(unittest.TestCase):
         locked = base / "node_modules" / "locked"
         locked.mkdir()
         locked.chmod(0o000)  # pruned before it is entered, so never an error
-        with patch("msdmd.collect.subprocess.run", return_value=absent):
+        with patch("msdmd.native_code.run_node", return_value=absent):
             generator_identity_components(base)
             (base / "collect.py").chmod(0o000)
             try:
@@ -377,11 +377,11 @@ class GeneratorIdentityProbeFailClosedTests(unittest.TestCase):
 
     def test_probe_rejected_flag_and_timeout_raise(self) -> None:
         rejected = subprocess.CompletedProcess(["node"], 9, "", "node: bad option: --jitless\n")
-        with patch("msdmd.collect.subprocess.run", return_value=rejected):
+        with patch("msdmd.native_code.run_node", return_value=rejected):
             with self.assertRaises(GeneratorIdentityError) as raised:
                 generator_identity_components()
         self.assertIn("rejected --jitless", str(raised.exception))
-        with patch("msdmd.collect.subprocess.run", side_effect=subprocess.TimeoutExpired(["node"], 1)) as run:
+        with patch("msdmd.native_code.run_node", side_effect=subprocess.TimeoutExpired(["node"], 1)) as run:
             with self.assertRaises(GeneratorIdentityError) as raised:
                 generator_identity_components()
         self.assertIn("exceeded", str(raised.exception))

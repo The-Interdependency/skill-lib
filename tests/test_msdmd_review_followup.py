@@ -292,7 +292,7 @@ class TypeScriptWorkerFailureTests(unittest.TestCase):
         completed = subprocess.CompletedProcess(args=["node"], returncode=1, stdout="", stderr=stderr)
         context = {"repo": "fixture", "revision": "r", "file": "a.ts", "content_sha256": "0" * 64, "codeowners_source": None,
                    "configuration_sha256": "0" * 64}
-        with patch("msdmd.native_code.subprocess.run", return_value=completed):
+        with patch("msdmd.native_code.run_node", return_value=completed):
             return read_typescript(Path("a.ts"), b"export const a = 1;\n", context)[2]
 
     def test_missing_typescript_package_is_runtime_unavailable(self) -> None:

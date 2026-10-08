@@ -73,6 +73,8 @@ drift. Nothing is written on exit 3, 4 or 5. Runners that fingerprint freshness 
 its Node probe is killed by a signal, fails, times out or cannot read the
 typescript package). A TypeScript worker that exits nonzero, prints no complete
 JSON result, rejects `--jitless` or exceeds `--typescript-timeout` also exits 3.
+A file nested too deeply for the reader's stack is a per-file
+`typescript_input_too_deep` diagnostic instead (exit 0, or 2 under `--strict`).
 
 Run any target-local checks named in `CLAUDE.md`, `AGENTS.md`, or
 `.agents/skills/README.md`.

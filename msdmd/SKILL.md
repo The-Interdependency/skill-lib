@@ -45,7 +45,12 @@ by a signal is `node_runtime_unavailable` and also exits 3. Any other
 TypeScript worker failure also fails closed with exit 3: a nonzero exit, exit
 0 without a complete JSON result, or node rejecting `--jitless` is
 `typescript_reader_failed`, and a worker running past `--typescript-timeout`
-seconds (default 120) is killed as `typescript_reader_timeout`.
+seconds (default 120) is killed, with its whole process group (so a
+version-manager shim's node child goes too), as `typescript_reader_timeout`.
+Valid input nested too deeply for the reader's stack (very long operator
+chains, deeply nested blocks or literals) is not a runtime failure: that file
+gets a `typescript_input_too_deep` error diagnostic and no facts, and the run
+continues (exit 0, or 2 under `--strict`).
 The universal MSDMD block parsers themselves remain dependency-free.
 
 ## Doctrine

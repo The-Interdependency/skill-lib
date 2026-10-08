@@ -51,7 +51,12 @@ so sandboxes with systemd `MemoryDenyWriteExecute=yes` work; a Node worker
 killed by a signal is a missing runtime (exit 3), never an empty TypeScript
 extraction. Any other worker failure (nonzero exit, no complete JSON result on
 exit 0, node rejecting `--jitless`, or running past `--typescript-timeout`
-seconds, default 120) also exits 3 and writes nothing.
+seconds, default 120) also exits 3 and writes nothing; a timeout kills the
+worker's whole process group, including node started by a version-manager
+shim. Input nested too deeply for the reader's stack is the exception: that
+file gets a `typescript_input_too_deep` error diagnostic and the run continues
+(exit 0, or 2 under `--strict`), so runners must not treat it as a missing
+runtime.
 
 These commands implement the shipped reader matrix, not every possible metadata
 standard. A complete compliance verdict still depends on the declared repository

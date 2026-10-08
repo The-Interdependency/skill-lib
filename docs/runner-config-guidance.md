@@ -45,10 +45,18 @@ PATH, corrupt index, broken `.git`) or the root is git-ignored by an enclosing
 repository (no opt-out; `--check` reports 5, not drift). Exits 3, 4 and 5 write
 nothing and are reported together, with precedence 5, then 3, then 4.
 Use `--print-generator-identity` as the generator fingerprint; it exits 3 with
-no identity when its Node probe is killed by a signal or fails. Node always runs
-with `--jitless`, so sandboxes with systemd `MemoryDenyWriteExecute=yes` work;
-a Node worker killed by a signal is a missing runtime (exit 3), never an empty
-TypeScript extraction.
+no identity when its Node probe is killed by a signal, fails, times out or
+finds a typescript package it cannot read. Node always runs with `--jitless`,
+so sandboxes with systemd `MemoryDenyWriteExecute=yes` work; a Node worker
+killed by a signal is a missing runtime (exit 3), never an empty TypeScript
+extraction. Any other worker failure (nonzero exit, no complete JSON result on
+exit 0, node rejecting `--jitless`, or running past `--typescript-timeout`
+seconds, default 120) also exits 3 and writes nothing; a timeout kills the
+worker's whole process group, including node started by a version-manager
+shim. Input nested too deeply for the reader's stack is the exception: that
+file gets a `typescript_input_too_deep` error diagnostic and the run continues
+(exit 0, or 2 under `--strict`), so runners must not treat it as a missing
+runtime.
 
 These commands implement the shipped reader matrix, not every possible metadata
 standard. A complete compliance verdict still depends on the declared repository

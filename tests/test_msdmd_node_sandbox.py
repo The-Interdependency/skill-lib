@@ -85,11 +85,11 @@ class NodeSignalTests(unittest.TestCase):
     def test_node_always_runs_jitless(self) -> None:
         self.assertEqual(("node", "--jitless"), NODE_ARGV)
         completed = subprocess.CompletedProcess(args=["node"], returncode=0, stdout='{"node":"v0","typescript":"0"}', stderr="")
-        with patch("msdmd.collect.subprocess.run", return_value=completed) as probe:
+        with patch("msdmd.native_code.run_node", return_value=completed) as probe:
             generator_identity_components()
         self.assertEqual(["node", "--jitless", "-e"], probe.call_args.args[0][:3])
         failed = subprocess.CompletedProcess(args=["node"], returncode=1, stdout="", stderr="")
-        with patch("msdmd.native_code.subprocess.run", return_value=failed) as worker:
+        with patch("msdmd.native_code.run_node", return_value=failed) as worker:
             read_typescript(Path("a.ts"), b"export const a = 1;\n", CONTEXT)
         self.assertEqual(["node", "--jitless"], worker.call_args.args[0][:2])
 
@@ -99,7 +99,7 @@ class TypeScriptWorkerSignalTests(unittest.TestCase):
         for returncode in (-signal.SIGTRAP, 128 + signal.SIGTRAP):
             completed = subprocess.CompletedProcess(args=["node"], returncode=returncode, stdout="",
                                                     stderr="# Fatal error in , line 0\n# secret-source-line")
-            with patch("msdmd.native_code.subprocess.run", return_value=completed):
+            with patch("msdmd.native_code.run_node", return_value=completed):
                 diagnostics = read_typescript(Path("a.ts"), b"export const a = 1;\n", CONTEXT)[2]
             self.assertEqual(["node_runtime_unavailable"], [d["code"] for d in diagnostics])
             self.assertIn("SIGTRAP", diagnostics[0]["message"])
@@ -124,7 +124,7 @@ class TypeScriptWorkerSignalTests(unittest.TestCase):
 
 class GeneratorIdentityProbeTests(unittest.TestCase):
     def probe(self, completed: subprocess.CompletedProcess):
-        with patch("msdmd.collect.subprocess.run", return_value=completed):
+        with patch("msdmd.native_code.run_node", return_value=completed):
             return generator_identity_components()
 
     def test_failed_probe_raises_instead_of_reporting_absent(self) -> None:
@@ -139,12 +139,12 @@ class GeneratorIdentityProbeTests(unittest.TestCase):
             with self.assertRaises(GeneratorIdentityError) as raised:
                 self.probe(completed)
             self.assertIn(expected.strip(), str(raised.exception))
-        with patch("msdmd.collect.subprocess.run", side_effect=OSError(12, "Cannot allocate memory")):
+        with patch("msdmd.native_code.run_node", side_effect=OSError(12, "Cannot allocate memory")):
             with self.assertRaises(GeneratorIdentityError):
                 generator_identity_components()
 
     def test_node_missing_from_path_is_still_absent(self) -> None:
-        with patch("msdmd.collect.subprocess.run", side_effect=FileNotFoundError("node")):
+        with patch("msdmd.native_code.run_node", side_effect=FileNotFoundError("node")):
             components = generator_identity_components()
         self.assertEqual(("absent", "absent"), (components["node"], components["typescript"]))
 

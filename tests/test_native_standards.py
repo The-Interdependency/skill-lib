@@ -118,7 +118,7 @@ export class Client {
         self.assertIn('custom', json.dumps(docs))
 
     def test_missing_typescript_runtime_is_unsupported_not_empty_success(self):
-        with patch('msdmd.native_code.subprocess.run', side_effect=FileNotFoundError()):
+        with patch('msdmd.native_code.run_node', side_effect=FileNotFoundError()):
             result = self.collection({'a.ts': 'export const x = 1;'}, required_sources=['*.ts'])
         self.assertTrue(collection_errors(result))
         self.assertIn('reader_dependency_unavailable', {d['code'] for d in result['diagnostics']})

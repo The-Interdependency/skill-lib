@@ -292,7 +292,7 @@ class TypeScriptWorkerFailureTests(unittest.TestCase):
         completed = subprocess.CompletedProcess(args=["node"], returncode=1, stdout="", stderr=stderr)
         context = {"repo": "fixture", "revision": "r", "file": "a.ts", "content_sha256": "0" * 64, "codeowners_source": None,
                    "configuration_sha256": "0" * 64}
-        with patch("msdmd.native_code.subprocess.run", return_value=completed):
+        with patch("msdmd.native_code.run_node", return_value=completed):
             return read_typescript(Path("a.ts"), b"export const a = 1;\n", context)[2]
 
     def test_missing_typescript_package_is_runtime_unavailable(self) -> None:
@@ -300,11 +300,13 @@ class TypeScriptWorkerFailureTests(unittest.TestCase):
         self.assertEqual(["typescript_reader_unavailable"], [d["code"] for d in diagnostics])
         self.assertTrue(runtime_unavailable({"diagnostics": diagnostics}))
 
-    def test_other_worker_failures_are_reader_errors(self) -> None:
+    def test_other_worker_failures_are_reader_errors_that_fail_closed(self) -> None:
+        # #120 review: any nonzero worker exit fails closed (CLI exit 3), but it
+        # is still named a reader failure, not a missing package.
         diagnostics = self.run_worker("RangeError: Maximum call stack size exceeded\n    at visit (secret-source-line)")
         self.assertEqual(["typescript_reader_failed"], [d["code"] for d in diagnostics])
         self.assertEqual("error", diagnostics[0]["severity"])
-        self.assertFalse(runtime_unavailable({"diagnostics": diagnostics}))
+        self.assertTrue(runtime_unavailable({"diagnostics": diagnostics}))
         self.assertNotIn("secret-source-line", json.dumps(diagnostics))
 
 

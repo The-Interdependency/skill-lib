@@ -26,7 +26,7 @@ class NativeReviewRegressions(unittest.TestCase):
 
     def test_missing_comment_parser_retains_uncertified_candidates_and_fails_closed(self):
         source = '// === DOCS ===\n// id: rescued\n//   owner: team\n// === END DOCS ===\nexport const x = 1;\n'
-        with patch('msdmd.native_code.subprocess.run', side_effect=FileNotFoundError()):
+        with patch('msdmd.native_code.run_node', side_effect=FileNotFoundError()):
             result = self.collection({'a.ts': source})
         self.assertTrue(collection_errors(result))
         candidates = [d for d in result['diagnostics'] if d['code'] == 'supplemental_comment_extraction_unavailable']

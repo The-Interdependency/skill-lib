@@ -1,71 +1,37 @@
 ---
 name: wdll
-description: Executive task selection, scope, completion, and strategic advancement under uncertainty and constraint. Load this at spawn or work inception when an agent must choose consequential work, define what completion means, decide how much scope is required, or advance a broad objective through unresolved constraints. Do not load for trivial fixed-scope execution whose target state and proof are already explicit.
+description: Executive job selection and falsifiable completion under uncertainty and constraint. Load this when a spawn or newly scoped unit of work must choose consequential work, establish the required scope, or define what completion proves. Do not load for a fixed-scope operation whose target state and verification are already explicit.
 ---
 
 # WDLL — What Done Looks Like
 
-For each spawn:
+## Workflow
 
-1. **Select the job**
-   - Identify the objective.
-   - Find the highest-leverage constraint or uncertainty.
-   - Work at the causal layer, not the nearest symptom.
+For each applicable spawn or newly scoped unit of work:
 
-2. **Define the transition**
-   - State `FROM → TO`.
-   - Scope includes whatever is required to make that transition real.
-   - Exclude work that does not contribute to it.
+1. **Select** — Identify the objective; choose the causal constraint or uncertainty whose removal most advances it, not the nearest defect.
+2. **Bound** — State `FROM → TO`. Include whatever is necessary to realize that transition, and exclude unrelated work; size alone is not a criterion.
+3. **Define done** — Record `DONE WHEN` (observable state), `PROVEN BY` (test, receipt, artifact, or live evidence), and `FAILS IF` (invalidating conditions).
+4. **Resolve** — Test uncertainty only when the result could change the action. Otherwise defer it under `hmmm`.
+5. **Execute within authority** — Honor the user's and parent's actual authorization, permissions, and scope. Read-only/audit tasks remain read-only; mutate, publish, or merge only when authorized. Prefer executable repair to advice *within* that boundary.
+6. **Apply governing skills** — Load domain contracts for their own work. If the task concerns metadata readers, provenance, parsing, collections, or projections, load `msdmd/SKILL.md` and verify its applicable requirements there. WDLL selects and proves the work; MSDMD owns its compliance rules.
+7. **Verify** — Check the exact resulting head or artifact, relevant tests, drift/contract gates, live review findings, and mergeability where applicable. Evidence for stale state does not verify new state.
+8. **Return** — Report `CHANGED` (state), `PROOF` (evidence), `NEXT` (highest-leverage remaining action), and `hmmm` (unresolved constraint). Suppress unchanged process narration.
 
-3. **Define completion**
-   - **DONE WHEN:** observable target state exists.
-   - **PROVEN BY:** test, receipt, artifact, or live state.
-   - **FAILS IF:** conditions that invalidate completion.
+## Anti-patterns
 
-4. **Handle uncertainty**
-   - Resolve only uncertainty that can change action.
-   - Otherwise defer it.
-   - Preserve unresolved constraints under `hmmm`.
-
-5. **Execute**
-   - Inspect, test, repair, implement, regenerate, remove, migrate, merge.
-   - Do not stop at recommendation when safe execution is available.
-
-6. **MSDMD compliance**
-   Where applicable, verify:
-   - canonical authority and exact SHA;
-   - native readers consume existing metadata;
-   - no duplicate redeclaration;
-   - trusted parsing cannot be shadowed by the inspected repo;
-   - incomplete visibility stays incomplete;
-   - sensitive failure paths fail closed;
-   - IDs/provenance are source-qualified;
-   - projections reproduce from canonical source;
-   - deprecated routes are removed when replacement exists;
-   - meaningful invariants have executable falsification tests.
-
-7. **Verify final reality**
-   - exact head;
-   - relevant tests;
-   - drift/contract state;
-   - review findings;
-   - generated artifacts;
-   - mergeability where relevant.
-
-8. **Return only**
-   - **CHANGED** — material state change.
-   - **PROOF** — evidence.
-   - **NEXT** — highest-leverage remaining action.
-   - **hmmm** — unresolved constraint.
+- Selecting the smallest or easiest-green task instead of the consequential transition.
+- Repairing repeated symptoms in consumers while leaving their canonical cause intact.
+- Presenting a checklist, passing check, or recommendation as accomplished state.
+- Executing mutations beyond the task's authorization.
+- Repeating domain rules instead of loading their owning skill.
 
 ## WDLL for WDLL
 
-This skill succeeds when the spawn:
+DONE WHEN a spawn or newly scoped task selects consequential work, bounds and executes the authorized transition, and returns falsifiable evidence that improves the parent's next decision.
 
-- chooses the right work;
-- scopes to the required state transition;
-- executes at the causal layer;
-- proves completion with falsifiable evidence;
-- leaves the parent system in a better strategic position.
+FAILS IF task selection rewards size, proximity, convenient green checks, or mere activity over strategic advancement.
 
-It fails if the spawn optimizes for smallest task, nearest defect, easiest green check, or activity without strategic advancement.
+## hmmm
+
+Preserve unavailable authority and undecidable constraints rather than fabricating completion.

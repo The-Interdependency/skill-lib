@@ -80,35 +80,36 @@ stream lives in `agent_logs`. Keep these three in agreement.
    `get_pcna()` at lifespan startup; `await pcna.load_checkpoint()` to
    restore learned ring state; ensure its row in the agent/instance table.
    Do not construct a second primary.
-3. **Spawn only through the `sub_agent_spawn` tool**
+3. **Bind consequential spawned work to WDLL.** When the child receives a nontrivial objective whose target state, scope, or proof is not already explicit, apply `wdll/SKILL.md` before execution so the spawn owns a falsifiable state transition rather than a broad activity prompt.
+4. **Spawn only through the `sub_agent_spawn` tool**
    (`python/services/tools/sub_agent_spawn.py`). Never `INSERT` an
    `agent_runs` row by hand. The tool checks spawn caps, derives
    `root_run_id`/`depth` from the parent run scope, inserts the row
    `status='running'`, and returns `{ok, agent_id, run_id}` immediately
    (spawn is non-blocking).
-4. **Fork the engine via `InstanceMerge.fork(parent)`**
+5. **Fork the engine via `InstanceMerge.fork(parent)`**
    (`python/engine/merge.py`) — returns `(child, meta)`. The child gets
    independent tensors with small Gaussian noise (a0: σ≈0.02 on Φ/Ψ/Ω,
    ≈0.01 on Θ; Memory-L copied deterministically). Register it in
    `_sub_agents` with `parent_id` + `run_id`. Never share tensor references
    between instances.
-5. **Execute via the spawn executor, not inline.** The background loop in
+6. **Execute via the spawn executor, not inline.** The background loop in
    `python/services/spawn_executor.py` claims one `running` row atomically
    (`SELECT … FOR UPDATE SKIP LOCKED` in `spawn_db.py`), resolves the
    provider, runs one turn, emits to `agent_logs`, and sets the terminal
    status (with the row's retry policy on transient errors). Do not call the
    model directly from the spawn path.
-6. **Merge with `InstanceMerge.absorb(parent, child)`** when the child's
+7. **Merge with `InstanceMerge.absorb(parent, child)`** when the child's
    work is done — federated averaging blends the rings (a0: donor α≈0.15 on
    Φ/Ψ/Ω, ≈0.8 on Memory-L). Then unregister the child, mark its row
    `merged`, and archive its log stream. Use `fork`/`absorb` for the
    parent⇄child path; `converge(a, b, α)` only for two live peers that both
    continue.
-7. **Persist on a cadence, validate on restore.** Save ring tensors to the
+8. **Persist on a cadence, validate on restore.** Save ring tensors to the
    checkpoint store (a0: base64 in `system_toggles`) from a **heartbeat
    task**, not ad hoc; on load, validate every ring's shape and assign
    nothing if any mismatches (all-or-nothing restore).
-8. **Gate every mutation.** Manual spawn/merge routes call
+9. **Gate every mutation.** Manual spawn/merge routes call
    `require_admin(request)` (or are listed in the gating allowlist with a
    justification). Tools that cause side effects honor the approval scope
    (`get_approval_scope_user_id()`); spawn caps and parent run scope ride

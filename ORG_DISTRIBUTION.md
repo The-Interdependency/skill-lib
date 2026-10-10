@@ -15,6 +15,14 @@ Repo-local copies may exist under:
 
 Propagation PRs should cite this repository and the source commit SHA.
 
+Selected propagation includes the transitive `depends_on` prerequisites from
+`skills.json`. For example, `python tools/propagate_skills.py ../a0 --skills
+agent-instantiation --apply` installs both the requested skill and `wdll`.
+Verify the result with `python tools/check_consumer_drift.py ../a0
+--require-vendored`: the checker requires that same dependency closure, including
+its canonical files and referenced doctrine. Missing prerequisites and invalid
+dependency graphs fail; unrelated unvendored skills remain outside the subset.
+
 ## Installed skills
 
 * `msdmd/` — Module Self-Declared Metadata Markdown
@@ -51,6 +59,7 @@ Propagation PRs should cite this repository and the source commit SHA.
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
+* `wdll/` — executive job selection, state-transition scope, falsifiable completion, and strategic advancement for spawned work
 * `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations

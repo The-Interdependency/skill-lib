@@ -63,8 +63,26 @@ class SkillIndexSemanticsTest(unittest.TestCase):
 
             if skill["kind"] == "metadata-block" and skill["name"] != "msdmd":
                 self.assertIn("msdmd", depends_on, skill["name"])
-            if skill["kind"] == "procedural":
-                self.assertNotIn("depends_on", skill, skill["name"])
+            self.assertEqual(len(depends_on), len(set(depends_on)), skill["name"])
+            self.assertNotIn(skill["name"], depends_on, skill["name"])
+
+    def test_skill_dependency_graph_is_acyclic(self) -> None:
+        dependencies = {entry["name"]: entry.get("depends_on", []) for entry in self.skills}
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(name: str) -> None:
+            self.assertNotIn(name, visiting, f"dependency cycle at {name}")
+            if name in visited:
+                return
+            visiting.add(name)
+            for dependency in dependencies[name]:
+                visit(dependency)
+            visiting.remove(name)
+            visited.add(name)
+
+        for name in self.names:
+            visit(name)
 
     def test_foundational_and_procedural_skill_positions_are_stable(self) -> None:
         self.assertEqual("msdmd", self.skills[0]["name"])

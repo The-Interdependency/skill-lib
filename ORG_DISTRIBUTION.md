@@ -15,6 +15,14 @@ Repo-local copies may exist under:
 
 Propagation PRs should cite this repository and the source commit SHA.
 
+Selected propagation includes the transitive `depends_on` prerequisites from
+`skills.json`. For example, `python tools/propagate_skills.py ../a0 --skills
+agent-instantiation --apply` installs both the requested skill and `wdll`.
+Verify the result with `python tools/check_consumer_drift.py ../a0
+--require-vendored`: the checker requires that same dependency closure, including
+its canonical files and referenced doctrine. Missing prerequisites and invalid
+dependency graphs fail; unrelated unvendored skills remain outside the subset.
+
 ## Installed skills
 
 * `msdmd/` — Module Self-Declared Metadata Markdown

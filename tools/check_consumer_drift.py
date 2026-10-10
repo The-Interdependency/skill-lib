@@ -1,11 +1,12 @@
-# ratios: loc_comments=240:48 imports_exports=9:12 calls_definitions=91:16
+# ratios: loc_comments=287:54 imports_exports=9:13 calls_definitions=116:18
 """Detect drift between a consumer repo's vendored skills and canonical skill-lib.
 
 Given a checked-out consumer repository, for every skill directory it vendors
 under ``.agents/skills/`` that also exists in this canonical ``skill-lib``, verify
 the canonical files match verbatim. The vendored subset is auto-detected as the
-intersection of the consumer's skill directories with the canonical ones, so no
-per-repo configuration is required.
+intersection of the consumer's skill directories with the canonical ones, then
+expanded through the canonical index's transitive ``depends_on`` declarations.
+No per-repo configuration is required.
 
 Rules (matching org propagation doctrine):
 
@@ -15,6 +16,9 @@ Rules (matching org propagation doctrine):
   repo may keep local runners, extra skills, or its own README beside the
   canonical assets.
 * Bytecode (``__pycache__`` / ``*.pyc``) is ignored on both sides.
+* Declared prerequisites must exist canonically and be vendored verbatim, even
+  if their entire directory is missing. Unknown, malformed, or cyclic dependency
+  declarations fail closed. Unrelated unvendored skills remain outside scope.
 * When a vendored ``manifest/generate.py.sha256`` companion is present it must
   pin the vendored ``generate.py`` (``sha256sum -c`` semantics); a stale pin is
   drift.
@@ -27,6 +31,7 @@ Rules (matching org propagation doctrine):
   under ``--strict-sha``).
 
 Pure stdlib. No network. Read-only -- it never writes to the consumer repo.
+Usage: ``python tools/check_consumer_drift.py ../consumer --require-vendored``.
 Exit status is ``0`` when clean, ``1`` on drift (or a SHA warning under
 ``--strict-sha``, or zero vendored canonical skills under ``--require-vendored``),
 ``2`` on a usage error. ``--require-vendored`` is for callers -- like the
@@ -74,6 +79,7 @@ class ConsumerReport:
     skills: List[SkillReport] = field(default_factory=list)
     doctrine: List[str] = field(default_factory=list)  # referenced-doctrine drift reasons
     superseded: List[str] = field(default_factory=list)  # forbidden active vendored skills
+    dependencies: List[str] = field(default_factory=list)  # missing or invalid prerequisites
     sha_warning: str | None = None
 
     @property
@@ -104,6 +110,51 @@ def superseded_skills(canon_root: Path) -> dict[str, List[str]]:
             continue
         out[str(entry["name"])] = [str(value) for value in entry.get("replacements", [])]
     return out
+
+
+def required_skills(
+    canon_root: Path, skills_root: Path, vendored: List[str]
+) -> tuple[List[str], List[str]]:
+    """Return the declared closure and fail-closed diagnostics for this subset."""
+    index_path = canon_root / "skills.json"
+    index = json.loads(index_path.read_text(encoding="utf-8")) if index_path.is_file() else {}
+    entries = {entry["name"]: entry for entry in index.get("skills", [])}
+    required = set(vendored)
+    visited: set[str] = set()
+    problems: List[str] = []
+
+    def visit(name: str, chain: tuple[str, ...]) -> None:
+        if name in chain:
+            problems.append(f"dependency cycle: {' -> '.join((*chain, name))}")
+            return
+        entry = entries.get(name)
+        if entry is None:
+            if chain:
+                problems.append(f"unknown dependency: {' -> '.join((*chain, name))}")
+            return
+        if name in visited:
+            return
+        visited.add(name)
+        path = (*chain, name)
+        if not (canon_root / name / "SKILL.md").is_file():
+            problems.append(f"missing canonical dependency source: {' -> '.join(path)}")
+            return
+        required.add(name)
+        if chain and not (skills_root / name / "SKILL.md").is_file():
+            problems.append(f"missing dependency: {' -> '.join(path)}")
+        dependencies = entry.get("depends_on", [])
+        if not isinstance(dependencies, list):
+            problems.append(f"invalid dependencies for {name}: expected a list")
+            return
+        for dependency in dependencies:
+            if not isinstance(dependency, str) or not dependency:
+                problems.append(f"invalid dependency in {name}: expected a nonempty skill name")
+                continue
+            visit(dependency, path)
+
+    for name in vendored:
+        visit(name, ())
+    return sorted(required), problems
 
 
 def _canon_files(skill_dir: Path) -> Iterable[Path]:
@@ -215,13 +266,16 @@ def check_consumer(
         if name not in canon:
             continue  # repo-local skill, not part of the canonical set
         vendored_canon.append(name)
+
+    required, report.dependencies = required_skills(canon_root, skills_root, vendored_canon)
+    for name in required:
         skill = SkillReport(name=name)
         skill.drift.extend(diff_skill(canon_root / name, skills_root / name))
         if name == "manifest":
             skill.drift.extend(check_manifest_pin(skills_root / name))
         report.skills.append(skill)
 
-    report.doctrine.extend(check_doctrine(canon_root, skills_root, vendored_canon))
+    report.doctrine.extend(check_doctrine(canon_root, skills_root, required))
 
     if sha:
         readme = skills_root / "README.md"
@@ -248,6 +302,8 @@ def format_report(
         lines.append(f"  DOC   {reason}")
     for reason in report.superseded:
         lines.append(f"  OLD   {reason}")
+    for reason in report.dependencies:
+        lines.append(f"  DEP   {reason}")
     if report.sha_warning:
         lines.append(f"  SHA   {report.sha_warning}")
     empty = require_vendored and checked == 0
@@ -257,6 +313,7 @@ def format_report(
         bool(drifted)
         or bool(report.doctrine)
         or bool(report.superseded)
+        or bool(report.dependencies)
         or empty
         or (strict_sha and report.sha_warning is not None)
     )
@@ -320,6 +377,7 @@ def main(argv: List[str] | None = None) -> int:
             "drift": {s.name: s.drift for s in report.skills if not s.ok},
             "doctrine": report.doctrine,
             "superseded": report.superseded,
+            "dependencies": report.dependencies,
             "checked": [s.name for s in report.skills],
             "sha_warning": report.sha_warning,
             "failed": failed,
@@ -332,4 +390,4 @@ def main(argv: List[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=240:48 imports_exports=9:12 calls_definitions=91:16
+# ratios: loc_comments=287:54 imports_exports=9:13 calls_definitions=116:18

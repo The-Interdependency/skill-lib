@@ -1,4 +1,4 @@
-# ratios: loc_comments=265:18 imports_exports=8:2 calls_definitions=149:5
+# ratios: loc_comments=276:20 imports_exports=8:2 calls_definitions=155:5
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -23,7 +23,7 @@ def pointer(*parts: Any) -> str:
 
 
 def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list, list, list]:
-    from msdmd.readers import _fact, _diagnostic, _edge, _redact_sensitive
+    from msdmd.readers import _fact, _diagnostic, _edge, _redact_sensitive, _sanitize_url_credentials
     rid = 'metadata-standards'
     facts: list = []
     edges: list = []
@@ -33,7 +33,13 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
              *, scope: str = 'document', identity: str | None = None,
              native_id: str | None = None, standing: str = 'declared') -> dict:
         value, redactions = _redact_sensitive(value)
-        if redactions:
+        # Native identifiers, locations and versions are publication surfaces too.
+        # Sanitize them before they can enter a subject or percent-encoded address.
+        fields = [identity, native_id, loc, version]
+        safe_fields = [_sanitize_url_credentials(str(item)) if item is not None else None for item in fields]
+        identity, native_id, loc, version = safe_fields
+        loc = pointer(*[_sanitize_url_credentials(part.replace('~1', '/').replace('~0', '~')) for part in loc.split('/')[1:]])
+        if redactions or safe_fields != fields or loc != fields[2]:
             diagnostics.append(_diagnostic(context, reader_id=rid, code='sensitive_fields_redacted',
                 message='sensitive values withheld from metadata projection', status='redacted'))
         fact = _fact(dict(context, convention_version=version, dialect=convention), reader_id=rid,
@@ -213,9 +219,16 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         if version not in {'https://in-toto.io/Statement/v1', 'https://in-toto.io/Statement/v0.1'}:
             unsupported('unsupported_statement_version', 'subject mapping requires in-toto Statement v1 or v0.1')
         else:
-            for i, subject in enumerate(statement.get('subject', [])):
+            subjects = statement.get('subject', [])
+            if not isinstance(subjects, list):
+                unsupported('invalid_statement_subject', 'in-toto subject must be a list; statement retained without subject projection', status='invalid')
+                subjects = []
+            for i, subject in enumerate(subjects):
+                if not isinstance(subject, dict) or not isinstance(subject.get('name'), str):
+                    unsupported('invalid_statement_subject', 'in-toto subject requires a mapping with a string name; invalid entry retained only in statement', status='invalid')
+                    continue
                 emit('in-toto.statement', version, 'attested-subject', statement_pointer + pointer('subject', i), subject,
-                    scope='artifact', identity=subject.get('name', str(i)), native_id=subject.get('name'), standing='reported-evidence')
+                    scope='artifact', identity=subject['name'], native_id=subject['name'], standing='reported-evidence')
     elif envelope_fact is not None:
         # Declared in-toto payload that is not a Statement: keep the decoded
         # (redacted) payload as its own fact rather than claiming a statement.
@@ -279,7 +292,7 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         elif isinstance(item, list):
             for index, child in enumerate(item):
                 refs(child, loc + pointer(index))
-    refs(value, '')
+    refs(_redact_sensitive(value)[0], '')
     # Native IDs have convention-owned uniqueness rules; collector pointers do
     # not excuse duplicate IDs. Retain all witnesses while rejecting validity.
     unique_kinds = {'openapi.document': {'api-operation'},
@@ -297,4 +310,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=265:18 imports_exports=8:2 calls_definitions=149:5
+# ratios: loc_comments=276:20 imports_exports=8:2 calls_definitions=155:5

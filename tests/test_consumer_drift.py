@@ -1,7 +1,18 @@
+"""Consumer drift regressions, including declared skill dependency closure.
+
+Usage: python -m unittest discover -s tests -p 'test_consumer_drift.py'
+Fixtures and the propagation integration write only to temporary directories.
+"""
+
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.util
+import io
+import json
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -248,6 +259,294 @@ class ConsumerDriftTest(unittest.TestCase):
         report = self._report()
         _text, failed = ccd.format_report(report, strict_sha=False)
         self.assertTrue(failed)
+
+
+class ConsumerDependencyClosureTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self._tmp.cleanup)
+        base = Path(self._tmp.name)
+        self.canon = base / "canon"
+        self.consumer = base / "consumer"
+        self.skills_root = self.consumer / ".agents/skills"
+        self.declarations = {
+            "agent-instantiation": ["wdll"],
+            "wdll": [],
+            "msdmd": [],
+            "unrelated": [],
+        }
+        for name in self.declarations:
+            _write(self.canon / name / "SKILL.md", f"canonical {name}\n")
+        self._write_index()
+        self._vendor("agent-instantiation")
+
+    def _write_index(self) -> None:
+        _write(
+            self.canon / "skills.json",
+            json.dumps({
+                "skills": [
+                    {"name": name, "depends_on": dependencies}
+                    for name, dependencies in self.declarations.items()
+                ],
+            }),
+        )
+
+    def _vendor(self, *names: str) -> None:
+        for name in names:
+            shutil.copytree(self.canon / name, self.skills_root / name, dirs_exist_ok=True)
+
+    def _report(self):
+        return ccd.check_consumer(self.consumer, canon_root=self.canon)
+
+    def _assert_dependency_failure(self, *names: str):
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertTrue(failed, text)
+        self.assertTrue(report.dependencies, text)
+        diagnostics = "\n".join(report.dependencies)
+        for name in names:
+            self.assertIn(name, diagnostics)
+        return report
+
+    def _cli(self, *args: str) -> tuple[int, str]:
+        stdout = io.StringIO()
+        with contextlib.redirect_stdout(stdout):
+            code = ccd.main([
+                str(self.consumer), "--canon-root", str(self.canon), *args,
+            ])
+        return code, stdout.getvalue()
+
+    def test_direct_missing_dependency_fails(self) -> None:
+        self._assert_dependency_failure("agent-instantiation", "wdll")
+
+    def test_transitive_missing_dependency_fails(self) -> None:
+        self.declarations["wdll"] = ["msdmd"]
+        self._write_index()
+        self._vendor("wdll")
+        self._assert_dependency_failure("agent-instantiation", "wdll", "msdmd")
+
+    def test_missing_intermediate_still_checks_transitive_dependency(self) -> None:
+        self.declarations["wdll"] = ["msdmd"]
+        self._write_index()
+        self._assert_dependency_failure("agent-instantiation", "wdll", "msdmd")
+
+    def test_complete_transitive_closure_is_clean(self) -> None:
+        self.declarations["wdll"] = ["msdmd"]
+        self._write_index()
+        self._vendor("wdll", "msdmd")
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False, require_vendored=True)
+        self.assertFalse(failed, text)
+        self.assertEqual(report.dependencies, [])
+        self.assertEqual(
+            {skill.name for skill in report.skills},
+            {"agent-instantiation", "wdll", "msdmd"},
+        )
+
+    def test_shared_dependency_is_checked_once(self) -> None:
+        self.declarations["agent-instantiation"] = ["wdll", "msdmd"]
+        self.declarations["wdll"] = ["msdmd"]
+        self._write_index()
+        self._vendor("wdll", "msdmd")
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertFalse(failed, text)
+        self.assertEqual([skill.name for skill in report.skills].count("msdmd"), 1)
+
+    def test_unrelated_unvendored_dependency_errors_are_ignored(self) -> None:
+        self.declarations["unrelated"] = ["not-in-index"]
+        self._write_index()
+        self._vendor("wdll")
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertFalse(failed, text)
+        self.assertNotIn("unrelated", [skill.name for skill in report.skills])
+
+    def test_local_only_skill_and_additions_remain_allowed(self) -> None:
+        self._vendor("wdll")
+        _write(self.skills_root / "repo-local" / "SKILL.md", "local skill\n")
+        _write(self.skills_root / "wdll" / "runner.py", "local helper\n")
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertFalse(failed, text)
+        self.assertNotIn("repo-local", [skill.name for skill in report.skills])
+
+    def test_required_dependency_canonical_source_missing_fails(self) -> None:
+        self._vendor("wdll")
+        shutil.rmtree(self.canon / "wdll")
+        report = self._assert_dependency_failure("agent-instantiation", "wdll")
+        self.assertIn("canonical", "\n".join(report.dependencies).lower())
+
+    def test_required_dependency_canonical_skill_file_missing_fails(self) -> None:
+        self._vendor("wdll")
+        (self.canon / "wdll" / "SKILL.md").unlink()
+        self._assert_dependency_failure("agent-instantiation", "wdll")
+
+    def test_unknown_dependency_fails_even_with_local_copy(self) -> None:
+        self.declarations["agent-instantiation"] = ["not-in-index"]
+        self._write_index()
+        _write(self.skills_root / "not-in-index" / "SKILL.md", "local copy\n")
+        self._assert_dependency_failure("agent-instantiation", "not-in-index")
+
+    def test_unindexed_root_without_declared_dependents_remains_allowed(self) -> None:
+        del self.declarations["agent-instantiation"]
+        self._write_index()
+        report = self._report()
+        text, failed = ccd.format_report(report, strict_sha=False)
+        self.assertFalse(failed, text)
+
+    def test_unknown_dependency_cannot_hide_behind_an_already_checked_root(self) -> None:
+        # The unindexed skill sorts first as a root, but a declared prerequisite
+        # still needs an index entry even when its canonical files are present.
+        del self.declarations["agent-instantiation"]
+        self.declarations["unrelated"] = ["agent-instantiation"]
+        self._write_index()
+        self._vendor("unrelated")
+        self._assert_dependency_failure("unrelated", "agent-instantiation")
+
+    def test_dependency_cycle_fails(self) -> None:
+        self.declarations["wdll"] = ["agent-instantiation"]
+        self._write_index()
+        self._vendor("wdll")
+        report = self._assert_dependency_failure("agent-instantiation", "wdll")
+        self.assertIn("cycle", "\n".join(report.dependencies).lower())
+
+    def test_self_dependency_cycle_fails(self) -> None:
+        self.declarations["agent-instantiation"] = ["agent-instantiation"]
+        self._write_index()
+        report = self._assert_dependency_failure("agent-instantiation")
+        self.assertIn("cycle", "\n".join(report.dependencies).lower())
+
+    def test_malformed_dependency_container_fails(self) -> None:
+        for invalid in (None, "wdll", {"wdll": True}, 1, False):
+            with self.subTest(depends_on=invalid):
+                self.declarations["agent-instantiation"] = invalid
+                self._write_index()
+                self._assert_dependency_failure("agent-instantiation")
+
+    def test_malformed_dependency_item_fails(self) -> None:
+        self._vendor("wdll")
+        for invalid in (None, 1, False, {"name": "wdll"}, ["wdll"], ""):
+            with self.subTest(dependency=invalid):
+                self.declarations["agent-instantiation"] = ["wdll", invalid]
+                self._write_index()
+                self._assert_dependency_failure("agent-instantiation")
+
+    def test_malformed_transitive_declaration_fails(self) -> None:
+        self.declarations["wdll"] = "msdmd"
+        self._write_index()
+        self._vendor("wdll")
+        self._assert_dependency_failure("wdll")
+
+    def test_dependency_helper_drift_is_checked(self) -> None:
+        _write(self.canon / "wdll" / "helper.py", "canonical helper\n")
+        self._vendor("wdll")
+        _write(self.skills_root / "wdll" / "helper.py", "stale helper\n")
+        report = self._report()
+        wdll = next(skill for skill in report.skills if skill.name == "wdll")
+        self.assertIn("differs: helper.py", wdll.drift)
+        self.assertTrue(ccd.format_report(report, strict_sha=False)[1])
+
+    def test_dependency_directory_without_skill_file_fails(self) -> None:
+        (self.skills_root / "wdll").mkdir()
+        report = self._report()
+        self.assertTrue(ccd.format_report(report, strict_sha=False)[1])
+        wdll = next(skill for skill in report.skills if skill.name == "wdll")
+        self.assertIn("missing: SKILL.md", wdll.drift)
+
+    def test_missing_dependency_still_requires_its_doctrine(self) -> None:
+        _write(
+            self.canon / "wdll" / "SKILL.md",
+            "See [doctrine](../doctrine/dependency.md)\n",
+        )
+        _write(self.canon / "doctrine" / "dependency.md", "canonical doctrine\n")
+        report = self._assert_dependency_failure("agent-instantiation", "wdll")
+        self.assertIn("missing: doctrine/dependency.md", report.doctrine)
+
+    def test_complete_dependency_closure_checks_doctrine_bytes(self) -> None:
+        _write(
+            self.canon / "wdll" / "SKILL.md",
+            "See [doctrine](../doctrine/dependency.md)\n",
+        )
+        _write(self.canon / "doctrine" / "dependency.md", "canonical doctrine\n")
+        self._vendor("wdll")
+        _write(self.skills_root / "doctrine" / "dependency.md", "stale doctrine\n")
+        report = self._report()
+        self.assertIn("differs: doctrine/dependency.md", report.doctrine)
+        self.assertTrue(ccd.format_report(report, strict_sha=False)[1])
+
+    def test_missing_dependency_cli_text_is_nonzero_and_actionable(self) -> None:
+        code, output = self._cli()
+        self.assertEqual(code, 1, output)
+        self.assertIn("DRIFT", output)
+        self.assertIn("agent-instantiation", output)
+        self.assertIn("wdll", output)
+        self.assertIn("missing", output.lower())
+
+    def test_missing_dependency_cli_json_is_nonzero_and_actionable(self) -> None:
+        code, output = self._cli("--json")
+        payload = json.loads(output)
+        self.assertEqual(code, 1, output)
+        self.assertTrue(payload["failed"])
+        self.assertTrue(payload["dependencies"])
+        self.assertIn("agent-instantiation", "\n".join(payload["dependencies"]))
+        self.assertIn("wdll", "\n".join(payload["dependencies"]))
+
+    def test_clean_dependency_cli_json_is_zero(self) -> None:
+        self._vendor("wdll")
+        code, output = self._cli("--json", "--require-vendored")
+        payload = json.loads(output)
+        self.assertEqual(code, 0, output)
+        self.assertFalse(payload["failed"])
+        self.assertEqual(payload["dependencies"], [])
+
+    def test_malformed_dependency_cli_returns_structured_failure(self) -> None:
+        self.declarations["agent-instantiation"] = None
+        self._write_index()
+        code, output = self._cli("--json")
+        payload = json.loads(output)
+        self.assertEqual(code, 1, output)
+        self.assertTrue(payload["failed"])
+        self.assertTrue(payload["dependencies"])
+
+    def test_custom_install_root_checks_dependency_closure(self) -> None:
+        custom = Path("custom/skills")
+        destination = self.consumer / custom
+        destination.parent.mkdir()
+        shutil.move(str(self.skills_root), destination)
+        report = ccd.check_consumer(
+            self.consumer, canon_root=self.canon, skills_rel=custom,
+        )
+        self.assertTrue(ccd.format_report(report, strict_sha=False)[1])
+        self.assertIn("wdll", "\n".join(report.dependencies))
+
+
+class ConsumerPropagationIntegrationTest(unittest.TestCase):
+    def test_agent_instantiation_propagation_then_wdll_deletion(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            consumer = Path(tmp)
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "tools/propagate_skills.py"),
+                 str(consumer), "--skills", "agent-instantiation", "--apply"],
+                capture_output=True, text=True, check=False,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            wdll = consumer / ".agents/skills/wdll"
+            self.assertEqual(
+                (wdll / "SKILL.md").read_bytes(),
+                (ROOT / "wdll/SKILL.md").read_bytes(),
+            )
+            report = ccd.check_consumer(consumer, canon_root=ROOT)
+            text, failed = ccd.format_report(report, strict_sha=False)
+            self.assertFalse(failed, text)
+
+            shutil.rmtree(wdll)
+            report = ccd.check_consumer(consumer, canon_root=ROOT)
+            text, failed = ccd.format_report(report, strict_sha=False)
+            self.assertTrue(failed, text)
+            self.assertIn("agent-instantiation", "\n".join(report.dependencies))
+            self.assertIn("wdll", "\n".join(report.dependencies))
+            self.assertFalse(wdll.exists(), "the checker must remain read-only")
 
 
 if __name__ == "__main__":

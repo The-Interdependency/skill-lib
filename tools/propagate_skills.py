@@ -1,4 +1,4 @@
-# ratios: loc_comments=197:14 imports_exports=9:11 calls_definitions=96:11
+# ratios: loc_comments=226:15 imports_exports=9:12 calls_definitions=111:13
 """Synchronize canonical skill-lib skills into a target repo working tree.
 
 This script is intentionally local-file based. It does not push, commit, open
@@ -124,6 +124,35 @@ def referenced_doctrine(skill_srcs: Iterable[Path]) -> List[str]:
     return sorted(ref for ref in refs if (ROOT / "doctrine" / ref).is_file())
 
 
+def expand_skill_dependencies(requested: Sequence[str], index: Mapping[str, object]) -> List[str]:
+    """Include all declared prerequisites before their consumers, without duplicates."""
+    skills = {entry["name"]: entry for entry in index.get("skills", [])}
+    state: dict[str, int] = {}
+    ordered: List[str] = []
+
+    def visit(name: str) -> None:
+        if name not in skills:
+            raise ValueError(f"missing skill dependency: {name}")
+        if state.get(name) == 1:
+            raise ValueError(f"skill dependency cycle at {name}")
+        if state.get(name) == 2:
+            return
+        state[name] = 1
+        dependencies = skills[name].get("depends_on", [])
+        if not isinstance(dependencies, list):
+            raise ValueError(f"invalid dependencies for {name}")
+        for dependency in dependencies:
+            if not isinstance(dependency, str):
+                raise ValueError(f"invalid dependency in {name}")
+            visit(dependency)
+        state[name] = 2
+        ordered.append(name)
+
+    for name in requested:
+        visit(name)
+    return ordered
+
+
 def write_readme(target_install_root: Path, sha: str, skills: Sequence[str]) -> None:
     readme = target_install_root / "README.md"
     old_text = readme.read_text(encoding="utf-8") if readme.is_file() else ""
@@ -185,6 +214,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if unknown:
         print(f"unknown skills: {', '.join(unknown)}", file=sys.stderr)
         return 2
+    try:
+        selected = expand_skill_dependencies(requested, load_index())
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 2
 
     install_root = target_repo / args.install_root
     sha = current_sha()
@@ -192,7 +226,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     removals = [install_root / name for name in load_superseded_names() if (install_root / name).exists()]
 
     actions = []
-    for name in requested:
+    for name in selected:
         src = ROOT / name
         dst = install_root / name
         if not (src / "SKILL.md").is_file():
@@ -237,7 +271,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     for src, dst in doc_actions:
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
-    write_readme(install_root, sha, requested)
+    write_readme(install_root, sha, selected)
     for skill_name, path in removed_files:
         print(f"Removed obsolete canonical file: {skill_name}/{path}")
     print("Propagation complete.")
@@ -246,4 +280,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=197:14 imports_exports=9:11 calls_definitions=96:11
+# ratios: loc_comments=226:15 imports_exports=9:12 calls_definitions=111:13

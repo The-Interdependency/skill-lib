@@ -12,7 +12,7 @@ The transport invariant remains:
 
 ```text
 human/bootstrap path: SSH / Google OS Login / IAP
-model path:           MCP -> authenticated private tunnel -> loopback vm-mcp
+model path:           MCP -> authenticated private tunnel -> bearer-authenticated loopback vm-mcp
 credential boundary: SSH/cloud credentials stay outside model context
 ```
 
@@ -113,7 +113,7 @@ vm-mcp-admin.service (root)
 The broker:
 
 - accepts only Unix-domain connections;
-- verifies the connecting process with `SO_PEERCRED` against the `vmmcp` uid;
+- verifies the connecting process with `SO_PEERCRED` against the `vmmcp` uid and systemd's current `vm-mcp.service` MainPID; same-UID shell descendants are refused;
 - creates its socket root-owned and group-accessible only to `vmmcp`;
 - requires itself to be uid 0 before executing requests;
 - rejects `root` through `user_exec`; root must use the visibly privileged `admin_exec` surface;
@@ -121,6 +121,21 @@ The broker:
 - sanitizes the command environment rather than inheriting arbitrary service secrets;
 - records request id, mode, run-as user, cwd, command SHA-256, exit status, and timeout in journald;
 - returns the command/output to the MCP caller but does not print arbitrary environment secrets automatically.
+
+Every HTTP request, including direct loopback traffic, must carry the configured
+`Authorization: Bearer` credential. The server refuses startup without a
+32–256 character URL-safe `VM_MCP_AUTH_TOKEN`; operators must supply a random,
+high-entropy token through root-owned service configuration and the client's
+secure header configuration. Tokens never belong in tool arguments, URLs,
+workspace files, or chat. The installer does not generate or disclose one.
+Provisioning or rotating access is a separate operator-authorized action.
+
+Before serving or spawning shell commands, the server disables Linux process
+dumpability. Same-UID shell children therefore cannot inspect its memory,
+environment or descriptors to steal caller credentials. Children receive only
+the sanitized execution environment. Root remains outside this protection.
+The broker queries systemd for the live main-process identity on every request;
+standalone personal-console launches without the managed service are refused.
 
 Personal-console is intentionally high authority. Anyone able to invoke
 `admin_exec` effectively controls the host. Therefore it is appropriate only
@@ -149,6 +164,11 @@ service or human account. Use `admin_exec` for host-level operations such as
 systemd, packages, mounts, ownership, PostgreSQL provisioning, or recovery.
 
 ## Installer behavior
+
+Provision `VM_MCP_AUTH_TOKEN` through the operator's secure root environment
+before either installation command below. Use the same value in the MCP client's
+secure Authorization-header configuration; a tunnel by itself does not authenticate
+other local processes. Do not place an actual credential in a pasted command.
 
 Canonical install:
 
@@ -261,7 +281,8 @@ time rather than treating this skill's historical product snapshot as current.
 For a personal console, verify in this order:
 
 ```text
-vm_info
+unauthenticated HTTP request -> 401
+authenticated vm_info
 read_text / list_directory
 write_text inside disposable VM_MCP_ROOT fixture
 shell_exec("id -u")
@@ -329,7 +350,10 @@ The shipped suite must cover at least:
 - root rejection through `user_exec`;
 - root selection through `admin_exec`;
 - broker root-process requirement;
-- `SO_PEERCRED` caller verification;
+- `SO_PEERCRED` UID plus current systemd MainPID verification;
+- caller authentication before HTTP request parsing, including loopback callers;
+- same-UID shell denial and non-dumpable service credential isolation;
+- move/remove operate on final symlinks themselves, including broken links;
 - root:vmmcp socket permissions;
 - non-root MCP systemd hardening remaining intact;
 - loopback-only MCP listener and metadata-address denial;
@@ -365,6 +389,7 @@ Disconnect the MCP client/tunnel as a separate control-plane action.
 - Hiding root execution behind a tool that looks non-privileged.
 - Letting `user_exec(user="root", ...)` become an alias for root; use `admin_exec` visibly.
 - Using an existing application checkout as `VM_MCP_ROOT` and changing its ownership as an installer side effect.
+- Treating a loopback listener, private tunnel, or shared UID alone as caller authentication.
 - Assuming `read-only` is always preferable when the owner intentionally wants a broad personal console.
 - Assuming `personal-console` is appropriate for multi-user/shared systems merely because it is available.
 - Treating named convenience tools as the only permissible operations in a single-owner console.

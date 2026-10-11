@@ -1,4 +1,4 @@
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=993:71 imports_exports=22:5 calls_definitions=320:32
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -353,8 +353,10 @@ def _digest(value: bytes | str) -> str:
 
 def _json_safe(value: Any) -> Any:
     """Preserve non-JSON native scalar types with explicit tagged values."""
-    if value is None or isinstance(value, (str, bool, int)):
+    if value is None or isinstance(value, (str, bool)):
         return value
+    if isinstance(value, int):
+        return value if abs(value) <= 2 ** 53 - 1 else {"$type": "json-number", "lexeme": str(value)}
     if isinstance(value, float):
         return value if math.isfinite(value) else {"$type": "nonfinite-float", "value": repr(value)}
     if isinstance(value, (dt.datetime, dt.date, dt.time)):
@@ -370,14 +372,46 @@ def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
     """Redact values owned by plainly secret-bearing field names."""
     redacted: list[str] = []
     if isinstance(value, dict):
+        # Typed YAML entries carry their owning key beside the value. Redact in
+        # that name domain before traversing the transport representation.
+        entries = value.get("entries")
+        if value.get("$type") == "yaml-mapping" and isinstance(entries, list) and all(
+            isinstance(entry, dict) and {"key", "tag", "value"} <= entry.keys() for entry in entries
+        ):
+            secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
+            result_entries = []
+            for index, entry in enumerate(entries):
+                child_pointer = f"{pointer}/entries/{index}/value"
+                key, key_redactions = _redact_sensitive(entry["key"], f"{pointer}/entries/{index}/key")
+                redacted.extend(key_redactions)
+                if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
+                    child = {"$redacted": True, "reason": "sensitive-field-name"}
+                    redacted.append(child_pointer)
+                else:
+                    child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
+                    redacted.extend(child_redacted)
+                result_entries.append({"key": key, "tag": entry["tag"], "value": child})
+            return {"$type": "yaml-mapping", "entries": result_entries}, redacted
         result: dict[str, Any] = {}
         for key, item in value.items():
-            child_pointer = f"{pointer}/{key}"
-            if _is_sensitive_key(key):
-                result[str(key)] = {"$redacted": True, "reason": "sensitive-field-name"}
+            safe_key = _sanitize_url_credentials(str(key))
+            if safe_key != str(key):
+                # Distinct source keys must stay distinct after withholding userinfo.
+                safe_key += "#redacted-" + _digest(str(key))
+                redacted.append(f"{pointer}/[redacted-key]")
+            child_pointer = f"{pointer}/{safe_key}"
+            secret_payload = value.get("kind") == "Secret" and key in ("data", "stringData")
+            dsse_payload = value.get("payloadType") == "application/vnd.in-toto+json" and key == "payload" and isinstance(item, str)
+            if _is_sensitive_key(key) or secret_payload:
+                result[safe_key] = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse_payload:
+                # Withhold in the syntax reader too: semantic-reader failure must
+                # never restore a reversible encoding of a secret-bearing tree.
+                result[safe_key] = {"$withheld": True, "reason": "encoded-dsse-payload"}
                 redacted.append(child_pointer)
             else:
-                result[str(key)], child_redacted = _redact_sensitive(item, child_pointer)
+                result[safe_key], child_redacted = _redact_sensitive(item, child_pointer)
                 redacted.extend(child_redacted)
         return result, redacted
     if isinstance(value, list):
@@ -1110,4 +1144,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=993:71 imports_exports=22:5 calls_definitions=320:32

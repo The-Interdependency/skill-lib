@@ -1,4 +1,4 @@
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=92:60 imports_exports=8:12 calls_definitions=39:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -13,6 +13,10 @@ that profile only for a single-owner private VM behind an authenticated tunnel.
 from __future__ import annotations
 
 import os
+
+import uvicorn
+
+from auth import BearerAuth, configured_token, protect_process
 from typing import Any, Callable
 
 from mcp.server import MCPServer
@@ -49,7 +53,7 @@ from policy import (
 #   rollout: root_installer_plus_systemd_plus_private_mcp_tunnel
 #   rollback: disable vm-mcp services and remove private client registration
 #   feature_flag: VM_MCP_PROFILE
-#   unresolved: client_specific_private_tunnel_registration, application_layer_auth_when_not_using_a_private_tunnel
+#   unresolved: client_specific_private_tunnel_registration, operator_provisioned_bearer_token_and_client_header_support
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -175,16 +179,17 @@ def admin_exec(command: str, cwd: str = "/", timeout_seconds: float = 60.0) -> d
 
 
 def main() -> None:
-    mcp.run(
-        transport="streamable-http",
+    protect_process()
+    token = configured_token()
+    app = mcp.streamable_http_app(
         host="127.0.0.1",
-        port=int(os.environ.get("VM_MCP_PORT", "8765")),
         streamable_http_path="/mcp",
         stateless_http=True,
         json_response=True,
     )
+    uvicorn.run(BearerAuth(app, token), host="127.0.0.1", port=int(os.environ.get("VM_MCP_PORT", "8765")))
 
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=92:60 imports_exports=8:12 calls_definitions=39:14

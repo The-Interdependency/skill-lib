@@ -1,4 +1,4 @@
-# ratios: loc_comments=374:57 imports_exports=13:12 calls_definitions=134:24
+# ratios: loc_comments=385:58 imports_exports=13:13 calls_definitions=139:25
 """Policy primitives for the vm-mcp runtime.
 
 Usage guidance:
@@ -172,6 +172,22 @@ def resolve_under_root(root: Path, requested: str, *, must_exist: bool = True) -
     return candidate
 
 
+def resolve_entry_under_root(root: Path, requested: str, *, must_exist: bool = True) -> Path:
+    """Resolve the parent only; destructive operations own the final entry."""
+    root_resolved = root.expanduser().resolve(strict=False)
+    raw = Path(requested).expanduser()
+    if raw.name in {"", ".", ".."}:
+        raise PermissionError("a non-root directory entry is required")
+    candidate = raw if raw.is_absolute() else root_resolved / raw
+    parent = resolve_under_root(root_resolved, str(candidate.parent))
+    path = parent / candidate.name
+    if path == root_resolved:
+        raise PermissionError("refusing to move or remove VM_MCP_ROOT")
+    if must_exist:
+        path.lstat()  # broken links are entries too
+    return path
+
+
 def _require_workspace_write(config: VmMcpConfig) -> None:
     if not config.workspace_write_enabled:
         raise PermissionError(
@@ -305,8 +321,8 @@ def make_directory(
 
 def move_path(config: VmMcpConfig, source: str, destination: str) -> dict[str, Any]:
     _require_workspace_write(config)
-    src = resolve_under_root(config.root, source)
-    dst = resolve_under_root(config.root, destination, must_exist=False)
+    src = resolve_entry_under_root(config.root, source)
+    dst = resolve_entry_under_root(config.root, destination, must_exist=False)
     if not dst.parent.is_dir():
         raise FileNotFoundError(dst.parent)
     os.replace(src, dst)
@@ -315,9 +331,7 @@ def move_path(config: VmMcpConfig, source: str, destination: str) -> dict[str, A
 
 def remove_path(config: VmMcpConfig, requested: str, *, recursive: bool = False) -> dict[str, Any]:
     _require_workspace_write(config)
-    path = resolve_under_root(config.root, requested)
-    if path == config.root.expanduser().resolve(strict=False):
-        raise PermissionError("refusing to remove VM_MCP_ROOT")
+    path = resolve_entry_under_root(config.root, requested)
     if path.is_dir() and not path.is_symlink():
         if recursive:
             shutil.rmtree(path)
@@ -478,4 +492,4 @@ def broker_exec(
         timeout_seconds=timeout,
         max_output_bytes=config.max_output_bytes,
     )
-# ratios: loc_comments=374:57 imports_exports=13:12 calls_definitions=134:24
+# ratios: loc_comments=385:58 imports_exports=13:13 calls_definitions=139:25

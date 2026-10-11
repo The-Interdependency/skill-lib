@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 set -euo pipefail
+umask 0077
 
 # Install canonical vm-mcp on a Linux VM.
 #
@@ -30,6 +31,11 @@ PORT="${VM_MCP_PORT:-8765}"
 SERVICE_USER="${VM_MCP_SERVICE_USER:-vmmcp}"
 SERVICE_GROUP="$SERVICE_USER"
 ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
+AUTH_TOKEN="${VM_MCP_AUTH_TOKEN:-}"
+if [[ ! "$AUTH_TOKEN" =~ ^[A-Za-z0-9_-]{32,256}$ ]]; then
+  echo "ERROR: supply an operator-provisioned VM_MCP_AUTH_TOKEN (32-256 URL-safe characters) before installation" >&2
+  exit 3
+fi
 NOLOGIN="$(command -v nologin || true)"
 [[ -n "$NOLOGIN" ]] || NOLOGIN=/bin/false
 
@@ -88,7 +94,7 @@ fi
 install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 "$WORK_ROOT/.vm-mcp-home"
 install -d -o root -g root -m 0755 "$INSTALL_ROOT" "$INSTALL_ROOT/systemd"
 
-for file in server.py policy.py admin_client.py admin_broker.py requirements.txt; do
+for file in server.py auth.py policy.py admin_client.py admin_broker.py requirements.txt; do
   install -m 0644 "$SOURCE_ROOT/$file" "$INSTALL_ROOT/$file"
 done
 install -m 0644 "$SOURCE_ROOT/systemd/vm-mcp.service" "$INSTALL_ROOT/systemd/vm-mcp.service"
@@ -113,6 +119,7 @@ cat > /etc/vm-mcp.env <<EOF
 VM_MCP_ROOT=$(systemd_quote "$WORK_ROOT")
 VM_MCP_PROFILE=$PROFILE
 VM_MCP_PORT=$PORT
+VM_MCP_AUTH_TOKEN=$AUTH_TOKEN
 VM_MCP_ADMIN_SOCKET=$(systemd_quote "$ADMIN_SOCKET")
 EOF
 chmod 0600 /etc/vm-mcp.env

@@ -100,6 +100,67 @@ class NativeP1SecurityTests(unittest.TestCase):
         self.assertEqual({clash: 3, 'https://[redacted]@example.com/a#redacted-2': 1,
                           'https://[redacted]@example.com/a#redacted-3': 2}, value)
 
+    def test_source_object_spelling_the_yaml_wrapper_is_not_trusted(self):
+        # A source object that spells the internal typed-mapping wrapper used to
+        # have its entry tags copied verbatim, publishing the userinfo secret.
+        spoof = {'$type': 'yaml-mapping', 'entries': [
+            {'key': 'a', 'tag': 'https://mallory:SPOOFSECRET@evil.example/tag', 'value': 1}]}
+        for name, content in [('spoof.json', json.dumps(spoof)),
+                              ('spoof.yaml', '$type: yaml-mapping\nentries:\n- key: a\n'
+                                             '  tag: https://mallory:SPOOFSECRET@evil.example/tag\n  value: 1\n')]:
+            with self.subTest(name=name):
+                result = self.collection(name, content)
+                text = json.dumps(result)
+                self.assertNotIn('SPOOFSECRET', text)
+                self.assertNotIn('mallory', text)
+                self.assertIn('sensitive_fields_redacted', text)
+
+    def test_parser_built_typed_mapping_redacts_tags_too(self):
+        from msdmd.formats import YamlMapping
+        from msdmd.readers import _redact_sensitive
+        wrapper = YamlMapping({'$type': 'yaml-mapping', 'entries': [
+            {'key': 1, 'tag': 'https://u:TAGSECRET@example.com/t', 'value': 'x'}]})
+        value, redacted = _redact_sensitive(wrapper)
+        self.assertNotIn('TAGSECRET', json.dumps(value))
+        self.assertIn('/entries/0/tag', redacted)
+        self.assertIsInstance(value, YamlMapping)
+
+    def test_typed_mapping_withheld_keys_get_mapping_wide_ordinals(self):
+        source = ('1: integer\n'
+                  'https://u:pw-one@example.com/a: first\n'
+                  'https://u:pw-two@example.com/a: second\n'
+                  'https://[redacted]@example.com/a#redacted-1: literal\n')
+        result = self.collection('typed.yaml', source)
+        self.assertFalse(collection_errors(result), result['diagnostics'])
+        self.assertNotIn('pw-', json.dumps(result))
+        value = next(f['native']['value'] for f in result['facts'] if f['kind'] == 'structured-document')
+        keys = [entry['key'] for entry in value['entries']]
+        self.assertEqual([1, 'https://[redacted]@example.com/a#redacted-2', 'https://[redacted]@example.com/a#redacted-3',
+                          'https://[redacted]@example.com/a#redacted-1'], keys)
+        self.assertEqual(len(keys), len({json.dumps(k) for k in keys}))
+
+    def bom(self, *refs):
+        return json.dumps({'bomFormat': 'CycloneDX', 'specVersion': '1.6',
+                           'components': [{'type': 'library', 'name': f'c{i}', 'bom-ref': ref} for i, ref in enumerate(refs)]})
+
+    def test_standards_ordinals_skip_literal_identifiers(self):
+        literal = 'https://[redacted]@example.com/a#redacted-1'
+        result = self.collection('bom.json', self.bom(literal, 'https://u:pw@example.com/a'))
+        codes = [d['code'] for d in result['diagnostics']]
+        self.assertNotIn('duplicate_native_identifier', codes)
+        self.assertFalse(collection_errors(result), result['diagnostics'])
+        ids = sorted(f['native']['id'] for f in result['facts'] if f['kind'] == 'artifact-component')
+        self.assertEqual([literal, 'https://[redacted]@example.com/a#redacted-2'], ids)
+        self.assertNotIn('u:pw', json.dumps(result))
+
+    def test_standards_identical_withheld_identifiers_still_collide(self):
+        same = 'https://u:pw@example.com/a'
+        result = self.collection('bom.json', self.bom(same, same))
+        self.assertIn('duplicate_native_identifier', [d['code'] for d in result['diagnostics']])
+        self.assertNotIn('u:pw', json.dumps(result))
+        distinct = self.collection('bom.json', self.bom(same, 'https://u:other@example.com/a'))
+        self.assertNotIn('duplicate_native_identifier', [d['code'] for d in distinct['diagnostics']])
+
     def test_malformed_dsse_subject_keeps_redacted_decoded_evidence(self):
         for subjects in [[None, 1, 'invalid', {'name': 'valid'}], None, {'name': 'wrong-container'}]:
             with self.subTest(subjects=subjects):

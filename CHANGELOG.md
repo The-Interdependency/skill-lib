@@ -12,9 +12,14 @@ standards facts:
   `json-number` with the exact decimal lexeme instead of losing precision.
 - **Typed YAML mappings** keep key/value association while redacting;
   Kubernetes `Secret` `data`/`stringData` are withheld in lists and typed maps.
+  Only the parser's own wrapper is trusted as a typed mapping: a source object
+  spelling `"$type": "yaml-mapping"` is redacted as an ordinary object, and
+  entry tags are redacted too.
 - **URL userinfo is withheld from native identifiers, locations and keys**
   before addresses are built. Where that would merge distinct sources, a
   `#redacted-N` ordinal keeps them apart; it is never a hash of the secret.
+  Ordinals are mapping-wide (typed YAML keys included) and skip identifiers the
+  document already contains literally; identical sources still collide.
 - **Encoded DSSE payloads are withheld** even when semantic mapping fails.
 
 ## Unreleased: msdmd Node runs jitless; signal deaths exit 3

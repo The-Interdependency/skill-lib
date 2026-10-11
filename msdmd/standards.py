@@ -1,4 +1,4 @@
-# ratios: loc_comments=287:24 imports_exports=8:2 calls_definitions=159:6
+# ratios: loc_comments=313:27 imports_exports=8:2 calls_definitions=173:7
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -28,11 +28,30 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
     facts: list = []
     edges: list = []
     diagnostics: list = []
-    # Source identifiers whose URL userinfo was withheld, numbered in first-seen
-    # order for this document. Identical sources keep one ordinal (true
-    # duplicates are still caught); identifiers that differ only in
-    # user:password stay distinct. Nothing is derived from the secret itself.
-    withheld_ids: dict[str, int] = {}
+    # Source identifiers whose URL userinfo was withheld get "#redacted-N", in
+    # first-seen order for this document. Identical sources share one ordinal
+    # (true duplicates are still caught); identifiers that differ only in
+    # user:password stay distinct; and an ordinal is skipped if the document
+    # already contains it literally (collected before any emit), so a real
+    # identifier ending in "#redacted-1" is never falsely duplicated. Nothing is
+    # derived from the secret itself.
+    literal_ids: set[str] = set()
+    withheld_ids: dict[str, str] = {}
+    used_ordinals: set[str] = set()
+    ordinal = [0]
+
+    def note_literals(item: Any) -> None:
+        stack = [item]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, dict):
+                for key, child in node.items():
+                    literal_ids.add(str(key))
+                    stack.append(child)
+            elif isinstance(node, (list, tuple)):
+                stack.extend(node)
+            elif node is not None:
+                literal_ids.add(str(node))
 
     def safe_id(item: Any) -> str | None:
         if item is None:
@@ -41,8 +60,15 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         clean = _sanitize_url_credentials(text)
         if clean == text:
             return text
-        ordinal = withheld_ids.setdefault(text, len(withheld_ids) + 1)
-        return f'{clean}#redacted-{ordinal}'
+        if text not in withheld_ids:
+            while True:
+                ordinal[0] += 1
+                candidate = f'{clean}#redacted-{ordinal[0]}'
+                if candidate not in literal_ids and candidate not in used_ordinals:
+                    break
+            withheld_ids[text] = candidate
+            used_ordinals.add(candidate)
+        return withheld_ids[text]
 
     def emit(convention: str, version: str, kind: str, loc: str, value: Any,
              *, scope: str = 'document', identity: str | None = None,
@@ -70,6 +96,8 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
     suffix = path.suffix.lower()
     if suffix == '.xml':
         root = parse_xml(data)
+        for node in root.iter():
+            note_literals([node.tag, node.text, node.tail, dict(node.attrib)])
         local = lambda node: node.tag.rsplit('}', 1)[-1]
         xml_redacted = False
 
@@ -146,6 +174,7 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         value = tomllib.loads(data.decode('utf-8'))
     else:
         value = parse_json(data)
+    note_literals(value)
     if not isinstance(value, dict):
         return facts, edges, diagnostics
 
@@ -221,6 +250,7 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
     envelope_fact = None
     if value.get('payloadType') == 'application/vnd.in-toto+json' and isinstance(value.get('payload'), str):
         statement = parse_json(base64.b64decode(value['payload'], validate=True))
+        note_literals(statement)
         statement_pointer = '/payload'
         # The decoded statement is published (redacted) at /payload; never also
         # publish the raw base64 payload, which would reverse that redaction.
@@ -326,4 +356,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=287:24 imports_exports=8:2 calls_definitions=159:6
+# ratios: loc_comments=313:27 imports_exports=8:2 calls_definitions=173:7

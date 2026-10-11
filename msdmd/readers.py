@@ -1,4 +1,4 @@
-# ratios: loc_comments=1000:73 imports_exports=22:5 calls_definitions=320:32
+# ratios: loc_comments=1011:78 imports_exports=22:5 calls_definitions=325:35
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -53,7 +53,7 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_ratios, ratios_placement
-from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml
+from msdmd.formats import YamlMapping, is_json_schema_uri, parse_json, parse_yaml, parse_xml
 from msdmd.grammar_code import read_grammar
 from msdmd.native_code import read_python as _read_python, read_typescript as _read_typescript
 from msdmd.standards import read_standards
@@ -368,45 +368,66 @@ def _json_safe(value: Any) -> Any:
     return {"$type": f"unsupported:{type(value).__name__}", "value": repr(value)}
 
 
+class _WithheldKeys:
+    """Allocate ``#redacted-N`` ordinals for one mapping.
+
+    Ordinals are mapping-wide, start at 1, and skip any string already present as
+    a source key, so withheld keys never collide with each other or with a literal
+    key. Nothing is derived from the secret: a digest would let weak passwords be
+    guessed offline.
+    """
+
+    def __init__(self, source_keys: Any) -> None:
+        self.taken = {key for key in source_keys if isinstance(key, str)}
+        self.count = 0
+
+    def key(self, key: Any) -> tuple[Any, bool]:
+        if not isinstance(key, str):
+            return key, False
+        clean = _sanitize_url_credentials(key)
+        if clean == key:
+            return key, False
+        while True:
+            self.count += 1
+            candidate = f"{clean}#redacted-{self.count}"
+            if candidate not in self.taken:
+                self.taken.add(candidate)
+                return candidate, True
+
+
 def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
     """Redact values owned by plainly secret-bearing field names."""
     redacted: list[str] = []
+    if isinstance(value, YamlMapping):
+        # Only parse_yaml builds this type; a source object that merely spells
+        # "$type": "yaml-mapping" is an ordinary mapping below. Typed entries
+        # carry their owning key beside the value, so redact in that name domain.
+        entries = value["entries"]
+        secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
+        withheld = _WithheldKeys(entry["key"] for entry in entries)
+        result_entries = []
+        for index, entry in enumerate(entries):
+            child_pointer = f"{pointer}/entries/{index}/value"
+            key, key_withheld = withheld.key(entry["key"])
+            if key_withheld:
+                redacted.append(f"{pointer}/entries/{index}/key")
+            # Belt and braces: tags come from the parser, but never publish one unredacted.
+            tag, tag_redactions = _redact_sensitive(entry["tag"], f"{pointer}/entries/{index}/tag")
+            redacted.extend(tag_redactions)
+            if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
+                child = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            else:
+                child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
+                redacted.extend(child_redacted)
+            result_entries.append({"key": key, "tag": tag, "value": child})
+        return YamlMapping({"$type": "yaml-mapping", "entries": result_entries}), redacted
     if isinstance(value, dict):
-        # Typed YAML entries carry their owning key beside the value. Redact in
-        # that name domain before traversing the transport representation.
-        entries = value.get("entries")
-        if value.get("$type") == "yaml-mapping" and isinstance(entries, list) and all(
-            isinstance(entry, dict) and {"key", "tag", "value"} <= entry.keys() for entry in entries
-        ):
-            secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
-            result_entries = []
-            for index, entry in enumerate(entries):
-                child_pointer = f"{pointer}/entries/{index}/value"
-                key, key_redactions = _redact_sensitive(entry["key"], f"{pointer}/entries/{index}/key")
-                redacted.extend(key_redactions)
-                if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
-                    child = {"$redacted": True, "reason": "sensitive-field-name"}
-                    redacted.append(child_pointer)
-                else:
-                    child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
-                    redacted.extend(child_redacted)
-                result_entries.append({"key": key, "tag": entry["tag"], "value": child})
-            return {"$type": "yaml-mapping", "entries": result_entries}, redacted
         result: dict[str, Any] = {}
-        source_keys = {str(key) for key in value}
-        withheld = 0
+        withheld = _WithheldKeys(str(key) for key in value)
         for key, item in value.items():
-            safe_key = _sanitize_url_credentials(str(key))
-            if safe_key != str(key):
-                # Distinct source keys must stay distinct after withholding userinfo.
-                # A per-mapping ordinal does that without deriving anything from
-                # the secret: a hash of the key would let weak passwords be guessed.
-                stem = safe_key
-                while True:
-                    withheld += 1
-                    safe_key = f"{stem}#redacted-{withheld}"
-                    if safe_key not in source_keys and safe_key not in result:
-                        break
+            safe_key, key_withheld = withheld.key(str(key))
+            if key_withheld:
                 redacted.append(f"{pointer}/[redacted-key]")
             child_pointer = f"{pointer}/{safe_key}"
             secret_payload = value.get("kind") == "Secret" and key in ("data", "stringData")
@@ -1153,4 +1174,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=1000:73 imports_exports=22:5 calls_definitions=320:32
+# ratios: loc_comments=1011:78 imports_exports=22:5 calls_definitions=325:35

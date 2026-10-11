@@ -104,12 +104,15 @@ resolution, arbitrary-language support and independent evidence verification.
 Use `python -m unittest tests.test_native_p1_security` to verify the structured
 publication boundary. YAML/TOML integers outside JavaScript's safe range use
 `json-number` tags with exact decimal lexemes. Typed YAML mappings preserve key/value
-associations during redaction. Kubernetes `Secret` data/stringData containers are
+associations during redaction; only the parser's internal wrapper type is treated
+as one, so a source object spelling `"$type": "yaml-mapping"` is an ordinary
+mapping, and entry tags are redacted as well. Kubernetes `Secret` data/stringData containers are
 withheld. Credential-bearing native identifiers and pointers are sanitized before
 address construction. When withholding URL userinfo would make two source keys or
 identifiers equal, each gets a `#redacted-N` suffix: an ordinal in first-seen order
-within its mapping (keys) or document (identifiers), skipping any value already
-present. Identical sources share one ordinal, so true duplicates are still caught.
+within its mapping (keys, including typed YAML keys) or document (identifiers),
+skipping any value already present literally (for identifiers, anywhere in the
+document, collected before projection). Identical sources share one ordinal, so true duplicates are still caught.
 Nothing in the suffix is derived from the secret; a digest of it would let weak
 passwords be guessed offline. Encoded DSSE payloads are withheld even if semantic mapping
 fails; malformed subjects remain diagnosed while the redacted statement is retained.

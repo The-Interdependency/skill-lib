@@ -1,4 +1,4 @@
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=1016:80 imports_exports=22:5 calls_definitions=328:35
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -53,7 +53,7 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from msdmd.parsers.universal import marker_for, parse_ratios, ratios_placement
-from msdmd.formats import is_json_schema_uri, parse_json, parse_yaml, parse_xml
+from msdmd.formats import YamlMapping, is_json_schema_uri, parse_json, parse_yaml, parse_xml
 from msdmd.grammar_code import read_grammar
 from msdmd.native_code import read_python as _read_python, read_typescript as _read_typescript
 from msdmd.standards import read_standards
@@ -353,8 +353,10 @@ def _digest(value: bytes | str) -> str:
 
 def _json_safe(value: Any) -> Any:
     """Preserve non-JSON native scalar types with explicit tagged values."""
-    if value is None or isinstance(value, (str, bool, int)):
+    if value is None or isinstance(value, (str, bool)):
         return value
+    if isinstance(value, int):
+        return value if abs(value) <= 2 ** 53 - 1 else {"$type": "json-number", "lexeme": str(value)}
     if isinstance(value, float):
         return value if math.isfinite(value) else {"$type": "nonfinite-float", "value": repr(value)}
     if isinstance(value, (dt.datetime, dt.date, dt.time)):
@@ -366,18 +368,87 @@ def _json_safe(value: Any) -> Any:
     return {"$type": f"unsupported:{type(value).__name__}", "value": repr(value)}
 
 
+class _WithheldKeys:
+    """Allocate ``#redacted-N`` ordinals for one mapping.
+
+    Ordinals are mapping-wide, start at 1, and skip any string already present as
+    a source key, so withheld keys never collide with each other or with a literal
+    key. Nothing is derived from the secret: a digest would let weak passwords be
+    guessed offline.
+    """
+
+    def __init__(self, source_keys: Any) -> None:
+        self.taken = {key for key in source_keys if isinstance(key, str)}
+        self.count = 0
+
+    def key(self, key: Any) -> tuple[Any, bool]:
+        if not isinstance(key, str):
+            return key, False
+        clean = _sanitize_url_credentials(key)
+        if clean == key:
+            return key, False
+        while True:
+            self.count += 1
+            candidate = f"{clean}#redacted-{self.count}"
+            if candidate not in self.taken:
+                self.taken.add(candidate)
+                return candidate, True
+
+
 def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
     """Redact values owned by plainly secret-bearing field names."""
     redacted: list[str] = []
-    if isinstance(value, dict):
-        result: dict[str, Any] = {}
-        for key, item in value.items():
-            child_pointer = f"{pointer}/{key}"
-            if _is_sensitive_key(key):
-                result[str(key)] = {"$redacted": True, "reason": "sensitive-field-name"}
+    if isinstance(value, YamlMapping):
+        # Only parse_yaml builds this type; a source object that merely spells
+        # "$type": "yaml-mapping" is an ordinary mapping below. Typed entries
+        # carry their owning key beside the value, so redact in that name domain.
+        entries = value["entries"]
+        secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
+        # Same DSSE rule as the plain-dict branch: a typed mapping (any non-string
+        # key elsewhere) must not publish the raw base64 payload either.
+        dsse = any(entry["key"] == "payloadType" and entry["value"] == "application/vnd.in-toto+json"
+                   for entry in entries)
+        withheld = _WithheldKeys(entry["key"] for entry in entries)
+        result_entries = []
+        for index, entry in enumerate(entries):
+            child_pointer = f"{pointer}/entries/{index}/value"
+            key, key_withheld = withheld.key(entry["key"])
+            if key_withheld:
+                redacted.append(f"{pointer}/entries/{index}/key")
+            # Belt and braces: tags come from the parser, but never publish one unredacted.
+            tag, tag_redactions = _redact_sensitive(entry["tag"], f"{pointer}/entries/{index}/tag")
+            redacted.extend(tag_redactions)
+            if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
+                child = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse and entry["key"] == "payload" and isinstance(entry["value"], str):
+                child = {"$withheld": True, "reason": "encoded-dsse-payload"}
                 redacted.append(child_pointer)
             else:
-                result[str(key)], child_redacted = _redact_sensitive(item, child_pointer)
+                child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
+                redacted.extend(child_redacted)
+            result_entries.append({"key": key, "tag": tag, "value": child})
+        return YamlMapping({"$type": "yaml-mapping", "entries": result_entries}), redacted
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        withheld = _WithheldKeys(str(key) for key in value)
+        for key, item in value.items():
+            safe_key, key_withheld = withheld.key(str(key))
+            if key_withheld:
+                redacted.append(f"{pointer}/[redacted-key]")
+            child_pointer = f"{pointer}/{safe_key}"
+            secret_payload = value.get("kind") == "Secret" and key in ("data", "stringData")
+            dsse_payload = value.get("payloadType") == "application/vnd.in-toto+json" and key == "payload" and isinstance(item, str)
+            if _is_sensitive_key(key) or secret_payload:
+                result[safe_key] = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse_payload:
+                # Withhold in the syntax reader too: semantic-reader failure must
+                # never restore a reversible encoding of a secret-bearing tree.
+                result[safe_key] = {"$withheld": True, "reason": "encoded-dsse-payload"}
+                redacted.append(child_pointer)
+            else:
+                result[safe_key], child_redacted = _redact_sensitive(item, child_pointer)
                 redacted.extend(child_redacted)
         return result, redacted
     if isinstance(value, list):
@@ -1110,4 +1181,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=964:66 imports_exports=22:5 calls_definitions=300:32
+# ratios: loc_comments=1016:80 imports_exports=22:5 calls_definitions=328:35

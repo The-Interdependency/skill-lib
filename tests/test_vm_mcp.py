@@ -25,4 +25,5 @@ from test_admin_broker import VmMcpAdminBrokerTests  # noqa: E402,F401
 from test_security_p1 import (BrokerCallerAuthTests, DestructiveEntryTests, HttpCallerAuthTests,
                               McpHttpIntegrationTests)  # noqa: E402,F401
 from test_auth_token_sources import (BearerSchemeTests, InstallerSecretFileTests, InstallerTokenSourceTests,  # noqa: E402,F401
-                                     InstallerUmaskTests, ServerDumpabilityTests, ServiceTokenLoadingTests)
+                                     InstallerLocaleTests, InstallerPtraceScopeTests, InstallerUmaskTests,
+                                     ServerDumpabilityTests, ServicePtraceIsolationTests, ServiceTokenLoadingTests)

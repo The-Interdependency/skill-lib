@@ -36,6 +36,8 @@ SERVICE_USER="${VM_MCP_SERVICE_USER:-vmmcp}"
 SERVICE_GROUP="$SERVICE_USER"
 ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
 CREDENTIAL_FILE=/etc/credstore/vm-mcp-token
+YAMA_SCOPE_PATH=/proc/sys/kernel/yama/ptrace_scope
+PTRACE_SYSCTL_CONF=/etc/sysctl.d/90-vm-mcp-ptrace.conf
 # The bearer token comes from exactly one operator-provisioned source, so it
 # never has to appear in a pasted command line or shell history:
 #   VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token  regular file owned by the
@@ -45,7 +47,7 @@ CREDENTIAL_FILE=/etc/credstore/vm-mcp-token
 # Every function that touches the token runs with xtrace off, so `bash -x`
 # never prints it, and restores the caller's xtrace setting afterwards.
 _resolve_auth_token() {
-  local sources=0 token="" file fd owner mode kind fd_id path_id
+  local sources=0 token="" file fd owner mode raw fd_id path_id path_raw
   case "${VM_MCP_AUTH_TOKEN_STDIN-}" in
     ""|1) ;;
     *) echo "ERROR: VM_MCP_AUTH_TOKEN_STDIN must be unset or 1" >&2; return 3 ;;
@@ -69,9 +71,13 @@ _resolve_auth_token() {
       echo "ERROR: cannot open VM_MCP_AUTH_TOKEN_FILE" >&2
       return 3
     fi
-    read -r owner mode kind fd_id < <(stat -L -c '%u %a %F %d:%i' "/dev/fd/$fd" | sed 's/regular empty file/regular_file/; s/regular file/regular_file/')
-    path_id="$(stat -c '%F %d:%i' -- "$file" 2>/dev/null | sed 's/regular empty file/regular_file/; s/regular file/regular_file/' || true)"
-    if [[ "$kind" != regular_file || "$path_id" != "regular_file $fd_id" ]]; then
+    # %f is the raw st_mode in hex and is not locale-translated (unlike %F).
+    read -r owner mode raw fd_id < <(LC_ALL=C stat -L -c '%u %a %f %d:%i' "/dev/fd/$fd")
+    path_id="$(LC_ALL=C stat -c '%f %d:%i' -- "$file" 2>/dev/null || true)"
+    path_raw="${path_id%% *}"
+    if [[ ! "$raw" =~ ^[0-9a-f]+$ || ! "$path_raw" =~ ^[0-9a-f]+$ ]] \
+        || (( (16#$raw & 16#F000) != 16#8000 || (16#$path_raw & 16#F000) != 16#8000 )) \
+        || [[ "${path_id#* }" != "$fd_id" ]]; then
       exec {fd}<&-
       echo "ERROR: VM_MCP_AUTH_TOKEN_FILE is not a regular file or changed while being opened" >&2
       return 3
@@ -149,6 +155,43 @@ case "$WORK_ROOT" in
   *$'\n'*|*$'\r'*) echo "ERROR: VM_MCP_ROOT must not contain newlines" >&2; exit 3 ;;
 esac
 
+# Usage: ensure_ptrace_scope PROFILE
+# Yama ptrace_scope >= 1 stops same-UID shell_exec children from ptracing or
+# pidfd_getfd-ing the service (a non-ancestor), so they cannot copy its token
+# descriptor even in the startup instant before it is non-dumpable. Keeps an
+# existing higher value; persists it in sysctl.d and applies it now.
+ensure_ptrace_scope() {
+  local profile=$1 current target tmp
+  if [[ ! -r "$YAMA_SCOPE_PATH" ]]; then
+    if [[ "$profile" == read-only ]]; then
+      echo "WARNING: kernel.yama.ptrace_scope is unavailable; the read-only profile runs no shell children" >&2
+      return 0
+    fi
+    echo "ERROR: kernel.yama.ptrace_scope is unavailable (Yama LSM not enabled). The $profile profile runs shell children as the service user and needs ptrace_scope >= 1 so they cannot copy the service's token descriptor. Enable Yama (security=yama / lsm=...,yama) or use VM_MCP_PROFILE=read-only" >&2
+    return 7
+  fi
+  current="$(< "$YAMA_SCOPE_PATH")"
+  if [[ ! "$current" =~ ^[0-3]$ ]]; then
+    echo "ERROR: unexpected kernel.yama.ptrace_scope value" >&2
+    return 7
+  fi
+  target=$(( current > 1 ? current : 1 ))
+  tmp="$(mktemp "$(dirname -- "$PTRACE_SYSCTL_CONF")/.vm-mcp-ptrace.XXXXXX")" || return 7
+  printf '# Written by vm-mcp/install.sh: same-UID processes may not ptrace or\n# pidfd_getfd non-descendants such as vm-mcp.service.\nkernel.yama.ptrace_scope = %s\n' "$target" > "$tmp" \
+    && chmod 0644 "$tmp" && mv -f -- "$tmp" "$PTRACE_SYSCTL_CONF" || { rm -f -- "$tmp"; return 7; }
+  if (( current < 1 )); then
+    if ! sysctl -q -w "kernel.yama.ptrace_scope=$target" >/dev/null; then
+      echo "ERROR: could not set kernel.yama.ptrace_scope=$target" >&2
+      return 7
+    fi
+  fi
+  current="$(< "$YAMA_SCOPE_PATH")"
+  if (( current < 1 )); then
+    echo "ERROR: kernel.yama.ptrace_scope is still $current after applying $PTRACE_SYSCTL_CONF" >&2
+    return 7
+  fi
+}
+
 install_python() {
   if command -v apt-get >/dev/null 2>&1; then
     export DEBIAN_FRONTEND=noninteractive
@@ -172,6 +215,7 @@ systemd_quote() {
   printf '"%s"' "$value"
 }
 
+ensure_ptrace_scope "$PROFILE" || exit 7
 install_python
 
 if ! id "$SERVICE_USER" >/dev/null 2>&1; then

@@ -1,4 +1,4 @@
-# ratios: loc_comments=71:50 imports_exports=8:3 calls_definitions=34:7
+# ratios: loc_comments=103:61 imports_exports=8:8 calls_definitions=46:12
 """HTTP caller and process isolation for the private VM control plane.
 
 Usage: provision /etc/credstore/vm-mcp-token (root, 0600) via vm-mcp/install.sh,
@@ -105,6 +105,62 @@ def configured_token() -> bytes:
     return token
 
 
+YAMA_PTRACE_SCOPE = "/proc/sys/kernel/yama/ptrace_scope"
+SELF_STATUS = "/proc/self/status"
+# Profiles that run same-UID shell children. Anything but read-only counts, so
+# an unknown profile name fails safe.
+_SHELL_FREE_PROFILES = {"read-only"}
+
+
+def ptrace_scope(path: str = YAMA_PTRACE_SCOPE) -> int | None:
+    """Return kernel.yama.ptrace_scope, or None when Yama is unavailable."""
+    try:
+        with open(path, encoding="ascii") as handle:
+            return int(handle.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def require_ptrace_isolation(profile: str, path: str = YAMA_PTRACE_SCOPE) -> None:
+    """Refuse shell-capable profiles unless Yama blocks non-ancestor ptrace.
+
+    pidfd_getfd needs PTRACE_MODE_ATTACH; with ptrace_scope >= 1 a same-UID
+    shell_exec child (never an ancestor of this service) cannot copy the token
+    descriptor, even in the startup instant before PR_SET_DUMPABLE applies.
+    """
+    if profile in _SHELL_FREE_PROFILES:
+        return
+    scope = ptrace_scope(path)
+    if scope is None or scope < 1:
+        raise SystemExit(f"vm-mcp: profile {profile} requires kernel.yama.ptrace_scope >= 1 "
+                         f"(found {'unavailable' if scope is None else scope}); re-run vm-mcp/install.sh")
+
+
+def tracer_pid(path: str = SELF_STATUS) -> int:
+    """Return TracerPid from /proc/self/status; unreadable counts as traced."""
+    try:
+        with open(path, encoding="ascii", errors="replace") as handle:
+            for line in handle:
+                if line.startswith("TracerPid:"):
+                    return int(line.split(":", 1)[1].strip())
+    except (OSError, ValueError):
+        pass
+    return -1
+
+
+def refuse_if_traced(path: str = SELF_STATUS) -> None:
+    """Exit before touching the token if anything already traces this process."""
+    if tracer_pid(path) != 0:
+        raise SystemExit("vm-mcp: refusing to start while traced (TracerPid is not 0)")
+
+
+def startup_token(profile: str, *, scope_path: str = YAMA_PTRACE_SCOPE, status_path: str = SELF_STATUS) -> bytes:
+    """Run right after PR_SET_DUMPABLE=0: check isolation, then read and close the token fd."""
+    refuse_if_traced(status_path)
+    require_ptrace_isolation(profile, scope_path)
+    return configured_token()
+
+
 class BearerAuth:
     """Authorize before MCP parsing or routing, including direct loopback callers."""
 
@@ -138,4 +194,4 @@ class BearerAuth:
             await send({"type": "http.response.body", "body": b"Authentication required"})
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=71:50 imports_exports=8:3 calls_definitions=34:7
+# ratios: loc_comments=103:61 imports_exports=8:8 calls_definitions=46:12

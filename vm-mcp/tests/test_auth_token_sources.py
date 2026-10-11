@@ -18,6 +18,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import auth
 from auth import BearerAuth, configured_token
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -127,8 +128,10 @@ class InstallerTokenSourceTests(unittest.TestCase):
         text = INSTALLER.read_text(encoding="utf-8")
         body = text[text.index("_resolve_auth_token() {"):text.index("load_auth_token() {")]
         self.assertEqual(1, body.count('exec {fd}<"$file"'))
-        self.assertIn('stat -L -c \'%u %a %F %d:%i\' "/dev/fd/$fd"', body)
-        self.assertIn('"$path_id" != "regular_file $fd_id"', body)
+        self.assertIn('LC_ALL=C stat -L -c \'%u %a %f %d:%i\' "/dev/fd/$fd"', body)
+        self.assertIn('[[ "${path_id#* }" != "$fd_id" ]]', body)
+        self.assertFalse([line for line in body.splitlines() if "stat " in line and "%F" in line
+                          and not line.lstrip().startswith("#")])  # %F is locale-translated
         self.assertIn('read -r token <&"$fd"', body)
         self.assertNotIn('< "$file"', body)
 
@@ -161,6 +164,126 @@ class InstallerTokenSourceTests(unittest.TestCase):
         self.assertNotIn("AUTH_TOKEN", env_block)
         self.assertNotIn("cat > /etc/vm-mcp.env", text)
         self.assertNotIn("chmod 0600 /etc/vm-mcp.env", text)
+
+
+class InstallerLocaleTests(unittest.TestCase):
+    def test_token_file_check_ignores_a_translating_locale(self) -> None:
+        # Emulate a de_DE stat: translate %F output unless LC_ALL=C.
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        real = shutil.which("stat")
+        stub = directory / "stat"
+        stub.write_text("#!/bin/bash\n"
+                        f'if [[ "${{LC_ALL:-}}" == C ]]; then exec {real} "$@"; fi\n'
+                        f'{real} "$@" | sed "s/regular file/regul\u00e4re Datei/; s/regular empty file/regul\u00e4re leere Datei/"\n',
+                        encoding="utf-8")
+        stub.chmod(0o700)
+        token = directory / "token"
+        token.write_text(TOKEN + "\n", encoding="utf-8")
+        token.chmod(0o600)
+        result = run_installer_functions('load_auth_token && printf %s "$AUTH_TOKEN"', env={
+            "PATH": f"{directory}:{os.environ['PATH']}", "LANG": "de_DE.UTF-8", "LC_ALL": "de_DE.UTF-8",
+            "VM_MCP_AUTH_TOKEN_FILE": str(token)})
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual(TOKEN, result.stdout)
+
+
+class InstallerPtraceScopeTests(unittest.TestCase):
+    def run_scope(self, profile: str, scope: str | None, *, sysctl_ok: bool = True):
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        scope_path = directory / "ptrace_scope"
+        if scope is not None:
+            scope_path.write_text(scope + "\n", encoding="ascii")
+        calls = directory / "sysctl.calls"
+        bindir = directory / "bin"
+        bindir.mkdir()
+        (bindir / "sysctl").write_text(
+            "#!/bin/bash\n"
+            f'echo "$*" >> "{calls}"\n'
+            + (f'echo "${{@: -1}}" | cut -d= -f2 > "{scope_path}"\n' if sysctl_ok else "exit 1\n"),
+            encoding="utf-8")
+        (bindir / "sysctl").chmod(0o700)
+        conf = directory / "90-vm-mcp-ptrace.conf"
+        result = run_installer_functions(
+            f'YAMA_SCOPE_PATH="{scope_path}"; PTRACE_SYSCTL_CONF="{conf}"; ensure_ptrace_scope {profile}; echo "rc=$?"',
+            env={"PATH": f"{bindir}:{os.environ['PATH']}"}, names=("ensure_ptrace_scope",))
+        return result, conf, calls, scope_path
+
+    def test_scope_zero_is_raised_to_one_persisted_and_applied(self) -> None:
+        result, conf, calls, scope_path = self.run_scope("personal-console", "0")
+        self.assertIn("rc=0", result.stdout, result.stderr)
+        self.assertIn("kernel.yama.ptrace_scope = 1", conf.read_text(encoding="ascii"))
+        self.assertEqual(0o644, stat.S_IMODE(conf.stat().st_mode))
+        self.assertIn("kernel.yama.ptrace_scope=1", calls.read_text(encoding="ascii"))
+        self.assertEqual("1", scope_path.read_text(encoding="ascii").strip())
+
+    def test_existing_higher_scope_is_kept_without_lowering(self) -> None:
+        for value in ("1", "2", "3"):
+            with self.subTest(value=value):
+                result, conf, calls, _ = self.run_scope("workspace", value)
+                self.assertIn("rc=0", result.stdout, result.stderr)
+                self.assertIn(f"kernel.yama.ptrace_scope = {value}", conf.read_text(encoding="ascii"))
+                self.assertFalse(calls.exists())
+
+    def test_missing_yama_fails_clearly_for_shell_profiles_only(self) -> None:
+        for profile in ("workspace", "personal-console"):
+            with self.subTest(profile=profile):
+                result, conf, _, _ = self.run_scope(profile, None)
+                self.assertIn("rc=7", result.stdout)
+                self.assertIn("Yama LSM not enabled", result.stderr)
+                self.assertFalse(conf.exists())
+        result, _, _, _ = self.run_scope("read-only", None)
+        self.assertIn("rc=0", result.stdout)
+        self.assertIn("WARNING", result.stderr)
+
+    def test_failed_apply_fails(self) -> None:
+        result, _, _, _ = self.run_scope("workspace", "0", sysctl_ok=False)
+        self.assertIn("rc=7", result.stdout)
+        self.assertIn("could not set kernel.yama.ptrace_scope=1", result.stderr)
+
+    def test_installer_checks_scope_before_installing_anything(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertLess(text.index('ensure_ptrace_scope "$PROFILE" || exit 7'), text.index("\ninstall_python\n"))
+
+
+class ServicePtraceIsolationTests(unittest.TestCase):
+    def proc_file(self, content: str | None) -> str:
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        path = directory / "proc"
+        if content is not None:
+            path.write_text(content, encoding="ascii")
+        return str(path)
+
+    def test_shell_profiles_require_yama_scope_at_least_one(self) -> None:
+        for profile in ("workspace", "personal-console", "unknown-profile"):
+            for content in (None, "0\n", "garbage\n"):
+                with self.subTest(profile=profile, content=content), self.assertRaises(SystemExit) as raised:
+                    auth.require_ptrace_isolation(profile, self.proc_file(content))
+                self.assertIn("ptrace_scope >= 1", str(raised.exception))
+            for content in ("1\n", "2\n", "3\n"):
+                auth.require_ptrace_isolation(profile, self.proc_file(content))
+        auth.require_ptrace_isolation("read-only", self.proc_file(None))  # no shell children
+
+    def test_traced_or_unreadable_status_refuses_start(self) -> None:
+        auth.refuse_if_traced(self.proc_file("Name:\tpython\nTracerPid:\t0\n"))
+        for content in ("Name:\tpython\nTracerPid:\t4242\n", "Name:\tpython\n", None):
+            with self.subTest(content=content), self.assertRaises(SystemExit):
+                auth.refuse_if_traced(self.proc_file(content))
+
+    def test_startup_checks_run_before_the_token_is_read(self) -> None:
+        with patch.object(auth, "configured_token", return_value=TOKEN.encode()) as read:
+            with self.assertRaises(SystemExit):
+                auth.startup_token("workspace", scope_path=self.proc_file("0\n"),
+                                   status_path=self.proc_file("TracerPid:\t0\n"))
+            with self.assertRaises(SystemExit):
+                auth.startup_token("read-only", scope_path=self.proc_file(None),
+                                   status_path=self.proc_file("TracerPid:\t7\n"))
+            read.assert_not_called()
+            self.assertEqual(TOKEN.encode(), auth.startup_token(
+                "personal-console", scope_path=self.proc_file("1\n"), status_path=self.proc_file("TracerPid:\t0\n")))
+            read.assert_called_once()
 
 
 class InstallerSecretFileTests(unittest.TestCase):
@@ -286,6 +409,18 @@ class ServerDumpabilityTests(unittest.TestCase):
         guard = ast.unparse(body[1])
         self.assertIn("prctl(4, 0, 0, 0, 0)", guard)
         self.assertIn("SystemExit", guard)
+        # Then, still before uvicorn/mcp: the light auth import and the token read.
+        self.assertEqual("os", body[2].names[0].name)
+        self.assertIsInstance(body[3], ast.ImportFrom)
+        self.assertEqual("auth", body[3].module)
+        self.assertIn("startup_token(", ast.unparse(body[4]))
+        heavy = [i for i, node in enumerate(body) if isinstance(node, (ast.Import, ast.ImportFrom))
+                 and any(name in ast.unparse(node) for name in ("uvicorn", "mcp"))]
+        self.assertGreater(min(heavy), 4)
+        auth_imports = {node.module if isinstance(node, ast.ImportFrom) else node.names[0].name
+                        for node in ast.parse((ROOT / "auth.py").read_text(encoding="utf-8")).body
+                        if isinstance(node, (ast.Import, ast.ImportFrom))}
+        self.assertEqual({"__future__", "ctypes", "logging", "os", "re", "secrets", "stat", "typing"}, auth_imports)
 
 
 if __name__ == "__main__":

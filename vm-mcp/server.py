@@ -1,4 +1,4 @@
-# ratios: loc_comments=95:63 imports_exports=9:12 calls_definitions=41:14
+# ratios: loc_comments=96:66 imports_exports=9:12 calls_definitions=41:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -22,9 +22,14 @@ if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPA
 
 import os
 
-import uvicorn
+# Still before any heavy import: refuse if traced or if Yama does not block
+# same-UID pidfd_getfd (shell profiles), then read the token from fd 0 and
+# replace fd 0 with /dev/null. auth imports only the standard library.
+from auth import BearerAuth, protect_process, startup_token
 
-from auth import BearerAuth, configured_token, protect_process
+_TOKEN = startup_token(os.environ.get("VM_MCP_PROFILE", "read-only"))
+
+import uvicorn
 from typing import Any, Callable
 
 from mcp.server import MCPServer
@@ -188,7 +193,7 @@ def admin_exec(command: str, cwd: str = "/", timeout_seconds: float = 60.0) -> d
 
 def main() -> None:
     protect_process()
-    token = configured_token()
+    token = _TOKEN
     app = mcp.streamable_http_app(
         host="127.0.0.1",
         streamable_http_path="/mcp",
@@ -200,4 +205,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=95:63 imports_exports=9:12 calls_definitions=41:14
+# ratios: loc_comments=96:66 imports_exports=9:12 calls_definitions=41:14

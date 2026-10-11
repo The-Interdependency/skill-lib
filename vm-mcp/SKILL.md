@@ -138,7 +138,17 @@ Provisioning or rotating access is a separate operator-authorized action.
 
 The server disables Linux process dumpability as its first statement, before
 importing `mcp` or `uvicorn`, and again before serving or spawning shell
-commands. Same-UID shell children therefore cannot inspect its memory,
+commands. Right after that, still before the heavy imports, it exits if
+`TracerPid` in `/proc/self/status` is nonzero, and in the `workspace` and
+`personal-console` profiles it refuses to start unless
+`kernel.yama.ptrace_scope` is at least 1. Only then does it read the token from
+fd 0 and close it. Yama matters for the instant before the process is
+non-dumpable: `pidfd_getfd` needs `PTRACE_MODE_ATTACH`, so with scope >= 1 a
+same-UID `shell_exec` child (never an ancestor of the service) cannot copy the
+token descriptor, even by killing the server to force a restart. The installer
+writes `kernel.yama.ptrace_scope` (1, or the existing higher value) to
+`/etc/sysctl.d/90-vm-mcp-ptrace.conf`, applies it, and exits 7 for shell
+profiles if Yama is unavailable. Same-UID shell children therefore cannot inspect its memory,
 environment or descriptors to steal caller credentials. Children receive only
 the sanitized execution environment. Root remains outside this protection.
 The broker queries systemd for the live main-process identity on every request;
@@ -223,6 +233,11 @@ Installs from before caller authentication have no token. After this upgrade:
   it refuses to start. Re-running the installer removes the variable from
   `/etc/vm-mcp.env` and moves the token to the root-only file;
 - clients without the `Authorization` header get `401` on every request.
+- `workspace`/`personal-console` need Yama: the installer sets
+  `kernel.yama.ptrace_scope` >= 1 persistently (exit 7 if Yama is missing), and
+  the server refuses to start in those profiles while the scope is 0 or absent.
+  A later sysctl.d file that sets it back to 0 stops the service rather than
+  weakening it.
 
 Upgrade order: (1) create the root-owned `0600` token file through the human
 SSH/OS Login/IAP path; (2) re-run the installer with `VM_MCP_AUTH_TOKEN_FILE`

@@ -1,4 +1,4 @@
-# ratios: loc_comments=313:27 imports_exports=8:2 calls_definitions=173:7
+# ratios: loc_comments=314:27 imports_exports=8:2 calls_definitions=173:7
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -90,8 +90,9 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         facts.append(fact)
         return fact
 
-    def unsupported(code: str, message: str, *, status: str = 'unsupported') -> None:
-        diagnostics.append(_diagnostic(context, reader_id=rid, code=code, message=message, status=status))
+    def unsupported(code: str, message: str, *, status: str = 'unsupported', severity: str = 'warning') -> None:
+        diagnostics.append(_diagnostic(context, reader_id=rid, code=code, message=message, status=status,
+                                       severity=severity))
 
     suffix = path.suffix.lower()
     if suffix == '.xml':
@@ -267,11 +268,11 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         else:
             subjects = statement.get('subject', [])
             if not isinstance(subjects, list):
-                unsupported('invalid_statement_subject', 'in-toto subject must be a list; statement retained without subject projection', status='invalid')
+                unsupported('invalid_statement_subject', 'in-toto subject must be a list; statement retained without subject projection', status='invalid', severity='error')
                 subjects = []
             for i, subject in enumerate(subjects):
                 if not isinstance(subject, dict) or not isinstance(subject.get('name'), str):
-                    unsupported('invalid_statement_subject', 'in-toto subject requires a mapping with a string name; invalid entry retained only in statement', status='invalid')
+                    unsupported('invalid_statement_subject', 'in-toto subject requires a mapping with a string name; invalid entry retained only in statement', status='invalid', severity='error')
                     continue
                 emit('in-toto.statement', version, 'attested-subject', statement_pointer + pointer('subject', i), subject,
                     scope='artifact', identity=subject['name'], native_id=subject['name'], standing='reported-evidence')
@@ -356,4 +357,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=313:27 imports_exports=8:2 calls_definitions=173:7
+# ratios: loc_comments=314:27 imports_exports=8:2 calls_definitions=173:7

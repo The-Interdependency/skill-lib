@@ -172,6 +172,33 @@ class NativeP1SecurityTests(unittest.TestCase):
                 self.assertTrue(any(f['kind'] == 'attestation' for f in result['facts']))
                 self.assertIn('invalid_statement_subject', {d['code'] for d in result['diagnostics']})
 
+    def test_typed_yaml_dsse_envelope_withholds_the_raw_payload(self):
+        statement = {'_type': 'https://in-toto.io/Statement/v1', 'subject': [{'name': 'a'}],
+                     'predicate': {'note': 'DO_NOT_PUBLISH_typed_dsse'}}
+        payload = base64.b64encode(json.dumps(statement).encode()).decode()
+        # The integer key forces the typed-mapping representation.
+        source = f'payloadType: application/vnd.in-toto+json\npayload: {payload}\n7: typed-key\n'
+        result = self.collection('envelope.yaml', source)
+        text = json.dumps(result)
+        self.assertNotIn(payload, text)
+        self.assertNotIn(payload[:40], text)
+        self.assertIn('encoded-dsse-payload', text)
+        self.assertIn('sensitive_fields_redacted', text)
+        # Other payloadTypes are ordinary data.
+        plain = self.collection('other.yaml', 'payloadType: text/plain\npayload: aGVsbG8=\n7: typed-key\n')
+        self.assertIn('aGVsbG8=', json.dumps(plain))
+
+    def test_malformed_statement_subject_is_an_error_under_strict(self):
+        statement = {'_type': 'https://in-toto.io/Statement/v1', 'subject': [None, {'name': 'valid'}]}
+        result = self.collection('statement.json', json.dumps(statement))
+        subject = [d for d in result['diagnostics'] if d['code'] == 'invalid_statement_subject']
+        self.assertTrue(subject)
+        self.assertEqual({'error'}, {d['severity'] for d in subject})
+        self.assertTrue(collection_errors(result))
+        self.assertTrue(any(f['kind'] == 'attested-subject' for f in result['facts']))
+        valid = self.collection('statement.json', json.dumps(dict(statement, subject=[{'name': 'valid'}])))
+        self.assertFalse(collection_errors(valid), valid['diagnostics'])
+
     def test_raw_dsse_payload_is_withheld_even_if_semantic_reader_aborts(self):
         payload = base64.b64encode(b'{"password":"DO_NOT_PUBLISH_failure"}').decode()
         with patch('msdmd.readers.read_standards', side_effect=ValueError('failure')):

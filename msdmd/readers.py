@@ -1,4 +1,4 @@
-# ratios: loc_comments=1011:78 imports_exports=22:5 calls_definitions=325:35
+# ratios: loc_comments=1016:80 imports_exports=22:5 calls_definitions=328:35
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -404,6 +404,10 @@ def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
         # carry their owning key beside the value, so redact in that name domain.
         entries = value["entries"]
         secret = any(entry["key"] == "kind" and entry["value"] == "Secret" for entry in entries)
+        # Same DSSE rule as the plain-dict branch: a typed mapping (any non-string
+        # key elsewhere) must not publish the raw base64 payload either.
+        dsse = any(entry["key"] == "payloadType" and entry["value"] == "application/vnd.in-toto+json"
+                   for entry in entries)
         withheld = _WithheldKeys(entry["key"] for entry in entries)
         result_entries = []
         for index, entry in enumerate(entries):
@@ -416,6 +420,9 @@ def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
             redacted.extend(tag_redactions)
             if _is_sensitive_key(entry["key"]) or (secret and entry["key"] in ("data", "stringData")):
                 child = {"$redacted": True, "reason": "sensitive-field-name"}
+                redacted.append(child_pointer)
+            elif dsse and entry["key"] == "payload" and isinstance(entry["value"], str):
+                child = {"$withheld": True, "reason": "encoded-dsse-payload"}
                 redacted.append(child_pointer)
             else:
                 child, child_redacted = _redact_sensitive(entry["value"], child_pointer)
@@ -1174,4 +1181,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=1011:78 imports_exports=22:5 calls_definitions=325:35
+# ratios: loc_comments=1016:80 imports_exports=22:5 calls_definitions=328:35

@@ -20,7 +20,11 @@ standards facts:
   `#redacted-N` ordinal keeps them apart; it is never a hash of the secret.
   Ordinals are mapping-wide (typed YAML keys included) and skip identifiers the
   document already contains literally; identical sources still collide.
-- **Encoded DSSE payloads are withheld** even when semantic mapping fails.
+- **Encoded DSSE payloads are withheld** even when semantic mapping fails,
+  and also in typed YAML mappings (an envelope with any non-string key).
+- **Malformed in-toto subjects are errors.** `invalid_statement_subject` is now
+  severity `error`, so `--strict` exits 2 on a statement whose `subject` is not
+  a list of mappings with a string `name`; the statement is still retained.
 
 ## Unreleased: msdmd TypeScript reader failures fail closed
 

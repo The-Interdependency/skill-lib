@@ -115,6 +115,8 @@ skipping any value already present literally (for identifiers, anywhere in the
 document, collected before projection). Identical sources share one ordinal, so true duplicates are still caught.
 Nothing in the suffix is derived from the secret; a digest of it would let weak
 passwords be guessed offline. Encoded DSSE payloads are withheld even if semantic mapping
-fails; malformed subjects remain diagnosed while the redacted statement is retained.
+fails, including in typed YAML mappings; malformed subjects are
+`invalid_statement_subject` errors (so `--strict` fails) while the redacted
+statement is retained.
 Source digests preserve provenance; redacted values and locators are intentionally
 lossy and do not grant access to the source.

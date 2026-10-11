@@ -139,16 +139,28 @@ Provisioning or rotating access is a separate operator-authorized action.
 The server disables Linux process dumpability as its first statement, before
 importing `mcp` or `uvicorn`, and again before serving or spawning shell
 commands. Right after that, still before the heavy imports, it exits if
-`TracerPid` in `/proc/self/status` is nonzero, and in the `workspace` and
-`personal-console` profiles it refuses to start unless
-`kernel.yama.ptrace_scope` is at least 1. Only then does it read the token from
-fd 0 and close it. Yama matters for the instant before the process is
-non-dumpable: `pidfd_getfd` needs `PTRACE_MODE_ATTACH`, so with scope >= 1 a
-same-UID `shell_exec` child (never an ancestor of the service) cannot copy the
-token descriptor, even by killing the server to force a restart. The installer
-writes `kernel.yama.ptrace_scope` (1, or the existing higher value) to
-`/etc/sysctl.d/90-vm-mcp-ptrace.conf`, applies it, and exits 7 for shell
-profiles if Yama is unavailable. Same-UID shell children therefore cannot inspect its memory,
+`TracerPid` in `/proc/self/status` is nonzero, then reads the token from fd 0
+and closes it. In the `workspace` and `personal-console` profiles it also
+refuses a `VM_MCP_AUTH_TOKEN` environment fallback, because Yama does not gate
+`/proc/<pid>/environ` reads.
+
+Shell profiles need Yama `kernel.yama.ptrace_scope` >= 1 for the instant before
+the process is non-dumpable: `pidfd_getfd` needs `PTRACE_MODE_ATTACH`, so with
+scope >= 1 a same-UID `shell_exec` child (never an ancestor of the service)
+cannot copy the token descriptor, even by killing the server to force a
+restart. The unit's `ProcSubset=pid` hides `/proc/sys` from the server, so the
+check is a root pre-start gate, `ExecStartPre=+... yama_gate.py`: the `+` runs
+it as root outside the sandbox, and if it exits nonzero systemd never starts
+`server.py`, so the token fd is never handed over. `StandardInput=` applies to
+every executed process, `ExecStartPre=` included (systemd opens the token file
+again for each one, so the gate cannot consume the server's copy); the gate
+never reads fd 0 and replaces it with `/dev/null` first. All components resolve
+the profile through one helper (`profiles.resolve_profile`). For shell profiles
+the installer writes `kernel.yama.ptrace_scope` (1, or the existing higher
+value) to `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, which sorts last, applies
+it, warns if `systemd-sysctl --cat-config` shows a later override to 0, and
+exits 7 if Yama is unavailable. `read-only` runs no shell children, so the
+installer leaves the host's ptrace policy unchanged for it. Same-UID shell children therefore cannot inspect its memory,
 environment or descriptors to steal caller credentials. Children receive only
 the sanitized execution environment. Root remains outside this protection.
 The broker queries systemd for the live main-process identity on every request;
@@ -235,9 +247,28 @@ Installs from before caller authentication have no token. After this upgrade:
 - clients without the `Authorization` header get `401` on every request.
 - `workspace`/`personal-console` need Yama: the installer sets
   `kernel.yama.ptrace_scope` >= 1 persistently (exit 7 if Yama is missing), and
-  the server refuses to start in those profiles while the scope is 0 or absent.
-  A later sysctl.d file that sets it back to 0 stops the service rather than
-  weakening it.
+  the root pre-start gate refuses to start the service in those profiles while
+  the scope is 0 or absent. A later sysctl.d file that sets it back to 0 stops
+  the service rather than weakening it. Those profiles also refuse the
+  `VM_MCP_AUTH_TOKEN` environment fallback; re-run the installer.
+
+#### One-time real-unit check on the VM (after the first install of this version)
+
+Run as root through the human path, in the deployed profile (stack runs
+`personal-console`):
+
+1. `cat /proc/sys/kernel/yama/ptrace_scope` prints 1 or more, and
+   `systemctl is-active vm-mcp.service` prints `active`;
+   `journalctl -u vm-mcp.service -b | grep yama-gate` shows nothing.
+2. The gate does not consume stdin: `systemctl show -p ExecStartPre vm-mcp.service`
+   shows `status=0`, and an authenticated `vm_info` succeeds (the server read the
+   token from its own fd 0).
+3. Refusal: `sysctl -w kernel.yama.ptrace_scope=0; systemctl restart vm-mcp.service`
+   fails, `journalctl -u vm-mcp.service -n 20` shows
+   `vm-mcp-yama-gate: profile personal-console requires kernel.yama.ptrace_scope >= 1`,
+   and no `server.py` process starts (`systemctl show -p MainPID` is 0).
+4. Restore: `sysctl --system` (or `sysctl -w kernel.yama.ptrace_scope=1`), then
+   `systemctl restart vm-mcp.service` and repeat step 1.
 
 Upgrade order: (1) create the root-owned `0600` token file through the human
 SSH/OS Login/IAP path; (2) re-run the installer with `VM_MCP_AUTH_TOKEN_FILE`

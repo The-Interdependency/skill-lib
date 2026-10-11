@@ -19,6 +19,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import auth
+import profiles
 from auth import BearerAuth, configured_token
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -189,7 +190,7 @@ class InstallerLocaleTests(unittest.TestCase):
 
 
 class InstallerPtraceScopeTests(unittest.TestCase):
-    def run_scope(self, profile: str, scope: str | None, *, sysctl_ok: bool = True):
+    def run_scope(self, profile: str, scope: str | None, *, sysctl_ok: bool = True, cat_config: str | None = None):
         directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, directory)
         scope_path = directory / "ptrace_scope"
@@ -204,10 +205,14 @@ class InstallerPtraceScopeTests(unittest.TestCase):
             + (f'echo "${{@: -1}}" | cut -d= -f2 > "{scope_path}"\n' if sysctl_ok else "exit 1\n"),
             encoding="utf-8")
         (bindir / "sysctl").chmod(0o700)
-        conf = directory / "90-vm-mcp-ptrace.conf"
+        conf = directory / "99-zz-vm-mcp-ptrace.conf"
+        if cat_config is not None:
+            (bindir / "systemd-sysctl").write_text(
+                "#!/bin/bash\n" f"cat <<'CFG'\n{cat_config.replace('CONF', str(conf))}\nCFG\n", encoding="utf-8")
+            (bindir / "systemd-sysctl").chmod(0o700)
         result = run_installer_functions(
             f'YAMA_SCOPE_PATH="{scope_path}"; PTRACE_SYSCTL_CONF="{conf}"; ensure_ptrace_scope {profile}; echo "rc=$?"',
-            env={"PATH": f"{bindir}:{os.environ['PATH']}"}, names=("ensure_ptrace_scope",))
+            env={"PATH": f"{bindir}:/usr/bin:/bin"}, names=("ensure_ptrace_scope", "warn_ptrace_override"))
         return result, conf, calls, scope_path
 
     def test_scope_zero_is_raised_to_one_persisted_and_applied(self) -> None:
@@ -226,16 +231,38 @@ class InstallerPtraceScopeTests(unittest.TestCase):
                 self.assertIn(f"kernel.yama.ptrace_scope = {value}", conf.read_text(encoding="ascii"))
                 self.assertFalse(calls.exists())
 
-    def test_missing_yama_fails_clearly_for_shell_profiles_only(self) -> None:
+    def test_missing_yama_fails_clearly_for_shell_profiles(self) -> None:
         for profile in ("workspace", "personal-console"):
             with self.subTest(profile=profile):
                 result, conf, _, _ = self.run_scope(profile, None)
                 self.assertIn("rc=7", result.stdout)
                 self.assertIn("Yama LSM not enabled", result.stderr)
                 self.assertFalse(conf.exists())
-        result, _, _, _ = self.run_scope("read-only", None)
+
+    def test_read_only_leaves_the_host_ptrace_policy_alone(self) -> None:
+        for scope in (None, "0"):
+            with self.subTest(scope=scope):
+                result, conf, calls, scope_path = self.run_scope("read-only", scope)
+                self.assertIn("rc=0", result.stdout, result.stderr)
+                self.assertFalse(conf.exists())
+                self.assertFalse(calls.exists())
+                if scope is not None:
+                    self.assertEqual("0", scope_path.read_text(encoding="ascii").strip())
+
+    def test_sysctl_file_sorts_last_and_a_later_zero_override_warns(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertIn("PTRACE_SYSCTL_CONF=/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf", text)
+        later = "# /etc/sysctl.d/10-ptrace.conf\nkernel.yama.ptrace_scope = 1\n# CONF\nkernel.yama.ptrace_scope = 1\n" \
+                "# /etc/sysctl.d/zzz-override.conf\nkernel.yama.ptrace_scope = 0"
+        result, _, _, _ = self.run_scope("workspace", "1", cat_config=later)
         self.assertIn("rc=0", result.stdout)
-        self.assertIn("WARNING", result.stderr)
+        self.assertIn("WARNING: /etc/sysctl.d/zzz-override.conf sets kernel.yama.ptrace_scope = 0", result.stderr)
+        ours_last = "# /etc/sysctl.d/10-ptrace.conf\nkernel.yama.ptrace_scope = 0\n# CONF\nkernel.yama.ptrace_scope = 1"
+        result, _, _, _ = self.run_scope("workspace", "1", cat_config=ours_last)
+        self.assertNotIn("WARNING", result.stderr)
+        result, _, _, _ = self.run_scope("workspace", "1")  # no systemd-sysctl: no warning, no failure
+        self.assertIn("rc=0", result.stdout)
+        self.assertNotIn("WARNING", result.stderr)
 
     def test_failed_apply_fails(self) -> None:
         result, _, _, _ = self.run_scope("workspace", "0", sysctl_ok=False)
@@ -247,43 +274,121 @@ class InstallerPtraceScopeTests(unittest.TestCase):
         self.assertLess(text.index('ensure_ptrace_scope "$PROFILE" || exit 7'), text.index("\ninstall_python\n"))
 
 
-class ServicePtraceIsolationTests(unittest.TestCase):
-    def proc_file(self, content: str | None) -> str:
+class ProfileResolutionTests(unittest.TestCase):
+    def test_one_resolver_strips_lowercases_and_maps_the_legacy_flag(self) -> None:
+        cases = [({}, "read-only"), ({"VM_MCP_PROFILE": " Personal-Console "}, "personal-console"),
+                 ({"VM_MCP_PROFILE": "READ-ONLY"}, "read-only"), ({"VM_MCP_PROFILE": ""}, "read-only"),
+                 ({"VM_MCP_PROFILE": "", "VM_MCP_SHELL_ENABLED": "1"}, "workspace"),
+                 ({"VM_MCP_SHELL_ENABLED": "yes"}, "workspace"),
+                 ({"VM_MCP_PROFILE": "read-only", "VM_MCP_SHELL_ENABLED": "1"}, "read-only")]
+        for env, expected in cases:
+            with self.subTest(env=env):
+                self.assertEqual(expected, profiles.resolve_profile(env))
+        with self.assertRaises(ValueError):
+            profiles.resolve_profile({"VM_MCP_PROFILE": "root"})
+
+    def test_policy_server_auth_and_gate_share_the_resolver(self) -> None:
+        import policy
+        env = {"VM_MCP_PROFILE": "", "VM_MCP_SHELL_ENABLED": "1", "VM_MCP_ROOT": "/tmp"}
+        with patch.dict(os.environ, env, clear=False):
+            os.environ.pop("VM_MCP_PROFILE", None)
+            os.environ["VM_MCP_PROFILE"] = ""
+            self.assertEqual("workspace", policy.VmMcpConfig.from_env().profile)
+            self.assertEqual("workspace", profiles.resolve_profile())
+        for name in ("server.py", "auth.py", "yama_gate.py", "policy.py"):
+            self.assertIn("resolve_profile(", (ROOT / name).read_text(encoding="utf-8"), name)
+        self.assertNotIn('os.environ.get("VM_MCP_PROFILE"', (ROOT / "server.py").read_text(encoding="utf-8"))
+
+    def test_mismatched_raw_profile_cannot_slip_past_the_env_fallback_refusal(self) -> None:
+        # Raw "" + VM_MCP_SHELL_ENABLED=1 is workspace for policy, so auth must refuse the env token too.
+        for env in ({"VM_MCP_PROFILE": "", "VM_MCP_SHELL_ENABLED": "1"}, {"VM_MCP_PROFILE": " Workspace "}):
+            with self.subTest(env=env), patch.dict(os.environ, dict(env, VM_MCP_AUTH_TOKEN=TOKEN)):
+                os.environ.pop("VM_MCP_AUTH_TOKEN_SOURCE", None)
+                with self.assertRaisesRegex(RuntimeError, "refuses VM_MCP_AUTH_TOKEN from the environment"):
+                    auth.startup_token(status_path=self.status("TracerPid:\t0\n"))
+                self.assertNotIn("VM_MCP_AUTH_TOKEN", os.environ)
+        with patch.dict(os.environ, {"VM_MCP_PROFILE": "READ-ONLY", "VM_MCP_AUTH_TOKEN": TOKEN}), \
+                self.assertLogs("vm-mcp", "WARNING"):
+            os.environ.pop("VM_MCP_AUTH_TOKEN_SOURCE", None)
+            self.assertEqual(TOKEN.encode(), auth.startup_token(status_path=self.status("TracerPid:\t0\n")))
+
+    def status(self, content: str | None) -> str:
         directory = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, directory)
-        path = directory / "proc"
+        path = directory / "status"
         if content is not None:
             path.write_text(content, encoding="ascii")
         return str(path)
 
-    def test_shell_profiles_require_yama_scope_at_least_one(self) -> None:
-        for profile in ("workspace", "personal-console", "unknown-profile"):
-            for content in (None, "0\n", "garbage\n"):
-                with self.subTest(profile=profile, content=content), self.assertRaises(SystemExit) as raised:
-                    auth.require_ptrace_isolation(profile, self.proc_file(content))
-                self.assertIn("ptrace_scope >= 1", str(raised.exception))
-            for content in ("1\n", "2\n", "3\n"):
-                auth.require_ptrace_isolation(profile, self.proc_file(content))
-        auth.require_ptrace_isolation("read-only", self.proc_file(None))  # no shell children
 
-    def test_traced_or_unreadable_status_refuses_start(self) -> None:
-        auth.refuse_if_traced(self.proc_file("Name:\tpython\nTracerPid:\t0\n"))
-        for content in ("Name:\tpython\nTracerPid:\t4242\n", "Name:\tpython\n", None):
-            with self.subTest(content=content), self.assertRaises(SystemExit):
-                auth.refuse_if_traced(self.proc_file(content))
+class ServiceTracerTests(unittest.TestCase):
+    status = ProfileResolutionTests.status
 
-    def test_startup_checks_run_before_the_token_is_read(self) -> None:
+    def test_traced_or_unreadable_status_refuses_start_before_the_token_is_read(self) -> None:
+        auth.refuse_if_traced(self.status("Name:\tpython\nTracerPid:\t0\n"))
         with patch.object(auth, "configured_token", return_value=TOKEN.encode()) as read:
-            with self.assertRaises(SystemExit):
-                auth.startup_token("workspace", scope_path=self.proc_file("0\n"),
-                                   status_path=self.proc_file("TracerPid:\t0\n"))
-            with self.assertRaises(SystemExit):
-                auth.startup_token("read-only", scope_path=self.proc_file(None),
-                                   status_path=self.proc_file("TracerPid:\t7\n"))
+            for content in ("Name:\tpython\nTracerPid:\t4242\n", "Name:\tpython\n", None):
+                with self.subTest(content=content), self.assertRaises(SystemExit):
+                    auth.startup_token("personal-console", status_path=self.status(content))
             read.assert_not_called()
-            self.assertEqual(TOKEN.encode(), auth.startup_token(
-                "personal-console", scope_path=self.proc_file("1\n"), status_path=self.proc_file("TracerPid:\t0\n")))
-            read.assert_called_once()
+            self.assertEqual(TOKEN.encode(), auth.startup_token("personal-console",
+                                                                status_path=self.status("TracerPid:\t0\n")))
+            read.assert_called_once_with("personal-console")
+
+    def test_server_no_longer_reads_proc_sys(self) -> None:
+        for name in ("auth.py", "server.py"):
+            self.assertNotIn("/proc/sys", (ROOT / name).read_text(encoding="utf-8"), name)
+
+
+class YamaGateTests(unittest.TestCase):
+    def gate(self, env: dict[str, str], scope: str | None):
+        directory = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, directory)
+        scope_path = directory / "ptrace_scope"
+        if scope is not None:
+            scope_path.write_text(scope + "\n", encoding="ascii")
+        token = directory / "token"
+        token.write_text(TOKEN + "\n", encoding="utf-8")
+        clean = {k: v for k, v in os.environ.items() if not k.startswith("VM_MCP_")}
+        with open(token, "rb") as stdin:
+            result = subprocess.run([sys.executable, "-I", str(ROOT / "yama_gate.py")], stdin=stdin,
+                                    env=dict(clean, VM_MCP_TEST_YAMA_SCOPE_PATH=str(scope_path), **env),
+                                    capture_output=True, text=True)
+            offset = os.lseek(stdin.fileno(), 0, os.SEEK_CUR)  # shared open file description
+        return result, offset
+
+    @unittest.skipIf(os.geteuid() == 0, "the test-only scope override is ignored for root")
+    def test_gate_refuses_shell_profiles_without_scope_and_never_reads_stdin(self) -> None:
+        cases = [({"VM_MCP_PROFILE": "personal-console"}, "1", 0), ({"VM_MCP_PROFILE": "workspace"}, "2", 0),
+                 ({"VM_MCP_PROFILE": "personal-console"}, "0", 1), ({"VM_MCP_PROFILE": "personal-console"}, None, 1),
+                 ({"VM_MCP_PROFILE": "workspace"}, "junk", 1),
+                 ({"VM_MCP_PROFILE": "", "VM_MCP_SHELL_ENABLED": "1"}, "0", 1),  # resolved, not raw
+                 ({"VM_MCP_PROFILE": " Personal-Console "}, "0", 1),
+                 ({"VM_MCP_PROFILE": "read-only"}, "0", 0), ({}, None, 0),
+                 ({"VM_MCP_PROFILE": "root"}, "1", 2)]
+        for env, scope, expected in cases:
+            with self.subTest(env=env, scope=scope):
+                result, offset = self.gate(env, scope)
+                self.assertEqual(expected, result.returncode, result.stderr)
+                self.assertEqual(0, offset, "gate consumed stdin")
+                self.assertNotIn(TOKEN, result.stdout + result.stderr)
+                if expected == 1:
+                    self.assertIn("requires kernel.yama.ptrace_scope >= 1", result.stderr)
+
+    def test_test_override_is_ignored_for_root(self) -> None:
+        text = (ROOT / "yama_gate.py").read_text(encoding="utf-8")
+        self.assertIn("if override and os.geteuid() != 0:", text)
+        self.assertLess(text.index("_detach_stdin()\n    sys.path"), text.index("resolve_profile()"))
+
+    def test_unit_runs_the_gate_as_root_before_the_server(self) -> None:
+        unit = (ROOT / "systemd" / "vm-mcp.service").read_text(encoding="utf-8")
+        gate = "ExecStartPre=+/opt/vm-mcp/.venv/bin/python -I /opt/vm-mcp/yama_gate.py\n"
+        self.assertIn(gate, unit)
+        self.assertLess(unit.index(gate), unit.index("ExecStart=/opt/vm-mcp/.venv/bin/python /opt/vm-mcp/server.py"))
+        self.assertIn("ProcSubset=pid", unit)  # why the gate must run outside the sandbox
+        self.assertIn("StandardInput=file:/etc/credstore/vm-mcp-token", unit)
+        installer = INSTALLER.read_text(encoding="utf-8")
+        self.assertIn("profiles.py yama_gate.py", installer)
 
 
 class InstallerSecretFileTests(unittest.TestCase):
@@ -413,14 +518,19 @@ class ServerDumpabilityTests(unittest.TestCase):
         self.assertEqual("os", body[2].names[0].name)
         self.assertIsInstance(body[3], ast.ImportFrom)
         self.assertEqual("auth", body[3].module)
-        self.assertIn("startup_token(", ast.unparse(body[4]))
+        self.assertEqual("profiles", body[4].module)
+        self.assertIn("startup_token(resolve_profile())", ast.unparse(body[5]))
         heavy = [i for i, node in enumerate(body) if isinstance(node, (ast.Import, ast.ImportFrom))
                  and any(name in ast.unparse(node) for name in ("uvicorn", "mcp"))]
-        self.assertGreater(min(heavy), 4)
+        self.assertGreater(min(heavy), 5)
         auth_imports = {node.module if isinstance(node, ast.ImportFrom) else node.names[0].name
                         for node in ast.parse((ROOT / "auth.py").read_text(encoding="utf-8")).body
                         if isinstance(node, (ast.Import, ast.ImportFrom))}
-        self.assertEqual({"__future__", "ctypes", "logging", "os", "re", "secrets", "stat", "typing"}, auth_imports)
+        self.assertEqual({"__future__", "ctypes", "logging", "os", "profiles", "re", "secrets", "stat", "typing"}, auth_imports)
+        profile_imports = {node.module if isinstance(node, ast.ImportFrom) else node.names[0].name
+                           for node in ast.parse((ROOT / "profiles.py").read_text(encoding="utf-8")).body
+                           if isinstance(node, (ast.Import, ast.ImportFrom))}
+        self.assertEqual({"__future__", "os", "typing"}, profile_imports)
 
 
 if __name__ == "__main__":

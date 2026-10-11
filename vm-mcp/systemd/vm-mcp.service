@@ -23,6 +23,11 @@ Environment=VM_MCP_PROFILE=read-only
 Environment=VM_MCP_PORT=8765
 Environment=VM_MCP_ADMIN_SOCKET=/run/vm-mcp/admin.sock
 Environment=PYTHONDONTWRITEBYTECODE=1
+# Root gate outside the sandbox (+): shell profiles need Yama ptrace_scope >= 1,
+# which ProcSubset=pid hides from the server. StandardInput= applies to this
+# command too (systemd opens the token file again for it); the gate never
+# reads it and replaces fd 0 with /dev/null. If it fails, server.py never runs.
+ExecStartPre=+/opt/vm-mcp/.venv/bin/python -I /opt/vm-mcp/yama_gate.py
 ExecStart=/opt/vm-mcp/.venv/bin/python /opt/vm-mcp/server.py
 Restart=on-failure
 RestartSec=2

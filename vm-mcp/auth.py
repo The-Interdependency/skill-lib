@@ -1,4 +1,4 @@
-# ratios: loc_comments=103:61 imports_exports=8:8 calls_definitions=46:12
+# ratios: loc_comments=91:58 imports_exports=9:6 calls_definitions=43:10
 """HTTP caller and process isolation for the private VM control plane.
 
 Usage: provision /etc/credstore/vm-mcp-token (root, 0600) via vm-mcp/install.sh,
@@ -15,6 +15,8 @@ import re
 import secrets
 import stat
 from typing import Any
+
+from profiles import resolve_profile, runs_shell
 
 
 # === MODULE_BUILD ===
@@ -74,7 +76,7 @@ def _read_stdin_token() -> bytes:
     return raw[:-1] if raw.endswith(b"\n") else raw
 
 
-def configured_token() -> bytes:
+def configured_token(profile: str = "read-only") -> bytes:
     """Load the operator-provisioned token without leaving it reachable by children.
 
     The installed unit sets VM_MCP_AUTH_TOKEN_SOURCE=stdin and
@@ -95,6 +97,11 @@ def configured_token() -> bytes:
         if legacy:
             log.warning("VM_MCP_AUTH_TOKEN is ignored because the token file is configured; re-run vm-mcp/install.sh to drop it from /etc/vm-mcp.env")
     else:
+        if legacy and runs_shell(profile):
+            # Yama does not gate /proc/<pid>/environ: same-UID shell children
+            # could read an environment token during startup.
+            raise RuntimeError(f"profile {profile} refuses VM_MCP_AUTH_TOKEN from the environment; "
+                               "re-run vm-mcp/install.sh so the token arrives on stdin from the root-only file")
         token = legacy.encode("utf-8", "replace")
         source = "VM_MCP_AUTH_TOKEN"
         if token:
@@ -105,35 +112,7 @@ def configured_token() -> bytes:
     return token
 
 
-YAMA_PTRACE_SCOPE = "/proc/sys/kernel/yama/ptrace_scope"
 SELF_STATUS = "/proc/self/status"
-# Profiles that run same-UID shell children. Anything but read-only counts, so
-# an unknown profile name fails safe.
-_SHELL_FREE_PROFILES = {"read-only"}
-
-
-def ptrace_scope(path: str = YAMA_PTRACE_SCOPE) -> int | None:
-    """Return kernel.yama.ptrace_scope, or None when Yama is unavailable."""
-    try:
-        with open(path, encoding="ascii") as handle:
-            return int(handle.read().strip())
-    except (OSError, ValueError):
-        return None
-
-
-def require_ptrace_isolation(profile: str, path: str = YAMA_PTRACE_SCOPE) -> None:
-    """Refuse shell-capable profiles unless Yama blocks non-ancestor ptrace.
-
-    pidfd_getfd needs PTRACE_MODE_ATTACH; with ptrace_scope >= 1 a same-UID
-    shell_exec child (never an ancestor of this service) cannot copy the token
-    descriptor, even in the startup instant before PR_SET_DUMPABLE applies.
-    """
-    if profile in _SHELL_FREE_PROFILES:
-        return
-    scope = ptrace_scope(path)
-    if scope is None or scope < 1:
-        raise SystemExit(f"vm-mcp: profile {profile} requires kernel.yama.ptrace_scope >= 1 "
-                         f"(found {'unavailable' if scope is None else scope}); re-run vm-mcp/install.sh")
 
 
 def tracer_pid(path: str = SELF_STATUS) -> int:
@@ -154,11 +133,14 @@ def refuse_if_traced(path: str = SELF_STATUS) -> None:
         raise SystemExit("vm-mcp: refusing to start while traced (TracerPid is not 0)")
 
 
-def startup_token(profile: str, *, scope_path: str = YAMA_PTRACE_SCOPE, status_path: str = SELF_STATUS) -> bytes:
-    """Run right after PR_SET_DUMPABLE=0: check isolation, then read and close the token fd."""
+def startup_token(profile: str | None = None, *, status_path: str = SELF_STATUS) -> bytes:
+    """Run right after PR_SET_DUMPABLE=0: refuse if traced, then read and close the token fd.
+
+    Yama ptrace_scope is enforced by the root pre-start gate (yama_gate.py):
+    ProcSubset=pid hides the kernel sysctl tree from this sandboxed process.
+    """
     refuse_if_traced(status_path)
-    require_ptrace_isolation(profile, scope_path)
-    return configured_token()
+    return configured_token(resolve_profile() if profile is None else profile)
 
 
 class BearerAuth:
@@ -194,4 +176,4 @@ class BearerAuth:
             await send({"type": "http.response.body", "body": b"Authentication required"})
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=103:61 imports_exports=8:8 calls_definitions=46:12
+# ratios: loc_comments=91:58 imports_exports=9:6 calls_definitions=43:10

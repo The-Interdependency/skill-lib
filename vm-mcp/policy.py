@@ -1,4 +1,4 @@
-# ratios: loc_comments=385:58 imports_exports=13:13 calls_definitions=139:25
+# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24
 """Policy primitives for the vm-mcp runtime.
 
 Usage guidance:
@@ -23,6 +23,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from profiles import PROFILES, resolve_profile  # noqa: F401  (PROFILES re-exported)
 
 # === CONTRACTS ===
 # id: vm_mcp_read_paths_confined
@@ -77,7 +79,6 @@ DEFAULT_MAX_READ_BYTES = 256 * 1024
 DEFAULT_MAX_OUTPUT_BYTES = 256 * 1024
 DEFAULT_MAX_TIMEOUT_SECONDS = 300.0
 DEFAULT_MAX_DIRECTORY_ENTRIES = 500
-PROFILES = ("read-only", "workspace", "personal-console")
 _READ_CHUNK = 64 * 1024
 
 
@@ -105,12 +106,8 @@ class VmMcpConfig:
 
     @classmethod
     def from_env(cls) -> "VmMcpConfig":
-        profile = os.environ.get("VM_MCP_PROFILE", "").strip().lower()
-        if not profile:
-            # Backward compatibility with the first vm-mcp release.
-            profile = "workspace" if _env_flag("VM_MCP_SHELL_ENABLED", default=False) else "read-only"
-        if profile not in PROFILES:
-            raise ValueError(f"VM_MCP_PROFILE must be one of {PROFILES}: {profile!r}")
+        # One resolver for policy, server, auth and the pre-start gate.
+        profile = resolve_profile()
         return cls(
             root=Path(os.environ.get("VM_MCP_ROOT", str(DEFAULT_ROOT))).expanduser(),
             profile=profile,
@@ -130,13 +127,6 @@ class VmMcpConfig:
                 os.environ.get("VM_MCP_ADMIN_SOCKET", str(DEFAULT_ADMIN_SOCKET))
             ),
         )
-
-
-def _env_flag(name: str, *, default: bool) -> bool:
-    raw = os.environ.get(name)
-    if raw is None:
-        return default
-    return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _positive_int(raw: str | None, default: int) -> int:
@@ -492,4 +482,4 @@ def broker_exec(
         timeout_seconds=timeout,
         max_output_bytes=config.max_output_bytes,
     )
-# ratios: loc_comments=385:58 imports_exports=13:13 calls_definitions=139:25
+# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24

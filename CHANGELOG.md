@@ -28,13 +28,17 @@ VMs re-installing vm-mcp past this change get:
   `mcp`/`uvicorn`.
 - **Shell profiles require Yama `ptrace_scope` >= 1.** The token arrives on
   fd 0 before the process is non-dumpable, and a same-UID process could copy it
-  with `pidfd_getfd`. The installer now persists and applies
-  `kernel.yama.ptrace_scope` (1, or the existing higher value) in
-  `/etc/sysctl.d/90-vm-mcp-ptrace.conf`, exiting 7 for `workspace` and
-  `personal-console` if Yama is unavailable. The server refuses those profiles
-  while the scope is 0 or absent, exits if it is being traced, and reads and
-  closes fd 0 before importing `mcp`/`uvicorn`. Token file checks no longer
-  depend on the locale (`stat %f`, `LC_ALL=C`).
+  with `pidfd_getfd`. A root pre-start gate (`ExecStartPre=+... yama_gate.py`,
+  outside the sandbox, since `ProcSubset=pid` hides `/proc/sys` from the
+  server) refuses `workspace` and `personal-console` while the scope is 0 or
+  absent, so the server never receives its token fd. For those profiles the
+  installer persists and applies `kernel.yama.ptrace_scope` (1, or the
+  existing higher value) in `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, warns
+  about a later override to 0, and exits 7 if Yama is unavailable; `read-only`
+  leaves the host's ptrace policy alone. The server exits if traced, reads and
+  closes fd 0 before importing `mcp`/`uvicorn`, and refuses the environment
+  token fallback in shell profiles. Policy, server, auth and the gate share one
+  profile resolver. Token file checks no longer depend on the locale.
 - **Fresh installs start again.** The installer's umask is `0022`; only secret
   files are written under `0077`, to a temp file renamed into place, so the
   `vmmcp` user can run the venv and a loosened old `/etc/vm-mcp.env` never

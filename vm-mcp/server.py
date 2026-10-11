@@ -1,4 +1,4 @@
-# ratios: loc_comments=96:66 imports_exports=9:12 calls_definitions=41:14
+# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -22,12 +22,14 @@ if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPA
 
 import os
 
-# Still before any heavy import: refuse if traced or if Yama does not block
-# same-UID pidfd_getfd (shell profiles), then read the token from fd 0 and
-# replace fd 0 with /dev/null. auth imports only the standard library.
+# Still before any heavy import: refuse if traced, then read the token from
+# fd 0 and replace fd 0 with /dev/null. Yama ptrace_scope is checked by the
+# root ExecStartPre gate (yama_gate.py), since ProcSubset=pid hides sysctls
+# here. auth and profiles import only the standard library.
 from auth import BearerAuth, protect_process, startup_token
+from profiles import resolve_profile
 
-_TOKEN = startup_token(os.environ.get("VM_MCP_PROFILE", "read-only"))
+_TOKEN = startup_token(resolve_profile())
 
 import uvicorn
 from typing import Any, Callable
@@ -205,4 +207,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=96:66 imports_exports=9:12 calls_definitions=41:14
+# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14

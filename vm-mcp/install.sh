@@ -37,7 +37,7 @@ SERVICE_GROUP="$SERVICE_USER"
 ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
 CREDENTIAL_FILE=/etc/credstore/vm-mcp-token
 YAMA_SCOPE_PATH=/proc/sys/kernel/yama/ptrace_scope
-PTRACE_SYSCTL_CONF=/etc/sysctl.d/90-vm-mcp-ptrace.conf
+PTRACE_SYSCTL_CONF=/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf
 # The bearer token comes from exactly one operator-provisioned source, so it
 # never has to appear in a pasted command line or shell history:
 #   VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token  regular file owned by the
@@ -156,17 +156,18 @@ case "$WORK_ROOT" in
 esac
 
 # Usage: ensure_ptrace_scope PROFILE
-# Yama ptrace_scope >= 1 stops same-UID shell_exec children from ptracing or
-# pidfd_getfd-ing the service (a non-ancestor), so they cannot copy its token
-# descriptor even in the startup instant before it is non-dumpable. Keeps an
-# existing higher value; persists it in sysctl.d and applies it now.
+# Shell profiles only: Yama ptrace_scope >= 1 stops same-UID shell_exec
+# children from ptracing or pidfd_getfd-ing the service (a non-ancestor), so
+# they cannot copy its token descriptor in the startup instant before it is
+# non-dumpable. Keeps an existing higher value, persists it in a sysctl.d file
+# that sorts last, applies it now, and warns about a later override to 0.
+# read-only runs no shell children, so the host's ptrace policy is left alone.
 ensure_ptrace_scope() {
   local profile=$1 current target tmp
+  if [[ "$profile" == read-only ]]; then
+    return 0
+  fi
   if [[ ! -r "$YAMA_SCOPE_PATH" ]]; then
-    if [[ "$profile" == read-only ]]; then
-      echo "WARNING: kernel.yama.ptrace_scope is unavailable; the read-only profile runs no shell children" >&2
-      return 0
-    fi
     echo "ERROR: kernel.yama.ptrace_scope is unavailable (Yama LSM not enabled). The $profile profile runs shell children as the service user and needs ptrace_scope >= 1 so they cannot copy the service's token descriptor. Enable Yama (security=yama / lsm=...,yama) or use VM_MCP_PROFILE=read-only" >&2
     return 7
   fi
@@ -189,6 +190,32 @@ ensure_ptrace_scope() {
   if (( current < 1 )); then
     echo "ERROR: kernel.yama.ptrace_scope is still $current after applying $PTRACE_SYSCTL_CONF" >&2
     return 7
+  fi
+  warn_ptrace_override
+}
+
+# Usage: warn_ptrace_override
+# Warn when the merged sysctl.d configuration's last kernel.yama.ptrace_scope
+# assignment comes from another file and is 0 (it would apply at next boot;
+# the pre-start gate would then refuse to start the service).
+warn_ptrace_override() {
+  local tool line file="" last_file="" last_value=""
+  tool="$(command -v systemd-sysctl || true)"
+  for candidate in /usr/lib/systemd/systemd-sysctl /lib/systemd/systemd-sysctl; do
+    [[ -n "$tool" ]] && break
+    [[ -x "$candidate" ]] && tool="$candidate"
+  done
+  [[ -n "$tool" ]] || return 0
+  while IFS= read -r line; do
+    if [[ "$line" =~ ^#\ (/.*\.conf)$ ]]; then
+      file="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^[[:space:]]*-?kernel[./]yama[./]ptrace_scope[[:space:]]*=[[:space:]]*([0-9]+) ]]; then
+      last_file="$file"
+      last_value="${BASH_REMATCH[1]}"
+    fi
+  done < <("$tool" --cat-config 2>/dev/null || true)
+  if [[ -n "$last_value" && "$last_file" != "$PTRACE_SYSCTL_CONF" && "$last_value" -lt 1 ]]; then
+    echo "WARNING: $last_file sets kernel.yama.ptrace_scope = $last_value after $PTRACE_SYSCTL_CONF; at next boot vm-mcp.service will refuse to start in the $profile profile until that override is removed" >&2
   fi
 }
 
@@ -236,7 +263,7 @@ fi
 install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 "$WORK_ROOT/.vm-mcp-home"
 install -d -o root -g root -m 0755 "$INSTALL_ROOT" "$INSTALL_ROOT/systemd"
 
-for file in server.py auth.py policy.py admin_client.py admin_broker.py requirements.txt; do
+for file in server.py auth.py policy.py profiles.py yama_gate.py admin_client.py admin_broker.py requirements.txt; do
   install -m 0644 "$SOURCE_ROOT/$file" "$INSTALL_ROOT/$file"
 done
 install -m 0644 "$SOURCE_ROOT/systemd/vm-mcp.service" "$INSTALL_ROOT/systemd/vm-mcp.service"

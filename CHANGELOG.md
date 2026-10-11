@@ -3,6 +3,23 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: vm-mcp requires a bearer token; admin_exec only from the service
+
+VMs re-installing vm-mcp past this change get:
+
+- **Every HTTP request needs `Authorization: Bearer <token>`.** Loopback is
+  not authentication: any local process could reach `admin_exec` before.
+  The scheme is case-insensitive (RFC 9110); the token compare is constant
+  time. Missing, wrong or duplicate headers get `401` before the body is read.
+- **The installer and service fail closed without a token.** `install.sh`
+  exits 3 unless exactly one of `VM_MCP_AUTH_TOKEN_FILE` (owner-only `0600`
+  file, preferred), `VM_MCP_AUTH_TOKEN_STDIN=1` or `VM_MCP_AUTH_TOKEN` gives a
+  32-256 character URL-safe token; the service will not start without one.
+  Follow the upgrade order in `vm-mcp/SKILL.md` before updating a running VM.
+- **The root broker serves only the vm-mcp service process** (peer UID and
+  systemd MainPID), not other same-UID processes; the MCP process is made
+  non-dumpable; move/remove refuse `VM_MCP_ROOT` itself.
+
 ## Unreleased: msdmd Node runs jitless; signal deaths exit 3
 
 Consumers re-syncing past `38c6433` get:

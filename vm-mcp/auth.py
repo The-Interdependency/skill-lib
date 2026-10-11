@@ -1,4 +1,4 @@
-# ratios: loc_comments=35:39 imports_exports=6:3 calls_definitions=15:5
+# ratios: loc_comments=40:42 imports_exports=6:3 calls_definitions=18:6
 """HTTP caller and process isolation for the private VM control plane.
 
 Usage: configure VM_MCP_AUTH_TOKEN through root-owned service configuration,
@@ -70,7 +70,17 @@ class BearerAuth:
         if not token:
             raise ValueError("HTTP bearer token is required")
         self.app = app
-        self.expected = b"Bearer " + token
+        self.token = token
+
+    def _authorized(self, header: bytes) -> bool:
+        """RFC 9110 credentials: the auth-scheme is case-insensitive, then 1*SP, then the token.
+
+        Only the token is secret; it is compared in constant time.
+        """
+        scheme, separator, rest = header.partition(b" ")
+        if not separator or scheme.lower() != b"bearer":
+            return False
+        return secrets.compare_digest(rest.lstrip(b" "), self.token)
 
     async def __call__(self, scope: dict, receive: Any, send: Any) -> None:
         if scope["type"] == "lifespan":
@@ -80,10 +90,10 @@ class BearerAuth:
             await send({"type": "websocket.close", "code": 1008})
             return
         headers = [value for key, value in scope.get("headers", []) if key.lower() == b"authorization"]
-        if len(headers) != 1 or not secrets.compare_digest(headers[0], self.expected):
+        if len(headers) != 1 or not self._authorized(headers[0]):
             await send({"type": "http.response.start", "status": 401, "headers": [
                 (b"www-authenticate", b"Bearer"), (b"content-type", b"text/plain"), (b"cache-control", b"no-store")]})
             await send({"type": "http.response.body", "body": b"Authentication required"})
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=35:39 imports_exports=6:3 calls_definitions=15:5
+# ratios: loc_comments=40:42 imports_exports=6:3 calls_definitions=18:6

@@ -31,11 +31,46 @@ PORT="${VM_MCP_PORT:-8765}"
 SERVICE_USER="${VM_MCP_SERVICE_USER:-vmmcp}"
 SERVICE_GROUP="$SERVICE_USER"
 ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
-AUTH_TOKEN="${VM_MCP_AUTH_TOKEN:-}"
-if [[ ! "$AUTH_TOKEN" =~ ^[A-Za-z0-9_-]{32,256}$ ]]; then
-  echo "ERROR: supply an operator-provisioned VM_MCP_AUTH_TOKEN (32-256 URL-safe characters) before installation" >&2
-  exit 3
-fi
+# The bearer token comes from exactly one operator-provisioned source, so it
+# never has to appear in a pasted command line or shell history:
+#   VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token  regular file owned by the
+#                                              installing user, no group/other access
+#   VM_MCP_AUTH_TOKEN_STDIN=1                  first line of stdin
+#   VM_MCP_AUTH_TOKEN=...                      environment (avoid in shell history)
+resolve_auth_token() {
+  local sources=0 token="" file mode owner
+  [[ -n "${VM_MCP_AUTH_TOKEN:-}" ]] && sources=$((sources + 1))
+  [[ -n "${VM_MCP_AUTH_TOKEN_FILE:-}" ]] && sources=$((sources + 1))
+  [[ "${VM_MCP_AUTH_TOKEN_STDIN:-}" == 1 ]] && sources=$((sources + 1))
+  if (( sources > 1 )); then
+    echo "ERROR: give exactly one of VM_MCP_AUTH_TOKEN_FILE, VM_MCP_AUTH_TOKEN_STDIN=1 or VM_MCP_AUTH_TOKEN" >&2
+    return 3
+  fi
+  if [[ -n "${VM_MCP_AUTH_TOKEN_FILE:-}" ]]; then
+    file="$VM_MCP_AUTH_TOKEN_FILE"
+    if [[ -L "$file" || ! -f "$file" ]]; then
+      echo "ERROR: VM_MCP_AUTH_TOKEN_FILE must be a regular file, not a symlink" >&2
+      return 3
+    fi
+    read -r owner mode < <(stat -c '%u %a' -- "$file")
+    if [[ "$owner" != "$EUID" ]] || (( (8#$mode & 8#077) != 0 )); then
+      echo "ERROR: VM_MCP_AUTH_TOKEN_FILE must be owned by the installing user with no group/other access (chmod 0600)" >&2
+      return 3
+    fi
+    IFS= read -r token < "$file" || [[ -n "$token" ]]
+  elif [[ "${VM_MCP_AUTH_TOKEN_STDIN:-}" == 1 ]]; then
+    IFS= read -r token || [[ -n "$token" ]]
+  else
+    token="${VM_MCP_AUTH_TOKEN:-}"
+  fi
+  if [[ ! "$token" =~ ^[A-Za-z0-9_-]{32,256}$ ]]; then
+    echo "ERROR: supply an operator-provisioned token (32-256 URL-safe characters) via VM_MCP_AUTH_TOKEN_FILE, VM_MCP_AUTH_TOKEN_STDIN=1 or VM_MCP_AUTH_TOKEN before installation" >&2
+    return 3
+  fi
+  printf '%s' "$token"
+}
+AUTH_TOKEN="$(resolve_auth_token)" || exit 3
+unset VM_MCP_AUTH_TOKEN
 NOLOGIN="$(command -v nologin || true)"
 [[ -n "$NOLOGIN" ]] || NOLOGIN=/bin/false
 

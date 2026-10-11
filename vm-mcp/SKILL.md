@@ -165,16 +165,26 @@ systemd, packages, mounts, ownership, PostgreSQL provisioning, or recovery.
 
 ## Installer behavior
 
-Provision `VM_MCP_AUTH_TOKEN` through the operator's secure root environment
-before either installation command below. Use the same value in the MCP client's
-secure Authorization-header configuration; a tunnel by itself does not authenticate
-other local processes. Do not place an actual credential in a pasted command.
+Provision the bearer token before either installation command below. Give the
+installer exactly one source:
+
+- `VM_MCP_AUTH_TOKEN_FILE=<path>`: a regular file (not a symlink) owned by the
+  installing user (root) with no group or other access (`chmod 0600`); the first
+  line is the token. Preferred.
+- `VM_MCP_AUTH_TOKEN_STDIN=1`: the first line of the installer's stdin.
+- `VM_MCP_AUTH_TOKEN`: the environment; avoid it where it would enter shell history.
+
+Use the same value in the MCP client's secure Authorization-header configuration
+(`Authorization: Bearer <token>`; the scheme is case-insensitive per RFC 9110).
+A tunnel by itself does not authenticate other local processes. Do not place an
+actual credential in a pasted command.
 
 Canonical install:
 
 ```bash
 sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
   VM_MCP_PROFILE=read-only \
+  VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token \
   bash vm-mcp/install.sh
 ```
 
@@ -183,8 +193,27 @@ Single-owner personal console:
 ```bash
 sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
   VM_MCP_PROFILE=personal-console \
+  VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token \
   bash vm-mcp/install.sh
 ```
+
+### Upgrading an existing install (fails closed until a token exists)
+
+Installs from before caller authentication have no token. After this upgrade:
+
+- the installer exits 3 without changing anything until one token source is given;
+- `vm-mcp.service` refuses to start if `/etc/vm-mcp.env` lacks a valid
+  `VM_MCP_AUTH_TOKEN`, so updated code without a re-run installer leaves the MCP
+  path down rather than open;
+- clients without the `Authorization` header get `401` on every request.
+
+Upgrade order: (1) create the root-owned `0600` token file through the human
+SSH/OS Login/IAP path; (2) re-run the installer with `VM_MCP_AUTH_TOKEN_FILE`
+and the same profile and root as before; (3) add the header to the MCP client's
+secure configuration; (4) verify an unauthenticated request returns `401` and an
+authenticated `vm_info` succeeds; (5) delete or keep the token file under the
+operator's own secret handling. Recovery while the MCP path is down uses the same
+human path; never restore an unauthenticated listener to regain access.
 
 Important ownership rule: if `VM_MCP_ROOT` already exists, the installer leaves
 that directory's ownership unchanged. It creates/chowns the root only when the

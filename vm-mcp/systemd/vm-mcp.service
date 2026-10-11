@@ -9,6 +9,15 @@ User=vmmcp
 Group=vmmcp
 WorkingDirectory=/opt/vm-mcp
 EnvironmentFile=-/etc/vm-mcp.env
+# The bearer token is never an environment variable and never a file the
+# vmmcp UID can open: the service manager opens the root-only 0600 file and
+# hands it over as stdin, which server.py reads once and replaces with
+# /dev/null. (A LoadCredential= copy would stay readable by same-UID
+# shell_exec children for the whole service lifetime.)
+StandardInput=file:/etc/credstore/vm-mcp-token
+Environment=VM_MCP_AUTH_TOKEN_SOURCE=stdin
+StandardOutput=journal
+StandardError=journal
 Environment=VM_MCP_ROOT=/srv/vm-mcp/workspace
 Environment=VM_MCP_PROFILE=read-only
 Environment=VM_MCP_PORT=8765

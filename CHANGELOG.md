@@ -15,7 +15,21 @@ VMs re-installing vm-mcp past this change get:
   exits 3 unless exactly one of `VM_MCP_AUTH_TOKEN_FILE` (owner-only `0600`
   file, preferred), `VM_MCP_AUTH_TOKEN_STDIN=1` or `VM_MCP_AUTH_TOKEN` gives a
   32-256 character URL-safe token; the service will not start without one.
+  `VM_MCP_AUTH_TOKEN_STDIN` must be unset or `1`; the token file is opened
+  once and checked through the descriptor; CRLF token files get a clear error;
+  token handling never shows up under `bash -x`.
   Follow the upgrade order in `vm-mcp/SKILL.md` before updating a running VM.
+- **The token is never in the service environment.** The installer writes it
+  to `/etc/credstore/vm-mcp-token` (root, `0600`). systemd opens that file as
+  root and passes it as the service's stdin; the server reads it once and
+  swaps stdin for `/dev/null`. `VM_MCP_AUTH_TOKEN` in `/etc/vm-mcp.env` is only
+  a warned fallback for old units; re-running the installer removes it. The
+  server makes itself non-dumpable as its first statement, before importing
+  `mcp`/`uvicorn`.
+- **Fresh installs start again.** The installer's umask is `0022`; only secret
+  files are written under `0077`, to a temp file renamed into place, so the
+  `vmmcp` user can run the venv and a loosened old `/etc/vm-mcp.env` never
+  exposes new contents.
 - **The root broker serves only the vm-mcp service process** (peer UID and
   systemd MainPID), not other same-UID processes; the MCP process is made
   non-dumpable; move/remove refuse `VM_MCP_ROOT` itself.

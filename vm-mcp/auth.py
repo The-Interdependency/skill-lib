@@ -1,7 +1,7 @@
-# ratios: loc_comments=40:42 imports_exports=6:3 calls_definitions=18:6
+# ratios: loc_comments=71:50 imports_exports=8:3 calls_definitions=34:7
 """HTTP caller and process isolation for the private VM control plane.
 
-Usage: configure VM_MCP_AUTH_TOKEN through root-owned service configuration,
+Usage: provision /etc/credstore/vm-mcp-token (root, 0600) via vm-mcp/install.sh,
 then wrap the MCP ASGI app with BearerAuth. Never put the token in tool arguments,
 URLs, command output, or a workspace file. Call protect_process before serving
 or spawning commands; Linux must deny same-UID inspection of this process.
@@ -9,9 +9,11 @@ or spawning commands; Linux must deny same-UID inspection of this process.
 from __future__ import annotations
 
 import ctypes
+import logging
 import os
 import re
 import secrets
+import stat
 from typing import Any
 
 
@@ -55,12 +57,52 @@ def protect_process() -> None:
         raise OSError(ctypes.get_errno(), "cannot isolate vm-mcp service process")
 
 
+def _read_stdin_token() -> bytes:
+    """Read the token from fd 0 once, then replace fd 0 with /dev/null."""
+    if not stat.S_ISREG(os.fstat(0).st_mode):
+        raise RuntimeError("VM_MCP_AUTH_TOKEN_SOURCE=stdin requires stdin to be the root-only token file")
+    chunks = []
+    while sum(map(len, chunks)) < 258:
+        chunk = os.read(0, 258)
+        if not chunk:
+            break
+        chunks.append(chunk)
+    null = os.open(os.devnull, os.O_RDONLY)
+    os.dup2(null, 0)
+    os.close(null)
+    raw = b"".join(chunks)
+    return raw[:-1] if raw.endswith(b"\n") else raw
+
+
 def configured_token() -> bytes:
-    """Consume an operator-provisioned token, without exposing it to child envs."""
-    token = os.environ.pop("VM_MCP_AUTH_TOKEN", "")
-    if not re.fullmatch(r"[A-Za-z0-9_-]{32,256}", token):
-        raise RuntimeError("VM_MCP_AUTH_TOKEN must be an operator-provisioned 32-256 character URL-safe token")
-    return token.encode("ascii")
+    """Load the operator-provisioned token without leaving it reachable by children.
+
+    The installed unit sets VM_MCP_AUTH_TOKEN_SOURCE=stdin and
+    StandardInput=file:/etc/credstore/vm-mcp-token, so the service manager opens
+    the root-only file and the token never enters the environment. A token in
+    VM_MCP_AUTH_TOKEN is a legacy fallback, used with a warning only when no stdin
+    source is configured; the variable is always removed so children never
+    inherit it.
+    """
+    log = logging.getLogger("vm-mcp")
+    legacy = os.environ.pop("VM_MCP_AUTH_TOKEN", "")
+    source_kind = os.environ.pop("VM_MCP_AUTH_TOKEN_SOURCE", "")
+    if source_kind not in ("", "stdin"):
+        raise RuntimeError("VM_MCP_AUTH_TOKEN_SOURCE must be unset or stdin")
+    if source_kind == "stdin":
+        token = _read_stdin_token()
+        source = "the stdin token file"
+        if legacy:
+            log.warning("VM_MCP_AUTH_TOKEN is ignored because the token file is configured; re-run vm-mcp/install.sh to drop it from /etc/vm-mcp.env")
+    else:
+        token = legacy.encode("utf-8", "replace")
+        source = "VM_MCP_AUTH_TOKEN"
+        if token:
+            log.warning("no token file configured; falling back to VM_MCP_AUTH_TOKEN from the environment. "
+                        "Re-run vm-mcp/install.sh to move the token out of the service environment")
+    if not re.fullmatch(rb"[A-Za-z0-9_-]{32,256}", token):
+        raise RuntimeError(f"{source} must hold an operator-provisioned 32-256 character URL-safe token")
+    return token
 
 
 class BearerAuth:
@@ -96,4 +138,4 @@ class BearerAuth:
             await send({"type": "http.response.body", "body": b"Authentication required"})
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=40:42 imports_exports=6:3 calls_definitions=18:6
+# ratios: loc_comments=71:50 imports_exports=8:3 calls_definitions=34:7

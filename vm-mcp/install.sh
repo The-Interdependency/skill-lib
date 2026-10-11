@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 # ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 set -euo pipefail
-umask 0077
+# Runtime code and the venv must stay readable by the vmmcp service user; only
+# secret files are written under umask 0077 (write_secret_file).
+umask 0022
+TRACE_INSTALL=0
+[[ $- == *x* ]] && TRACE_INSTALL=1
 
 # Install canonical vm-mcp on a Linux VM.
 #
@@ -31,14 +35,21 @@ PORT="${VM_MCP_PORT:-8765}"
 SERVICE_USER="${VM_MCP_SERVICE_USER:-vmmcp}"
 SERVICE_GROUP="$SERVICE_USER"
 ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
+CREDENTIAL_FILE=/etc/credstore/vm-mcp-token
 # The bearer token comes from exactly one operator-provisioned source, so it
 # never has to appear in a pasted command line or shell history:
 #   VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token  regular file owned by the
 #                                              installing user, no group/other access
 #   VM_MCP_AUTH_TOKEN_STDIN=1                  first line of stdin
 #   VM_MCP_AUTH_TOKEN=...                      environment (avoid in shell history)
-resolve_auth_token() {
-  local sources=0 token="" file mode owner
+# Every function that touches the token runs with xtrace off, so `bash -x`
+# never prints it, and restores the caller's xtrace setting afterwards.
+_resolve_auth_token() {
+  local sources=0 token="" file fd owner mode kind fd_id path_id
+  case "${VM_MCP_AUTH_TOKEN_STDIN-}" in
+    ""|1) ;;
+    *) echo "ERROR: VM_MCP_AUTH_TOKEN_STDIN must be unset or 1" >&2; return 3 ;;
+  esac
   [[ -n "${VM_MCP_AUTH_TOKEN:-}" ]] && sources=$((sources + 1))
   [[ -n "${VM_MCP_AUTH_TOKEN_FILE:-}" ]] && sources=$((sources + 1))
   [[ "${VM_MCP_AUTH_TOKEN_STDIN:-}" == 1 ]] && sources=$((sources + 1))
@@ -52,25 +63,77 @@ resolve_auth_token() {
       echo "ERROR: VM_MCP_AUTH_TOKEN_FILE must be a regular file, not a symlink" >&2
       return 3
     fi
-    read -r owner mode < <(stat -c '%u %a' -- "$file")
+    # Open once, check the opened file itself (fstat through /dev/fd), and
+    # require the path to still name that same inode: no check-then-read race.
+    if ! exec {fd}<"$file"; then
+      echo "ERROR: cannot open VM_MCP_AUTH_TOKEN_FILE" >&2
+      return 3
+    fi
+    read -r owner mode kind fd_id < <(stat -L -c '%u %a %F %d:%i' "/dev/fd/$fd" | sed 's/regular empty file/regular_file/; s/regular file/regular_file/')
+    path_id="$(stat -c '%F %d:%i' -- "$file" 2>/dev/null | sed 's/regular empty file/regular_file/; s/regular file/regular_file/' || true)"
+    if [[ "$kind" != regular_file || "$path_id" != "regular_file $fd_id" ]]; then
+      exec {fd}<&-
+      echo "ERROR: VM_MCP_AUTH_TOKEN_FILE is not a regular file or changed while being opened" >&2
+      return 3
+    fi
     if [[ "$owner" != "$EUID" ]] || (( (8#$mode & 8#077) != 0 )); then
+      exec {fd}<&-
       echo "ERROR: VM_MCP_AUTH_TOKEN_FILE must be owned by the installing user with no group/other access (chmod 0600)" >&2
       return 3
     fi
-    IFS= read -r token < "$file" || [[ -n "$token" ]]
+    IFS= read -r token <&"$fd" || [[ -n "$token" ]]
+    exec {fd}<&-
   elif [[ "${VM_MCP_AUTH_TOKEN_STDIN:-}" == 1 ]]; then
     IFS= read -r token || [[ -n "$token" ]]
   else
     token="${VM_MCP_AUTH_TOKEN:-}"
   fi
+  if [[ "$token" == *$'\r' ]]; then
+    echo "ERROR: the token ends in a carriage return: the token file has Windows (CRLF) line endings. Save it with LF endings (for example: sed -i 's/\r\$//' FILE) and retry" >&2
+    return 3
+  fi
   if [[ ! "$token" =~ ^[A-Za-z0-9_-]{32,256}$ ]]; then
     echo "ERROR: supply an operator-provisioned token (32-256 URL-safe characters) via VM_MCP_AUTH_TOKEN_FILE, VM_MCP_AUTH_TOKEN_STDIN=1 or VM_MCP_AUTH_TOKEN before installation" >&2
     return 3
   fi
-  printf '%s' "$token"
+  AUTH_TOKEN="$token"
 }
-AUTH_TOKEN="$(resolve_auth_token)" || exit 3
-unset VM_MCP_AUTH_TOKEN
+
+# Usage: load_auth_token  (sets AUTH_TOKEN, or returns 3)
+load_auth_token() {
+  local xtrace=0 rc=0
+  [[ $- == *x* ]] && xtrace=1
+  set +x
+  _resolve_auth_token || rc=$?
+  unset VM_MCP_AUTH_TOKEN
+  if (( xtrace )); then set -x; fi
+  return "$rc"
+}
+
+# Usage: ... | write_secret_file DEST
+# Writes stdin to a new 0600 temp file beside DEST under umask 0077, then
+# renames it over DEST: an existing loosened DEST is replaced by a new inode,
+# so the secret is never readable through an old mode.
+write_secret_file() {
+  local dest=$1 xtrace=0 rc=0
+  [[ $- == *x* ]] && xtrace=1
+  set +x
+  # Explicit checks: errexit does not apply inside a subshell used with ||.
+  (
+    umask 0077
+    tmp="$(mktemp "$(dirname -- "$dest")/.$(basename -- "$dest").XXXXXX")" || exit 1
+    trap 'rm -f -- "$tmp"' EXIT
+    cat > "$tmp" || exit 1
+    chmod 0600 "$tmp" || exit 1
+    if [[ $EUID -eq 0 ]]; then chown root:root "$tmp" || exit 1; fi
+    mv -f -- "$tmp" "$dest" || exit 1
+    trap - EXIT
+  ) || rc=$?
+  if (( xtrace )); then set -x; fi
+  return "$rc"
+}
+
+load_auth_token || exit 3
 NOLOGIN="$(command -v nologin || true)"
 [[ -n "$NOLOGIN" ]] || NOLOGIN=/bin/false
 
@@ -142,22 +205,40 @@ fi
 printf '%s\n' "$SOURCE_COMMIT" > "$INSTALL_ROOT/SOURCE_COMMIT"
 chmod 0644 "$INSTALL_ROOT/SOURCE_COMMIT"
 
-if [[ ! -x "$INSTALL_ROOT/.venv/bin/python" ]]; then
-  python3 -m venv "$INSTALL_ROOT/.venv"
-fi
-"$INSTALL_ROOT/.venv/bin/python" -m pip install --upgrade pip >/dev/null
-"$INSTALL_ROOT/.venv/bin/python" -m pip install -r "$INSTALL_ROOT/requirements.txt"
+# Usage: install_runtime INSTALL_ROOT
+# The vmmcp service user must read and exec the venv whatever umask the
+# operator's shell had, so venv creation and pip always run under umask 0022.
+install_runtime() {
+  local root=$1
+  (
+    set -e
+    umask 0022
+    if [[ ! -x "$root/.venv/bin/python" ]]; then
+      python3 -m venv "$root/.venv"
+    fi
+    "$root/.venv/bin/python" -m pip install --upgrade pip >/dev/null
+    "$root/.venv/bin/python" -m pip install -r "$root/requirements.txt"
+  )
+}
+install_runtime "$INSTALL_ROOT"
 
 install -m 0644 "$SOURCE_ROOT/systemd/vm-mcp.service" /etc/systemd/system/vm-mcp.service
 install -m 0644 "$SOURCE_ROOT/systemd/vm-mcp-admin.service" /etc/systemd/system/vm-mcp-admin.service
-cat > /etc/vm-mcp.env <<EOF
+# The token goes to a root-only 0600 file that the service manager opens and
+# passes as the service's stdin (see systemd/vm-mcp.service). It is never a
+# service environment variable: /proc/<pid>/environ is readable by same-UID
+# processes until the server is non-dumpable.
+install -d -o root -g root -m 0700 "$(dirname -- "$CREDENTIAL_FILE")"
+set +x
+printf '%s\n' "$AUTH_TOKEN" | write_secret_file "$CREDENTIAL_FILE" || exit 6
+unset AUTH_TOKEN
+if (( TRACE_INSTALL )); then set -x; fi
+write_secret_file /etc/vm-mcp.env <<EOF || exit 6
 VM_MCP_ROOT=$(systemd_quote "$WORK_ROOT")
 VM_MCP_PROFILE=$PROFILE
 VM_MCP_PORT=$PORT
-VM_MCP_AUTH_TOKEN=$AUTH_TOKEN
 VM_MCP_ADMIN_SOCKET=$(systemd_quote "$ADMIN_SOCKET")
 EOF
-chmod 0600 /etc/vm-mcp.env
 
 install -d -m 0755 /etc/systemd/system/vm-mcp.service.d
 cat > /etc/systemd/system/vm-mcp.service.d/workspace.conf <<EOF

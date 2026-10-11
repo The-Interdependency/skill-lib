@@ -155,12 +155,25 @@ class DestructiveEntryTests(unittest.TestCase):
 @unittest.skipUnless(importlib.util.find_spec('mcp'), 'install vm-mcp/requirements.txt for HTTP integration')
 class McpHttpIntegrationTests(unittest.TestCase):
     def test_real_mcp_endpoint_denies_unauthenticated_admin_call(self):
+        # The installed unit hands the token over as a root-opened stdin file;
+        # the environment variable is the legacy fallback.
+        for source in ('stdin', 'environment'):
+            with self.subTest(source=source), tempfile.TemporaryFile('w+') as token_file:
+                token_file.write('f' * 32 + '\n')
+                token_file.seek(0)
+                extra = ({'VM_MCP_AUTH_TOKEN_SOURCE': 'stdin'} if source == 'stdin'
+                         else {'VM_MCP_AUTH_TOKEN': 'f' * 32})
+                self._check_endpoint(extra, token_file if source == 'stdin' else subprocess.DEVNULL)
+
+    def _check_endpoint(self, extra, stdin):
         with socket.socket() as port_socket:
             port_socket.bind(('127.0.0.1', 0))
             port = port_socket.getsockname()[1]
         runtime = Path(__file__).resolve().parents[1]
-        env = dict(os.environ, VM_MCP_PROFILE='read-only', VM_MCP_PORT=str(port), VM_MCP_AUTH_TOKEN='f' * 32)
-        process = subprocess.Popen([sys.executable, str(runtime / 'server.py')], env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        base = {k: v for k, v in os.environ.items() if not k.startswith('VM_MCP_AUTH_TOKEN')}
+        env = dict(base, VM_MCP_PROFILE='read-only', VM_MCP_PORT=str(port), **extra)
+        process = subprocess.Popen([sys.executable, str(runtime / 'server.py')], env=env, stdin=stdin,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             deadline = time.monotonic() + 10
             while True:

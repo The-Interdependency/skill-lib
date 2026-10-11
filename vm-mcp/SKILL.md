@@ -124,14 +124,21 @@ The broker:
 
 Every HTTP request, including direct loopback traffic, must carry the configured
 `Authorization: Bearer` credential. The server refuses startup without a
-32–256 character URL-safe `VM_MCP_AUTH_TOKEN`; operators must supply a random,
-high-entropy token through root-owned service configuration and the client's
-secure header configuration. Tokens never belong in tool arguments, URLs,
+32–256 character URL-safe token; operators must supply a random, high-entropy
+token through the installer and the client's secure header configuration. The
+installer writes it to `/etc/credstore/vm-mcp-token` (root, `0600`, new inode on
+every write). systemd opens that file as root and hands it to the service as
+stdin (`StandardInput=file:`); the server reads it once and replaces stdin with
+`/dev/null`. The token is never in the service environment and never in a file
+the `vmmcp` UID can open. (`LoadCredential=` was not used: its copy stays
+readable by the service UID, so by same-UID `shell_exec` children, for the
+whole service lifetime.) Tokens never belong in tool arguments, URLs,
 workspace files, or chat. The installer does not generate or disclose one.
 Provisioning or rotating access is a separate operator-authorized action.
 
-Before serving or spawning shell commands, the server disables Linux process
-dumpability. Same-UID shell children therefore cannot inspect its memory,
+The server disables Linux process dumpability as its first statement, before
+importing `mcp` or `uvicorn`, and again before serving or spawning shell
+commands. Same-UID shell children therefore cannot inspect its memory,
 environment or descriptors to steal caller credentials. Children receive only
 the sanitized execution environment. Root remains outside this protection.
 The broker queries systemd for the live main-process identity on every request;
@@ -171,8 +178,14 @@ installer exactly one source:
 - `VM_MCP_AUTH_TOKEN_FILE=<path>`: a regular file (not a symlink) owned by the
   installing user (root) with no group or other access (`chmod 0600`); the first
   line is the token. Preferred.
-- `VM_MCP_AUTH_TOKEN_STDIN=1`: the first line of the installer's stdin.
+- `VM_MCP_AUTH_TOKEN_STDIN=1`: the first line of the installer's stdin (any value
+  other than unset or `1` is rejected).
 - `VM_MCP_AUTH_TOKEN`: the environment; avoid it where it would enter shell history.
+
+The token file is opened once and checked through the open descriptor, so it
+cannot be swapped between the check and the read; a token file with Windows
+CRLF line endings is rejected with a message saying so. Token handling runs
+with xtrace off, so `bash -x install.sh` never prints the token.
 
 Use the same value in the MCP client's secure Authorization-header configuration
 (`Authorization: Bearer <token>`; the scheme is case-insensitive per RFC 9110).
@@ -202,9 +215,13 @@ sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
 Installs from before caller authentication have no token. After this upgrade:
 
 - the installer exits 3 without changing anything until one token source is given;
-- `vm-mcp.service` refuses to start if `/etc/vm-mcp.env` lacks a valid
-  `VM_MCP_AUTH_TOKEN`, so updated code without a re-run installer leaves the MCP
-  path down rather than open;
+- the new `vm-mcp.service` unit does not start until
+  `/etc/credstore/vm-mcp-token` exists and holds a valid token, so the MCP path
+  stays down rather than open;
+- updated server code under an old unit (no token file configured) falls back
+  to a `VM_MCP_AUTH_TOKEN` in `/etc/vm-mcp.env` and logs a warning; with neither,
+  it refuses to start. Re-running the installer removes the variable from
+  `/etc/vm-mcp.env` and moves the token to the root-only file;
 - clients without the `Authorization` header get `401` on every request.
 
 Upgrade order: (1) create the root-owned `0600` token file through the human
@@ -221,8 +238,10 @@ path does not yet exist. This prevents an existing application checkout such as
 `/srv/stack` from accidentally being transferred to `vmmcp` merely because it
 was selected as an MCP root.
 
-The install places immutable runtime code under `/opt/vm-mcp`, configuration in
-`/etc/vm-mcp.env`, and starts `vm-mcp-admin.service` only for
+The install places immutable runtime code under `/opt/vm-mcp` (venv created
+under umask `0022` so `vmmcp` can run it), non-secret configuration in
+`/etc/vm-mcp.env` and the token in `/etc/credstore/vm-mcp-token` (both written
+`0600` to a temp file and renamed into place), and starts `vm-mcp-admin.service` only for
 `personal-console`.
 
 ## Workflow

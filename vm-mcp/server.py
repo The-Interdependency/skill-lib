@@ -1,4 +1,4 @@
-# ratios: loc_comments=92:60 imports_exports=8:12 calls_definitions=39:14
+# ratios: loc_comments=95:63 imports_exports=9:12 calls_definitions=41:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -11,6 +11,14 @@ explicit ``user_exec`` and ``admin_exec`` through the separate root broker; use
 that profile only for a single-owner private VM behind an authenticated tunnel.
 """
 from __future__ import annotations
+
+# Defence in depth: become non-dumpable before any heavy import, so same-UID
+# processes cannot read this process's /proc/<pid>/environ, memory or fds while
+# mcp/uvicorn load. Fails closed; auth.protect_process repeats it in main().
+import ctypes as _ctypes
+
+if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPABLE, 0
+    raise SystemExit("vm-mcp: cannot disable process dumpability (prctl PR_SET_DUMPABLE)")
 
 import os
 
@@ -192,4 +200,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=92:60 imports_exports=8:12 calls_definitions=39:14
+# ratios: loc_comments=95:63 imports_exports=9:12 calls_definitions=41:14

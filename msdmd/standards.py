@@ -1,4 +1,4 @@
-# ratios: loc_comments=276:20 imports_exports=8:2 calls_definitions=155:5
+# ratios: loc_comments=287:24 imports_exports=8:2 calls_definitions=159:6
 """Semantic projections for native metadata documents, preserving owning trees.
 
 Usage: registry invokes read_standards(path, bytes, context). The JSON/YAML/TOML
@@ -28,6 +28,21 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
     facts: list = []
     edges: list = []
     diagnostics: list = []
+    # Source identifiers whose URL userinfo was withheld, numbered in first-seen
+    # order for this document. Identical sources keep one ordinal (true
+    # duplicates are still caught); identifiers that differ only in
+    # user:password stay distinct. Nothing is derived from the secret itself.
+    withheld_ids: dict[str, int] = {}
+
+    def safe_id(item: Any) -> str | None:
+        if item is None:
+            return None
+        text = str(item)
+        clean = _sanitize_url_credentials(text)
+        if clean == text:
+            return text
+        ordinal = withheld_ids.setdefault(text, len(withheld_ids) + 1)
+        return f'{clean}#redacted-{ordinal}'
 
     def emit(convention: str, version: str, kind: str, loc: str, value: Any,
              *, scope: str = 'document', identity: str | None = None,
@@ -36,9 +51,10 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
         # Native identifiers, locations and versions are publication surfaces too.
         # Sanitize them before they can enter a subject or percent-encoded address.
         fields = [identity, native_id, loc, version]
-        safe_fields = [_sanitize_url_credentials(str(item)) if item is not None else None for item in fields]
+        safe_fields = [safe_id(identity), safe_id(native_id), str(loc),
+                       _sanitize_url_credentials(str(version)) if version is not None else None]
         identity, native_id, loc, version = safe_fields
-        loc = pointer(*[_sanitize_url_credentials(part.replace('~1', '/').replace('~0', '~')) for part in loc.split('/')[1:]])
+        loc = pointer(*[safe_id(part.replace('~1', '/').replace('~0', '~')) for part in loc.split('/')[1:]])
         if redactions or safe_fields != fields or loc != fields[2]:
             diagnostics.append(_diagnostic(context, reader_id=rid, code='sensitive_fields_redacted',
                 message='sensitive values withheld from metadata projection', status='redacted'))
@@ -310,4 +326,4 @@ def read_standards(path: Path, data: bytes, context: dict[str, Any]) -> tuple[li
                 code='duplicate_native_identifier', message='duplicate native ID in ' + namespace,
                 status='invalid', severity='error'))
     return facts, edges, diagnostics
-# ratios: loc_comments=276:20 imports_exports=8:2 calls_definitions=155:5
+# ratios: loc_comments=287:24 imports_exports=8:2 calls_definitions=159:6

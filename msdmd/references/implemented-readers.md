@@ -106,7 +106,12 @@ publication boundary. YAML/TOML integers outside JavaScript's safe range use
 `json-number` tags with exact decimal lexemes. Typed YAML mappings preserve key/value
 associations during redaction. Kubernetes `Secret` data/stringData containers are
 withheld. Credential-bearing native identifiers and pointers are sanitized before
-address construction. Encoded DSSE payloads are withheld even if semantic mapping
+address construction. When withholding URL userinfo would make two source keys or
+identifiers equal, each gets a `#redacted-N` suffix: an ordinal in first-seen order
+within its mapping (keys) or document (identifiers), skipping any value already
+present. Identical sources share one ordinal, so true duplicates are still caught.
+Nothing in the suffix is derived from the secret; a digest of it would let weak
+passwords be guessed offline. Encoded DSSE payloads are withheld even if semantic mapping
 fails; malformed subjects remain diagnosed while the redacted statement is retained.
 Source digests preserve provenance; redacted values and locators are intentionally
 lossy and do not grant access to the source.

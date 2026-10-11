@@ -69,6 +69,37 @@ class NativeP1SecurityTests(unittest.TestCase):
                 self.assertNotIn('DO_NOT_PUBLISH', json.dumps(result))
                 self.assertIn('redacted', json.dumps(result))
 
+    def test_withheld_keys_and_identifiers_use_ordinals_not_secret_digests(self):
+        import hashlib
+        weak = ['https://u:hunter2@example.com/a', 'https://u:hunter3@example.com/a']
+        digests = {hashlib.sha256(text.encode()).hexdigest() for text in weak}
+        digests |= {hashlib.sha256(part.encode()).hexdigest() for part in ('hunter2', 'hunter3', 'u:hunter2', 'u:hunter3')}
+        clash = 'https://[redacted]@example.com/a#redacted-1'
+        fixtures = [
+            # Structured-document keys: distinct source keys stay distinct, and an
+            # ordinal that already exists as a literal source key is skipped.
+            ('sample.json', json.dumps({weak[0]: 1, weak[1]: 2, clash: 3})),
+            # OpenAPI path identifiers differing only in user:password are not duplicates.
+            ('api.json', json.dumps({'openapi': '3.1.0', 'paths': {
+                weak[0]: {'get': {'operationId': 'one'}}, weak[1]: {'get': {'operationId': 'two'}}}})),
+        ]
+        for name, source in fixtures:
+            with self.subTest(name=name):
+                result = self.collection(name, source)
+                self.assertFalse(collection_errors(result), result['diagnostics'])
+                text = json.dumps(result)
+                self.assertNotIn('hunter', text)
+                for digest in digests:
+                    self.assertNotIn(digest, text)
+                    self.assertNotIn(digest[:12], text)
+                self.assertIn('#redacted-1', text)
+                self.assertIn('#redacted-2', text)
+                self.assertEqual(text, json.dumps(self.collection(name, source)))  # deterministic
+        value = next(f['native']['value'] for f in self.collection('sample.json', fixtures[0][1])['facts']
+                     if f['kind'] == 'structured-document')
+        self.assertEqual({clash: 3, 'https://[redacted]@example.com/a#redacted-2': 1,
+                          'https://[redacted]@example.com/a#redacted-3': 2}, value)
+
     def test_malformed_dsse_subject_keeps_redacted_decoded_evidence(self):
         for subjects in [[None, 1, 'invalid', {'name': 'valid'}], None, {'name': 'wrong-container'}]:
             with self.subTest(subjects=subjects):

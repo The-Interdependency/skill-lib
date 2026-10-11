@@ -3,6 +3,20 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: msdmd structured redaction and identifier hardening
+
+Consumers re-syncing past this change get, in structured-document and
+standards facts:
+
+- **YAML/TOML integers outside JavaScript's safe range** are tagged
+  `json-number` with the exact decimal lexeme instead of losing precision.
+- **Typed YAML mappings** keep key/value association while redacting;
+  Kubernetes `Secret` `data`/`stringData` are withheld in lists and typed maps.
+- **URL userinfo is withheld from native identifiers, locations and keys**
+  before addresses are built. Where that would merge distinct sources, a
+  `#redacted-N` ordinal keeps them apart; it is never a hash of the secret.
+- **Encoded DSSE payloads are withheld** even when semantic mapping fails.
+
 ## Unreleased: msdmd Node runs jitless; signal deaths exit 3
 
 Consumers re-syncing past `38c6433` get:

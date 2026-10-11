@@ -1,4 +1,4 @@
-# ratios: loc_comments=993:71 imports_exports=22:5 calls_definitions=320:32
+# ratios: loc_comments=1000:73 imports_exports=22:5 calls_definitions=320:32
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -393,11 +393,20 @@ def _redact_sensitive(value: Any, pointer: str = "") -> tuple[Any, list[str]]:
                 result_entries.append({"key": key, "tag": entry["tag"], "value": child})
             return {"$type": "yaml-mapping", "entries": result_entries}, redacted
         result: dict[str, Any] = {}
+        source_keys = {str(key) for key in value}
+        withheld = 0
         for key, item in value.items():
             safe_key = _sanitize_url_credentials(str(key))
             if safe_key != str(key):
                 # Distinct source keys must stay distinct after withholding userinfo.
-                safe_key += "#redacted-" + _digest(str(key))
+                # A per-mapping ordinal does that without deriving anything from
+                # the secret: a hash of the key would let weak passwords be guessed.
+                stem = safe_key
+                while True:
+                    withheld += 1
+                    safe_key = f"{stem}#redacted-{withheld}"
+                    if safe_key not in source_keys and safe_key not in result:
+                        break
                 redacted.append(f"{pointer}/[redacted-key]")
             child_pointer = f"{pointer}/{safe_key}"
             secret_payload = value.get("kind") == "Secret" and key in ("data", "stringData")
@@ -1144,4 +1153,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=993:71 imports_exports=22:5 calls_definitions=320:32
+# ratios: loc_comments=1000:73 imports_exports=22:5 calls_definitions=320:32

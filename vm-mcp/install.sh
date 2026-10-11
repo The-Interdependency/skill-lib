@@ -155,16 +155,46 @@ case "$WORK_ROOT" in
   *$'\n'*|*$'\r'*) echo "ERROR: VM_MCP_ROOT must not contain newlines" >&2; exit 3 ;;
 esac
 
+# Usage: check_work_root WORK_ROOT INSTALL_ROOT
+# The workspace is writable by the service user, and root runs code from the
+# install root (the ExecStartPre gate). Reject a workspace that is /, equal to,
+# inside, or a parent of the install root, comparing realpath-resolved paths
+# so symlinks and ../ cannot hide an overlap.
+check_work_root() {
+  local work install
+  work="$(realpath -m -- "$1")" || return 3
+  install="$(realpath -m -- "$2")" || return 3
+  if [[ "$work" == / ]]; then
+    echo "ERROR: VM_MCP_ROOT must not be /" >&2
+    return 3
+  fi
+  if [[ "$work" == "$install" || "$work/" == "$install"/* || "$install/" == "$work"/* ]]; then
+    echo "ERROR: VM_MCP_ROOT ($work) must not be, contain, or be inside the install root ($install): the service user could plant code that root imports" >&2
+    return 3
+  fi
+}
+check_work_root "$WORK_ROOT" "$INSTALL_ROOT" || exit 3
+
 # Usage: ensure_ptrace_scope PROFILE
 # Shell profiles only: Yama ptrace_scope >= 1 stops same-UID shell_exec
 # children from ptracing or pidfd_getfd-ing the service (a non-ancestor), so
 # they cannot copy its token descriptor in the startup instant before it is
 # non-dumpable. Keeps an existing higher value, persists it in a sysctl.d file
 # that sorts last, applies it now, and warns about a later override to 0.
-# read-only runs no shell children, so the host's ptrace policy is left alone.
+# read-only runs no shell children: it never raises the scope, and only removes
+# our own sysctl.d file left by an earlier shell-profile install.
 ensure_ptrace_scope() {
   local profile=$1 current target tmp
   if [[ "$profile" == read-only ]]; then
+    # Moving back to read-only: drop only our own boot-time setting. The live
+    # value is left alone (lowering it could weaken other host policy).
+    if [[ -f "$PTRACE_SYSCTL_CONF" && ! -L "$PTRACE_SYSCTL_CONF" ]] \
+        && head -n 1 -- "$PTRACE_SYSCTL_CONF" | grep -qx '# Written by vm-mcp/install.sh: same-UID processes may not ptrace or'; then
+      rm -f -- "$PTRACE_SYSCTL_CONF"
+      echo "NOTE: removed $PTRACE_SYSCTL_CONF; the live kernel.yama.ptrace_scope is unchanged until reboot or sysctl --system" >&2
+    elif [[ -e "$PTRACE_SYSCTL_CONF" || -L "$PTRACE_SYSCTL_CONF" ]]; then
+      echo "WARNING: $PTRACE_SYSCTL_CONF was not written by vm-mcp/install.sh; leaving it" >&2
+    fi
     return 0
   fi
   if [[ ! -r "$YAMA_SCOPE_PATH" ]]; then
@@ -199,7 +229,7 @@ ensure_ptrace_scope() {
 # assignment comes from another file and is 0 (it would apply at next boot;
 # the pre-start gate would then refuse to start the service).
 warn_ptrace_override() {
-  local tool line file="" last_file="" last_value=""
+  local tool line key value file="" last_file="" last_value=""
   tool="$(command -v systemd-sysctl || true)"
   for candidate in /usr/lib/systemd/systemd-sysctl /lib/systemd/systemd-sysctl; do
     [[ -n "$tool" ]] && break
@@ -209,9 +239,15 @@ warn_ptrace_override() {
   while IFS= read -r line; do
     if [[ "$line" =~ ^#\ (/.*\.conf)$ ]]; then
       file="${BASH_REMATCH[1]}"
-    elif [[ "$line" =~ ^[[:space:]]*-?kernel[./]yama[./]ptrace_scope[[:space:]]*=[[:space:]]*([0-9]+) ]]; then
-      last_file="$file"
-      last_value="${BASH_REMATCH[1]}"
+    elif [[ "$line" =~ ^[[:space:]]*-?([^=[:space:]]+)[[:space:]]*=[[:space:]]*([0-9]+) ]]; then
+      key="${BASH_REMATCH[1]//\//.}"
+      value="${BASH_REMATCH[2]}"
+      # Exact key or a sysctl.d glob such as kernel.yama.* (unquoted: pattern match).
+      # shellcheck disable=SC2053
+      if [[ kernel.yama.ptrace_scope == $key ]]; then
+        last_file="$file"
+        last_value="$value"
+      fi
     fi
   done < <("$tool" --cat-config 2>/dev/null || true)
   if [[ -n "$last_value" && "$last_file" != "$PTRACE_SYSCTL_CONF" && "$last_value" -lt 1 ]]; then

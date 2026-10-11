@@ -26,5 +26,5 @@ from test_security_p1 import (BrokerCallerAuthTests, DestructiveEntryTests, Http
                               McpHttpIntegrationTests)  # noqa: E402,F401
 from test_auth_token_sources import (BearerSchemeTests, InstallerSecretFileTests, InstallerTokenSourceTests,  # noqa: E402,F401
                                      InstallerLocaleTests, InstallerPtraceScopeTests, InstallerUmaskTests,
-                                     ProfileResolutionTests, ServerDumpabilityTests, ServiceTokenLoadingTests,
+                                     InstallerWorkRootTests, ProfileResolutionTests, ServerDumpabilityTests, ServiceTokenLoadingTests,
                                      ServiceTracerTests, YamaGateTests)

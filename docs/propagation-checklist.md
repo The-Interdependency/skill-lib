@@ -70,7 +70,11 @@ corrupt index or broken `.git`) or the root is git-ignored by an enclosing
 repository; run in a readable checkout (no opt-out). `--check` reports 5, not
 drift. Nothing is written on exit 3, 4 or 5. Runners that fingerprint freshness should use
 `python -m msdmd.collect --print-generator-identity` (exit 3 and no output when
-its Node probe is killed by a signal or fails).
+its Node probe is killed by a signal, fails, times out or cannot read the
+typescript package). A TypeScript worker that exits nonzero, prints no complete
+JSON result, rejects `--jitless` or exceeds `--typescript-timeout` also exits 3.
+A file nested too deeply for the reader's stack is a per-file
+`typescript_input_too_deep` diagnostic instead (exit 0, or 2 under `--strict`).
 
 Run any target-local checks named in `CLAUDE.md`, `AGENTS.md`, or
 `.agents/skills/README.md`.

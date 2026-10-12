@@ -172,7 +172,13 @@ class McpHttpIntegrationTests(unittest.TestCase):
         runtime = Path(__file__).resolve().parents[1]
         base = {k: v for k, v in os.environ.items() if not k.startswith('VM_MCP_AUTH_TOKEN')}
         env = dict(base, VM_MCP_PROFILE='read-only', VM_MCP_PORT=str(port), **extra)
-        process = subprocess.Popen([sys.executable, str(runtime / 'server.py')], env=env, stdin=stdin,
+        # The temp token file is owned by the test user, not root: rebind the
+        # owner constant in-process, then run server.py unchanged as __main__.
+        launcher = ('import os, runpy, sys; sys.path.insert(0, sys.argv[1]); import auth; '
+                    'auth.TOKEN_FILE_OWNER_UID = os.getuid(); sys.argv = [sys.argv[2]]; '
+                    'runpy.run_path(sys.argv[0], run_name="__main__")')
+        process = subprocess.Popen([sys.executable, '-c', launcher, str(runtime), str(runtime / 'server.py')],
+                                   env=env, stdin=stdin,
                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             deadline = time.monotonic() + 10

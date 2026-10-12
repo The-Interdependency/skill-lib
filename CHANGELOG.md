@@ -8,8 +8,11 @@ first. Propagation PRs cite the skill-lib commit; this file explains why.
 VMs re-installing vm-mcp past this change get:
 
 - **Installer hardening.** Moving a host back to `read-only` deletes only the
-  installer's own `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf` and leaves the live
-  ptrace scope alone. `VM_MCP_ROOT` may no longer be `/` or equal to, inside, or
+  installer's own `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, only after the env
+  file is written and the service has restarted, and leaves the live ptrace
+  scope alone. The install root is fixed at `/opt/vm-mcp` (the units hardcode
+  it; `VM_MCP_INSTALL_ROOT` is gone). The server refuses a stdin token file
+  that is not root-owned or has group/other permission bits. `VM_MCP_ROOT` may no longer be `/` or equal to, inside, or
   a parent of the install root (realpath-resolved), since the service user
   could otherwise plant code that the root pre-start gate imports. The sysctl
   override warning also catches globs such as `kernel.yama.* = 0`.

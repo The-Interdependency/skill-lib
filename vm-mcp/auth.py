@@ -1,4 +1,4 @@
-# ratios: loc_comments=91:58 imports_exports=9:6 calls_definitions=43:10
+# ratios: loc_comments=96:63 imports_exports=9:6 calls_definitions=45:10
 """HTTP caller and process isolation for the private VM control plane.
 
 Usage: provision /etc/credstore/vm-mcp-token (root, 0600) via vm-mcp/install.sh,
@@ -59,10 +59,23 @@ def protect_process() -> None:
         raise OSError(ctypes.get_errno(), "cannot isolate vm-mcp service process")
 
 
+# Owner the stdin token file must have. A plain constant with no environment
+# override: tests that hand over a file they own rebind it in-process.
+TOKEN_FILE_OWNER_UID = 0
+
+
 def _read_stdin_token() -> bytes:
-    """Read the token from fd 0 once, then replace fd 0 with /dev/null."""
-    if not stat.S_ISREG(os.fstat(0).st_mode):
+    """Read the token from fd 0 once, then replace fd 0 with /dev/null.
+
+    fd 0 must be a regular file owned by root (TOKEN_FILE_OWNER_UID) with no
+    group or other permission bits, checked on the descriptor itself.
+    """
+    info = os.fstat(0)
+    if not stat.S_ISREG(info.st_mode):
         raise RuntimeError("VM_MCP_AUTH_TOKEN_SOURCE=stdin requires stdin to be the root-only token file")
+    if info.st_uid != TOKEN_FILE_OWNER_UID or info.st_mode & 0o077:
+        raise RuntimeError("VM_MCP_AUTH_TOKEN_SOURCE=stdin requires the token file to be owned by root with no "
+                           "group or other access (chown root:root, chmod 0600); re-run vm-mcp/install.sh")
     chunks = []
     while sum(map(len, chunks)) < 258:
         chunk = os.read(0, 258)
@@ -176,4 +189,4 @@ class BearerAuth:
             await send({"type": "http.response.body", "body": b"Authentication required"})
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=91:58 imports_exports=9:6 calls_definitions=43:10
+# ratios: loc_comments=96:63 imports_exports=9:6 calls_definitions=45:10

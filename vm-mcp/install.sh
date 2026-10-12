@@ -28,7 +28,9 @@ if [[ ${EUID} -ne 0 ]]; then
 fi
 
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_ROOT="${VM_MCP_INSTALL_ROOT:-/opt/vm-mcp}"
+# Fixed: both systemd units hardcode /opt/vm-mcp, so the install root is not
+# configurable (check_work_root must guard the path the units actually run).
+INSTALL_ROOT=/opt/vm-mcp
 WORK_ROOT="${VM_MCP_ROOT:-/srv/vm-mcp/workspace}"
 PROFILE="${VM_MCP_PROFILE:-read-only}"
 PORT="${VM_MCP_PORT:-8765}"
@@ -186,15 +188,7 @@ check_work_root "$WORK_ROOT" "$INSTALL_ROOT" || exit 3
 ensure_ptrace_scope() {
   local profile=$1 current target tmp
   if [[ "$profile" == read-only ]]; then
-    # Moving back to read-only: drop only our own boot-time setting. The live
-    # value is left alone (lowering it could weaken other host policy).
-    if [[ -f "$PTRACE_SYSCTL_CONF" && ! -L "$PTRACE_SYSCTL_CONF" ]] \
-        && head -n 1 -- "$PTRACE_SYSCTL_CONF" | grep -qx '# Written by vm-mcp/install.sh: same-UID processes may not ptrace or'; then
-      rm -f -- "$PTRACE_SYSCTL_CONF"
-      echo "NOTE: removed $PTRACE_SYSCTL_CONF; the live kernel.yama.ptrace_scope is unchanged until reboot or sysctl --system" >&2
-    elif [[ -e "$PTRACE_SYSCTL_CONF" || -L "$PTRACE_SYSCTL_CONF" ]]; then
-      echo "WARNING: $PTRACE_SYSCTL_CONF was not written by vm-mcp/install.sh; leaving it" >&2
-    fi
+    # Nothing to raise; remove_own_ptrace_conf runs after a successful restart.
     return 0
   fi
   if [[ ! -r "$YAMA_SCOPE_PATH" ]]; then
@@ -252,6 +246,22 @@ warn_ptrace_override() {
   done < <("$tool" --cat-config 2>/dev/null || true)
   if [[ -n "$last_value" && "$last_file" != "$PTRACE_SYSCTL_CONF" && "$last_value" -lt 1 ]]; then
     echo "WARNING: $last_file sets kernel.yama.ptrace_scope = $last_value after $PTRACE_SYSCTL_CONF; at next boot vm-mcp.service will refuse to start in the $profile profile until that override is removed" >&2
+  fi
+}
+
+# Usage: remove_own_ptrace_conf PROFILE
+# Moving back to read-only: drop only our own boot-time setting, and only once
+# the env file is written and the service has restarted, so a failed install
+# never leaves a shell-profile service without its scope >= 1 after a reboot.
+# The live value is left alone (lowering it could weaken other host policy).
+remove_own_ptrace_conf() {
+  [[ "$1" == read-only ]] || return 0
+  if [[ -f "$PTRACE_SYSCTL_CONF" && ! -L "$PTRACE_SYSCTL_CONF" ]] \
+      && head -n 1 -- "$PTRACE_SYSCTL_CONF" | grep -qx '# Written by vm-mcp/install.sh: same-UID processes may not ptrace or'; then
+    rm -f -- "$PTRACE_SYSCTL_CONF"
+    echo "NOTE: removed $PTRACE_SYSCTL_CONF; the live kernel.yama.ptrace_scope is unchanged until reboot or sysctl --system" >&2
+  elif [[ -e "$PTRACE_SYSCTL_CONF" || -L "$PTRACE_SYSCTL_CONF" ]]; then
+    echo "WARNING: $PTRACE_SYSCTL_CONF was not written by vm-mcp/install.sh; leaving it" >&2
   fi
 }
 
@@ -364,6 +374,7 @@ else
 fi
 systemctl enable --now vm-mcp.service
 systemctl restart vm-mcp.service
+remove_own_ptrace_conf "$PROFILE"
 
 printf '\nvm-mcp installed\n'
 printf '  source commit: %s\n' "$SOURCE_COMMIT"

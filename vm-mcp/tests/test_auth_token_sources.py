@@ -253,21 +253,44 @@ class InstallerPtraceScopeTests(unittest.TestCase):
         result, conf, calls, scope_path = self.run_scope("workspace", "0")
         self.assertIn("rc=0", result.stdout, result.stderr)
         self.assertTrue(conf.exists())
+        names = ("ensure_ptrace_scope", "warn_ptrace_override", "remove_own_ptrace_conf")
+        env = {"PATH": f"{calls.parent / 'bin'}:/usr/bin:/bin"}
+        # ensure_ptrace_scope itself never deletes anything on read-only ...
         result = run_installer_functions(
             f'YAMA_SCOPE_PATH="{scope_path}"; PTRACE_SYSCTL_CONF="{conf}"; ensure_ptrace_scope read-only; echo "rc=$?"',
-            env={"PATH": f"{calls.parent / 'bin'}:/usr/bin:/bin"}, names=("ensure_ptrace_scope", "warn_ptrace_override"))
+            env=env, names=names)
+        self.assertIn("rc=0", result.stdout, result.stderr)
+        self.assertTrue(conf.exists())
+        # ... shell profiles keep it ...
+        result = run_installer_functions(f'PTRACE_SYSCTL_CONF="{conf}"; remove_own_ptrace_conf workspace; echo "rc=$?"',
+                                         env=env, names=names)
+        self.assertIn("rc=0", result.stdout)
+        self.assertTrue(conf.exists())
+        # ... and the post-restart step removes only our own file on read-only.
+        result = run_installer_functions(f'PTRACE_SYSCTL_CONF="{conf}"; remove_own_ptrace_conf read-only; echo "rc=$?"',
+                                         env=env, names=names)
         self.assertIn("rc=0", result.stdout, result.stderr)
         self.assertFalse(conf.exists())
         self.assertIn("live kernel.yama.ptrace_scope is unchanged", result.stderr)
         self.assertEqual("1", scope_path.read_text(encoding="ascii").strip())  # not lowered
         self.assertEqual(1, len(calls.read_text(encoding="utf-8").splitlines()))  # no sysctl call on read-only
         conf.write_text("# operator's own file\nkernel.yama.ptrace_scope = 2\n", encoding="utf-8")
-        result = run_installer_functions(
-            f'YAMA_SCOPE_PATH="{scope_path}"; PTRACE_SYSCTL_CONF="{conf}"; ensure_ptrace_scope read-only; echo "rc=$?"',
-            names=("ensure_ptrace_scope", "warn_ptrace_override"))
+        result = run_installer_functions(f'PTRACE_SYSCTL_CONF="{conf}"; remove_own_ptrace_conf read-only; echo "rc=$?"',
+                                         names=names)
         self.assertIn("rc=0", result.stdout)
         self.assertTrue(conf.exists())
         self.assertIn("was not written by vm-mcp/install.sh", result.stderr)
+
+    def test_sysctl_file_is_removed_only_after_env_write_and_restart_succeed(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertTrue(text.splitlines()[2].startswith("set -euo pipefail"))  # any earlier failure aborts
+        call = text.index('remove_own_ptrace_conf "$PROFILE"\n')
+        self.assertLess(text.index("write_secret_file /etc/vm-mcp.env <<EOF || exit 6"), call)
+        self.assertLess(text.index("systemctl restart vm-mcp.service\n"), call)
+        self.assertEqual(1, text.count('remove_own_ptrace_conf "$PROFILE"'))
+        body = text[text.index("ensure_ptrace_scope() {"):]
+        body = body[:body.index("\n}\n")]
+        self.assertNotIn('rm -f -- "$PTRACE_SYSCTL_CONF"', body)
 
     def test_glob_override_to_zero_also_warns(self) -> None:
         for line in ("kernel.yama.* = 0", "kernel/yama/* = 0", "-kernel.yama.ptrace_* = 0", "kernel.* = 0"):
@@ -451,6 +474,20 @@ class InstallerWorkRootTests(unittest.TestCase):
                 result = self.check(work, str(install))
                 self.assertIn("rc=0", result.stdout, result.stderr)
 
+    def test_install_root_is_fixed_to_the_path_the_units_run(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertIn("\nINSTALL_ROOT=/opt/vm-mcp\n", text)
+        self.assertNotIn("VM_MCP_INSTALL_ROOT", text)
+        for unit in ("vm-mcp.service", "vm-mcp-admin.service"):
+            lines = [line for line in (ROOT / "systemd" / unit).read_text(encoding="utf-8").splitlines()
+                     if line.startswith(("ExecStart", "WorkingDirectory"))]
+            self.assertTrue(lines, unit)
+            for line in lines:
+                self.assertIn("/opt/vm-mcp/", line + "/", unit)
+        result = run_installer_functions('check_work_root /opt/vm-mcp/ws /opt/vm-mcp; echo "rc=$?"',
+                                         env={"VM_MCP_INSTALL_ROOT": "/elsewhere"}, names=("check_work_root",))
+        self.assertIn("rc=3", result.stdout)
+
     def test_installer_checks_the_workspace_before_installing_anything(self) -> None:
         text = INSTALLER.read_text(encoding="utf-8")
         self.assertLess(text.index('check_work_root "$WORK_ROOT" "$INSTALL_ROOT" || exit 3'),
@@ -517,9 +554,12 @@ class InstallerUmaskTests(unittest.TestCase):
 
 
 class ServiceTokenLoadingTests(unittest.TestCase):
-    def run_loader(self, *, stdin, env: dict[str, str]) -> subprocess.CompletedProcess:
-        code = ("import os, sys; sys.path.insert(0, sys.argv[1]); from auth import configured_token;\n"
-                "token = configured_token().decode()\n"
+    def run_loader(self, *, stdin, env: dict[str, str], own_file: bool = True) -> subprocess.CompletedProcess:
+        # Test files are owned by the test user, so the harness rebinds the
+        # owner constant in-process; production has no override at all.
+        code = ("import os, sys; sys.path.insert(0, sys.argv[1]); import auth; from auth import configured_token;\n"
+                + ("auth.TOKEN_FILE_OWNER_UID = os.getuid()\n" if own_file else "")
+                + "token = configured_token().decode()\n"
                 "print(token, 'VM_MCP_AUTH_TOKEN' in os.environ, 'VM_MCP_AUTH_TOKEN_SOURCE' in os.environ,"
                 " os.path.realpath('/proc/self/fd/0'))")
         clean = {k: v for k, v in os.environ.items() if not k.startswith("VM_MCP_AUTH_TOKEN")}
@@ -544,6 +584,38 @@ class ServiceTokenLoadingTests(unittest.TestCase):
         self.assertEqual([TOKEN, "False", "False", "/dev/null"], result.stdout.split())
         self.assertIn("VM_MCP_AUTH_TOKEN is ignored", result.stderr)
         self.assertNotIn(TOKEN, result.stderr)
+
+    def test_stdin_token_file_must_be_root_owned_without_group_or_other_bits(self) -> None:
+        for mode, ok in ((0o600, True), (0o400, True), (0o640, False), (0o604, False), (0o660, False), (0o606, False)):
+            with self.subTest(mode=oct(mode)), tempfile.NamedTemporaryFile("w+") as handle:
+                handle.write(TOKEN + "\n")
+                handle.flush()
+                os.chmod(handle.name, mode)
+                handle.seek(0)
+                result = self.run_loader(stdin=handle, env={"VM_MCP_AUTH_TOKEN_SOURCE": "stdin"})
+                self.assertEqual(ok, result.returncode == 0, result.stderr)
+                if not ok:
+                    self.assertIn("owned by root with no group or other access", result.stderr)
+                self.assertNotIn(TOKEN, result.stderr)
+
+    @unittest.skipIf(os.geteuid() == 0, "a root test user owns the file as root")
+    def test_stdin_token_file_owned_by_the_service_user_is_refused(self) -> None:
+        with tempfile.TemporaryFile("w+") as handle:
+            handle.write(TOKEN + "\n")
+            handle.seek(0)
+            result = self.run_loader(stdin=handle, env={"VM_MCP_AUTH_TOKEN_SOURCE": "stdin"}, own_file=False)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("owned by root with no group or other access", result.stderr)
+
+    def test_owner_check_has_no_environment_override(self) -> None:
+        text = (ROOT / "auth.py").read_text(encoding="utf-8")
+        self.assertIn("\nTOKEN_FILE_OWNER_UID = 0\n", text)
+        tree = ast.parse(text)
+        reader = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "_read_stdin_token")
+        source = ast.unparse(reader)
+        self.assertIn("os.fstat(0)", source)
+        self.assertNotIn("environ", source)
+        self.assertNotIn("getenv", source)
 
     def test_stdin_source_rejects_pipes_bad_tokens_and_unknown_sources(self) -> None:
         result = self.run_loader(stdin=subprocess.PIPE, env={"VM_MCP_AUTH_TOKEN_SOURCE": "stdin"})

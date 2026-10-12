@@ -21,7 +21,7 @@ jobs:
           node-version: "24.15.0"
       - name: Install pinned native-reader runtimes
         run: |
-          python -m pip install -r msdmd/requirements.txt
+          python -m pip install -r msdmd/requirements.txt -r vm-mcp/requirements.txt
           npm ci --ignore-scripts --prefix msdmd
       - name: Native collection drift and TypeScript schema
         run: |

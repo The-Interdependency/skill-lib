@@ -20,3 +20,11 @@ sys.path.insert(0, str(VM_MCP_TESTS))
 
 from test_assets import VmMcpAssetTests  # noqa: E402,F401
 from test_policy import VmMcpPolicyTests  # noqa: E402,F401
+
+from test_admin_broker import VmMcpAdminBrokerTests  # noqa: E402,F401
+from test_security_p1 import (BrokerCallerAuthTests, DestructiveEntryTests, HttpCallerAuthTests,
+                              McpHttpIntegrationTests)  # noqa: E402,F401
+from test_auth_token_sources import (BearerSchemeTests, InstallerSecretFileTests, InstallerTokenSourceTests,  # noqa: E402,F401
+                                     InstallerLocaleTests, InstallerPtraceScopeTests, InstallerUmaskTests,
+                                     ProfileResolutionTests, ServerDumpabilityTests, ServiceTokenLoadingTests,
+                                     ServiceTracerTests, YamaGateTests)

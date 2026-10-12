@@ -1,4 +1,4 @@
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -12,7 +12,26 @@ that profile only for a single-owner private VM behind an authenticated tunnel.
 """
 from __future__ import annotations
 
+# Defence in depth: become non-dumpable before any heavy import, so same-UID
+# processes cannot read this process's /proc/<pid>/environ, memory or fds while
+# mcp/uvicorn load. Fails closed; auth.protect_process repeats it in main().
+import ctypes as _ctypes
+
+if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPABLE, 0
+    raise SystemExit("vm-mcp: cannot disable process dumpability (prctl PR_SET_DUMPABLE)")
+
 import os
+
+# Still before any heavy import: refuse if traced, then read the token from
+# fd 0 and replace fd 0 with /dev/null. Yama ptrace_scope is checked by the
+# root ExecStartPre gate (yama_gate.py), since ProcSubset=pid hides sysctls
+# here. auth and profiles import only the standard library.
+from auth import BearerAuth, protect_process, startup_token
+from profiles import resolve_profile
+
+_TOKEN = startup_token(resolve_profile())
+
+import uvicorn
 from typing import Any, Callable
 
 from mcp.server import MCPServer
@@ -49,7 +68,7 @@ from policy import (
 #   rollout: root_installer_plus_systemd_plus_private_mcp_tunnel
 #   rollback: disable vm-mcp services and remove private client registration
 #   feature_flag: VM_MCP_PROFILE
-#   unresolved: client_specific_private_tunnel_registration, application_layer_auth_when_not_using_a_private_tunnel
+#   unresolved: client_specific_private_tunnel_registration, operator_provisioned_bearer_token_and_client_header_support
 # === END MODULE_BUILD ===
 
 # === CONTRACTS ===
@@ -175,16 +194,17 @@ def admin_exec(command: str, cwd: str = "/", timeout_seconds: float = 60.0) -> d
 
 
 def main() -> None:
-    mcp.run(
-        transport="streamable-http",
+    protect_process()
+    token = _TOKEN
+    app = mcp.streamable_http_app(
         host="127.0.0.1",
-        port=int(os.environ.get("VM_MCP_PORT", "8765")),
         streamable_http_path="/mcp",
         stateless_http=True,
         json_response=True,
     )
+    uvicorn.run(BearerAuth(app, token), host="127.0.0.1", port=int(os.environ.get("VM_MCP_PORT", "8765")))
 
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=89:60 imports_exports=6:12 calls_definitions=37:14
+# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14

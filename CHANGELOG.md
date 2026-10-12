@@ -3,6 +3,50 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: vm-mcp requires a bearer token; admin_exec only from the service
+
+VMs re-installing vm-mcp past this change get:
+
+- **Every HTTP request needs `Authorization: Bearer <token>`.** Loopback is
+  not authentication: any local process could reach `admin_exec` before.
+  The scheme is case-insensitive (RFC 9110); the token compare is constant
+  time. Missing, wrong or duplicate headers get `401` before the body is read.
+- **The installer and service fail closed without a token.** `install.sh`
+  exits 3 unless exactly one of `VM_MCP_AUTH_TOKEN_FILE` (owner-only `0600`
+  file, preferred), `VM_MCP_AUTH_TOKEN_STDIN=1` or `VM_MCP_AUTH_TOKEN` gives a
+  32-256 character URL-safe token; the service will not start without one.
+  `VM_MCP_AUTH_TOKEN_STDIN` must be unset or `1`; the token file is opened
+  once and checked through the descriptor; CRLF token files get a clear error;
+  token handling never shows up under `bash -x`.
+  Follow the upgrade order in `vm-mcp/SKILL.md` before updating a running VM.
+- **The token is never in the service environment.** The installer writes it
+  to `/etc/credstore/vm-mcp-token` (root, `0600`). systemd opens that file as
+  root and passes it as the service's stdin; the server reads it once and
+  swaps stdin for `/dev/null`. `VM_MCP_AUTH_TOKEN` in `/etc/vm-mcp.env` is only
+  a warned fallback for old units; re-running the installer removes it. The
+  server makes itself non-dumpable as its first statement, before importing
+  `mcp`/`uvicorn`.
+- **Shell profiles require Yama `ptrace_scope` >= 1.** The token arrives on
+  fd 0 before the process is non-dumpable, and a same-UID process could copy it
+  with `pidfd_getfd`. A root pre-start gate (`ExecStartPre=+... yama_gate.py`,
+  outside the sandbox, since `ProcSubset=pid` hides `/proc/sys` from the
+  server) refuses `workspace` and `personal-console` while the scope is 0 or
+  absent, so the server never receives its token fd. For those profiles the
+  installer persists and applies `kernel.yama.ptrace_scope` (1, or the
+  existing higher value) in `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, warns
+  about a later override to 0, and exits 7 if Yama is unavailable; `read-only`
+  leaves the host's ptrace policy alone. The server exits if traced, reads and
+  closes fd 0 before importing `mcp`/`uvicorn`, and refuses the environment
+  token fallback in shell profiles. Policy, server, auth and the gate share one
+  profile resolver. Token file checks no longer depend on the locale.
+- **Fresh installs start again.** The installer's umask is `0022`; only secret
+  files are written under `0077`, to a temp file renamed into place, so the
+  `vmmcp` user can run the venv and a loosened old `/etc/vm-mcp.env` never
+  exposes new contents.
+- **The root broker serves only the vm-mcp service process** (peer UID and
+  systemd MainPID), not other same-UID processes; the MCP process is made
+  non-dumpable; move/remove refuse `VM_MCP_ROOT` itself.
+
 ## Unreleased: msdmd structured redaction and identifier hardening
 
 Consumers re-syncing past this change get, in structured-document and

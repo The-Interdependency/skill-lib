@@ -55,7 +55,7 @@ class VmMcpAdminBrokerTests(unittest.TestCase):
     def test_serve_source_uses_peer_credentials(self) -> None:
         text = Path(admin_broker.__file__).read_text(encoding="utf-8")
         self.assertIn("SO_PEERCRED", text)
-        self.assertIn("peer_uid != caller.pw_uid", text)
+        self.assertIn("peer_uid != caller_uid", text)
         self.assertIn("os.chmod(socket_path, 0o660)", text)
 
     def test_admin_execution_timeout_is_bounded_when_root(self) -> None:

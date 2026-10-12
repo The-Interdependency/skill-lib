@@ -12,7 +12,7 @@ The transport invariant remains:
 
 ```text
 human/bootstrap path: SSH / Google OS Login / IAP
-model path:           MCP -> authenticated private tunnel -> loopback vm-mcp
+model path:           MCP -> authenticated private tunnel -> bearer-authenticated loopback vm-mcp
 credential boundary: SSH/cloud credentials stay outside model context
 ```
 
@@ -113,7 +113,7 @@ vm-mcp-admin.service (root)
 The broker:
 
 - accepts only Unix-domain connections;
-- verifies the connecting process with `SO_PEERCRED` against the `vmmcp` uid;
+- verifies the connecting process with `SO_PEERCRED` against the `vmmcp` uid and systemd's current `vm-mcp.service` MainPID; same-UID shell descendants are refused;
 - creates its socket root-owned and group-accessible only to `vmmcp`;
 - requires itself to be uid 0 before executing requests;
 - rejects `root` through `user_exec`; root must use the visibly privileged `admin_exec` surface;
@@ -121,6 +121,50 @@ The broker:
 - sanitizes the command environment rather than inheriting arbitrary service secrets;
 - records request id, mode, run-as user, cwd, command SHA-256, exit status, and timeout in journald;
 - returns the command/output to the MCP caller but does not print arbitrary environment secrets automatically.
+
+Every HTTP request, including direct loopback traffic, must carry the configured
+`Authorization: Bearer` credential. The server refuses startup without a
+32–256 character URL-safe token; operators must supply a random, high-entropy
+token through the installer and the client's secure header configuration. The
+installer writes it to `/etc/credstore/vm-mcp-token` (root, `0600`, new inode on
+every write). systemd opens that file as root and hands it to the service as
+stdin (`StandardInput=file:`); the server reads it once and replaces stdin with
+`/dev/null`. The token is never in the service environment and never in a file
+the `vmmcp` UID can open. (`LoadCredential=` was not used: its copy stays
+readable by the service UID, so by same-UID `shell_exec` children, for the
+whole service lifetime.) Tokens never belong in tool arguments, URLs,
+workspace files, or chat. The installer does not generate or disclose one.
+Provisioning or rotating access is a separate operator-authorized action.
+
+The server disables Linux process dumpability as its first statement, before
+importing `mcp` or `uvicorn`, and again before serving or spawning shell
+commands. Right after that, still before the heavy imports, it exits if
+`TracerPid` in `/proc/self/status` is nonzero, then reads the token from fd 0
+and closes it. In the `workspace` and `personal-console` profiles it also
+refuses a `VM_MCP_AUTH_TOKEN` environment fallback, because Yama does not gate
+`/proc/<pid>/environ` reads.
+
+Shell profiles need Yama `kernel.yama.ptrace_scope` >= 1 for the instant before
+the process is non-dumpable: `pidfd_getfd` needs `PTRACE_MODE_ATTACH`, so with
+scope >= 1 a same-UID `shell_exec` child (never an ancestor of the service)
+cannot copy the token descriptor, even by killing the server to force a
+restart. The unit's `ProcSubset=pid` hides `/proc/sys` from the server, so the
+check is a root pre-start gate, `ExecStartPre=+... yama_gate.py`: the `+` runs
+it as root outside the sandbox, and if it exits nonzero systemd never starts
+`server.py`, so the token fd is never handed over. `StandardInput=` applies to
+every executed process, `ExecStartPre=` included (systemd opens the token file
+again for each one, so the gate cannot consume the server's copy); the gate
+never reads fd 0 and replaces it with `/dev/null` first. All components resolve
+the profile through one helper (`profiles.resolve_profile`). For shell profiles
+the installer writes `kernel.yama.ptrace_scope` (1, or the existing higher
+value) to `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, which sorts last, applies
+it, warns if `systemd-sysctl --cat-config` shows a later override to 0, and
+exits 7 if Yama is unavailable. `read-only` runs no shell children, so the
+installer leaves the host's ptrace policy unchanged for it. Same-UID shell children therefore cannot inspect its memory,
+environment or descriptors to steal caller credentials. Children receive only
+the sanitized execution environment. Root remains outside this protection.
+The broker queries systemd for the live main-process identity on every request;
+standalone personal-console launches without the managed service are refused.
 
 Personal-console is intentionally high authority. Anyone able to invoke
 `admin_exec` effectively controls the host. Therefore it is appropriate only
@@ -150,11 +194,32 @@ systemd, packages, mounts, ownership, PostgreSQL provisioning, or recovery.
 
 ## Installer behavior
 
+Provision the bearer token before either installation command below. Give the
+installer exactly one source:
+
+- `VM_MCP_AUTH_TOKEN_FILE=<path>`: a regular file (not a symlink) owned by the
+  installing user (root) with no group or other access (`chmod 0600`); the first
+  line is the token. Preferred.
+- `VM_MCP_AUTH_TOKEN_STDIN=1`: the first line of the installer's stdin (any value
+  other than unset or `1` is rejected).
+- `VM_MCP_AUTH_TOKEN`: the environment; avoid it where it would enter shell history.
+
+The token file is opened once and checked through the open descriptor, so it
+cannot be swapped between the check and the read; a token file with Windows
+CRLF line endings is rejected with a message saying so. Token handling runs
+with xtrace off, so `bash -x install.sh` never prints the token.
+
+Use the same value in the MCP client's secure Authorization-header configuration
+(`Authorization: Bearer <token>`; the scheme is case-insensitive per RFC 9110).
+A tunnel by itself does not authenticate other local processes. Do not place an
+actual credential in a pasted command.
+
 Canonical install:
 
 ```bash
 sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
   VM_MCP_PROFILE=read-only \
+  VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token \
   bash vm-mcp/install.sh
 ```
 
@@ -163,8 +228,55 @@ Single-owner personal console:
 ```bash
 sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
   VM_MCP_PROFILE=personal-console \
+  VM_MCP_AUTH_TOKEN_FILE=/root/vm-mcp.token \
   bash vm-mcp/install.sh
 ```
+
+### Upgrading an existing install (fails closed until a token exists)
+
+Installs from before caller authentication have no token. After this upgrade:
+
+- the installer exits 3 without changing anything until one token source is given;
+- the new `vm-mcp.service` unit does not start until
+  `/etc/credstore/vm-mcp-token` exists and holds a valid token, so the MCP path
+  stays down rather than open;
+- updated server code under an old unit (no token file configured) falls back
+  to a `VM_MCP_AUTH_TOKEN` in `/etc/vm-mcp.env` and logs a warning; with neither,
+  it refuses to start. Re-running the installer removes the variable from
+  `/etc/vm-mcp.env` and moves the token to the root-only file;
+- clients without the `Authorization` header get `401` on every request.
+- `workspace`/`personal-console` need Yama: the installer sets
+  `kernel.yama.ptrace_scope` >= 1 persistently (exit 7 if Yama is missing), and
+  the root pre-start gate refuses to start the service in those profiles while
+  the scope is 0 or absent. A later sysctl.d file that sets it back to 0 stops
+  the service rather than weakening it. Those profiles also refuse the
+  `VM_MCP_AUTH_TOKEN` environment fallback; re-run the installer.
+
+#### One-time real-unit check on the VM (after the first install of this version)
+
+Run as root through the human path, in the deployed profile (stack runs
+`personal-console`):
+
+1. `cat /proc/sys/kernel/yama/ptrace_scope` prints 1 or more, and
+   `systemctl is-active vm-mcp.service` prints `active`;
+   `journalctl -u vm-mcp.service -b | grep yama-gate` shows nothing.
+2. The gate does not consume stdin: `systemctl show -p ExecStartPre vm-mcp.service`
+   shows `status=0`, and an authenticated `vm_info` succeeds (the server read the
+   token from its own fd 0).
+3. Refusal: `sysctl -w kernel.yama.ptrace_scope=0; systemctl restart vm-mcp.service`
+   fails, `journalctl -u vm-mcp.service -n 20` shows
+   `vm-mcp-yama-gate: profile personal-console requires kernel.yama.ptrace_scope >= 1`,
+   and no `server.py` process starts (`systemctl show -p MainPID` is 0).
+4. Restore: `sysctl --system` (or `sysctl -w kernel.yama.ptrace_scope=1`), then
+   `systemctl restart vm-mcp.service` and repeat step 1.
+
+Upgrade order: (1) create the root-owned `0600` token file through the human
+SSH/OS Login/IAP path; (2) re-run the installer with `VM_MCP_AUTH_TOKEN_FILE`
+and the same profile and root as before; (3) add the header to the MCP client's
+secure configuration; (4) verify an unauthenticated request returns `401` and an
+authenticated `vm_info` succeeds; (5) delete or keep the token file under the
+operator's own secret handling. Recovery while the MCP path is down uses the same
+human path; never restore an unauthenticated listener to regain access.
 
 Important ownership rule: if `VM_MCP_ROOT` already exists, the installer leaves
 that directory's ownership unchanged. It creates/chowns the root only when the
@@ -172,8 +284,10 @@ path does not yet exist. This prevents an existing application checkout such as
 `/srv/stack` from accidentally being transferred to `vmmcp` merely because it
 was selected as an MCP root.
 
-The install places immutable runtime code under `/opt/vm-mcp`, configuration in
-`/etc/vm-mcp.env`, and starts `vm-mcp-admin.service` only for
+The install places immutable runtime code under `/opt/vm-mcp` (venv created
+under umask `0022` so `vmmcp` can run it), non-secret configuration in
+`/etc/vm-mcp.env` and the token in `/etc/credstore/vm-mcp-token` (both written
+`0600` to a temp file and renamed into place), and starts `vm-mcp-admin.service` only for
 `personal-console`.
 
 ## Workflow
@@ -261,7 +375,8 @@ time rather than treating this skill's historical product snapshot as current.
 For a personal console, verify in this order:
 
 ```text
-vm_info
+unauthenticated HTTP request -> 401
+authenticated vm_info
 read_text / list_directory
 write_text inside disposable VM_MCP_ROOT fixture
 shell_exec("id -u")
@@ -329,7 +444,10 @@ The shipped suite must cover at least:
 - root rejection through `user_exec`;
 - root selection through `admin_exec`;
 - broker root-process requirement;
-- `SO_PEERCRED` caller verification;
+- `SO_PEERCRED` UID plus current systemd MainPID verification;
+- caller authentication before HTTP request parsing, including loopback callers;
+- same-UID shell denial and non-dumpable service credential isolation;
+- move/remove operate on final symlinks themselves, including broken links;
 - root:vmmcp socket permissions;
 - non-root MCP systemd hardening remaining intact;
 - loopback-only MCP listener and metadata-address denial;
@@ -365,6 +483,7 @@ Disconnect the MCP client/tunnel as a separate control-plane action.
 - Hiding root execution behind a tool that looks non-privileged.
 - Letting `user_exec(user="root", ...)` become an alias for root; use `admin_exec` visibly.
 - Using an existing application checkout as `VM_MCP_ROOT` and changing its ownership as an installer side effect.
+- Treating a loopback listener, private tunnel, or shared UID alone as caller authentication.
 - Assuming `read-only` is always preferable when the owner intentionally wants a broad personal console.
 - Assuming `personal-console` is appropriate for multi-user/shared systems merely because it is available.
 - Treating named convenience tools as the only permissible operations in a single-owner console.

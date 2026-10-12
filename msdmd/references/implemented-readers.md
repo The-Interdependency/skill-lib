@@ -97,3 +97,26 @@ resolution, arbitrary-language support and independent evidence verification.
 - ratios semantic graphs do not resolve ambiguous targets; worktree renames in either porcelain column are parsed.
 - Git visibility failures (no git on PATH, ignored root) stop the CLI with exit 5 without writing; `--check` reports 5, not drift.
 - With `--out` outside the repository, the schema helper is located from the root; reader module files that actually resolve are part of the generator identity.
+
+
+### Consumer security regressions
+
+Use `python -m unittest tests.test_native_p1_security` to verify the structured
+publication boundary. YAML/TOML integers outside JavaScript's safe range use
+`json-number` tags with exact decimal lexemes. Typed YAML mappings preserve key/value
+associations during redaction; only the parser's internal wrapper type is treated
+as one, so a source object spelling `"$type": "yaml-mapping"` is an ordinary
+mapping, and entry tags are redacted as well. Kubernetes `Secret` data/stringData containers are
+withheld. Credential-bearing native identifiers and pointers are sanitized before
+address construction. When withholding URL userinfo would make two source keys or
+identifiers equal, each gets a `#redacted-N` suffix: an ordinal in first-seen order
+within its mapping (keys, including typed YAML keys) or document (identifiers),
+skipping any value already present literally (for identifiers, anywhere in the
+document, collected before projection). Identical sources share one ordinal, so true duplicates are still caught.
+Nothing in the suffix is derived from the secret; a digest of it would let weak
+passwords be guessed offline. Encoded DSSE payloads are withheld even if semantic mapping
+fails, including in typed YAML mappings; malformed subjects are
+`invalid_statement_subject` errors (so `--strict` fails) while the redacted
+statement is retained.
+Source digests preserve provenance; redacted values and locators are intentionally
+lossy and do not grant access to the source.

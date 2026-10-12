@@ -53,6 +53,29 @@ VMs re-installing vm-mcp past this change get:
   systemd MainPID), not other same-UID processes; the MCP process is made
   non-dumpable; move/remove refuse `VM_MCP_ROOT` itself.
 
+## Unreleased: msdmd structured redaction and identifier hardening
+
+Consumers re-syncing past this change get, in structured-document and
+standards facts:
+
+- **YAML/TOML integers outside JavaScript's safe range** are tagged
+  `json-number` with the exact decimal lexeme instead of losing precision.
+- **Typed YAML mappings** keep key/value association while redacting;
+  Kubernetes `Secret` `data`/`stringData` are withheld in lists and typed maps.
+  Only the parser's own wrapper is trusted as a typed mapping: a source object
+  spelling `"$type": "yaml-mapping"` is redacted as an ordinary object, and
+  entry tags are redacted too.
+- **URL userinfo is withheld from native identifiers, locations and keys**
+  before addresses are built. Where that would merge distinct sources, a
+  `#redacted-N` ordinal keeps them apart; it is never a hash of the secret.
+  Ordinals are mapping-wide (typed YAML keys included) and skip identifiers the
+  document already contains literally; identical sources still collide.
+- **Encoded DSSE payloads are withheld** even when semantic mapping fails,
+  and also in typed YAML mappings (an envelope with any non-string key).
+- **Malformed in-toto subjects are errors.** `invalid_statement_subject` is now
+  severity `error`, so `--strict` exits 2 on a statement whose `subject` is not
+  a list of mappings with a string `name`; the statement is still retained.
+
 ## Unreleased: msdmd TypeScript reader failures fail closed
 
 Consumers re-syncing past `3fa40b9` get:

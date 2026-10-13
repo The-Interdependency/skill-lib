@@ -226,7 +226,7 @@ class SkillSpecCoverageTest(unittest.TestCase):
         self.assertContainsAll(
             text,
             [
-                "## When to load",
+                "Do not load for in-task work by an existing contributor",
                 "## Org thesis",
                 "## Repo map",
                 "## Recommended reading order",

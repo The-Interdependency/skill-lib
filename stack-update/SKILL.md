@@ -5,9 +5,8 @@ description: Fail-closed update protocol for The-Interdependency/stack. Load thi
 
 # stack-update — change the stack as one coherent transaction
 
-Use this procedural skill for structural changes to `The-Interdependency/stack`.
-It specializes `interdependent-work-graph`; it does not replace that skill or
-`project-incubation-graduation`.
+Load the companion skills specified below; this protocol specializes their
+contracts for structural Stack changes.
 
 ## Core contract
 

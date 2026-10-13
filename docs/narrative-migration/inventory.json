@@ -1,0 +1,585 @@
+{
+  "baseline": "023ae12bb19ced1a4f2494ed6507fc31285a5b8e",
+  "scope": "root canonical SKILL.md files; skills/ contains generated adapters",
+  "families": [
+    "executive-and-runtime",
+    "metadata-and-generation",
+    "meaning-and-communication",
+    "repository-and-delivery",
+    "analysis-and-display"
+  ],
+  "entries": [
+    {
+      "name": "msdmd",
+      "path": "msdmd/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "reviewed-retained",
+      "before_words": 3356,
+      "after_words": 3356,
+      "decisions": [
+        "Runtime exit statuses, attachment exceptions, schemas and coverage distinctions are independent obligations; avoid blanket shortening."
+      ]
+    },
+    {
+      "name": "doc-build",
+      "path": "doc-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 735,
+      "after_words": 720,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "cap-build",
+      "path": "cap-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 737,
+      "after_words": 710,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "deps-build",
+      "path": "deps-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 765,
+      "after_words": 740,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "owner-build",
+      "path": "owner-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 775,
+      "after_words": 740,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "test-build",
+      "path": "test-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 1579,
+      "after_words": 1548,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "meta-module-build",
+      "path": "meta-module-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 1043,
+      "after_words": 1019,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "risk-boundary-build",
+      "path": "risk-boundary-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 770,
+      "after_words": 747,
+      "decisions": [
+        "MSDMD link/load instruction owns inherited rules; native coverage and runner sections retain domain obligations."
+      ]
+    },
+    {
+      "name": "ratios",
+      "path": "ratios/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 2188,
+      "after_words": 2103,
+      "decisions": [
+        "Existing read-first reference owns MSDMD dependency; seal and executor contracts retain ratio semantics.",
+        "Immediately following single-line/shebang section owns the shared seal rule.",
+        "The marker bullet and section opening already specify executable-only scope and exclusions."
+      ]
+    },
+    {
+      "name": "canon",
+      "path": "canon/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 574,
+      "after_words": 488,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Consolidate trigger list in discoverable frontmatter, including unique contexts and non-triggers."
+      ]
+    },
+    {
+      "name": "domain-claims",
+      "path": "domain-claims/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1938,
+      "after_words": 1893,
+      "decisions": [
+        "Following governing rule and zeroth-provenance section carry the authority boundary.",
+        "Remove closing restatement; domain-claim and handle contracts retain distinctions."
+      ]
+    },
+    {
+      "name": "manifest",
+      "path": "manifest/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 906,
+      "after_words": 868,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative."
+      ]
+    },
+    {
+      "name": "llms-build",
+      "path": "llms-build/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "reviewed-retained",
+      "before_words": 1013,
+      "after_words": 1013,
+      "decisions": [
+        "Native contract versus shipped block-only implementation must remain visible at publication and verification boundaries."
+      ]
+    },
+    {
+      "name": "char-compress",
+      "path": "char-compress/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "reviewed-retained",
+      "before_words": 2459,
+      "after_words": 2459,
+      "decisions": [
+        "Local notation, grammar-relative reconstruction and UCNS non-transfer distinctions remain necessary. Distribution rule retained for standalone copies."
+      ]
+    },
+    {
+      "name": "visitor-intro",
+      "path": "visitor-intro/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1292,
+      "after_words": 1130,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Consolidate trigger list in discoverable frontmatter, including unique contexts and non-triggers."
+      ]
+    },
+    {
+      "name": "adaptive-elicitation",
+      "path": "adaptive-elicitation/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1799,
+      "after_words": 1652,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Consolidate trigger list in discoverable frontmatter, including unique contexts and non-triggers."
+      ]
+    },
+    {
+      "name": "agent-instantiation",
+      "path": "agent-instantiation/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 1893,
+      "after_words": 1402,
+      "decisions": [
+        "Consolidate activation in frontmatter; retain runtime model in its dedicated section.",
+        "Route a0p runtime authority to its owning skill.",
+        "Remove competing a0p architecture snapshot; its owner retains all model, gating and persistence requirements.",
+        "Retain agent-versus-provider distinction at the model definition.",
+        "Remove prose restatement of nomenclature slots and examples."
+      ]
+    },
+    {
+      "name": "a0p-instancing",
+      "path": "a0p-instancing/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 1224,
+      "after_words": 1011,
+      "decisions": [
+        "Consolidate activation; model and implementation sequence retain entity and energy distinctions.",
+        "Preserve optional-energy distinction removed from introduction.",
+        "Relocate sentinel count/names from the removed a0p snapshot to the owning a0p workflow."
+      ]
+    },
+    {
+      "name": "plain-lens",
+      "path": "plain-lens/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1249,
+      "after_words": 1029,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Consolidate trigger list in discoverable frontmatter, including unique contexts and non-triggers.",
+        "Keep source primacy at the operative companion-view rule."
+      ]
+    },
+    {
+      "name": "thought-lens",
+      "path": "thought-lens/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 2097,
+      "after_words": 1931,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Retain neighboring skill routing; consolidate thought/source activation examples into frontmatter."
+      ]
+    },
+    {
+      "name": "meta",
+      "path": "meta/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1173,
+      "after_words": 1155,
+      "decisions": [
+        "Source-of-truth and workflow sections retain retrieval requirements and status boundaries."
+      ]
+    },
+    {
+      "name": "gonol-build",
+      "path": "gonol-build/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "migrated",
+      "before_words": 1121,
+      "after_words": 1087,
+      "decisions": [
+        "Workflow and authority sections carry all operative requirements.",
+        "Construction and pronunciation sections own these rules; usage keeps workspace routing and executable gate."
+      ]
+    },
+    {
+      "name": "ucns-option-selection",
+      "path": "ucns-option-selection/SKILL.md",
+      "kind": "procedural",
+      "family": "meaning-and-communication",
+      "status": "reviewed-retained",
+      "before_words": 1315,
+      "after_words": 1315,
+      "decisions": [
+        "Eligibility, replay, scope ratification and rollback are distinct noncompensable gates."
+      ]
+    },
+    {
+      "name": "epac-selection-display",
+      "path": "epac-selection-display/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 1614,
+      "after_words": 1568,
+      "decisions": [
+        "Frontmatter and core boundary retain display scope, non-canon selection and no MCP execution authority."
+      ]
+    },
+    {
+      "name": "the-interdependency",
+      "path": "the-interdependency/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 2718,
+      "after_words": 2462,
+      "decisions": [
+        "Frontmatter owns activation; remove repeated trigger list.",
+        "Keep standalone context/resource requirements for partial installations; workflow references their local owning clauses.",
+        "Consolidate usage guidance in one requirement, preserving examples, integration, edge cases and limitations."
+      ]
+    },
+    {
+      "name": "interdependent-work-graph",
+      "path": "interdependent-work-graph/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 1747,
+      "after_words": 1725,
+      "decisions": [
+        "Frontmatter owns activation; core contract owns distinction between repository and agent boundaries."
+      ]
+    },
+    {
+      "name": "stack-update",
+      "path": "stack-update/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 1000,
+      "after_words": 995,
+      "decisions": [
+        "Frontmatter owns activation; required-companion section owns routing."
+      ]
+    },
+    {
+      "name": "project-incubation-graduation",
+      "path": "project-incubation-graduation/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 2542,
+      "after_words": 2517,
+      "decisions": [
+        "Frontmatter already defines incubation trigger; following paragraph retains authority transition scope."
+      ]
+    },
+    {
+      "name": "distributed-publication",
+      "path": "distributed-publication/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 2073,
+      "after_words": 2027,
+      "decisions": [
+        "Frontmatter owns activation; authority model retains consumer rights and non-transfer prohibitions."
+      ]
+    },
+    {
+      "name": "website-builder-journal",
+      "path": "website-builder-journal/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "reviewed-retained",
+      "before_words": 811,
+      "after_words": 811,
+      "decisions": [
+        "Mutation trigger, append-only exceptions and validation cases each change execution."
+      ]
+    },
+    {
+      "name": "loop-eng",
+      "path": "loop-eng/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 1017,
+      "after_words": 873,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative.",
+        "Consolidate trigger list in discoverable frontmatter, including unique contexts and non-triggers."
+      ]
+    },
+    {
+      "name": "fresh-making",
+      "path": "fresh-making/SKILL.md",
+      "kind": "procedural",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 2508,
+      "after_words": 2486,
+      "decisions": [
+        "Workflow owns affected-closure selection; retain freshness/domain/executor authority distinction."
+      ]
+    },
+    {
+      "name": "action-calibration",
+      "path": "action-calibration/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 2501,
+      "after_words": 2480,
+      "decisions": [
+        "Frontmatter owns activation and following definitions own action sizing."
+      ]
+    },
+    {
+      "name": "wdll",
+      "path": "wdll/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "reviewed-retained",
+      "before_words": 398,
+      "after_words": 398,
+      "decisions": [
+        "Approved compressed governing contract; anti-patterns and self-application define separate failure/acceptance surfaces."
+      ]
+    },
+    {
+      "name": "repo-audit-repair",
+      "path": "repo-audit-repair/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "reviewed-retained",
+      "before_words": 2131,
+      "after_words": 2131,
+      "decisions": [
+        "Audit authority and exact-revision merge gates remain at action and acceptance points; no reduced permission or evidence boundary."
+      ]
+    },
+    {
+      "name": "skill-build",
+      "path": "skill-build/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 1354,
+      "after_words": 1324,
+      "decisions": [
+        "Remove self-description already expressed by the contract structure; retain distribution scope."
+      ]
+    },
+    {
+      "name": "skill-usage",
+      "path": "skill-usage/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "migrated",
+      "before_words": 474,
+      "after_words": 450,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative."
+      ]
+    },
+    {
+      "name": "ssh-automation",
+      "path": "ssh-automation/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 2710,
+      "after_words": 2662,
+      "decisions": [
+        "Retain explicit interpreter boundary and fixed-syntax/validated-data rule; remove restatement."
+      ]
+    },
+    {
+      "name": "vm-mcp",
+      "path": "vm-mcp/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "migrated",
+      "before_words": 3189,
+      "after_words": 3149,
+      "decisions": [
+        "Transport invariant immediately below retains credential boundary; frontmatter owns activation.",
+        "Profiles section specifies actual authority differences without transition narration."
+      ]
+    },
+    {
+      "name": "typed-meta-frontend",
+      "path": "typed-meta-frontend/SKILL.md",
+      "kind": "metadata-block",
+      "family": "metadata-and-generation",
+      "status": "migrated",
+      "before_words": 1254,
+      "after_words": 1208,
+      "decisions": [
+        "Remove introductory restatement; operative sections remain authoritative."
+      ]
+    },
+    {
+      "name": "sql-queries",
+      "path": "sql-queries/SKILL.md",
+      "kind": "procedural",
+      "family": "analysis-and-display",
+      "status": "migrated",
+      "before_words": 1558,
+      "after_words": 1555,
+      "decisions": [
+        "Remove introductory topic list already expressed by frontmatter and section titles."
+      ]
+    },
+    {
+      "name": "statistical-analysis",
+      "path": "statistical-analysis/SKILL.md",
+      "kind": "procedural",
+      "family": "analysis-and-display",
+      "status": "migrated",
+      "before_words": 1722,
+      "after_words": 1712,
+      "decisions": [
+        "Remove introductory topic list already expressed by frontmatter and section titles."
+      ]
+    },
+    {
+      "name": "explore-data",
+      "path": "explore-data/SKILL.md",
+      "kind": "procedural",
+      "family": "analysis-and-display",
+      "status": "migrated",
+      "before_words": 1839,
+      "after_words": 1788,
+      "decisions": [
+        "Remove appended workflow duplicate; the original six-stage workflow covers all five repeated instructions.",
+        "Update modification notice after changing imported narrative; retain source and license."
+      ]
+    },
+    {
+      "name": "validate-data",
+      "path": "validate-data/SKILL.md",
+      "kind": "procedural",
+      "family": "analysis-and-display",
+      "status": "migrated",
+      "before_words": 2378,
+      "after_words": 2361,
+      "decisions": [
+        "Move distinct verification obligations into original workflow and remove competing short sequence.",
+        "Retain decision framing at workflow entry.",
+        "Preserve mandatory independent reproduction; optional extra checks cannot weaken it.",
+        "Preserve adversarial review in narrative evaluation.",
+        "Retain evidence standing separately from share-readiness rating.",
+        "Update modification notice after changing imported narrative; retain source and license."
+      ]
+    },
+    {
+      "name": "data-visualization",
+      "path": "data-visualization/SKILL.md",
+      "kind": "procedural",
+      "family": "analysis-and-display",
+      "status": "migrated",
+      "before_words": 2332,
+      "after_words": 2323,
+      "decisions": [
+        "Remove introductory topic list already expressed by frontmatter and section titles."
+      ]
+    }
+  ],
+  "remaining_families": [],
+  "hmmm": [
+    "Static conservation checks and bounded reader exercises do not prove universal model behavior.",
+    "UCNS semantic-coordinate binding, relation admissibility and lossless reconstruction remain unimplemented; candidate coupling is documented separately.",
+    "Remote exact-head CI and terminal review govern integration; no merge is claimed."
+  ]
+}

@@ -1,19 +1,9 @@
 ---
 name: the-interdependency
-description: Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates. Load this whenever the task or context touches The-Interdependency assets, or on phrases like "assemble edcmbone transcripts for analysis", "write code that...", or any GitHub/research/build work on org projects.
+description: Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCMBONE transcript analysis, code building, research, GitHub maintenance and updates. Load this whenever the task or context touches The-Interdependency assets, interdependentway.org, Harrison Hovel, or on phrases like "assemble edcmbone transcripts for analysis", "write code that...", or any GitHub/research/build work on org projects.
 ---
 
-# the-interdependency — Workflow Protocol for The Interdependency Projects
 
-`the-interdependency` is a procedural skill that enforces consistent, high-fidelity, structure-preserving practices when working inside The Interdependency ecosystem (org repos, The Interdependent Way artifacts, skill-lib, edcmbone, ucns, pcea, a0, aimmh, etc.). It ensures EDCMBONE analysis follows framework conventions, code and docs always carry usage guidance, GitHub ops respect org standards, and neurodivergence-compatible structure is preserved.
-
-## Load this when
-
-- Any task, research, code, or context mentions The-Interdependency, The Interdependent Way, interdependentway.org, Harrison Hovel, or any repository under the The-Interdependency GitHub organization.
-- User requests include: "assemble edcmbone transcripts for analysis", "write code that..." (or similar), GitHub maintenance, updates, pushes, repo hygiene, or cross-project work.
-- Building, editing, reviewing, or shipping code, specs, documentation, or analysis artifacts destined for or affecting The-Interdependency projects.
-- Performing GitHub operations on org repositories (commits, branches, PRs, issues, propagation, drift checks).
-- Working with skill-lib itself, canon, msdmd blocks, or propagating skills to target repos.
 
 ## Core Doctrine
 
@@ -24,7 +14,6 @@ description: Protocol and workflow for all tasks involving The Interdependency o
 - **EDCMBONE transcript assembly & analysis**: When the task involves assembling or analyzing transcripts (e.g. for EDCMBONE / Energy Dissonance Circuit Model Bound Operator Numerical Evaluation), apply the established EDCMBONE lens: map energy flows and dissonance circuits, compute/report F-loss metrics (fidelity, deletion, inversion, collapse detection), tag F1–F6 failure modes, segment for cognitive accessibility (especially neurodivergent readers), and preserve transcript topology. Do not improvise assembly; extend or adhere to patterns from the edcmbone repository.
 - **Code writing standards**: When writing or modifying code that touches The-Interdependency:
   - Use msdmd self-declaration blocks (`# === BLOCK_NAME ===` ... `# === END BLOCK_NAME ===`) wherever the module fits an existing or new metadata skill.
-  - **Always include prominent usage guidance**: runnable examples, invocation patterns, integration notes, edge cases, limitations, and how the code participates in larger workflows (e.g. a0p/AIMMH orchestration, EDCMBONE analysis pipelines).
   - Respect ratios, test contracts, dependency declarations, ownership, and risk boundaries per the relevant skills.
   - For new modules, begin with `meta-module-build` patterns.
 - **GitHub maintenance & updates**: 
@@ -32,7 +21,7 @@ description: Protocol and workflow for all tasks involving The Interdependency o
   - Before/after changes, run available drift checkers and update machine-readable indexes (`skills.json`, README tables, AGENTS.md pointers).
   - Use clear commit messages that reference affected skills or the change class.
   - When propagating skill-lib changes, prefer the canonical `tools/propagate_skills.py` (or equivalent) with `--apply` only after dry-run validation.
-- **Usage guidance requirement**: Every code file, SKILL.md update, README change, research summary, or artifact produced under this skill **must contain clear, actionable usage guidance**. This is non-negotiable for accessibility, onboarding, and reducing signal loss.
+- **Usage guidance requirement**: Every code file, SKILL.md update, README change, research summary, or artifact produced under this skill **must contain clear, actionable usage guidance**: runnable examples, invocation patterns, integration notes, edge cases, limitations, and participation in larger workflows. This is non-negotiable for accessibility, onboarding, and reducing signal loss.
 - **Research & canon alignment**: Ground all claims in source-backed canon (cross-load `canon` skill). Use `char-compress` for context handoff. Leave genuine uncertainty as `hmmm`.
 
 ## Operator workflow contract
@@ -105,14 +94,13 @@ When consultation triggers, inspect the current METAPAT repository state before 
 
 ## Workflow
 
-1. **Agent/work context gate**: On agent birth, resolve skill-lib plus governing repository instructions before org work begins. On every work start, reevaluate skill triggers and load applicable contracts before reasoning or acting. Inherit resolved authority into child/sub-agents; do not make the user restate stable repository knowledge. Missing required authority is `hmmm` and blocks that boundary.
-2. **Trigger detection**: Activate on any The-Interdependency context or the example trigger phrases listed in the description.
-3. **Resource preflight**: Before starting any compute run, decide whether the available resources can sustain it to its natural terminal condition. If not, do not launch it. Do not substitute an arbitrary timeout for preflight judgment.
-4. **METAPAT gate**: Before conceptual or architectural commitment, run the consultation test above. If triggered, inspect current METAPAT before selecting the relation, boundary, transformation, or cross-domain mapping.
-5. **Context assembly**: For transcript work, explicitly structure output using EDCMBONE energy-dissonance mapping, F-metrics, failure-mode tags, and accessibility annotations. Preserve full original relations.
-6. **Artifact production**: Write code/docs with msdmd blocks (if applicable) + dedicated "Usage Guidance" section or equivalent. Include examples that can be copy-pasted.
-7. **GitHub hygiene**: Check drift, update indexes, propagate only after validation. Reference this skill in commit messages where relevant.
-8. **Output packaging**: Structure responses with:
+1. **Context gate**: Apply the agent/work context gate in Core Doctrine.
+2. **Resource preflight**: Apply the resource-run rule in Core Doctrine before compute.
+3. **METAPAT gate**: Before conceptual or architectural commitment, run the consultation test above. If triggered, inspect current METAPAT before selecting the relation, boundary, transformation, or cross-domain mapping.
+4. **Context assembly**: For transcript work, explicitly structure output using EDCMBONE energy-dissonance mapping, F-metrics, failure-mode tags, and accessibility annotations. Preserve full original relations.
+5. **Artifact production**: Write code/docs with msdmd blocks (if applicable) + dedicated "Usage Guidance" section or equivalent. Include examples that can be copy-pasted.
+6. **GitHub hygiene**: Check drift, update indexes, propagate only after validation. Reference this skill in commit messages where relevant.
+7. **Output packaging**: Structure responses with:
    - Preserved structure / epistemic layers first.
    - EDCMBONE-mapped analysis where transcripts are involved.
    - Usage guidance and examples.

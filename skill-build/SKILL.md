@@ -5,7 +5,7 @@ description: Skill authoring and skill compliance workflow for The Interdependen
 
 # skill-build — build skills that can build better skills
 
-Use this skill when authoring or auditing skills in `skill-lib` or repo-local `.agents/skills/` copies. It is itself the worked example: concise trigger frontmatter, bounded workflow, reusable question set, individualized test-suite prompts, explicit output shape, and an honest `hmmm` continuation boundary.
+Apply this contract to canonical skills and repo-local `.agents/skills/` copies.
 
 ## Core contract
 

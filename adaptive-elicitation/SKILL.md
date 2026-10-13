@@ -1,33 +1,9 @@
 ---
 name: adaptive-elicitation
-description: Adaptive, context-first interviewing for recovering missing information without making the user answer a questionnaire. Load this when a task requires eliciting facts, preferences, requirements, incident details, form fields, debugging context, or other missing inputs across turns; when prior conversation, files, connected sources, or authoritative records may already answer part of the question set; or when the user asks to be interviewed one question at a time. Do not load for a one-shot clarification that can be asked and resolved in a single ordinary prompt.
+description: Adaptive, context-first interviewing for recovering missing information without making the user answer a questionnaire. Load this when a task requires eliciting facts, preferences, requirements, incident details, form fields, debugging context, or other missing inputs across turns; when prior conversation, files, connected sources, or authoritative records may already answer part of the question set; or when the user asks to be interviewed one question at a time. Do not load for a one-shot clarification that can be asked and resolved in a single ordinary prompt. This includes missing facts in forms, filings, reports, applications, audits, or debugging; questionnaire replacement; debriefing; and sensitive, stressful, or non-linear recall.
 ---
 
-# adaptive-elicitation — ask only the next useful question
 
-A procedural skill for semi-structured, context-aware interviewing. Its job is
-to recover the missing information needed for the user's actual task with the
-least avoidable repetition, suggestion, ambiguity, and response burden.
-
-The interview state is a living ledger. Every answer can satisfy more than the
-question that elicited it. Consume volunteered facts immediately and recompute
-what is still missing before asking again.
-
-## When to load
-
-Load this skill when:
-
-- a form, filing, report, specification, application, incident record, audit,
-  debugging task, or other deliverable has missing user-supplied facts;
-- the agent would otherwise present a multi-question questionnaire;
-- prior conversation, memory, files, connected apps, repository state, or
-  authoritative sources may already contain answers;
-- the user asks to be interviewed, questioned, debriefed, or walked through
-  missing information one question at a time;
-- the subject is sensitive, stressful, cognitively expensive, or likely to
-  produce non-linear recall.
-
-Do not load merely because an ordinary request needs one obvious clarification.
 
 ## Source and evidence boundary
 

@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14
+# ratios: loc_comments=97:70 imports_exports=10:12 calls_definitions=41:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -12,9 +12,12 @@ that profile only for a single-owner private VM behind an authenticated tunnel.
 """
 from __future__ import annotations
 
-# Defence in depth: become non-dumpable before any heavy import, so same-UID
-# processes cannot read this process's /proc/<pid>/environ, memory or fds while
-# mcp/uvicorn load. Fails closed; auth.protect_process repeats it in main().
+# First statement: become non-dumpable before the token is read from fd 0 and
+# before any heavy import, so same-UID shell_exec children cannot ptrace this
+# process, pidfd_getfd its descriptors, or read its /proc/<pid>/mem. (Under the
+# systemd unit the token is never in the environment; Yama ptrace_scope >= 1
+# for shell profiles is enforced by the root ExecStartPre gate.) Fails closed;
+# auth.protect_process repeats it in main().
 import ctypes as _ctypes
 
 if _ctypes.CDLL(None, use_errno=True).prctl(4, 0, 0, 0, 0) != 0:  # PR_SET_DUMPABLE, 0
@@ -207,4 +210,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=97:67 imports_exports=10:12 calls_definitions=41:14
+# ratios: loc_comments=97:70 imports_exports=10:12 calls_definitions=41:14

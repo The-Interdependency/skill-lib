@@ -160,7 +160,24 @@ the installer writes `kernel.yama.ptrace_scope` (1, or the existing higher
 value) to `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, which sorts last, applies
 it, warns if `systemd-sysctl --cat-config` shows a later override to 0, and
 exits 7 if Yama is unavailable. `read-only` runs no shell children, so the
-installer leaves the host's ptrace policy unchanged for it. Same-UID shell children therefore cannot inspect its memory,
+installer never raises the scope for it; when a host moves back to `read-only`
+it deletes only its own `99-zz-vm-mcp-ptrace.conf` (a file it did not write is
+kept with a warning), and only after `/etc/vm-mcp.env` is written and the
+service has restarted, so a failed install never leaves the old shell-profile
+config without its boot-time scope. The live value is left alone until the
+next reboot or `sysctl --system`. The override warning also matches sysctl.d globs such as
+`kernel.yama.* = 0`.
+
+`VM_MCP_ROOT` is writable by the service user while root runs code from the
+install root (`/opt/vm-mcp`, including the pre-start gate), so the installer
+rejects a workspace that is `/`, equal to, inside, or a parent of the install
+root, comparing `realpath`-resolved paths. The install root is fixed at
+`/opt/vm-mcp` (both units hardcode it); `VM_MCP_INSTALL_ROOT` is no longer
+read.
+
+The server also checks the token descriptor itself (`fstat` on fd 0): it must
+be a regular file owned by root with no group or other permission bits,
+otherwise the service refuses to start. Same-UID shell children therefore cannot inspect its memory,
 environment or descriptors to steal caller credentials. Children receive only
 the sanitized execution environment. Root remains outside this protection.
 The broker queries systemd for the live main-process identity on every request;

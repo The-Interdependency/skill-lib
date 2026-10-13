@@ -1,10 +1,12 @@
-# ratios: loc_comments=108:7 imports_exports=8:10 calls_definitions=51:10
+# ratios: loc_comments=109:8 imports_exports=8:10 calls_definitions=52:10
 """Check baseline SKILL.md compliance for skill-lib.
 
 This checker intentionally enforces only repo-wide invariants that are already
 canon in AGENTS.md and skill-build/SKILL.md. It reports softer section-shape
 recommendations as warnings so historical skills can be normalized family by
 family without doctrinal churn.
+
+Usage: python tools/check_skill_compliance.py --warnings-fail
 """
 
 from __future__ import annotations
@@ -64,7 +66,7 @@ def has_heading(text: str, *names: str) -> bool:
 
 
 def workflow_count(text: str) -> int:
-    """Count actual workflow headings, excluding fenced output/examples."""
+    """Count plain or titled workflow headings, excluding fenced examples."""
     fence = ""
     count = 0
     for line in text.splitlines():
@@ -76,7 +78,8 @@ def workflow_count(text: str) -> int:
             elif token[0] == fence[0] and len(token) >= len(fence) and not line[marker.end():].strip():
                 fence = ""
             continue
-        if not fence and line.strip().lower() == "## workflow":
+        heading = line.strip().lower()
+        if not fence and (heading == "## workflow" or heading.startswith("## workflow:")):
             count += 1
     return count
 
@@ -153,4 +156,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-# ratios: loc_comments=108:7 imports_exports=8:10 calls_definitions=51:10
+# ratios: loc_comments=109:8 imports_exports=8:10 calls_definitions=52:10

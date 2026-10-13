@@ -94,12 +94,38 @@ class NarrativeMigrationTests(unittest.TestCase):
             path = Path(directory) / "example" / "SKILL.md"
             path.parent.mkdir()
             text = "---\nname: example\ndescription: Load this when testing.\n---\n## Workflow\nAct.\n## Anti-patterns\nhmmm\n"
-            path.write_text(text + "```markdown\n## Workflow\n```\n~~~markdown\n## Workflow\n~~~\n")
+            path.write_text(text + "```markdown\n## Workflow\n## Workflow: example\n```\n~~~markdown\n## Workflow\n## Workflow: example\n~~~\n")
             index = {"example": {"kind": "procedural"}}
             self.assertEqual([], check_skill(path, index))
             self.assertEqual(0, workflow_count("```text\n```python\n## Workflow\n```\n"))
             path.write_text(text + "## Workflow\nCompeting recipe.\n")
             self.assertIn("duplicate_workflow", [f.code for f in check_skill(path, index)])
+
+    def test_titled_workflows_are_counted_and_duplicates_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "example" / "SKILL.md"
+            path.parent.mkdir()
+            text = "---\nname: example\ndescription: Load this when testing.\n---\n## Anti-patterns\nhmmm\n"
+            index = {"example": {"kind": "procedural"}}
+            for first, second in (
+                ("## Workflow", "## Workflow: the five rules"),
+                ("## Workflow: the five rules", "## Workflow"),
+                ("## Workflow: the five rules", "## Workflow: another recipe"),
+                ("## WORKFLOW: the five rules", "## Workflow"),
+            ):
+                with self.subTest(first=first, second=second):
+                    single = text + first + "\nAct.\n"
+                    path.write_text(single)
+                    self.assertEqual(1, workflow_count(single))
+                    self.assertEqual([], check_skill(path, index))
+                    duplicate = single + second + "\nCompeting recipe.\n"
+                    path.write_text(duplicate)
+                    self.assertEqual(2, workflow_count(duplicate))
+                    self.assertIn("duplicate_workflow", [f.code for f in check_skill(path, index)])
+
+    def test_workflow_prefixes_and_subheadings_are_not_counted(self):
+        text = "## Workflow examples\n## Workflows\n### Workflow: subheading\nWorkflow: prose\n"
+        self.assertEqual(0, workflow_count(text))
 
     def test_conservation_guards_detect_content_loss(self):
         original = "```python\nassert authorized is True\n```\n"

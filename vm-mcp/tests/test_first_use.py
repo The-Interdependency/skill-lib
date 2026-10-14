@@ -7,6 +7,7 @@ import stat
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import first_use
 from first_use import (
@@ -25,6 +26,22 @@ class MarkerTests(unittest.TestCase):
             self.assertFalse(claim_install_marker(path))
             self.assertEqual(0o600, stat.S_IMODE(os.stat(path).st_mode))
             self.assertEqual(0o700, stat.S_IMODE(os.stat(os.path.dirname(path)).st_mode))
+
+    def test_marker_write_failure_is_non_blocking(self):
+        with tempfile.TemporaryDirectory() as d, patch("first_use.os.write", side_effect=OSError("full")):
+            self.assertFalse(claim_install_marker(os.path.join(d, "m")))
+
+    def test_marker_short_write_is_non_blocking(self):
+        with tempfile.TemporaryDirectory() as d, patch("first_use.os.write", return_value=0):
+            self.assertFalse(claim_install_marker(os.path.join(d, "m")))
+
+    def test_marker_close_failure_is_non_blocking(self):
+        close = os.close
+        def close_then_fail(fd):
+            close(fd)
+            raise OSError("close failed")
+        with tempfile.TemporaryDirectory() as d, patch("first_use.os.close", side_effect=close_then_fail):
+            self.assertFalse(claim_install_marker(os.path.join(d, "m")))
 
     def test_marker_env_override(self):
         with tempfile.TemporaryDirectory() as d:
@@ -99,9 +116,30 @@ class ClientKeyTests(unittest.TestCase):
 
     def test_key_sources(self):
         self.assertEqual("s1", self._run([(b"Mcp-Session-Id", b"s1"), (b"user-agent", b"ua")]))
-        self.assertEqual("ua", self._run([(b"User-Agent", b"ua")]))
-        self.assertEqual("default", self._run([]))
-        self.assertEqual("default", CLIENT_KEY.get())
+        self.assertIsNone(self._run([(b"User-Agent", b"ua")]))
+        self.assertIsNone(self._run([]))
+        self.assertIsNone(CLIENT_KEY.get())
+
+    def test_stateless_clients_with_same_sdk_each_receive_notice(self):
+        tracker = FirstUseContext()
+        seen = []
+        async def app(scope, receive, send):
+            seen.append(with_notice({"ok": True}, tracker))
+        middleware = ClientKeyMiddleware(app)
+        for _ in range(2):
+            asyncio.run(middleware({"type": "http", "headers": [(b"user-agent", b"same-sdk")]}, None, None))
+        self.assertTrue(all(NOTICE_KEY in result for result in seen))
+        self.assertEqual(set(), tracker._seen)
+
+    def test_long_session_ids_do_not_share_a_truncated_identity(self):
+        self.assertIsNone(self._run([(b"mcp-session-id", b"x" * 257)]))
+
+    def test_context_resets_after_app_failure(self):
+        async def app(scope, receive, send):
+            raise RuntimeError("failed request")
+        with self.assertRaises(RuntimeError):
+            asyncio.run(ClientKeyMiddleware(app)({"type": "http", "headers": [(b"mcp-session-id", b"s1")]}, None, None))
+        self.assertIsNone(CLIENT_KEY.get())
 
 
 class WiringTests(unittest.TestCase):

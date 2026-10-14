@@ -26,6 +26,8 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+from first_use import INSTALL_FLAG, claim_install_marker
+
 # === MODULE_BUILD ===
 # id: vm_mcp_personal_console_broker
 #   module_name: vm_mcp_personal_console_broker
@@ -226,6 +228,8 @@ def execute_request(request: dict[str, Any]) -> dict[str, Any]:
         "stderr_truncated": stderr_truncated,
         "output_limit_bytes_per_stream": limit,
     }
+    if mode == "admin":
+        result[INSTALL_FLAG] = claim_install_marker()
     print(
         json.dumps({
             "event": "vm_mcp_exec",

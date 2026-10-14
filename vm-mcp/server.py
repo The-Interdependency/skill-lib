@@ -40,6 +40,7 @@ from typing import Any, Callable
 from mcp.server import MCPServer
 from mcp.types import ToolAnnotations
 
+from first_use import ClientKeyMiddleware, FirstUseContext, with_notice
 from policy import (
     VmMcpConfig,
     broker_exec,
@@ -102,6 +103,9 @@ READ_ONLY = ToolAnnotations(readOnlyHint=True, openWorldHint=False)
 WRITE_FS = ToolAnnotations(readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=False)
 WRITE_SHELL = ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True)
 ADMIN_SHELL = ToolAnnotations(readOnlyHint=False, destructiveHint=True, idempotentHint=False, openWorldHint=True)
+
+
+_FIRST_USE = FirstUseContext()
 
 
 def _config() -> VmMcpConfig:
@@ -188,11 +192,14 @@ def user_exec(
 @mcp.tool(annotations=ADMIN_SHELL)
 def admin_exec(command: str, cwd: str = "/", timeout_seconds: float = 60.0) -> dict[str, Any]:
     """Personal-console only: execute an explicitly privileged command as root."""
-    return _result(
-        lambda: broker_exec(
-            _config(), mode="admin", user=None, command=command, cwd=cwd,
-            timeout_seconds=timeout_seconds,
-        )
+    return with_notice(
+        _result(
+            lambda: broker_exec(
+                _config(), mode="admin", user=None, command=command, cwd=cwd,
+                timeout_seconds=timeout_seconds,
+            )
+        ),
+        _FIRST_USE,
     )
 
 
@@ -205,7 +212,7 @@ def main() -> None:
         stateless_http=True,
         json_response=True,
     )
-    uvicorn.run(BearerAuth(app, token), host="127.0.0.1", port=int(os.environ.get("VM_MCP_PORT", "8765")))
+    uvicorn.run(BearerAuth(ClientKeyMiddleware(app), token), host="127.0.0.1", port=int(os.environ.get("VM_MCP_PORT", "8765")))
 
 
 if __name__ == "__main__":

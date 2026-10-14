@@ -1,0 +1,87 @@
+name: PR 129 exact-source collection rebuild
+
+on:
+  push:
+    branches: [ops/pr129-collection-rebuild]
+
+permissions:
+  contents: read
+
+jobs:
+  rebuild:
+    if: github.repository == 'The-Interdependency/skill-lib' && github.ref == 'refs/heads/ops/pr129-collection-rebuild'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # This execution-only branch is not part of PR 129. Checkout the exact
+      # product revision, so this temporary workflow cannot enter its snapshot.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 200a8310c1a6a9b58c61605bac3a2afe37fac9b8
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: '24.15.0'
+      - name: Install repository-declared runtimes
+        run: |
+          python -m pip install -r msdmd/requirements.txt -r vm-mcp/requirements.txt
+          npm ci --ignore-scripts --prefix msdmd
+      - name: Rebuild and verify the owning collection
+        run: |
+          test "$(git rev-parse HEAD)" = 200a8310c1a6a9b58c61605bac3a2afe37fac9b8
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+          python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+          node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+          test "$(git diff --name-only)" = skill-lib_msdmd.ts
+      - name: Run repository gates without replacing them
+        run: |
+          python -m unittest discover -s tests
+          bash tools/check_gonol_authority.sh
+          python tools/check_skill_lib_drift.py --warnings-fail
+          python tools/check_skill_compliance.py --warnings-fail
+          python tools/build_codex_plugin_skills.py --check
+          python ratios/ratios_check.py --strict
+          python -m llms.build --root . --out llms.txt --check
+          python tests/test_repo_loto.py --audit
+          python tests/test_repo_loto.py
+      - name: Store verified blob only; do not change any branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import subprocess
+          import urllib.request
+
+          source = '200a8310c1a6a9b58c61605bac3a2afe37fac9b8'
+          if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != source:
+              raise SystemExit('Source identity changed; refusing publication')
+          if subprocess.check_output(['git', 'diff', '--name-only'], text=True).strip() != 'skill-lib_msdmd.ts':
+              raise SystemExit('Unexpected worktree mutation; refusing publication')
+          data = Path('skill-lib_msdmd.ts').read_bytes()
+          payload = json.dumps({'content': base64.b64encode(data).decode('ascii'), 'encoding': 'base64'}).encode()
+          request = urllib.request.Request(
+              'https://api.github.com/repos/The-Interdependency/skill-lib/git/blobs',
+              data=payload, method='POST',
+              headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                       'Accept': 'application/vnd.github+json',
+                       'Content-Type': 'application/json'})
+          with urllib.request.urlopen(request, timeout=60) as response:
+              result = json.load(response)
+          expected = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+          if result.get('sha') != expected:
+              raise SystemExit('Uploaded blob identity mismatch')
+          print('VERIFIED_COLLECTION_RECEIPT=' + json.dumps({
+              'source_commit': source, 'path': 'skill-lib_msdmd.ts',
+              'blob_sha': expected, 'sha256': hashlib.sha256(data).hexdigest(),
+              'size_bytes': len(data), 'verification': 'generator check, TypeScript, repository gates passed',
+              'branch_mutated': False}, sort_keys=True))
+          PY

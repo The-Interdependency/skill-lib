@@ -108,7 +108,7 @@ Remove the marked profile line only when neither installed command needs it.
 ## Validation and hmmm
 
 ```bash
-bash -n tools/work.sh tools/install_ai.sh
+bash -n tools/work.sh && bash -n tools/install_ai.sh
 python -m unittest discover -s tests -p 'test_work_launcher.py' -v
 python -m unittest discover -s tests -p 'test_ai_launcher.py' -v
 ```

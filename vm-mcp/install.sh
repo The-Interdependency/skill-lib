@@ -14,6 +14,11 @@ TRACE_INSTALL=0
 #   sudo VM_MCP_PROFILE=personal-console \
 #        VM_MCP_ROOT=/srv/vm-mcp/workspace bash vm-mcp/install.sh
 #
+# Rerunning on a VM that already has vm-mcp keeps its workspace, profile and
+# port from /etc/vm-mcp.env unless overridden; changing the workspace or the
+# profile needs VM_MCP_ALLOW_RECONFIGURE=1. The previous install is backed up
+# under /var/backups/vm-mcp/ (root-only) before anything is overwritten.
+#
 # Profiles:
 #   read-only        read tools only (default)
 #   workspace        workspace write tools + confined shell_exec
@@ -31,12 +36,94 @@ SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Fixed: both systemd units hardcode /opt/vm-mcp, so the install root is not
 # configurable (check_work_root must guard the path the units actually run).
 INSTALL_ROOT=/opt/vm-mcp
-WORK_ROOT="${VM_MCP_ROOT:-/srv/vm-mcp/workspace}"
-PROFILE="${VM_MCP_PROFILE:-read-only}"
-PORT="${VM_MCP_PORT:-8765}"
+ENV_FILE=/etc/vm-mcp.env
+SYSTEMD_DIR=/etc/systemd/system
+BACKUP_BASE=/var/backups/vm-mcp
 SERVICE_USER="${VM_MCP_SERVICE_USER:-vmmcp}"
 SERVICE_GROUP="$SERVICE_USER"
-ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}"
+
+# Usage: read_previous_env FILE
+# Sets PREV_ROOT, PREV_PROFILE_RAW, PREV_SHELL_ENABLED, PREV_PORT and
+# PREV_ADMIN_SOCKET from an existing env file (KEY=value lines; values may be
+# double-quoted the way systemd_quote writes them). Nothing is sourced or run.
+read_previous_env() {
+  local file=$1 line key value
+  PREV_FOUND=0; PREV_ROOT=""; PREV_PROFILE_RAW=""; PREV_SHELL_ENABLED=""; PREV_PORT=""; PREV_ADMIN_SOCKET=""
+  [[ -f "$file" ]] || return 0
+  PREV_FOUND=1
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^(VM_MCP_[A-Z_]+)=(.*)$ ]] || continue
+    key=${BASH_REMATCH[1]}
+    value=${BASH_REMATCH[2]}
+    if [[ ${#value} -ge 2 && "$value" == \"*\" ]]; then
+      value=${value:1:${#value}-2}
+      value=${value//\\\"/\"}
+      value=${value//\\\\/\\}
+    fi
+    case "$key" in
+      VM_MCP_ROOT) PREV_ROOT=$value ;;
+      VM_MCP_PROFILE) PREV_PROFILE_RAW=$value ;;
+      VM_MCP_SHELL_ENABLED) PREV_SHELL_ENABLED=$value ;;
+      VM_MCP_PORT) PREV_PORT=$value ;;
+      VM_MCP_ADMIN_SOCKET) PREV_ADMIN_SOCKET=$value ;;
+    esac
+  done < "$file"
+}
+
+# Usage: resolve_previous_profile
+# Prints the effective profile of the existing install, resolved by the same
+# profiles.resolve_profile the service uses, so a legacy VM_MCP_SHELL_ENABLED=1
+# env (no VM_MCP_PROFILE) stays workspace instead of silently becoming read-only.
+resolve_previous_profile() {
+  local python=""
+  for candidate in "$INSTALL_ROOT/.venv/bin/python" "$(command -v python3 || true)"; do
+    if [[ -n "$candidate" && -x "$candidate" ]]; then python=$candidate; break; fi
+  done
+  if [[ -z "$python" ]]; then
+    echo "ERROR: cannot resolve the existing profile in $ENV_FILE: no python found" >&2
+    return 4
+  fi
+  env -i VM_MCP_PROFILE="$PREV_PROFILE_RAW" VM_MCP_SHELL_ENABLED="$PREV_SHELL_ENABLED" \
+    "$python" -I "$SOURCE_ROOT/profiles.py"
+}
+
+# Usage: choose_settings
+# Picks WORK_ROOT, PROFILE, PORT and ADMIN_SOCKET. On a rerun the existing env
+# file supplies the defaults; changing the workspace root or the profile of an
+# existing install needs VM_MCP_ALLOW_RECONFIGURE=1.
+choose_settings() {
+  local prev_profile="" allow="${VM_MCP_ALLOW_RECONFIGURE-}"
+  case "$allow" in
+    ""|1) ;;
+    *) echo "ERROR: VM_MCP_ALLOW_RECONFIGURE must be unset or 1" >&2; return 3 ;;
+  esac
+  read_previous_env "$ENV_FILE"
+  if (( PREV_FOUND )); then
+    prev_profile="$(resolve_previous_profile)" || {
+      echo "ERROR: $ENV_FILE has an unknown profile; set VM_MCP_PROFILE and VM_MCP_ALLOW_RECONFIGURE=1" >&2
+      [[ -n "${VM_MCP_PROFILE:-}" && "$allow" == 1 ]] || return 3
+      prev_profile=""
+    }
+  fi
+  WORK_ROOT="${VM_MCP_ROOT:-${PREV_ROOT:-/srv/vm-mcp/workspace}}"
+  PROFILE="${VM_MCP_PROFILE:-${prev_profile:-read-only}}"
+  PORT="${VM_MCP_PORT:-${PREV_PORT:-8765}}"
+  ADMIN_SOCKET="${VM_MCP_ADMIN_SOCKET:-${PREV_ADMIN_SOCKET:-/run/vm-mcp/admin.sock}}"
+  if (( PREV_FOUND )) && [[ "$allow" != 1 ]]; then
+    if [[ -n "$PREV_ROOT" && "$(realpath -m -- "$WORK_ROOT")" != "$(realpath -m -- "$PREV_ROOT")" ]]; then
+      echo "ERROR: VM_MCP_ROOT ($WORK_ROOT) differs from the installed workspace ($PREV_ROOT); rerun with VM_MCP_ALLOW_RECONFIGURE=1 to change it" >&2
+      return 3
+    fi
+    if [[ -n "$prev_profile" && "$PROFILE" != "$prev_profile" ]]; then
+      echo "ERROR: VM_MCP_PROFILE ($PROFILE) differs from the installed profile ($prev_profile); rerun with VM_MCP_ALLOW_RECONFIGURE=1 to change it" >&2
+      return 3
+    fi
+  fi
+  if (( PREV_FOUND )); then
+    echo "NOTE: existing install found; using workspace $WORK_ROOT, profile $PROFILE, port $PORT" >&2
+  fi
+}
+choose_settings || exit 3
 CREDENTIAL_FILE=/etc/credstore/vm-mcp-token
 YAMA_SCOPE_PATH=/proc/sys/kernel/yama/ptrace_scope
 PTRACE_SYSCTL_CONF=/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf
@@ -177,6 +264,103 @@ check_work_root() {
 }
 check_work_root "$WORK_ROOT" "$INSTALL_ROOT" || exit 3
 
+# Usage: precheck_ptrace_scope PROFILE
+# Read-only check run before anything changes: shell profiles need Yama.
+precheck_ptrace_scope() {
+  [[ "$1" == read-only ]] && return 0
+  if [[ ! -r "$YAMA_SCOPE_PATH" ]]; then
+    echo "ERROR: kernel.yama.ptrace_scope is unavailable (Yama LSM not enabled). The $1 profile runs shell children as the service user and needs ptrace_scope >= 1 so they cannot copy the service's token descriptor. Enable Yama (security=yama / lsm=...,yama) or use VM_MCP_PROFILE=read-only" >&2
+    return 7
+  fi
+  if [[ ! "$(< "$YAMA_SCOPE_PATH")" =~ ^[0-3]$ ]]; then
+    echo "ERROR: unexpected kernel.yama.ptrace_scope value" >&2
+    return 7
+  fi
+}
+
+# Usage: arm_ptrace_conf_rollback / finish_install
+# Until finish_install runs, a failing install restores the sysctl.d file to
+# what it was before (removed if this run created it). The live value is left
+# as is.
+PTRACE_CONF_SAVED=""
+PTRACE_CONF_CREATED=0
+INSTALL_DONE=0
+arm_ptrace_conf_rollback() {
+  if [[ -e "$PTRACE_SYSCTL_CONF" || -L "$PTRACE_SYSCTL_CONF" ]]; then
+    PTRACE_CONF_SAVED="$(mktemp)" || return 7
+    cp -a -- "$PTRACE_SYSCTL_CONF" "$PTRACE_CONF_SAVED" || return 7
+  else
+    PTRACE_CONF_CREATED=1
+  fi
+  trap 'on_install_exit $?' EXIT
+}
+on_install_exit() {
+  local rc=$1
+  if (( rc != 0 && ! INSTALL_DONE )); then
+    if [[ -n "$PTRACE_CONF_SAVED" ]]; then
+      cp -a -- "$PTRACE_CONF_SAVED" "$PTRACE_SYSCTL_CONF" \
+        && echo "NOTE: install failed (rc=$rc); restored the previous $PTRACE_SYSCTL_CONF" >&2
+    elif (( PTRACE_CONF_CREATED )) && [[ -e "$PTRACE_SYSCTL_CONF" ]]; then
+      rm -f -- "$PTRACE_SYSCTL_CONF" \
+        && echo "NOTE: install failed (rc=$rc); removed the $PTRACE_SYSCTL_CONF this run created" >&2
+    fi
+  fi
+  [[ -n "$PTRACE_CONF_SAVED" ]] && rm -f -- "$PTRACE_CONF_SAVED"
+  return 0
+}
+finish_install() {
+  INSTALL_DONE=1
+}
+
+# Usage: backup_previous_install
+# Copies the prior install root (without its venv), units, drop-in, env file
+# and sysctl.d file into a new root-only directory under BACKUP_BASE before
+# anything is overwritten, and prints its path. No-op on a fresh install.
+backup_previous_install() {
+  local dest item found=0
+  local items=("$INSTALL_ROOT" "$SYSTEMD_DIR/vm-mcp.service" "$SYSTEMD_DIR/vm-mcp-admin.service"
+               "$SYSTEMD_DIR/vm-mcp.service.d" "$ENV_FILE" "$PTRACE_SYSCTL_CONF")
+  for item in "${items[@]}"; do
+    [[ -e "$item" || -L "$item" ]] && found=1
+  done
+  (( found )) || return 0
+  ( umask 0077; install -d -m 0700 "$BACKUP_BASE" ) || return 1
+  chmod 0700 "$BACKUP_BASE" || return 1
+  dest="$(umask 0077; mktemp -d "$BACKUP_BASE/$(date +%Y%m%dT%H%M%S).XXXXXX")" || return 1
+  chmod 0700 "$dest" || return 1
+  for item in "${items[@]}"; do
+    [[ -e "$item" || -L "$item" ]] || continue
+    mkdir -p -- "$dest$(dirname -- "$item")" || return 1
+    if [[ "$item" == "$INSTALL_ROOT" ]]; then
+      mkdir -p -- "$dest$item" || return 1
+      ( cd -- "$item" && find . -mindepth 1 -maxdepth 1 ! -name .venv -exec cp -a -t "$dest$item" -- {} + ) || return 1
+    else
+      cp -a -- "$item" "$dest$item" || return 1
+    fi
+  done
+  BACKUP_DIR=$dest
+  echo "NOTE: previous install backed up to $dest" >&2
+}
+
+# Usage: prepare_service_user
+# Creates the service user, or points an existing one at the workspace home.
+# usermod refuses a user with running processes, so it is skipped when the
+# home is unchanged and otherwise runs only after both units are stopped
+# (they are restarted at the end of the install).
+prepare_service_user() {
+  local home="$WORK_ROOT/.vm-mcp-home" current
+  if ! id "$SERVICE_USER" >/dev/null 2>&1; then
+    useradd --system --home "$home" --shell "$NOLOGIN" "$SERVICE_USER"
+    return
+  fi
+  current="$(getent passwd "$SERVICE_USER" | cut -d: -f6)"
+  if [[ "$current" == "$home" ]]; then
+    return 0
+  fi
+  systemctl stop vm-mcp.service vm-mcp-admin.service >/dev/null 2>&1 || true
+  usermod --home "$home" "$SERVICE_USER"
+}
+
 # Usage: ensure_ptrace_scope PROFILE
 # Shell profiles only: Yama ptrace_scope >= 1 stops same-UID shell_exec
 # children from ptracing or pidfd_getfd-ing the service (a non-ancestor), so
@@ -288,14 +472,15 @@ systemd_quote() {
   printf '"%s"' "$value"
 }
 
-ensure_ptrace_scope "$PROFILE" || exit 7
+precheck_ptrace_scope "$PROFILE" || exit 7
+BACKUP_DIR=""
+backup_previous_install || { echo "ERROR: could not back up the previous install; nothing was changed" >&2; exit 9; }
 install_python
-
-if ! id "$SERVICE_USER" >/dev/null 2>&1; then
-  useradd --system --home "$WORK_ROOT/.vm-mcp-home" --shell "$NOLOGIN" "$SERVICE_USER"
-else
-  usermod --home "$WORK_ROOT/.vm-mcp-home" "$SERVICE_USER"
-fi
+prepare_service_user || exit 8
+# The sysctl.d file is written only after the user step, and rolled back if
+# anything later fails.
+arm_ptrace_conf_rollback || exit 7
+ensure_ptrace_scope "$PROFILE" || exit 7
 
 # Existing application directories retain their existing ownership. This fixes
 # the dangerous first-release behavior where selecting an existing VM_MCP_ROOT
@@ -350,7 +535,7 @@ set +x
 printf '%s\n' "$AUTH_TOKEN" | write_secret_file "$CREDENTIAL_FILE" || exit 6
 unset AUTH_TOKEN
 if (( TRACE_INSTALL )); then set -x; fi
-write_secret_file /etc/vm-mcp.env <<EOF || exit 6
+write_secret_file "$ENV_FILE" <<EOF || exit 6
 VM_MCP_ROOT=$(systemd_quote "$WORK_ROOT")
 VM_MCP_PROFILE=$PROFILE
 VM_MCP_PORT=$PORT
@@ -375,12 +560,16 @@ fi
 systemctl enable --now vm-mcp.service
 systemctl restart vm-mcp.service
 remove_own_ptrace_conf "$PROFILE"
+finish_install
 
 printf '\nvm-mcp installed\n'
 printf '  source commit: %s\n' "$SOURCE_COMMIT"
 printf '  endpoint:      http://127.0.0.1:%s/mcp\n' "$PORT"
 printf '  workspace:     %s\n' "$WORK_ROOT"
 printf '  profile:       %s\n' "$PROFILE"
+if [[ -n "$BACKUP_DIR" ]]; then
+  printf '  backup:        %s\n' "$BACKUP_DIR"
+fi
 if [[ "$PROFILE" == personal-console ]]; then
   printf '  root broker:   %s\n' "$ADMIN_SOCKET"
   printf '  user_exec:     enabled\n'

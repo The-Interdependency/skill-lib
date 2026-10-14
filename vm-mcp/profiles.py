@@ -1,7 +1,8 @@
-# ratios: loc_comments=20:10 imports_exports=3:2 calls_definitions=6:3
+# ratios: loc_comments=27:13 imports_exports=4:2 calls_definitions=9:3
 """Resolve the vm-mcp profile in exactly one place (standard library only).
 
-Usage: ``from profiles import resolve_profile, runs_shell``. policy.py, server.py,
+Usage: ``from profiles import resolve_profile, runs_shell``, or
+``python -I profiles.py`` to print the profile resolved from the environment. policy.py, server.py,
 auth.py and the root pre-start gate (yama_gate.py) all call this, so they can
 never disagree about which profile is running.
 """
@@ -39,4 +40,16 @@ def resolve_profile(environ: Mapping[str, str] | None = None) -> str:
 def runs_shell(profile: str) -> bool:
     """True when the profile runs same-UID shell children (shell_exec)."""
     return profile in SHELL_PROFILES
-# ratios: loc_comments=20:10 imports_exports=3:2 calls_definitions=6:3
+
+
+if __name__ == "__main__":
+    # `python -I profiles.py` prints the resolved profile from the environment
+    # (install.sh uses it for an existing env file); exit 2 if it is unknown.
+    import sys
+
+    try:
+        print(resolve_profile())
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        sys.exit(2)
+# ratios: loc_comments=27:13 imports_exports=4:2 calls_definitions=9:3

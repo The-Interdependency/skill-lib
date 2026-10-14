@@ -1,3 +1,4 @@
+# ratios: loc_comments=70:10 imports_exports=6:4 calls_definitions=21:8
 """First-use context for the profile's privileged tool (standard library only).
 
 Usage: the broker calls ``claim_install_marker()`` once per privileged request; the
@@ -95,3 +96,4 @@ class ClientKeyMiddleware:
                 CLIENT_KEY.reset(token)
             return
         await self.app(scope, receive, send)
+# ratios: loc_comments=70:10 imports_exports=6:4 calls_definitions=21:8

@@ -28,3 +28,5 @@ from test_auth_token_sources import (BearerSchemeTests, InstallerSecretFileTests
                                      InstallerLocaleTests, InstallerPtraceScopeTests, InstallerUmaskTests,
                                      InstallerWorkRootTests, ProfileResolutionTests, ServerDumpabilityTests, ServiceTokenLoadingTests,
                                      ServiceTracerTests, YamaGateTests)
+from test_installer_upgrade import (BackupTests, BusyServiceUserTests, PtraceConfOrderTests,  # noqa: E402,F401
+                                    RerunDefaultsTests)

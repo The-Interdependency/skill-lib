@@ -3,6 +3,27 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: vm-mcp installer reruns on existing VMs
+
+VMs re-running `vm-mcp/install.sh` over an existing install get:
+
+- **No busy-user failure.** `usermod` is skipped when the service user's home
+  is unchanged; otherwise both vm-mcp units are stopped first (they restart at
+  the end). Upgrades no longer exit 8 with "user vmmcp is currently used by
+  process".
+- **Settings carry over.** Workspace root, profile, port and socket default to
+  the existing `/etc/vm-mcp.env`; changing the root or profile needs
+  `VM_MCP_ALLOW_RECONFIGURE=1`. A legacy `VM_MCP_SHELL_ENABLED=1` env resolves
+  through `profiles.py` and stays `workspace` instead of silently becoming
+  `read-only`.
+- **Backup.** The previous install root (without `.venv`), units, drop-in, env
+  file and ptrace sysctl.d file are copied to a root-only directory under
+  `/var/backups/vm-mcp/` before anything is overwritten; the path is printed.
+  A failed backup exits 9 with nothing changed.
+- **sysctl.d file written later, rolled back on failure.** The ptrace sysctl.d
+  file is written after the user step and restored (or removed) if the install
+  fails afterwards.
+
 ## Unreleased: vm-mcp requires a bearer token; admin_exec only from the service
 
 VMs re-installing vm-mcp past this change get:

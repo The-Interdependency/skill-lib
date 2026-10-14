@@ -158,9 +158,9 @@ class InstallerTokenSourceTests(unittest.TestCase):
 
     def test_installer_writes_token_with_xtrace_off_and_not_into_the_env_file(self) -> None:
         text = INSTALLER.read_text(encoding="utf-8")
-        self.assertLess(text.index("load_auth_token || exit 3"), text.index("write_secret_file /etc/vm-mcp.env"))
+        self.assertLess(text.index("load_auth_token || exit 3"), text.index('write_secret_file "$ENV_FILE"'))
         self.assertIn('set +x\nprintf \'%s\\n\' "$AUTH_TOKEN" | write_secret_file "$CREDENTIAL_FILE" || exit 6\nunset AUTH_TOKEN', text)
-        env_block = text[text.index("write_secret_file /etc/vm-mcp.env <<EOF || exit 6"):]
+        env_block = text[text.index('write_secret_file "$ENV_FILE" <<EOF || exit 6'):]
         env_block = env_block[:env_block.index("\nEOF\n")]
         self.assertNotIn("AUTH_TOKEN", env_block)
         self.assertNotIn("cat > /etc/vm-mcp.env", text)
@@ -285,7 +285,7 @@ class InstallerPtraceScopeTests(unittest.TestCase):
         text = INSTALLER.read_text(encoding="utf-8")
         self.assertTrue(text.splitlines()[2].startswith("set -euo pipefail"))  # any earlier failure aborts
         call = text.index('remove_own_ptrace_conf "$PROFILE"\n')
-        self.assertLess(text.index("write_secret_file /etc/vm-mcp.env <<EOF || exit 6"), call)
+        self.assertLess(text.index('write_secret_file "$ENV_FILE" <<EOF || exit 6'), call)
         self.assertLess(text.index("systemctl restart vm-mcp.service\n"), call)
         self.assertEqual(1, text.count('remove_own_ptrace_conf "$PROFILE"'))
         body = text[text.index("ensure_ptrace_scope() {"):]
@@ -325,7 +325,10 @@ class InstallerPtraceScopeTests(unittest.TestCase):
 
     def test_installer_checks_scope_before_installing_anything(self) -> None:
         text = INSTALLER.read_text(encoding="utf-8")
-        self.assertLess(text.index('ensure_ptrace_scope "$PROFILE" || exit 7'), text.index("\ninstall_python\n"))
+        # The Yama check (no writes) runs before anything is installed; the
+        # sysctl.d write comes after the user step (test_installer_upgrade).
+        self.assertLess(text.index('precheck_ptrace_scope "$PROFILE" || exit 7'), text.index("\ninstall_python\n"))
+        self.assertIn('ENV_FILE=/etc/vm-mcp.env\n', text)
 
 
 class ProfileResolutionTests(unittest.TestCase):

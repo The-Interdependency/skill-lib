@@ -263,6 +263,32 @@ Installs from before caller authentication have no token. After this upgrade:
   the service rather than weakening it. Those profiles also refuse the
   `VM_MCP_AUTH_TOKEN` environment fallback; re-run the installer.
 
+### Rerunning the installer on a VM that already has vm-mcp
+
+- **Settings carry over.** When `/etc/vm-mcp.env` exists, `VM_MCP_ROOT`,
+  `VM_MCP_PROFILE`, `VM_MCP_PORT` and `VM_MCP_ADMIN_SOCKET` default to its values
+  instead of `/srv/vm-mcp/workspace`, `read-only` and `8765`. The existing profile is
+  resolved with `profiles.py` (the same resolver the service uses), so a legacy
+  env with only `VM_MCP_SHELL_ENABLED=1` stays `workspace` and the new env file
+  records it as `VM_MCP_PROFILE=workspace`.
+- **Changes are explicit.** A different workspace root or profile from the
+  installed one exits 3 unless `VM_MCP_ALLOW_RECONFIGURE=1` is set (any other
+  value is rejected). Restating the same values is fine.
+- **Backup first.** Before anything is overwritten, the installer copies the
+  previous `/opt/vm-mcp` (without `.venv`), both units, the
+  `vm-mcp.service.d` drop-in, `/etc/vm-mcp.env` and the ptrace sysctl.d file into
+  a new root-only (`0700`) directory under `/var/backups/vm-mcp/` and prints its
+  path (also in the final summary). If the backup fails it exits 9 with nothing
+  changed. Old backups are not pruned.
+- **Busy service user.** `usermod` refuses a user with running processes (the
+  exit 8 seen on upgrades). The installer skips `usermod` when the home is
+  unchanged and otherwise stops `vm-mcp.service` and `vm-mcp-admin.service`
+  first; both are restarted at the end.
+- **ptrace sysctl file order.** The Yama availability check still runs before
+  anything changes, but `99-zz-vm-mcp-ptrace.conf` is written only after the
+  user step, and if the install then fails the file is restored to its previous
+  content (or removed if this run created it). The live value is left as is.
+
 #### One-time real-unit check on the VM (after the first install of this version)
 
 Run as root through the human path, in the deployed profile (stack runs

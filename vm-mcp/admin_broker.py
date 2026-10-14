@@ -1,4 +1,4 @@
-# ratios: loc_comments=231:60 imports_exports=16:3 calls_definitions=101:11
+# ratios: loc_comments=234:60 imports_exports=17:3 calls_definitions=102:11
 """Root-side Unix-socket execution broker for vm-mcp personal-console mode.
 
 Usage guidance:
@@ -324,4 +324,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=231:60 imports_exports=16:3 calls_definitions=101:11
+# ratios: loc_comments=234:60 imports_exports=17:3 calls_definitions=102:11

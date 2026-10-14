@@ -1,4 +1,4 @@
-# ratios: loc_comments=97:70 imports_exports=10:12 calls_definitions=41:14
+# ratios: loc_comments=102:70 imports_exports=11:12 calls_definitions=43:14
 """MCP server for bounded or personal-console access to a private Linux VM.
 
 Usage guidance:
@@ -217,4 +217,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-# ratios: loc_comments=97:70 imports_exports=10:12 calls_definitions=41:14
+# ratios: loc_comments=102:70 imports_exports=11:12 calls_definitions=43:14

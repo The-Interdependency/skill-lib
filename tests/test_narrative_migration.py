@@ -14,7 +14,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools import propagate_skills
+from tools import check_consumer_drift, propagate_skills
 from tools.build_codex_plugin_skills import canonical_frontmatter
 from tools.check_skill_compliance import check_skill, workflow_count
 
@@ -94,7 +94,7 @@ class NarrativeMigrationTests(unittest.TestCase):
             path = Path(directory) / "example" / "SKILL.md"
             path.parent.mkdir()
             text = "---\nname: example\ndescription: Load this when testing.\n---\n## Workflow\nAct.\n## Anti-patterns\nhmmm\n"
-            path.write_text(text + "```markdown\n## Workflow\n## Workflow: example\n```\n~~~markdown\n## Workflow\n## Workflow: example\n~~~\n")
+            path.write_text(text + "```markdown\n## Workflow\n## Workflow: example\n```\n~~~markdown\n## Workflow\n## Workflow: example\n~~~\n\n    ## Workflow\n    ## Workflow: indented example\n")
             index = {"example": {"kind": "procedural"}}
             self.assertEqual([], check_skill(path, index))
             self.assertEqual(0, workflow_count("```text\n```python\n## Workflow\n```\n"))
@@ -141,6 +141,28 @@ class NarrativeMigrationTests(unittest.TestCase):
             self.assertIn("Once a healthy run begins, let it finish", text)
             self.assertIn("edge cases, limitations", text)
             self.assertNotIn("](" + "../AGENTS.md", text)
+
+    def test_partial_lifecycle_install_keeps_routed_skill_available(self):
+        with tempfile.TemporaryDirectory() as directory, contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(0, propagate_skills.main([directory, "--skills", "agent-instantiation", "--apply"]))
+            installed = Path(directory) / ".agents/skills"
+            expected = {"agent-instantiation", "wdll", "a0p-instancing"}
+            self.assertEqual(expected, {path.parent.name for path in installed.glob("*/SKILL.md")})
+            for name in expected:
+                self.assertEqual((ROOT / name / "SKILL.md").read_bytes(),
+                                 (installed / name / "SKILL.md").read_bytes())
+            source = installed / "agent-instantiation/SKILL.md"
+            self.assertIn("](../a0p-instancing/SKILL.md)", source.read_text())
+            self.assertTrue((source.parent / "../a0p-instancing/SKILL.md").resolve().is_file())
+            report = check_consumer_drift.check_consumer(Path(directory), canon_root=ROOT)
+            _text, failed = check_consumer_drift.format_report(report, strict_sha=False, require_vendored=True)
+            self.assertFalse(failed, _text)
+            (installed / "a0p-instancing/SKILL.md").unlink()
+            report = check_consumer_drift.check_consumer(Path(directory), canon_root=ROOT)
+            text, failed = check_consumer_drift.format_report(report, strict_sha=False, require_vendored=True)
+            self.assertTrue(failed, text)
+            self.assertIn("a0p-instancing", text)
+            self.assertIn("missing", text)
 
 
 if __name__ == "__main__":

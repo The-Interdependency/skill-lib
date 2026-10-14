@@ -14,8 +14,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      # This execution-only branch is not part of PR 129. Checkout the exact
-      # product revision, so this temporary workflow cannot enter its snapshot.
+      # Execution-only branch: the product checkout excludes this workflow.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: 200a8310c1a6a9b58c61605bac3a2afe37fac9b8
@@ -26,29 +25,89 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version: '24.15.0'
+      - name: Repair exactly the reviewed discovery surfaces
+        run: |
+          test "$(git rev-parse HEAD)" = 200a8310c1a6a9b58c61605bac3a2afe37fac9b8
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if text.count(old) != 1:
+                  raise SystemExit(f'{path}: expected exactly one source match')
+              p.write_text(text.replace(old, new))
+
+          replace('README.md', '## VM coding-agent launcher', '## VM and Google Cloud launchers')
+          replace('README.md',
+              '`a0` tmux session. Install it into the caller PATH without copying the\nimplementation:',
+              '`a0` tmux session. The parent `tools/work.sh` adds Ubuntu-hosted Google Cloud\naccess without changing that AI route. Install both commands into the caller\nPATH without copying their implementations:')
+          replace('README.md',
+              'On Termux the installer symlinks `ai.sh` into `$PREFIX/bin`; elsewhere it falls\nback to `~/.local/bin/ai.sh`. `ai.sh status` reports remote pane state,',
+              'On Termux the installer symlinks `ai.sh` and `work.sh` into `$PREFIX/bin`;\nelsewhere it falls back to `~/.local/bin`. `ai.sh status` reports remote pane state,')
+          replace('README.md', '## Maintenance tools',
+              'Run `work.sh` for the combined menu, or `work.sh cloud` for Google Cloud Shell\nthrough Ubuntu. See [launcher usage and repository-managed updates](tools/WORK.md).\n\n## Maintenance tools')
+
+          replace('tools/README.md', '## Canonical `ai.sh` launcher',
+              '## Canonical `ai.sh` and `work.sh` launchers')
+          replace('tools/README.md', 'Install the stable `ai.sh` command into the caller PATH:',
+              '`tools/work.sh` is the parent menu for that unchanged AI route and Google Cloud\nCLI inside Ubuntu. See [WORK.md](WORK.md) for prerequisites, repository-managed\nupdates, failure handling, and rollback.\n\nInstall both stable commands into the caller PATH:')
+          replace('tools/README.md',
+              'On Termux the installer symlinks the canonical source to `$PREFIX/bin/ai.sh`,\nwhich is already on PATH. Elsewhere it uses `~/.local/bin/ai.sh` and adds one\nidempotent login-shell PATH line only when required. No second launcher\nimplementation is copied.',
+              'On Termux the installer symlinks both canonical sources into `$PREFIX/bin`,\nwhich is already on PATH. Elsewhere it uses `~/.local/bin` and adds one\nidempotent login-shell PATH line only when required. No independent launcher\ncopies are installed; repository updates flow through the links.')
+          replace('tools/README.md', '```bash\nai.sh\nai.sh status',
+              '```bash\nwork.sh\nwork.sh cloud\nwork.sh ai status\nai.sh\nai.sh status')
+
+          replace('AGENTS.md',
+              'tools/ai.sh                    # canonical Termux -> a0 SSH/tmux coding-agent launcher\n',
+              'tools/ai.sh                    # canonical Termux -> a0 SSH/tmux coding-agent launcher\ntools/work.sh                  # parent menu: canonical ai.sh + Ubuntu Google Cloud\n')
+          replace('AGENTS.md',
+              'tools/install_ai.sh            # installs ai.sh into caller PATH (Termux $PREFIX/bin first)',
+              'tools/install_ai.sh            # installs ai.sh and work.sh into caller PATH (Termux $PREFIX/bin first)')
+          replace('AGENTS.md',
+              '- `tools/install_ai.sh` — installs `ai.sh` into caller PATH, preferring Termux `$PREFIX/bin`.',
+              '- `tools/install_ai.sh` — installs canonical `ai.sh` and `work.sh` symlinks into caller PATH, preferring Termux `$PREFIX/bin`.\n- `tools/work.sh` — combined AI / Ubuntu Google Cloud menu; [tools/WORK.md](tools/WORK.md) owns usage, updates, and rollback.')
+
+          replace('CLAUDE.md',
+              '- `tools/ai.sh` is the canonical Termux-side SSH/tmux launcher for the `a0` VM; `tools/install_ai.sh` installs `ai.sh` into the caller PATH (Termux `$PREFIX/bin`, otherwise `~/.local/bin`).',
+              '- `tools/ai.sh` is the canonical Termux-side SSH/tmux launcher for the `a0` VM. `tools/work.sh` adds a parent menu with Ubuntu-hosted Google Cloud access; `tools/install_ai.sh` installs both commands as canonical-source symlinks (Termux `$PREFIX/bin`, otherwise `~/.local/bin`). See [tools/WORK.md](tools/WORK.md) for usage, updates, and rollback.')
+          for path in ('README.md', 'tools/README.md', 'AGENTS.md', 'CLAUDE.md'):
+              text = Path(path).read_text()
+              if 'work.sh' not in text or 'WORK.md' not in text:
+                  raise SystemExit(f'{path}: missing launcher discovery link')
+          PY
+          git diff --check
+          git diff --stat
       - name: Install repository-declared runtimes
         run: |
-          python -m pip install -r msdmd/requirements.txt -r vm-mcp/requirements.txt
+          python -m pip install -q -r msdmd/requirements.txt -r vm-mcp/requirements.txt
           npm ci --ignore-scripts --prefix msdmd
       - name: Rebuild and verify the owning collection
         run: |
-          test "$(git rev-parse HEAD)" = 200a8310c1a6a9b58c61605bac3a2afe37fac9b8
           python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
           python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
           node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
-          test "$(git diff --name-only)" = skill-lib_msdmd.ts
       - name: Run repository gates without replacing them
         run: |
-          python -m unittest discover -s tests
-          bash tools/check_gonol_authority.sh
-          python tools/check_skill_lib_drift.py --warnings-fail
-          python tools/check_skill_compliance.py --warnings-fail
-          python tools/build_codex_plugin_skills.py --check
-          python ratios/ratios_check.py --strict
-          python -m llms.build --root . --out llms.txt --check
-          python tests/test_repo_loto.py --audit
-          python tests/test_repo_loto.py
-      - name: Store verified blob only; do not change any branch
+          run_gate() {
+            log=$(mktemp "$RUNNER_TEMP/gate.XXXXXX")
+            if "$@" >"$log" 2>&1; then
+              printf 'PASS: '; printf '%q ' "$@"; printf '\n'
+              tail -n 5 "$log"
+            else
+              rc=$?; cat "$log"; return "$rc"
+            fi
+          }
+          run_gate python -m unittest discover -s tests
+          run_gate bash tools/check_gonol_authority.sh
+          run_gate python tools/check_skill_lib_drift.py --warnings-fail
+          run_gate python tools/check_skill_compliance.py --warnings-fail
+          run_gate python tools/build_codex_plugin_skills.py --check
+          run_gate python ratios/ratios_check.py --strict
+          run_gate python -m llms.build --root . --out llms.txt --check
+          run_gate python tests/test_repo_loto.py --audit
+          run_gate python tests/test_repo_loto.py
+      - name: Store verified blobs only; do not change any branch
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -62,26 +121,32 @@ jobs:
           import urllib.request
 
           source = '200a8310c1a6a9b58c61605bac3a2afe37fac9b8'
+          expected_paths = {'README.md', 'tools/README.md', 'AGENTS.md', 'CLAUDE.md', 'skill-lib_msdmd.ts'}
           if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != source:
               raise SystemExit('Source identity changed; refusing publication')
-          if subprocess.check_output(['git', 'diff', '--name-only'], text=True).strip() != 'skill-lib_msdmd.ts':
+          changed = set(subprocess.check_output(['git', 'diff', '--name-only'], text=True).splitlines())
+          if changed != expected_paths:
               raise SystemExit('Unexpected worktree mutation; refusing publication')
-          data = Path('skill-lib_msdmd.ts').read_bytes()
-          payload = json.dumps({'content': base64.b64encode(data).decode('ascii'), 'encoding': 'base64'}).encode()
-          request = urllib.request.Request(
-              'https://api.github.com/repos/The-Interdependency/skill-lib/git/blobs',
-              data=payload, method='POST',
-              headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
-                       'Accept': 'application/vnd.github+json',
-                       'Content-Type': 'application/json'})
-          with urllib.request.urlopen(request, timeout=60) as response:
-              result = json.load(response)
-          expected = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
-          if result.get('sha') != expected:
-              raise SystemExit('Uploaded blob identity mismatch')
-          print('VERIFIED_COLLECTION_RECEIPT=' + json.dumps({
-              'source_commit': source, 'path': 'skill-lib_msdmd.ts',
-              'blob_sha': expected, 'sha256': hashlib.sha256(data).hexdigest(),
-              'size_bytes': len(data), 'verification': 'generator check, TypeScript, repository gates passed',
+          records = []
+          for path in sorted(expected_paths):
+              data = Path(path).read_bytes()
+              payload = json.dumps({'content': base64.b64encode(data).decode('ascii'), 'encoding': 'base64'}).encode()
+              request = urllib.request.Request(
+                  'https://api.github.com/repos/The-Interdependency/skill-lib/git/blobs',
+                  data=payload, method='POST',
+                  headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+                           'Accept': 'application/vnd.github+json',
+                           'Content-Type': 'application/json'})
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  result = json.load(response)
+              expected = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+              if result.get('sha') != expected:
+                  raise SystemExit('Uploaded blob identity mismatch')
+              mode = subprocess.check_output(['git', 'ls-files', '-s', '--', path], text=True).split()[0]
+              records.append({'path': path, 'mode': mode, 'blob_sha': expected,
+                  'sha256': hashlib.sha256(data).hexdigest(), 'size_bytes': len(data)})
+          print('VERIFIED_REPAIR_RECEIPT=' + json.dumps({
+              'source_commit': source, 'outputs': records,
+              'verification': 'generator check, TypeScript, repository gates passed',
               'branch_mutated': False}, sort_keys=True))
           PY

@@ -309,7 +309,7 @@ fi
 install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 "$WORK_ROOT/.vm-mcp-home"
 install -d -o root -g root -m 0755 "$INSTALL_ROOT" "$INSTALL_ROOT/systemd"
 
-for file in server.py auth.py policy.py profiles.py yama_gate.py admin_client.py admin_broker.py requirements.txt; do
+for file in server.py auth.py policy.py profiles.py yama_gate.py admin_client.py admin_broker.py first_use.py requirements.txt; do
   install -m 0644 "$SOURCE_ROOT/$file" "$INSTALL_ROOT/$file"
 done
 install -m 0644 "$SOURCE_ROOT/systemd/vm-mcp.service" "$INSTALL_ROOT/systemd/vm-mcp.service"

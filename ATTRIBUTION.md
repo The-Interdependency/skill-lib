@@ -25,8 +25,9 @@ Third-party skills vendored into this library, with provenance and license.
 Local modifications to imported files: frontmatter trigger phrasing
 normalized to skill-lib convention (`Use this when`), Cowork-only
 frontmatter keys removed, and a Workflow/Anti-patterns/Provenance/hmmm
-bookend appended per `skill-build` compliance. Upstream bodies are
-otherwise unmodified. `data-visualization/SKILL.md` also has a clearly marked
+bookend appended per `skill-build` compliance. The narrative compression
+migration removes redundant opening summaries and consolidates the explore-data
+and validate-data workflows, retaining their operative obligations. `data-visualization/SKILL.md` also has a clearly marked
 information-design extension appended locally (skill-lib `868de86`). These
 local additions to `data-visualization/SKILL.md` are contributed under
 Apache-2.0, so the whole file stays under a single license. Other local files in

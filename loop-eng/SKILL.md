@@ -1,20 +1,9 @@
 ---
 name: loop-eng
-description: Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Load this when building or orchestrating agent systems (a0p, AIMMH), EDCMBONE analysis pipelines, repeatable AI workflows, or any The-Interdependency project that benefits from structured loops instead of manual prompting. Cross-load with the-interdependency for org workflow context.
+description: Loop engineering for designing closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), single-agent and fleet loops with subagent maker/checker separation, and automated verify-iterate workflows. Load this when building or orchestrating agent systems (a0p, AIMMH), EDCMBONE analysis pipelines, repeatable AI workflows, or any The-Interdependency project that benefits from structured loops instead of manual prompting. Cross-load with the-interdependency for org workflow context. This includes design, implementation and review of research, coding or content loops, Emergent App workflows, single-agent versus fleet selection, and replacing a manual human feedback loop. Also load when routed from the-interdependency or either agent lifecycle skill.
 ---
 
-# loop-eng — Loop Engineering for Agent Workflows
 
-`loop-eng` is a procedural skill that turns the mindset shift from "prompt engineer" to "loop engineer" into reusable doctrine for The Interdependency. It provides patterns for closed, reliable, structure-preserving feedback cycles that reduce token waste, improve output quality through separation of concerns (maker vs checker), and integrate cleanly with existing org tools (skill-lib, msdmd, a0p, AIMMH, EDCMBONE, canon).
-
-## Load this when
-
-- Designing, implementing, or reviewing agent workflows, orchestrations, or feedback systems in a0p, AIMMH, Emergent App, or any The-Interdependency project.
-- User requests involve building loops, closed feedback cycles, subagent fleets, verification stages, or moving from one-off prompting to automated iterate-until-verified systems.
-- Working on EDCMBONE transcript analysis pipelines, research loops, coding loops, content loops, or any repeatable process that needs Discover→Plan→Execute→Verify→Iterate structure.
-- Choosing between single-agent self-improvement loops vs fleet loops (orchestrator + specialists + subagents).
-- Any context where the human is currently the manual feedback loop and we want to automate it reliably while preserving structure and epistemic clarity.
-- Cross-referenced from `the-interdependency` workflow or `agent-instantiation` / `a0p-instancing`.
 
 ## Core Doctrine
 

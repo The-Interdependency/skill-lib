@@ -26,6 +26,8 @@ Agents consuming this lib should start at
 [`skills.json`](skills.json). Root LLM-facing instructions are generated
 into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
+Narrative maintenance: see the [reviewed compression inventory and preservation checks](docs/narrative-migration/README.md).
+
 ## What's inside
 
 | Skill | Purpose |

@@ -1,0 +1,35 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "023ae12bb19ced1a4f2494ed6507fc31285a5b8e",
+      "authority": "reusable skill contracts and narrative migration baseline",
+      "relation": "sole edit owner"
+    },
+    {
+      "repository": "The-Interdependency/ucns",
+      "commit": "f8386d6eda7e49aa9a2b3c6b92b5f5d8692b08ea",
+      "authority": "mathematical representation and candidate scale-action arithmetic",
+      "relation": "read-only candidate producer inspection"
+    },
+    {
+      "repository": "The-Interdependency/metapat",
+      "commit": "8abffcd7766069fc835872974de31b086c6af337",
+      "authority": "cross-domain conceptual restraint",
+      "relation": "read-only consultation"
+    }
+  ],
+  "boundaries": {
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "hmmm",
+    "agent_scope": "cross-repository-work-graph",
+    "hmmm": [
+      "No semantic-coordinate binding, geometric skill codec or semantic-fidelity metric has been selected. Certification, empirical validity and user-data permissions do not transfer."
+    ]
+  },
+  "work_graph_sha256": "45cc180df512a18a858288721a157ae8a5612dea8e6ff12782c447dac4cf1230"
+}

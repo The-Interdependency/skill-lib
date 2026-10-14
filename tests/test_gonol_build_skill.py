@@ -144,11 +144,11 @@ class GonolBuildSkillTest(unittest.TestCase):
             anti_patterns,
         )
 
-    def test_usage_guidance_repeats_operational_contract(self) -> None:
+    def test_usage_guidance_and_owning_sections_preserve_contract(self) -> None:
         self.assertIn("start in the owning research workspace inside `The-Interdependency/stack`", self.compact)
         self.assertIn("Do not start in EDCM", self.compact)
-        self.assertIn("When a gonol closes, use it atomically at an admissible consuming scale", self.compact)
-        self.assertIn("Ignore pronunciation unless an explicit construction says otherwise", self.compact)
+        self.assertIn("Close each completed gonol before it participates atomically at an admissible consuming scale", self.compact)
+        self.assertIn("must not alter gonol identity, closure, ordering, or relations unless the owning construction explicitly admits phonology", self.compact)
 
     def test_codex_adapter_points_to_canonical_skill(self) -> None:
         text = ADAPTER.read_text(encoding="utf-8")

@@ -81,7 +81,8 @@ python tools/check_skill_compliance.py --warnings-fail
 
 Checks baseline `skill-build` invariants for every `SKILL.md`: frontmatter
 name, explicit load/use trigger text, `skills.json` registration, and visible
-`hmmm` boundary. It reports softer shape guidance as warnings so historical
+`hmmm` boundary, and one top-level workflow (fenced examples are excluded).
+It reports softer shape guidance as warnings so historical
 skills can be normalized one family at a time.
 
 ## Propagation helper

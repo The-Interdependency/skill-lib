@@ -17,7 +17,8 @@ Propagation PRs should cite this repository and the source commit SHA.
 
 Selected propagation includes the transitive `depends_on` prerequisites from
 `skills.json`. For example, `python tools/propagate_skills.py ../a0 --skills
-agent-instantiation --apply` installs both the requested skill and `wdll`.
+agent-instantiation --apply` installs the requested skill, `wdll`, and the
+`a0p-instancing` owner reached by its architecture-routing link.
 Verify the result with `python tools/check_consumer_drift.py ../a0
 --require-vendored`: the checker requires that same dependency closure, including
 its canonical files and referenced doctrine. Missing prerequisites and invalid

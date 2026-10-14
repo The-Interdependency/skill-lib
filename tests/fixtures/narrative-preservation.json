@@ -1,0 +1,519 @@
+{
+  "baseline": "023ae12bb19ced1a4f2494ed6507fc31285a5b8e",
+  "skills": {
+    "msdmd": {
+      "fenced_and_table_sha256": [
+        "0ec90fcf5dd10daa17b82b9c30970e9aa918dc32117b3a23af4a47a0e5d6efab",
+        "294dcaf58c72224190fef701797bb15e80b6a692a34f47c7c30e18850859c56e",
+        "3ec0e9a6852176f3926bd111099b1b4a29018263800f601d62c13eeb6dd11779",
+        "441e645326dc0bb18359f277a395cef31f0f0369b3ab7d90e1acd457f4a2c5ef",
+        "52447631133a56eb8eb3c8cc37fb94b95a3a4c089c493372b65f6ae1852f2266",
+        "5e7e8eb3d4b10d65374a0ef66d09eed595af5fc7fa70e4dba43f89a92de62a2c",
+        "738130c25b45b23996ae891fb715f9fd110a48f1f1727577bfc76388e94eaa6e",
+        "89b18b5db9a6cde7b21ce37e8a6f74d2777dc95fe900ed44763364d5770b1fc5",
+        "ea011aa825860ae9bfd650d6a274c220855efb95d24e50051dacdf27900c8949",
+        "eb8dec6541725d13f423955b6fc8ae3299e7d4d01c4b9e7c45a980c15b188114"
+      ],
+      "hmmm_tail": "The shipped matrix defines extraction subsets, not every metadata standard.\nUnimplemented conventions remain visible in discovery. `.h` language ambiguity,\nmacro/build/configuration expansion, full TSDoc validation, cross-source semantic\nconflict resolution, ownership applicability and independent attestation/runtime\nverification require their owning policies. None is inferred from a clean parse."
+    },
+    "doc-build": {
+      "fenced_and_table_sha256": [
+        "31dabb9b42c70f51073342db4fcf526f88ab783820b3b17c0babcc5a3ace112f",
+        "de20eb379392f6f0545fca65fcd63bb539e38a58e9e9ff0246173ccd53bcd999",
+        "ff432c85294201a57827680cb51d72144a9b36c2644ace789085fb699f0319fe"
+      ],
+      "hmmm_tail": "- native documentation readers and audience-specific policies remain consuming-repo work\n- whether examples listed in `examples` must execute or only resolve\n- how to normalize anchors across Markdown renderers"
+    },
+    "cap-build": {
+      "fenced_and_table_sha256": [
+        "4a61b1b501bfcbd202e31fbbc3c7a0893cd2775afc10da829a5463f05a598ba9",
+        "a806c8fef89545134798b3061c0caf57610097c6ba424c98dd5b91f0fbc36436",
+        "e8b0956c6d664c26fbb2f7bd27ff4ee3f810f221c4ec7c63807502f0ba365fc0"
+      ],
+      "hmmm_tail": "- exact resolver syntax for framework-specific route and UI surfaces\n- application capability identity and semantic conflict policy remain consuming-runner work\n- whether private capabilities need a distinct class in the consuming policy"
+    },
+    "deps-build": {
+      "fenced_and_table_sha256": [
+        "3248789d7e6732483fbd72b23c4225addd6d5b6ade92a1ae5bbdbcea9704fce4",
+        "4676676127d8e7273f0a812c59c383f39117af27d61fe8e1fa4d39f938502564",
+        "e9047acb359a82d504419f890fc73d8a26d3f723e77c4f6793d596984ca0aade",
+        "fab4500704fc27316c4f4dc2a1414ad014dee7e0f21abd34ac906cbdda525de0"
+      ],
+      "hmmm_tail": "- exact resolver syntax for cross-language call and route edges\n- which dependency classes disallow cycles by default\n- cross-language resolution and application cycle policy remain consuming-runner work"
+    },
+    "owner-build": {
+      "fenced_and_table_sha256": [
+        "64c9abaf9c6d8d0cc41f0f4133b545fa581e2376567584cf4fff553d44e761bd",
+        "ce3c0966a7b9fd4d2e883e81f77fd5d49adef7d662f0ca1e8c4da12343e130a2",
+        "d83a343483a4eacfdc8c7a0d591fce00fab7573e9941cdea21b3113beaada8ef"
+      ],
+      "hmmm_tail": "- non-GitHub provider ownership readers remain consuming-repo work\n- whether strict policy requires operational owners for all modules or only public/sensitive ones\n- how to represent temporary stewardship during incidents"
+    },
+    "test-build": {
+      "fenced_and_table_sha256": [
+        "0d206df255a0176d2870316886bd78fb6a64f8125b57f8cf7b3b8013ad67e413",
+        "2393b79e93271351ec877752a41899f4d2b7fad5a7c7f4b6ec0e5314dc858e1b",
+        "2473895f28e1c81acce853ea698c7291efa67e1290898d9e063dab2cf4c55e38",
+        "5f21dab3dbae30aaf0762f41f2a388deb04b60944be3a35acb9d18899308456b",
+        "609305568a02228cd93cfa62d95d4e219715d0f0f8acdd041d393b4ae46b2ae3",
+        "9c2d8a9db51e242f55474e676309b3ace6b073f3a876b11152eded2a770f06a3",
+        "ce10aad5fe0629b62bf8967569e3ca0815fc6ecb754d3de31fb2addfd4dd8ef7",
+        "d26c0a69c81d8db1466a7267843e5e7fba198e6a6839745118f923d0f9228587",
+        "d453cb9333c5e4b7eabae50edba63387fe7707282079b868469f757a096a40f4",
+        "ee9a7724e0fb7df8f24fd30c047bf2dd67cb7e159e373696a86913de14d9ecae"
+      ],
+      "hmmm_tail": "- native contract/witness readers and qualified evidence identities remain implementation work\n- the block type for harness tests that prove no product contract remains unsettled\n- mutation-level verification is not yet generalized across skills\n- slow/flaky/quarantined states need actual consumers before becoming schema fields"
+    },
+    "meta-module-build": {
+      "fenced_and_table_sha256": [
+        "372efb18daecb2929e868ef2c2a1657cb4c0a8f1a55c1f3868dff3c07a97b666",
+        "400e3b0b044fc226d0f080d57fcf257cb365a45bf05d3d878056f029a52ef920",
+        "55ad43f8f734e753bd7de397d0106b4d8e356d0691a4fe420ff00bc7b8c01dec",
+        "5c41970880bc4c2a1b5f809f763c94ff230655b9816d9eac9715f4858e2acb0a",
+        "5d824af81c0d3ec2a351fc1f9b63662b251a3b25c82ea970227eb08caa15362d",
+        "7033f08e8e4b69e21a040f10c1a604b371904c3d8c8a744e1ed8eccdf090bc93",
+        "7256596820aed79f8c4b4beada0ac0d9ff583c078c122ed3029f785b6ff33db9",
+        "7877f3a618436449f7cfef58fe4975014565cba7a04de1200e7665d7b0e0fa81",
+        "898f1154843f1fccd619ea1ffa2f1e12cb813c807be68e6d2352c61980defdb8",
+        "9ebe9d7da47aaac6eb3f978574def05f59821d59b8b4d37703693ae954f4dc4a",
+        "b12d0647e8e597fd4e744082615b2faf37b3ecce22990fa90715f29d32aedbe9",
+        "c79f213f46ce7a20e59d3ca0340741c7c6d5299e181739c7298152e49b9d6d76"
+      ],
+      "hmmm_tail": "Native planning-obligation mappings remain consuming-repo implementation work.\nDefault unresolved items for new modules:\n\n```text\nexact registry location\nfeature flag or default activation\nadmin gate\npersistence behavior\nUI metadata naming\nrollback owner\n```"
+    },
+    "risk-boundary-build": {
+      "fenced_and_table_sha256": [
+        "6db8f79add67b34b5b57054c066595ba860f5ad3f0e3ff5b8db6880d16838393",
+        "82d6843628efb7777259675f9fc91ee89bd116ad8b6d73e9238d11127927fd4b",
+        "de5aa2b50ca9f9a07d86433fdbe182dc13d41ca04c71d9e43bfd2067ecc98027"
+      ],
+      "hmmm_tail": "- exact sensitive-import heuristic lists per framework\n- native effect mappings and enforcement verification remain separate implementation work\n- how to represent read-only analytics on anonymized aggregate data"
+    },
+    "ratios": {
+      "fenced_and_table_sha256": [
+        "0eaacabbd092e345ce7b7a535fddf9f093e200e1c6d46a25e02502afdb959822",
+        "5b37de88a2f55cd46aa67492c26e3f87988f0ee5998b8a6254c162715f952c8f",
+        "6d10ff3a9c093d82ade04cff971e820a55913e20e2f4bb8068aa330bd4aa82e1",
+        "9c598cc08147cc84e5c47a8f25902904f0330f3195d302eff18a1e8be3babbdc",
+        "9ce881527635389ea2d979a560746b82306b4db89fcc7ff49f68016bbaa28979",
+        "cb4aca7a0999e3ed7b1578aa6372833b239e82264d32325d687c3023e82a5ab7",
+        "e5d7513b839343475c4994a2277ca012b0a66b616870643bc9d0dfa1c42e5b39",
+        "f9307300da3710cfab5ca7a300583ea32ad4c7c7e4ac72639d15308b99e6a244"
+      ],
+      "hmmm_tail": "- language-aware named-form computers for TypeScript and other parser-supported\n  languages remain an extension point; the runner now exposes them as outside\n  computer scope instead of applying Python semantics\n- whether ratios verification joins CI beside the other msdmd checks\n- calls_definitions: whether lambda assignments count as definitions\n- imports_exports: whether re-exported names from `__init__.py` aggregate\n  files count once or per-name"
+    },
+    "canon": {
+      "fenced_and_table_sha256": [
+        "3fe6f431b3c191468fa91ec466ccb8bef699e6e679559d643438f9699e5d3524",
+        "b1dcfa7e675b8cd946028ca03833e5a25470cf885f670d88bc45c87fcc62b539"
+      ],
+      "hmmm_tail": "- whether canon claims should eventually live in a `CANON` metadata block\n- whether target repo propagation should be verified by a dedicated runner\n- whether accepted design chat should be archived as a source-backed artifact"
+    },
+    "domain-claims": {
+      "fenced_and_table_sha256": [
+        "1580ce6ebef6baeea433ff1523d5ef81245bbcb2acb358a4b1abbfc66f5b0b08",
+        "33d43d97af029abe53eacb19b7dc702902d5d135b6138d7d726fe756847461ee",
+        "39b7403b753ca777843c3bd469ab806112fc3ca4456e09f90353376cc7e85a2e",
+        "4cbc52bafd2c30d1b27d24f92b88be7bd84340635756e5fd587e9f40928573bb",
+        "4ff872cd70c93d1883af4a80564f7dedf2bbb01978165745f4f0c65c6d3ca677",
+        "7d5ae6b4d5bcfa4efd3800174634616b6b7ffa0e93aaf4dc09bebdf96dcebe6d",
+        "87a0d76719724334d5cb2a2b81e99fddd862a3f860803ed2440acf7e651a98e4",
+        "fb81877655c0938e21a23db8b895fc94572f1e2cc03a1567e83388441d6574b4"
+      ],
+      "hmmm_tail": "- whether domain-claim records should later gain an msdmd metadata-block sibling and\n  registry runner\n- whether despecified-handle records need an organization-wide machine-readable registry\n  or should remain attached only to domain-qualified claims\n- whether ratified conversational definition events should have a standard immutable\n  transcript-envelope schema\n- how multilingual surface forms share or fork a term identity without assuming exact\n  translation\n- how domain authority is delegated, revoked, or shared across organizations"
+    },
+    "manifest": {
+      "fenced_and_table_sha256": [
+        "c0bed3ec774eea28dcef01d0abb68f256adb83788a21e1f0cbc7b190f05400a8",
+        "e3804fc7bf928ad5983a282622a7d669f9bbe0af808ce3243db989cf6e82fa21"
+      ],
+      "hmmm_tail": null
+    },
+    "llms-build": {
+      "fenced_and_table_sha256": [
+        "13280f2cecdb3a6a562589ba0392422974b7a05914d90b758133ff715acd0b84",
+        "15638c413e4b9ca1c4674bf9b80efbf5ddc4e247107668c653234ebd4fe6cbfe",
+        "ddc6970c8a652568c51eb77f7bdfe0969296691b498c2ea8bac0d0a05b3c40e2",
+        "ffecd41eb797e8e8962a9aa26e92d5e8ea765fa5fae9f2b3800f661a4ea45b1c"
+      ],
+      "hmmm_tail": "Native instruction readers and a native-capable publication schema remain\nimplementation work. Existing LLMS sources and the shipped command remain usable\nwithin their explicitly narrower scope."
+    },
+    "char-compress": {
+      "fenced_and_table_sha256": [
+        "0247463d3df8063c1ab7c2083cfef42a7dd8c410ad4793f108a38b1ff205df30",
+        "03971bc169fde6246fdc3ed8a272587025e0cb4da4a8b4e019f88b5784e95a0c",
+        "16a8f7fca96d9081ce75fb06cf59e2e1cf41be35f392ce3395695d4045fcb306",
+        "1bec4fd964f6c73d89ccd5424065f2d210de31c406ab4b563dd132b7c08fb8b3",
+        "20059313a7e1090d72001e5cd1823247491c8847ede95a83e031a3e1449d4c43",
+        "387232e7714695e41f0e3122674888129bbb606fcfcea5bb45d07422623d024a",
+        "3fe2af2711bac36792f6d96d1ac08f5d0272d633ee73c985e973e440f3c5d9d8",
+        "4fbb36e860ae61acc83ebe861de2e1f7d9627169a7b00ddfc67146d3c3ee051e",
+        "5880a777db9ce4dff4d2dc6eb851da622aa36e738ae4465af45bc117f7c5a063",
+        "635692075acf368afe1a6d3a15b10aa2e989e8d968a90b163db274e9b33f46f6",
+        "6a08dbc2e0274c91eb81aed8f959069c6dcc6b02aba5055b2a73e6d0a560067e",
+        "8405c62a15e0b1b255547a2da36df33aa6168f988d709a3cad122d56c795c9e8",
+        "890dc6df243a41e92ad3f7cfebba01aaf08ab068b9e9dc0f00d0a01def234494",
+        "8e455136339a479ed7af6ffe5dce87a25870c0abbbcfa1fd63a8996c81635406",
+        "90053a6c0219b30d157d891fb327eb78c21d30e4ecc2c0601dce66eecee0789e",
+        "9533f1c812b42966d0c356af3ca9a38850809d6694de6dc866ad37ec9f3c23e6",
+        "a270635819f61766805245f6426872abe9207325c24dec49815a2a14acbe1e48",
+        "d29c14e3f1f446fc54923bbca619112791cb0c50c38812d13996828fdff06ee4",
+        "d633bfab841a722f420dd9b08ef40c92828b1bdb0d60d036a5c804c58ee04991",
+        "e4493469ef665734e1ff08cd9c14de20f8cd146067999693b8c18997d1e05698",
+        "e6a932e3d26a118752c47220555ef9270b3eae0b49a14f2fbc3f6125ca07f17e",
+        "fccdae181c5d2fca073c3a321553b2d3614d115e518c6c0e51a3f5bddf6da9e6",
+        "fd202ff25988de1e1334981d158480772cc3dc7e5c533bd576738735c0f078c9"
+      ],
+      "hmmm_tail": "- the bone/flesh boundary is grammar-relative and domain-relative\n- numerals are inventory-poor like bones but content-bearing like flesh\n- transform vocabulary may be closed in one repo and open in another\n- reconstruction assumes a shared grammar; a different agent grammar may\n  regenerate different bones\n- `tools/char_compress_check.py` is deterministic fixture support, not a full codec\n- exact historical source for the text-stack model remains unresolved; this helper is not a UCNS codec\n- whether repeated characters become weights only, ordered recurrence layers only,\n  or both\n- whether future structure-preserving mode should carry bone fingerprints,\n  dependency slots, twist seams, recurrence layers, or all of them\n- whether opacity should layer on top of this compression or replace the\n  inventory boundary with a secret mapping"
+    },
+    "visitor-intro": {
+      "fenced_and_table_sha256": [
+        "afb9bea6ec30e299d2873570b9fe03e9d30b8a9981a071c4a0d1cc0ea5ba3dad",
+        "b0b4aaae226c3e314d450e595d67abb46fc8314904cbe7dfab8e7427a24c0e04"
+      ],
+      "hmmm_tail": null
+    },
+    "adaptive-elicitation": {
+      "fenced_and_table_sha256": [],
+      "hmmm_tail": "- A future runner could score unresolved fields by dependency reduction and\n  response burden, but the procedural heuristic is sufficient without fake\n  quantitative precision.\n- Cross-session context retrieval varies by agent harness; retrieval failure is\n  a source limitation, not permission to pretend the user never supplied it.\n- Sometimes the most informative next question is \"Which thing do you mean?\"\n  Entropy occasionally wears a very small hat."
+    },
+    "agent-instantiation": {
+      "fenced_and_table_sha256": [
+        "06455a4e44406ac6a093e7ef528b444e313c9c8263715f07bb8dda77fb304664",
+        "d26995d8b331cff2a1cc781d39b6b601394b4af61a967cfcc72e103308b93683",
+        "fb89fdfa59b71428e16922fa8557af06a44ac1be32fe743009e35718693d857c",
+        "fdfc54d13ce8d727f92944f69ebd5afac0858f3d5281210ad71403394bfdc6ef"
+      ],
+      "hmmm_tail": "- a0's `fork()` seeds its RNG from `time.time()`; rapid successive forks can\n  collide (flagged in `merge.py`). Prefer a UUID-derived seed if you extend it.\n- Several `spawn_executor` contracts (stale-sweep, retry-once-on-transient)\n  are declared but not all implemented; verify against the live file before\n  relying on them.\n- The merge blend weights and noise σ are tunable constants, not proven\n  optima — treat them as `repo-local`, not canonical."
+    },
+    "a0p-instancing": {
+      "fenced_and_table_sha256": [
+        "4e5a44a78fd0907bfcfe8ea7ccc82bc115e4fba4100a5ee3faa4cf8be94f70d4"
+      ],
+      "hmmm_tail": "- **No parallel sub-agent decomposition.** a0p dropped a0's fork/merge swarm\n  capability entirely (only volatile memory scoping remains). Whether this is\n  a deliberate trade or a gap to re-add (fork = clone-and-diverge a bank;\n  merge = distill/average banks) is unresolved — do not assume it exists.\n- **Native-inference quality is unproven.** The native engine is a\n  template-grammar decoder trained by distillation; readiness thresholds\n  (`min_steps`, `max_loss`, all-seeds-touched) are tunable, not validated\n  optima. Treat them as repo-local.\n- **Spawn/concurrency caps** are not clearly present as in a0; any limits may\n  live in sentinels. Verify against source before relying on a limit.\n- See `agent-instantiation` for the canonical a0 / a0ucns model this one\n  diverged from."
+    },
+    "plain-lens": {
+      "fenced_and_table_sha256": [],
+      "hmmm_tail": "- The EDCM-style reading here is an illustrative heuristic, not an\n  edcmbone runtime; precise cross-speaker metric formulas live in\n  `edcmbone` / `a0`, not in this skill.\n- \"Without talking down\" is a judgement call; this skill gives rules and\n  registers, not a measurable condescension score."
+    },
+    "thought-lens": {
+      "fenced_and_table_sha256": [
+        "0352b074b4ee3a0c8b2e8258979b069d911d543dbd86d6d6e2e27773257e5460",
+        "085733455569e6c55066fc561d684d0963d09b2a08b1dfe68af00256f4cf703c",
+        "0f70aa58987c6bab9a37356c39c552c6afaf58e121708e643159def7f1324d56",
+        "0fcd35421e15b06692be8b6a5ea714cf30851e7a3a22c5d627d906b61fb8beb0",
+        "12a9c227b77406f5ca90bfa121e86a0ebf2e4f28e03fb72a7b18d61e8a82a0a8",
+        "2671569e98871800dd77b8fa8ec01be591e9b5e74314671cdc0e935475b86482",
+        "42124f72966458e9fb5ef31ad20a4c722561fea9101a6e4a8439d7deb7d08b40",
+        "494f5261a0af2801724228ac254434cdb84e85765aa333f604798ea2bb8b0daa",
+        "5961699854a9645615ccba4d24efcde73bb27f0c70f778d06d01ec8be6e9d2f6",
+        "5fc8012a388397318b6181099f75591532eec385489f259b06149d0bcee8910d",
+        "6e25be4f7b2139ec0b1d303086133199228c76dee599e246783fc34e8650713f",
+        "78dbe7c4b19228b1ecbe8038e5a8d0cfa6db23d397f5795a0b2d1002e1f28953",
+        "8b92a599d4b4b1058afef7a6ff500899bf5ccb417d2b300055cd6ec4a600217c",
+        "96aa7478ad795ed15f6a67e67a80780858cb2a26b5deee4630a78ccda8f22604",
+        "a25f4397bce068d80a547f72c1fdb040b59c6307eb7520a7b2b3d89ec206c600",
+        "aafb6084d8e78d65abb8418df3675c757a3f505f264710f96e17107b44c3c4ce",
+        "baa12a67e8383e469e5b626b0c507e56ae9613d00205e771a4fb7ecb0d632f28",
+        "c551ce9d11d084d1944c4517ae1340a4fae413b5f74f744e9906d53605cf8d5e",
+        "d1e9757c466d22b3511f2718ec27d79017749c9736b62cc80b765ae39ce3ca00",
+        "da0fea7a5d1b5171d928c3ca524617c3857f61bd3843a03a1b23ab95985d0098",
+        "e7a76bfd1c2fdf5ec2b82a6c83d99d44119f499ce5fc23a9e93f5846f96e0d1a"
+      ],
+      "hmmm_tail": "- Human understanding cannot be guaranteed by model self-evaluation; the\n  back-translation self-check is a guardrail, not proof.\n- Audience models are approximations. A named audience can still vary widely in\n  domain knowledge, literacy, language, culture, attention, and stakes.\n- A future executable evaluator can compare claim kernels against independent\n  human/model back-translations, but no universal legibility metric is claimed\n  here.\n- Sometimes the shortest path between two minds is a definition; sometimes it\n  is a story. A compiler that cannot tell the difference eventually buys a\n  trumpet."
+    },
+    "meta": {
+      "fenced_and_table_sha256": [
+        "082669e341ed3798e4706ceeb5675369b16bf0c08cee1eb1e49ff66f5746bc97",
+        "10bea72e5c0a14f46ca7a30768dedce67f2cb0e4fc7a69f55b41338845689d06",
+        "4577df1d1b3dedd637da07d7fe4b3ed727409d6b985fbf28f9eb89464deb2d8d"
+      ],
+      "hmmm_tail": "The calling harness may not support automatic cross-repository retrieval. When current METAPAT cannot be read, report that consultation is required and preserve the unresolved boundary rather than falling back to this skill as theory authority."
+    },
+    "gonol-build": {
+      "fenced_and_table_sha256": [
+        "24e97338ce23233472c5a2cf42b84831a698f91f5d2ceea641e9fe4e9cc73ca5",
+        "6a62e8f7e04fe251ed975020108edf5cae8d6d548eada1763596ae5e8f5cd1fc",
+        "6f570917a1ecc7a2abe661c8b29dc5935ccb88e6edaff7c3e7f76662fa26ad96",
+        "ceeda0e944b3116dcc5461b1984b35f5b218f8266410886c8eee2fff45f22307",
+        "f18ac03c7c4a553413af78ea6efea7022a18ccf64a3d9530e7156179c49c6e15"
+      ],
+      "hmmm_tail": "- exact UCNS geometric operations that remain unresolved in current implementation;\n- future repository/package placement for graduated language-gonol artifacts where no repository presently exists;\n- any recursive relation whose governing source or geometry is not yet established."
+    },
+    "ucns-option-selection": {
+      "fenced_and_table_sha256": [
+        "674c96907e5e36ba0555c025df4e50a0dc167bfea4612d0993bfa173027f0079",
+        "968905531b88a872b2d78a1204ed73b32a360f05a97e7061be017a16ad375a1a",
+        "cd409e3a9fb1a8df41330202022ec913bcb1bee1d2b27f66b490e042967a6adc",
+        "e227f89ccd793a94dc2ada44ed80479198e77b98934767fa8fdddc322ff40406"
+      ],
+      "hmmm_tail": "- the first UCNS domain to ratify and exercise this complete rubric;\n- whether decision receipts should gain a machine-readable schema and runner;\n- which authorities may ratify scopes delegated by Erin Spencer;\n- the measurement-validity criterion required before any measurement option\n  can be selected as valid rather than merely structurally preferred;\n- when multiple non-dominated candidates should remain a selected set rather\n  than forcing one winner."
+    },
+    "epac-selection-display": {
+      "fenced_and_table_sha256": [
+        "0323da32cf5f4dfcd5b750586a0084241b57b187dee61d5ef9f4b03ec22b99c8",
+        "527acc47ac1650810c85d3216870dd715588d4aabbdab89068854905ee612e06",
+        "53ce338a22573807bbebae3642f2cae82cdbb54665db10563e6480e84d14b788",
+        "712d3b46a6e4c2915949f97fd439a3636a91e5488bdb556013b6c880ea53fa58",
+        "9d358679dd6cb1076210232c4fe04c22674f3f88cb08e342f8e5ab9559d9898e",
+        "ea98dcf2a5e50e5288b4f6f90b9c6235e5bb2e2906990e86624869c421b67e9c"
+      ],
+      "hmmm_tail": "- the future independent EPAC repository, authority, and release identity;\n- whether EPAC will ever ratify a fixed expansion rather than remain a\n  despecified handle;\n- the first committed, source-owned public renderer and its stable interface;\n- the durable schema, if any, for EPAC display packets;\n- whether a future separately authorized service should execute EPAC displays;\n  the current WebMCP server is registry and handoff only."
+    },
+    "the-interdependency": {
+      "fenced_and_table_sha256": [],
+      "hmmm_tail": "- Precise harness integration for automatically fetching current METAPAT after this gate triggers; the skill currently defines the decision rule and source-of-truth boundary, while the consuming agent uses its available GitHub/local-repo access.\n- Whether the historical `meta` skill should remain as a compatibility router or be removed after all consumers propagate this gate.\n- Whether a companion metadata-block skill (e.g. `# === TIW_WORKFLOW ===` or `# === INTERDEPENDENCY ===`) should be added for self-declaring modules inside The-Interdependency repos.\n- Exact canonical reference for the full EDCMBONE transcript assembly protocol — should the detailed steps live in this skill or be expanded inside the edcmbone repo's own skill definitions?\n- Actual VM state, current client/private-tunnel state, provider sessions, and quotas remain runtime evidence outside this skill."
+    },
+    "interdependent-work-graph": {
+      "fenced_and_table_sha256": [
+        "0528cf1005c45d64067ca7dad1f36eb0a166d2edcd19724650171e0506813f61",
+        "187d051e1a5a5f7b6d9db7150c693492acee069f991653a7da11f637dcca92a3",
+        "490a5afe7ad53a7d9e86cbe2892cb0eff3f866cbf181e07d2361b37a4a266598",
+        "657ebf5e9e844554ab5ab8f4d22e4ea497949bd7e49ea08e689822ea3299de82",
+        "85fbd6edce693e35663bc4d2b16d5ac2c556d7b267836331bdac72b036cf292a",
+        "9d4fa2fdbeed06be1f8ef5647374d1340d568e47d66d1d03f8a599184da29007",
+        "9deece2aa48882f22b45f31374e6db9c913f94f53f5c92b4927d407845402190",
+        "a46b1e0eaa337e91767123298b47369e1a8c1abc3f5f4696cdc4877d500edc39",
+        "db96e794b6463703f87ea6fb8fbfc6616418954cc3f5c20e30d1c388cb7bfb16",
+        "f01b213c1e83a2f349a116f04a4cfe0acd372059f8d0634ee3ed01bf238f20cf"
+      ],
+      "hmmm_tail": "- The organization-wide persistent service or user interface for live work graphs is not yet selected.\n- Content identities do not yet provide cryptographic producer or transport authentication.\n- Whether the stack-manifest schema remains a procedural-skill reference contract or later becomes its own metadata-block/schema skill.\n- The next stack-manifest schema revision is expected to add explicit `certification_status_transfer` and `empirical_status_transfer` boundary fields, a canonical `repositories` ordering (for example by `repository` then `commit`) in place of declared-order identity, typed non-repository participants with digest/version/schema identities, and an explicit hashed edge list (`from`, `to`, `relation_type`) so distinct work graphs over the same participants cannot share one digest. Version 1.0.0 stays as sealed by the EDCM OEWN 2025 run.\n- Cross-repository merge orchestration remains repository-host dependent; the skill defines order and evidence, not a universal transaction mechanism.\n- Automatic organization-wide portfolio discovery remains deliberately unselected; explicit report sets preserve intentional membership and visible incompletion."
+    },
+    "stack-update": {
+      "fenced_and_table_sha256": [
+        "09445b0fc73a04819b3cb3d912be0433f2454b848e666c37f06651990318dbb6",
+        "332aa2045f00113157fd3a5352fe0975a32c6e82304f23ee361c9fdda7f7978b"
+      ],
+      "hmmm_tail": "- The first stack checker is intentionally conservative: it can prove declared\n  projections agree, but it cannot infer every semantic responsibility from source code.\n- Future schema revisions may carry explicit typed stack-local component records and\n  edge lists so more structural obligations can be checked without text comparisons.\n- A checklist that never fails a build eventually becomes wall decoration."
+    },
+    "project-incubation-graduation": {
+      "fenced_and_table_sha256": [
+        "105cfc141b6f1267a184b9120895a4427c50e7333549343bb81c265730576844",
+        "15fb8d68544592f5edf4f7177785c77fe87d8dfccc9b8260f8167b9cc083daa8",
+        "31e0ced7dcbe30cf8aaeb8ae78e0b342e5303ce22d20f79f18fd5b255fd94ef1",
+        "559d341fca3d2e7944804a6485000d219a1728c507db7646bb963dbf2ffac02b",
+        "61bfad1e60d2cc34ebee1d40ceb61c233763de51522104603af8f01aa6df828c",
+        "7491c411d4df34d65d44f7a802ef1f7e42e60c6f9531dc97937697d282a5554c",
+        "7d46612b0b0547cf658855f2f451af56601ac171f97fdc63ff9f4bb1051e36c6",
+        "91110062b45a82ece200be12e33e2843e49cb2e68c70467ae06c0660b51a2383",
+        "9a1f51689fa5a0327fd5a2ee99eca05ceb2c7adf981a57fbce7f7916ed658d34",
+        "c39b2854907d4461cada5c8744adbc1a8c1fb9ceb7ceccb9117289dd028d9e94",
+        "f05cc950c2ed7c55995418524b7841e5dc56445b53d6a37b96bfee07184345a9"
+      ],
+      "hmmm_tail": "- Whether repeated real graduations justify promoting the graduation record and transition receipt into versioned schema/helper files rather than keeping them as procedural reference contracts.\n- Whether history extraction should become deterministic tooling; repository histories differ enough that the skill currently requires provenance preservation without mandating one Git surgery.\n- Whether package publication should later split into a separate ecosystem-specific release skill after repeated use proves substantial independent complexity.\n- A forge that cannot let go of its products is a warehouse with sparks; a product that cannot survive leaving the forge is still hot metal."
+    },
+    "distributed-publication": {
+      "fenced_and_table_sha256": [
+        "1bc6820e62f4628272b282f10a5b3a9d149b7e2d3c68355440fc2e1deafd01fa",
+        "6bf760982c5930ec34e3dbf5dc3080bac60c6e43d6b8f80fc3e627b9b8d390cf",
+        "8b52a6d27c1cda0fa5fc130a35a4e2acc01902cab6134a4a6582bcb81e566b47",
+        "8e66a438a38ed985117e0c9a4f1666ffa544dfd28c168a0c6859135bcac88a16",
+        "9927cc10ab6237a5be7c9b5c4e8636507e9f8ed68b00d4665f745f850f01c662"
+      ],
+      "hmmm_tail": "- Content digests establish byte identity, not cryptographic authorship or transport authentication.\n- A general signed-source contract for distributed publications is not yet selected.\n- License compatibility can be displayed and checked for declared metadata, but legal compatibility still requires competent human review.\n- Mathematical notation accessibility requires more than automated HTML accessibility scanning; the canonical cross-format expectation remains unresolved.\n- Whether the reference manifest becomes its own metadata-block/schema skill after multiple independent implementations.\n- Whether publication consumers should retain source snapshots in version control, release artifacts, object storage, or an external content-addressed archive remains context-dependent."
+    },
+    "website-builder-journal": {
+      "fenced_and_table_sha256": [
+        "0b52d730c67f68583d90921ff4cde6f7231e0e71778761a742df85e32b4ddf05",
+        "cd9679cde75f94158609023e777b4c297182600101d1c4baf903d4cbb29b44aa"
+      ],
+      "hmmm_tail": "The first published builder entry predates the date/time/exact-model contract. It remains intentionally unchanged because append-only history outranks retroactive schema neatness."
+    },
+    "loop-eng": {
+      "fenced_and_table_sha256": [],
+      "hmmm_tail": "- Concrete a0p-native patterns for worktree isolation and parallel subagent execution in TIW repos.\n- Standardized memory schema (beyond ad-hoc Markdown) that all loops can write/read (possible msdmd block candidate later).\n- How tightly to couple `loop-eng` with `the-interdependency` vs keeping them as peer skills that cross-load.\n- Whether to add a lightweight metadata-block companion (e.g. `# === LOOP_CONTRACT ===`) for self-declaring loop definitions inside modules.\n- Exact thresholds and hand-off protocols for when a closed loop should escalate to human or open exploratory mode."
+    },
+    "fresh-making": {
+      "fenced_and_table_sha256": [
+        "1e3b3b5f35e937f085930eadfa10bfef5b5c0a28a9808ff1456725f324ace218",
+        "382888918dd847bbdbcf6ed2cef6898fd7cb9127b6892802670702c6f664a49c",
+        "42d0203776666dfd4c02d50c77c30e7b64574d85296a199fe7a75f8fc88cf4d8",
+        "460b1ae17a847e90164c28fca75839383bd8ec830bc235b9c95a7bfd7fd7ee5b",
+        "6bdbae807852f9daf9c53f33dcd477e1dae435f9af536a75e1669ed35173a41f",
+        "74e6239f48d54ee8c220e9b4c03671da4ad30e22102178fab2e5acecd62430a3",
+        "7899ebe4226ebe2bca0fae127a3073ddad8df666a85fc5185947e68e0ee46cb5",
+        "87c3aa9f07921873272d312de043e246968e80c46e80dbc75e573d36d76e161e",
+        "8bfb794c61eea290b714d736bcfec997b39fbe1e3f668553a4636eef608620f6",
+        "93bc5e7333acdab01181fc0fe07c62f43380bd9f106c15dc9f2fd280f2087fed",
+        "983c7a25cc658f4c86f97c6d99ac1eaa43d64fc39c3d8c9996caac423e806597",
+        "d4b76127f680b5bfe56832ae80d5ad6c88be993ace512d90423203fa1301e5c0",
+        "d6156455ae9c2113fd1e49d1a09f4ef8913a38ce5dbac86ca7815e09d23bebbb",
+        "e768297a0fd75b3489bbfde4c8e3745968f0b3883df283d2cb425932769c3574",
+        "ee38b4a71664411a00444d98b35d082e930d60b27fe6ca27781a6b6271d72526",
+        "f8cdfdc018f60d684eb6b461d02a637740e277714632cce49a2e988a08accf44"
+      ],
+      "hmmm_tail": "- The first production derivation-spec storage location and schema implementation in `stack` are not yet selected.\n- Atomic publication semantics differ for local files, Git commits, package registries, and remote publication targets; consuming implementations must make the acceptance boundary explicit rather than pretending one universal filesystem rename solves all cases.\n- Cryptographic producer authentication is not provided by content digests or Git identities alone; signed receipts may become a separate contract if threat models require them.\n- Fixed-point derivations are intentionally unsupported by the baseline workflow until a concrete bounded convergence case earns the complexity.\n- A generator that regenerates itself is either a carefully versioned bootstrap problem or a small machine eating its own instruction manual. Treat it as `hmmm` until the bootstrap boundary is explicit."
+    },
+    "action-calibration": {
+      "fenced_and_table_sha256": [
+        "259a73bf410086ac93e3143de167f37e5050c3ee7a992238dc397a49879d1012",
+        "8367e4804f3417c4b965938a3b64e0bf84293285d2cf505070f703871a74c444",
+        "8dde9103c1d7f65edc38e81d4097dd12ea9cf63036833b97d125be93c1ec502e",
+        "8df0c84dba638fc3e7db5435a4f82cac49b77429930939b52cd275ac7459e02d",
+        "a451ced7d00b54a992b65bc34701739dda6547c83a3279c0f7b0b4841d90d9c1",
+        "a61898ee36f2119468ddc2d86efe3676480b786c525d1cec21493c7ab4096e5f",
+        "b69283e5a8c1b439a16e371a4c278302475f2b41b91961391a42786b5c0bd0e7",
+        "ff4968b340ff025b446dfee81fccfb1b82374a3f7da63b2878a7c81b1ba444d1"
+      ],
+      "hmmm_tail": "- Whether action records should gain a machine-readable `ACTION_SCOPE` metadata-block\n  sibling after enough field use.\n- Whether burden and decisiveness should remain qualitative or gain domain-specific\n  scoring profiles.\n- How to measure saved attention and coordination without rewarding superficial\n  shortness.\n- When a human's desire for exhaustive understanding should override the default\n  minimal-first rule.\n- Whether `evidence-ladder` and `preregistered-evaluation` should become separate\n  skills or references loaded by this one."
+    },
+    "wdll": {
+      "fenced_and_table_sha256": [],
+      "hmmm_tail": "Preserve unavailable authority and undecidable constraints rather than fabricating completion."
+    },
+    "repo-audit-repair": {
+      "fenced_and_table_sha256": [
+        "7e89c92b5564f80d4da5385b658c822760c1775d3291da206850656ab6f27919",
+        "b34834c45bd30cb8af54407a0494e23ee2dc9a3ed225b7d5852591f60b5d28c8",
+        "b6e7faa930070b36e3757fac57912d02c80919edfdf7ca74b6f183afdfd761a8",
+        "bbda8fc636d9b01e0b0b951f2a205cfbc81a41fd538845c865b414e94e9309e9",
+        "bf0f400ec3cee005b34f3dec9dd3ff7942b0e8fdd420a22285af5f5d353f7e8f",
+        "cd792fc973e75f9e3070a9176a453db96d80fa2c4304d62860e543852432dffe"
+      ],
+      "hmmm_tail": "- A portable executor that discovers repository-specific audit commands across\n  ecosystems is not yet selected; this skill governs agent behavior, while each\n  repository remains authoritative for its executable gates.\n- Manual semantic review can expose false-green checks that static workflow\n  inspection misses; the minimum automatable depth remains repository-specific."
+    },
+    "skill-build": {
+      "fenced_and_table_sha256": [
+        "42dfc329a0c593b01e64b8ba436cf683b6ab79c2e8daa0aa31e8b5c6b78491d7"
+      ],
+      "hmmm_tail": "- Baseline compliance is now checkable with `python tools/check_skill_compliance.py`; fuller family-by-family normalization still needs human approval before doctrine-shaped edits.\n- Whether future compliance should be enforced by a new checker script, by extending existing drift checks, or by human review only.\n- The exact minimum section set for every existing historical skill is not yet canon; this skill supplies the question set first, then lets the compliance pass reveal the honest shape.\n- A skill that teaches skill-building is a ladder carrying a small pocket ladder; suspicious, but surprisingly useful near roofs."
+    },
+    "skill-usage": {
+      "fenced_and_table_sha256": [
+        "3bd46be92ec72eed4e9cfb916ca863bec24cbbf57c0132a6f3bfa2d993cfd13f",
+        "50b2dedea211cdbab778d5d50368e42c7c0be5d293370aba86b52c83f3241dd4"
+      ],
+      "hmmm_tail": "- Codex does not currently provide a documented, authoritative\n  `SkillActivated` lifecycle-hook event. Recording therefore depends on the\n  loaded skill following this protocol.\n- Cross-device aggregation requires a future consent-bearing writable service;\n  the current counter is local to each plugin installation."
+    },
+    "ssh-automation": {
+      "fenced_and_table_sha256": [
+        "1af4fad79fd23f7ca6d8d46d8e5942c61027e8377fa3a93c1dbb758b0e52f0a0",
+        "480c35f0e681a6e48f533f227a3bc28ebfded5146c5b4973ad21b884fcefd138",
+        "52cef4304a70702988bdc817666b2e441d6d0e9ded8d5db3ed3a899ab84d663e",
+        "7389e5e8e60e27383dcdd5b9b97ec47cba96baeaeca83c7414451c3458a3f52e",
+        "9fe2a97b9fae89d11e97f4946be9cffdb2f32de158dd5a04d3c6be1d37f5a90d",
+        "a9adb7ea55fc0c98aa0d74e6a51b9101c8c7fadaf4607ce2714d11b74fdee48b",
+        "c06c2bc991e79229175509b8f38c6071605935173c6efb32d68547a87502a77e",
+        "c5d816ab3da535d7c1ff0a8ea4255f6949daa03820a144c00dc5144d1f8a8e5e",
+        "cca5b45dafab432374e1f0b65689b1c56e8cee0c2017b207c4cde89f8480de41",
+        "cecc34a243dd5e6a6353009af8089afa14e3d5901a50f92dbc51e41b34490b7f",
+        "dbf1677d7364e239eb9ff456bc0ab9fc7ace724ce643d891ed5c8f5fc612fbca",
+        "f7107df6dfcec08b494f7ee88fc1434f116a91d996eb287f70e7b8acb7e3fb57"
+      ],
+      "hmmm_tail": "- Host-key bootstrap is necessarily environment-specific; this skill refuses to\n  invent an authenticated channel where none has been identified.\n- OpenSSH behavior is the primary client contract. PuTTY, Dropbear, platform\n  wrappers, and vendor-specific SSH clients need their own observed mapping.\n- Exit `255` remains ambiguous when the remote application itself may emit it;\n  reserve application statuses or add a structured receipt where the distinction\n  is load-bearing.\n- Exact OS Login, IAP, SSH-certificate, and audit configuration remains owned by\n  the current provider/project policy and must be rechecked before deployment.\n- A tunnel can be secure while the command crossing it is nonsense; encryption\n  has never been a substitute for knowing which shell is speaking."
+    },
+    "vm-mcp": {
+      "fenced_and_table_sha256": [
+        "02fa82bd9ee59aafedeeb9d9dba063d23e3c3719ce728204952dee0b1c113d7b",
+        "244dd1aeb3b3d108a7382176c972e7a38ce0ceba45aaa2d0fa6ea5d50eb83cc7",
+        "27d681462db4857edf5a413c53897b978caaa5009579b11f2a526026e3b8f0a9",
+        "2aa95344be4bdf6bfafc3e8f38c2f42d012669a22775aa67a5e87ff4fb32e97e",
+        "54f00d1c0b02b576ae6c024ba60e72909eea56b4caa6c61609697b8b17a48fb8",
+        "67479f24fac07c28d261ee8a41f5a8e925125158fe49f54e8caf966fb1156d0f",
+        "746090f2819df8896f717c5b602977c1860ab2f90918a3ef51c64362f3f0d44a",
+        "83186ce7026236e62f1456414670496945cb07af4980f0aba5d9fdc195a4296d",
+        "89fe5fa75718daa64a909ab721e032db675e98c436b2f50feebec668ae90590d",
+        "a03e871ecf9e9179901c39f37b8580bf54e0d422780b6a94904e0d6281173c6f",
+        "a0ce884d1dd5cd532cfb0f49cdfed4bc7cd6fc80304b097ac0f5264e3f28c7ea",
+        "a14ac6cd37861839bd4548877f04cded14b1dc1385ab7cffd1206fbbdc524f30",
+        "aebce397e7d6fa5305e4adeb052422246ab8ebd5c62d007755cfacc2d9ec9229",
+        "b61c2db36936781d76e95ef02de8d9fe244b36cdce45bccc9e32e21eadc741e6",
+        "dd684edade0551c273d5eef510c7d597bddc78b62d56638c351e722c20beb550",
+        "e2b42573494d83e7816347e30d75bd0aaa8f6e86aab7921f966e111fe64b27d5",
+        "e696bc59e6d1f361ee046bf33d8422914d3dd0fdd81699b8db8a392b20fec8fe",
+        "f1e69973e7c13093cd217e1a1522b3b4bc45b18b9c3a60fa5057d90fd416094b",
+        "f293aeb1407afa3112083ba2501a671d8c429d270c2f555723be3f9d785f504f",
+        "f31a7c67a499b3f517bc0fda648a17640b4c351c5f3794c12f9dcb84994cd66c"
+      ],
+      "hmmm_tail": "- Private tunnel provisioning remains client/product infrastructure and must be resolved from the current official client surface at deployment time.\n- The shipped broker intentionally grants broad root administration in `personal-console`; future shared/multi-owner deployments may need a separate policy/profile rather than weakening this profile into ambiguous partial authority.\n- Named convenience tools for git, systemd, PostgreSQL, fresh-making, backups, and logs are useful ergonomics but are not required for capability because `user_exec` and `admin_exec` already expose the underlying operations."
+    },
+    "typed-meta-frontend": {
+      "fenced_and_table_sha256": [
+        "d6945dc127ba248c8144c099cf94e2666a6ce32635b7558a6e5b6f42081ff8d8",
+        "db7b3cf22e6aa6ef48810e59aab5d5df076b337489e2d5eead3516fc7014d19f"
+      ],
+      "hmmm_tail": "- Preferred concrete backend metadata transport is repo-specific: REST, GraphQL, generated JSON, OpenAPI, or msdmd collection can all satisfy the contract.\n- The exact persistence strategy for field patches depends on backend authorization and audit requirements.\n- A frontend that builds itself from metadata is a mirror with a wrench taped to it; useful, but only if the mirror admits where the wrench cannot reach."
+    },
+    "sql-queries": {
+      "fenced_and_table_sha256": [
+        "0af4bf86ea1202c0b2c7bdd76713f1b06efe166cea4ca9ce6c2b499799d795c8",
+        "146c91f34d7dba55a048ed03a7c24644265ebaa5ff1489b6b4608c270c77f93c",
+        "23b5261fb4efd4ef18eb211108100ab6063578aea5d022f02a3b11006466a626",
+        "2dbbc865a5588581695aa98ab6c951dc22f2c550d1c0ac68ed7434f55085b2b2",
+        "42c9393731164fddf7b59e7582e0f6244f72e02e6c4bfa6403a1777f7ce62a44",
+        "4c518976586ff63bf24ba71d140b8d68f87a3906a9c91b1c6261157d4be2f8f8",
+        "4ef235cabe1d6b71d81c9efbeac22757d35724c9d8a27ba340dd17bfc5f35322",
+        "5a9197854af1523f4830ab7bbf2cea984655fc84e45a677c7b567b7eb54d00d2",
+        "6a19032f51b376a1d85f7e35f385fa6377d6c900c43c5bde5aeb1ae09d318083",
+        "75b8ca57b481327f92686f7d47f75c755900b887e707e6353a675e87f1b9c40d",
+        "7ffa840c734ce08a3f1ee231f2cda774a9668bb5ca649c7993de827eb06dc11d",
+        "8943535f8dfadf1a72205fc6d843af70b19926bef35987f703f1a851acf2c7cb",
+        "a7ff15901d3fcc99aad65169e745490a7517c98968934effc8decffb42ca1412",
+        "c138422b46c6e2ad6fbc04eb938cfab38b1bcd33f98e78222911fc7587362485",
+        "c4a174b151f50a8a3abc2be60ac21c94747352810c7f6052438fcc7a47a9a069",
+        "cbe1de2cab7e650edfb404a46c1873cb804e500ad5d4d544ddce464143204d10",
+        "d4ac3604ddcd7a2f85f47e069e7bd4c1c2f9a14934ab6d92e554bc3992eee01f",
+        "f869f4018647bf9e2fc0f9dc72a3ca6bd34be5b43eb6dce2f12f116aba23e9e6"
+      ],
+      "hmmm_tail": "- Dialect coverage drifts as warehouses evolve; no pinned version matrix yet.\n- Advisory skill — no runner ships; whether example queries should become tested fixtures is open.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+    },
+    "statistical-analysis": {
+      "fenced_and_table_sha256": [
+        "0f24a046905f0df254a44e39291020832eea37e3554d4d5420c49bf16a429e87",
+        "4f662f694f6349d468bffeaf39ac2667fcb5c60c4878a6d8856948faac3c77fe",
+        "686f85fcbb6559c6edc1937067cfc920a63191dbacf38ad944e6f9d18d043004",
+        "68e55c87430fb04c4d7d200a3e495bcd86399510e386f9a88f64c5c7a32e814b",
+        "891626b6541e71d2e98f5600dbf3b825315651724f517b7a0a65dabe1050f204",
+        "a7889a7be223f11f3e2f1a8e40a0b82c979556d7c7f791696d64da9949a2d2fe",
+        "dcd666572827a2fb7e840c68ba3ab2ba8217dba97952e58269824d28ea5ff007",
+        "f5d7965132ba72e7559ccf10de453e36a485f746f8d3bdb929306122195d5dc4"
+      ],
+      "hmmm_tail": "- No stance yet on Bayesian vs frequentist framing for org analyses.\n- Whether standard fixtures (known-answer datasets) should validate each method is open.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+    },
+    "explore-data": {
+      "fenced_and_table_sha256": [
+        "0c85cc597160f6208cbf379567b4bb16d2c00216726d6d11240a9145a9a6d0b3",
+        "1b3498010fe1436fdc1e2d82799fa0f2a85e906bf58ecbd4d53e7f66d0cf826e",
+        "3dc39b3d03f9786fa66156437a83542da8f9759d3a53eb38c9524e9a9648ba60",
+        "429c45852c771a6a6a92560ae224bd4a5f4141a63f7cd8ea7819c856be1c4854",
+        "6329118c95fbcd80f3b1bccd5745f92fcb9d9ffb34e38ae91959ebe8b0128f37",
+        "ce67d8b2dbedc38d6c61256b3c7937756d1eeeaad032735f838f5f99a780e3eb",
+        "d56709a114e3617c5dd0e66a817969fe61732f26f56093612922222083b341fd",
+        "dea5bf3a1cd117671a4a77709de82e72afa1c49e34b42622eac536624a6ff9bc",
+        "fceb5e970b3c78c8fb420b672823781978db4ea4421a22409ae47ea906798ae1"
+      ],
+      "hmmm_tail": "- Sample-size thresholds for when profiling may subsample large tables are unstated.\n- No decision on emitting a machine-readable profile artifact vs prose summary.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+    },
+    "validate-data": {
+      "fenced_and_table_sha256": [
+        "27951cc7c977909221b57ab7ff2e46e46ad656ed22abffdc1a79f2e25760ecba",
+        "2bfb467360364e2de64b85d9f86350612eefe44c62537b3c90a87eea2a2091fd",
+        "2ca51c5ebf639d092d13a93b727937260264ff84aaee08f53b915afdeb431cb3",
+        "32ad6c6c16422e286e4b64d727710b5f2d37d52828a7e7c66109e5f410c0b68b",
+        "70e47a905422773ab6a96b23528dfe14ae3d22eed7aa1c6415cedd61c4f527c5",
+        "a70a225bf1596b96389804a4e655ff5ec528902b736d3e290593f790db0c3fa0",
+        "a7e413548c77a97dcff5e7c2aa766487761a1a0a4d058d5e2e0d5787d782979a",
+        "a847a044bbf9c4779d11c47eaeeef0e6e75370ca4a7dc8d496a2f47c4ab0081d",
+        "ebbd816fda73be3875dbe1d65915e3e63f39a10f01cdfe1d70b3f7b376dcf34f"
+      ],
+      "hmmm_tail": "- Severity taxonomy for findings (blocker vs caveat) is not yet standardized.\n- Relation to test-build CONTRACTS blocks for recurring analyses is unexplored.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+    },
+    "data-visualization": {
+      "fenced_and_table_sha256": [
+        "0e97fbe901e442839e1cfc598728b2e23378b5720e89a08a1115c570634c1c4b",
+        "15cf47dfd2fc47f3da5500045b79c2dccd3aeda986623adfdad5f115f4987340",
+        "38c381e43d032daaa91cc06637cabfb7d5507f4c1cbfb30afca84ddf609a6e9f",
+        "3e5a9fc097a2cc2fe8b1970dfec75cf549779cd1d1b9d438f22fedeb58322420",
+        "63e819723bd1a4f4bf6b75174aaca7b091af1f1b16ba9c10a785c1be88617447",
+        "7d69fb20f9fd66c05895df43a2319102b2d15344754017ebd353bdf31d4c4b91",
+        "88ac497cf82e074ddf4661b1face0869b55efc2e7eb17f0acfbb77e30c6955cf",
+        "88d22db34d67d14f3aa27c2296f51f3c9f69a719ab3e3fc6d62eb2e67cf26d80",
+        "9d81b73cf502f8e287695950294c4cd268cde4d5efd6796588cae74e37a9bc27",
+        "b3ac2070ffab51fe8600c5a95fb7b49ced5f447d31610547f5acc79687d61cb5",
+        "c65499a7b57a8272413104a4ee015443cfe43d310e599460d943ad3f39643ac1",
+        "d207beda0f16ecb07ea181cb68e8a12f1430408ca70c315d612841574db7b2ac"
+      ],
+      "hmmm_tail": "- Image-level protan/deutan/tritan simulation is intentionally not claimed by the stdlib audit; rendered-artifact perceptual review remains a separate tool/human gate.\n- Exact project brand palettes may override default hues while preserving the shared grammar and publication gates.\n- Whether image-generation workflows should emit a sidecar design manifest automatically is unresolved.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+    }
+  }
+}

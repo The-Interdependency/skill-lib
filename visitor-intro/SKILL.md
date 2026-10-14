@@ -1,35 +1,10 @@
 ---
 name: visitor-intro
-description: Onboarding tour for visitors arriving at any The-Interdependency repo. Load this when an unfamiliar user asks "what is this?", "what is The Interdependency?", "how do these repos fit together?", "where do I start?", or otherwise signals they are new to the org. Gives the agent a consistent, repo-aware way to orient a newcomer without inventing facts.
+description: Onboarding tour for visitors arriving at any The-Interdependency repo. Load this when an unfamiliar user asks "what is this?", "what is The Interdependency?", "how do these repos fit together?", "where do I start?", or otherwise signals they are new to the org. Gives the agent a consistent, repo-aware way to orient a newcomer without inventing facts. Also load for a pre-task repository overview, a visitor evaluating or auditing the org, or cross-repository work where a newcomer lacks the repo map. Do not load for in-task work by an existing contributor; this is onboarding, not doctrine reference.
 ---
 
-# visitor-intro — Orienting newcomers to The Interdependency
 
-This skill exists because visitors land at one repo at a time. A
-contributor who clones `a0` sees an agent platform; one who clones
-`ucns` sees number theory; one who clones `PCEA` sees an encryption
-algorithm. Without a shared frame, each landing looks like a separate
-project. It isn't — they're parts of one organization-level system.
-
-The goal of this skill is to let any agent give a coherent, brief,
-honest tour from wherever the visitor happens to be, then point them at
-the canonical entry points so they can read the org's own words rather
-than the agent's paraphrase.
-
-## When to load
-
-Load this skill when any of the following are true:
-
-- The visitor explicitly asks "what is this", "what is The
-  Interdependency", "how do these repos relate", "where do I start".
-- The visitor has cloned or opened a repo and asks for an overview
-  before doing any task.
-- The visitor mentions they are new, evaluating, or auditing the org.
-- A task touches more than one repo and the visitor seems unaware that
-  the other repo exists or what it does.
-
-Do not load this skill for in-task work by an existing contributor.
-This is an onboarding skill, not a doctrine reference.
+Start the tour from the visitor's landing repository and link to canonical entry points.
 
 ## Doctrine
 

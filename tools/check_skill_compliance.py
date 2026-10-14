@@ -1,10 +1,12 @@
-# ratios: loc_comments=91:6 imports_exports=8:9 calls_definitions=44:9
+# ratios: loc_comments=111:12 imports_exports=8:10 calls_definitions=53:12
 """Check baseline SKILL.md compliance for skill-lib.
 
 This checker intentionally enforces only repo-wide invariants that are already
 canon in AGENTS.md and skill-build/SKILL.md. It reports softer section-shape
 recommendations as warnings so historical skills can be normalized family by
 family without doctrinal churn.
+
+Usage: python tools/check_skill_compliance.py --warnings-fail
 """
 
 from __future__ import annotations
@@ -57,10 +59,40 @@ def frontmatter_text(text: str) -> str:
     return match.group("body") if match else ""
 
 
+def _heading_names(text: str) -> Iterable[str]:
+    """Yield ATX level-two names outside recognized fences.
+
+    Accept zero to three spaces, space/tab separators and optional closing hashes.
+    This lexical scan does not parse Markdown HTML blocks or container nesting.
+    """
+    fence = ""
+    for line in text.splitlines():
+        marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+        if marker:
+            token, suffix = marker.groups()
+            if not fence:
+                if token[0] == "~" or "`" not in suffix:
+                    fence = token
+            elif token[0] == fence[0] and len(token) >= len(fence) and not suffix.strip(" \t"):
+                fence = ""
+            continue
+        heading = re.match(r"^ {0,3}##[ \t]+(.*)$", line)
+        if not fence and heading:
+            yield re.sub(r"[ \t]+#+[ \t]*$", "", heading.group(1)).strip(" \t").lower()
+
+
+def _matches_heading(heading: str, name: str) -> bool:
+    wanted = name.lower()
+    return heading == wanted or heading.startswith(f"{wanted}:")
+
+
 def has_heading(text: str, *names: str) -> bool:
-    headings = {line.strip().lower() for line in text.splitlines() if line.startswith("## ")}
-    wanted = [f"## {name}".lower() for name in names]
-    return any(any(heading == item or heading.startswith(f"{item}:") for heading in headings) for item in wanted)
+    return any(_matches_heading(heading, name) for heading in _heading_names(text) for name in names)
+
+
+def workflow_count(text: str) -> int:
+    """Count plain or titled workflow headings using the same presence rules."""
+    return sum(_matches_heading(heading, "workflow") for heading in _heading_names(text))
 
 
 def check_skill(path: Path, indexed: dict[str, dict]) -> list[Finding]:
@@ -69,6 +101,9 @@ def check_skill(path: Path, indexed: dict[str, dict]) -> list[Finding]:
     fm = frontmatter(text)
     fm_text = frontmatter_text(text)
     findings: list[Finding] = []
+
+    if workflow_count(text) > 1:
+        findings.append(Finding("error", name, "duplicate_workflow", "consolidate competing Workflow sections; preserve distinct obligations at their execution points"))
 
     if fm.get("name") != name:
         findings.append(Finding("error", name, "frontmatter_name", f"frontmatter name must be {name!r}"))
@@ -132,4 +167,4 @@ def main(argv: Iterable[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-# ratios: loc_comments=91:6 imports_exports=8:9 calls_definitions=44:9
+# ratios: loc_comments=111:12 imports_exports=8:10 calls_definitions=53:12

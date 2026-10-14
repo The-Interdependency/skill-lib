@@ -5,9 +5,6 @@ description: Private VM control-plane skill for giving an AI/MCP client SSH-like
 
 # vm-mcp — private VM control plane
 
-`vm-mcp` gives an MCP-capable agent operational contact with a private VM while
-keeping SSH keys and cloud login credentials outside model context.
-
 The transport invariant remains:
 
 ```text
@@ -15,9 +12,6 @@ human/bootstrap path: SSH / Google OS Login / IAP
 model path:           MCP -> authenticated private tunnel -> bearer-authenticated loopback vm-mcp
 credential boundary: SSH/cloud credentials stay outside model context
 ```
-
-The runtime now supports three explicit authority profiles rather than treating
-minimal capability as the only safe shape.
 
 ## Profiles
 

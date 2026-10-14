@@ -1,4 +1,4 @@
-"""Contract tests for personal-console user/root execution separation."""
+"""Broker regressions: PYTHONPATH=vm-mcp python -m unittest discover -s vm-mcp/tests."""
 from __future__ import annotations
 
 # === CHECKS ===
@@ -27,6 +27,8 @@ from __future__ import annotations
 #   cleanup: none
 # === END CHECKS ===
 
+import os
+import tempfile
 import pwd
 import unittest
 from pathlib import Path
@@ -36,6 +38,31 @@ import admin_broker
 
 
 class VmMcpAdminBrokerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        state = tempfile.TemporaryDirectory()
+        self.addCleanup(state.cleanup)
+        self.marker = str(Path(state.name) / "first-use")
+        override = patch.dict(os.environ, {"VM_MCP_FIRST_USE_MARKER": self.marker})
+        override.start()
+        self.addCleanup(override.stop)
+
+    def test_completed_command_survives_marker_io_failure(self) -> None:
+        for failure in ("write", "close"):
+            with self.subTest(failure=failure), \
+                 patch("admin_broker.os.geteuid", return_value=0), \
+                 patch("admin_broker.subprocess.Popen") as popen, \
+                 patch("admin_broker._communicate_bounded", return_value=(b"done", b"", False, False, False)), \
+                 patch("first_use.os.open", return_value=123), \
+                 patch("first_use.os.write", side_effect=OSError("full") if failure == "write" else None), \
+                 patch("first_use.os.close", side_effect=OSError("close") if failure == "close" else None):
+                popen.return_value.returncode = 0
+                result = admin_broker.execute_request({"mode": "admin", "command": "true", "cwd": "/"})
+            self.assertTrue(result["ok"])
+            self.assertEqual(0, result["exit_code"])
+            self.assertEqual("done", result["stdout"])
+            self.assertFalse(result["first_use_install"])
+            popen.assert_called_once()
+
     def test_user_mode_rejects_root(self) -> None:
         with self.assertRaises(ValueError):
             admin_broker._account_for_request("user", "root")

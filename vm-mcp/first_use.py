@@ -1,12 +1,32 @@
-# ratios: loc_comments=70:10 imports_exports=6:4 calls_definitions=21:8
+# ratios: loc_comments=80:36 imports_exports=6:4 calls_definitions=23:8
 """First-use context for the profile's privileged tool (standard library only).
 
 Usage: the broker calls ``claim_install_marker()`` once per privileged request; the
 server wraps its result with ``with_notice()`` so the calling agent sees
-``SCOPE_NOTICE`` on its first successful authenticated call per client, and on the
-first call ever made on this install. Never raises; a failure only skips the notice.
+``SCOPE_NOTICE`` on its first successful authenticated call per session, and on the
+first call ever made on this install. Stateless calls always receive the notice:
+User-Agent is not a client identity. Marker I/O errors never change command results.
+Tests must set VM_MCP_FIRST_USE_MARKER to a disposable path, never production state.
 """
 from __future__ import annotations
+
+# === MODULE_BUILD ===
+# id: vm_mcp_first_use_context
+#   module_name: first_use
+#   module_kind: adapter
+#   summary: add non-blocking root-scope context to successful authenticated administrative results
+#   owner: skill-lib vm-mcp maintainers
+#   public_surface: SCOPE_NOTICE, claim_install_marker, with_notice, ClientKeyMiddleware
+#   internal_surface: FirstUseContext, CLIENT_KEY, INSTALL_FLAG
+#   auth_boundary: none
+#   storage_boundary: write
+#   network_boundary: internal
+#   user_data_boundary: none
+#   admin_only: false
+#   tests: vm-mcp/tests/test_first_use.py, vm-mcp/tests/test_admin_broker.py
+#   rollout: installer copies module; authenticated server wraps admin_exec; root broker claims /var/lib/vm-mcp-admin/first-use with 0600 under 0700 StateDirectory
+#   rollback: revert server and broker notice call sites and installer copy; retained marker is inert; operator may remove it separately to reset first-use state
+# === END MODULE_BUILD ===
 
 import contextvars
 import os
@@ -30,11 +50,16 @@ DEFAULT_MARKER = "/var/lib/vm-mcp-admin/first-use"
 NOTICE_KEY = "context_notice"
 INSTALL_FLAG = "first_use_install"
 
-CLIENT_KEY: contextvars.ContextVar[str] = contextvars.ContextVar("vm_mcp_client_key", default="default")
+CLIENT_KEY: contextvars.ContextVar[str | None] = contextvars.ContextVar("vm_mcp_client_key", default=None)
 
 
 def claim_install_marker(path: str | None = None) -> bool:
-    """Atomically create the root-only once-per-install marker; True only the first time."""
+    """Claim a private marker without turning completed commands into failures.
+
+    An I/O failure leaves any created reservation in place: do not race another
+    caller by unlinking or retrying close on a potentially reused descriptor.
+    Session/stateless notices remain available even if install marking fails.
+    """
     target = path or os.environ.get(MARKER_ENV) or DEFAULT_MARKER
     try:
         os.makedirs(os.path.dirname(target), mode=0o700, exist_ok=True)
@@ -43,11 +68,18 @@ def claim_install_marker(path: str | None = None) -> bool:
         return False
     except OSError:
         return False
+    claimed = False
     try:
-        os.write(fd, f"{int(time.time())}\n".encode())
+        payload = f"{int(time.time())}\n".encode()
+        claimed = os.write(fd, payload) == len(payload)
+    except OSError:
+        pass
     finally:
-        os.close(fd)
-    return True
+        try:
+            os.close(fd)
+        except OSError:
+            claimed = False
+    return claimed
 
 
 class FirstUseContext:
@@ -57,7 +89,9 @@ class FirstUseContext:
         self._lock = threading.Lock()
         self._seen: set[str] = set()
 
-    def should_notify(self, key: str) -> bool:
+    def should_notify(self, key: str | None) -> bool:
+        if key is None:
+            return True
         with self._lock:
             if key in self._seen:
                 return False
@@ -80,7 +114,11 @@ def with_notice(result: dict[str, Any], tracker: FirstUseContext, key: str | Non
 
 
 class ClientKeyMiddleware:
-    """ASGI wrapper: derive a stable client key from request headers for the notice."""
+    """Use a bounded session ID for advisory deduplication, never authorization.
+
+    Stateless or oversized IDs have no reliable client identity and therefore
+    receive a notice on every successful admin call without growing the tracker.
+    """
 
     def __init__(self, app: Any) -> None:
         self.app = app
@@ -88,12 +126,13 @@ class ClientKeyMiddleware:
     async def __call__(self, scope: dict[str, Any], receive: Any, send: Any) -> None:
         if scope.get("type") == "http":
             headers = {k.lower(): v for k, v in scope.get("headers", [])}
-            raw = headers.get(b"mcp-session-id") or headers.get(b"user-agent") or b"default"
-            token = CLIENT_KEY.set(raw.decode("latin-1")[:256])
+            raw = headers.get(b"mcp-session-id")
+            key = raw.decode("latin-1") if raw and len(raw) <= 256 else None
+            token = CLIENT_KEY.set(key)
             try:
                 await self.app(scope, receive, send)
             finally:
                 CLIENT_KEY.reset(token)
             return
         await self.app(scope, receive, send)
-# ratios: loc_comments=70:10 imports_exports=6:4 calls_definitions=21:8
+# ratios: loc_comments=80:36 imports_exports=6:4 calls_definitions=23:8

@@ -11,7 +11,7 @@ AI-assistant guidance for `The-Interdependency/skill-lib`.
 - Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
 - CI workflows: `.github/workflows/hygiene.yml` guards against tracked Python bytecode, `.github/workflows/ci.yml` runs the editorial/helper verification stack, and `.github/workflows/consumer-drift.yml` is a scheduled/dispatch detector that runs `tools/check_consumer_drift.py` against each consumer repo (the consumer repos are public, so it uses the default `GITHUB_TOKEN`).
 - Validation here is editorial plus pure-stdlib helper scripts in `tools/`, `ratios/`, `llms/`, and the RepoLOTO check module.
-- `tools/ai.sh` is the canonical Termux-side SSH/tmux launcher for the `a0` VM; `tools/install_ai.sh` installs `ai.sh` into the caller PATH (Termux `$PREFIX/bin`, otherwise `~/.local/bin`).
+- `tools/ai.sh` is the canonical Termux-side SSH/tmux launcher for the `a0` VM. `tools/work.sh` adds a parent menu with Ubuntu-hosted Google Cloud access; `tools/install_ai.sh` installs both commands as canonical-source symlinks (Termux `$PREFIX/bin`, otherwise `~/.local/bin`). See [tools/WORK.md](tools/WORK.md) for usage, updates, and rollback.
 - The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
 
 ## Layout

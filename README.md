@@ -144,23 +144,27 @@ python tools/build_codex_plugin_skills.py --apply
 python tools/build_codex_plugin_skills.py --check
 ```
 
-## VM coding-agent launcher
+## VM and Google Cloud launchers
 
 The canonical `ai.sh` launcher lives at `tools/ai.sh`. It runs on Termux,
 reaches the `a0` VM through the SSH host alias `a0`, and manages the remote
-`a0` tmux session. Install it into the caller PATH without copying the
-implementation:
+`a0` tmux session. The parent `tools/work.sh` adds Ubuntu-hosted Google Cloud
+access without changing that AI route. Install both commands into the caller
+PATH without copying their implementations:
 
 ```bash
 bash tools/install_ai.sh
 ```
 
-On Termux the installer symlinks `ai.sh` into `$PREFIX/bin`; elsewhere it falls
-back to `~/.local/bin/ai.sh`. `ai.sh status` reports remote pane state,
+On Termux the installer symlinks `ai.sh` and `work.sh` into `$PREFIX/bin`;
+elsewhere it falls back to `~/.local/bin`. `ai.sh status` reports remote pane state,
 `ai.sh restart deepcode` repairs a missing/dead DeepCode window, and pane output
 persists on the VM under `~/.local/state/a0/logs`. `ai.sh keys` only propagates
 already-present VM login-environment keys into tmux and reports
 `present`/`missing`, never values.
+
+Run `work.sh` for the combined menu, or `work.sh cloud` for Google Cloud Shell
+through Ubuntu. See [launcher usage and repository-managed updates](tools/WORK.md).
 
 ## Maintenance tools
 

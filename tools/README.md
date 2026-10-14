@@ -21,7 +21,7 @@ Stack = active language-gonol construction research
 EDCM  = measurement/evaluation only
 ```
 
-## Canonical `ai.sh` launcher
+## Canonical `ai.sh` and `work.sh` launchers
 
 `tools/ai.sh` is the canonical Termux-side launcher for the coding-agent CLIs on
 the `a0` VM. It uses the SSH host alias `a0` and owns the remote tmux session
@@ -29,20 +29,27 @@ layout (`0:shell`, `1:grok`, `2:codex`, `3:deepcode`), real pane/process status,
 explicit restart, `remain-on-exit`, and persistent VM logs under
 `~/.local/state/a0/logs`.
 
-Install the stable `ai.sh` command into the caller PATH:
+`tools/work.sh` is the parent menu for that unchanged AI route and Google Cloud
+CLI inside Ubuntu. See [WORK.md](WORK.md) for prerequisites, repository-managed
+updates, failure handling, and rollback.
+
+Install both stable commands into the caller PATH:
 
 ```bash
 bash tools/install_ai.sh
 ```
 
-On Termux the installer symlinks the canonical source to `$PREFIX/bin/ai.sh`,
-which is already on PATH. Elsewhere it uses `~/.local/bin/ai.sh` and adds one
-idempotent login-shell PATH line only when required. No second launcher
-implementation is copied.
+On Termux the installer symlinks both canonical sources into `$PREFIX/bin`,
+which is already on PATH. Elsewhere it uses `~/.local/bin` and adds one
+idempotent login-shell PATH line only when required. No independent launcher
+copies are installed; repository updates flow through the links.
 
 Examples:
 
 ```bash
+work.sh
+work.sh cloud
+work.sh ai status
 ai.sh
 ai.sh status
 ai.sh restart deepcode

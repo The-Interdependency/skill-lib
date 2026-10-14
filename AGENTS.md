@@ -53,7 +53,8 @@ Read [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) before any compute
 <skill-name>/<helpers>...      # optional: parsers, executors, examples
 llms/                          # stdlib module for python -m llms.build
 tools/ai.sh                    # canonical Termux -> a0 SSH/tmux coding-agent launcher
-tools/install_ai.sh            # installs ai.sh into caller PATH (Termux $PREFIX/bin first)
+tools/work.sh                  # parent menu: canonical ai.sh + Ubuntu Google Cloud
+tools/install_ai.sh            # installs ai.sh and work.sh into caller PATH (Termux $PREFIX/bin first)
 ```
 
 Every skill is a directory at the repo root containing at least a
@@ -204,4 +205,5 @@ propagate from here.
 - Each `<skill>/SKILL.md` — the authoritative skill spec.
 - `llms/build.py` — reference runner for `llms-build`.
 - `tools/ai.sh` — canonical Termux-side launcher for the remote `a0` tmux coding-agent session.
-- `tools/install_ai.sh` — installs `ai.sh` into caller PATH, preferring Termux `$PREFIX/bin`.
+- `tools/install_ai.sh` — installs canonical `ai.sh` and `work.sh` symlinks into caller PATH, preferring Termux `$PREFIX/bin`.
+- `tools/work.sh` — combined AI / Ubuntu Google Cloud menu; [tools/WORK.md](tools/WORK.md) owns usage, updates, and rollback.

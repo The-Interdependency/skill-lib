@@ -314,8 +314,9 @@
     },
     "website-builder-journal": {
       "fenced_and_table_sha256": [
-        "0b52d730c67f68583d90921ff4cde6f7231e0e71778761a742df85e32b4ddf05",
-        "cd9679cde75f94158609023e777b4c297182600101d1c4baf903d4cbb29b44aa"
+        "3619561a12e3506d3a320c0757a8978a9ba3c08370bdf161e639db34b2eac50c",
+        "4bdd3a9bd74adb8374c7cefa9929f8512520ef8a784d2b97fa6ee7bee01341fb",
+        "785b38f2045d55bb7664fb3dbd08164749ee4cbda687f2fef0870f2a7511c169"
       ],
       "hmmm_tail": "The first published builder entry predates the date/time/exact-model contract. It remains intentionally unchanged because append-only history outranks retroactive schema neatness."
     },

@@ -241,7 +241,7 @@ Before modifying any file in `The-Interdependency/The-Interdependency.github.io`
 .agents/skills/website-builder-journal/SKILL.md
 ```
 
-Every website change transaction must append at least one new `By the builder` record containing date, time, and exact runtime model. The model chooses the subject and stops when it has properly explicated it. The journal append satisfies the transaction and does not recursively require another append.
+Every website change transaction must append at least one new `By the builder` record containing date, time, and model provenance per `website-builder-journal/SKILL.md`. The model chooses the subject and stops when it has properly explicated it. The journal append satisfies the transaction and does not recursively require another append.
 
 Before creating a new module, route, service, adapter, schema, worker,
 engine, UI panel, migration, or experiment, agents should read:

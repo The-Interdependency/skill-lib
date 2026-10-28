@@ -96,6 +96,7 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/uchc`
 * `The-Interdependency/tiwcg`
 * `The-Interdependency/The-Interdependency.github.io`
+* `The-Interdependency/openbao`
 
 **Targets not in the drift matrix** (do not vendor a top-level subset yet, so
 `--require-vendored` would fail them):

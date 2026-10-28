@@ -754,8 +754,8 @@ def collect(
             })
             continue
         block_text = _block_source_text(relative_path, text)
-        if include_native and relative_path.suffix.lower() in {".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".mts", ".cts", ".rs", ".java", ".c", ".cpp", ".cc", ".cxx", ".hpp", ".hxx", ".h"}:
-            comments_available = any(f['kind'] == 'comment' and f['extraction']['reader_id'] in {'typescript-compiler', 'native-grammars'} for f in file_facts)
+        if include_native and relative_path.suffix.lower() in {".go", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".mts", ".cts", ".rs", ".java", ".c", ".cpp", ".cc", ".cxx", ".hpp", ".hxx", ".h"}:
+            comments_available = any(f['kind'] == 'comment' and f['extraction']['reader_id'] in {'go-tree-sitter', 'typescript-compiler', 'native-grammars'} for f in file_facts)
             if not comments_available and file_statuses & {'unsupported', 'ambiguous', 'invalid'}:
                 candidates = []
                 for candidate_block in block_names:
@@ -769,7 +769,7 @@ def collect(
                         'reader_id': 'msdmd-block'})
             lines = [""] * len(text.split("\n"))
             for fact in file_facts:
-                if fact["kind"] == "comment" and fact["extraction"]["reader_id"] in {"typescript-compiler", "native-grammars"}:
+                if fact["kind"] == "comment" and fact["extraction"]["reader_id"] in {"go-tree-sitter", "typescript-compiler", "native-grammars"}:
                     for offset, line in enumerate(fact["native"]["value"]["text"].split("\n")):
                         index = fact["source"]["location"]["start_line"] - 1 + offset
                         if index < len(lines):

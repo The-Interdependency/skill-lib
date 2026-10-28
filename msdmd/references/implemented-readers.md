@@ -6,12 +6,21 @@ standards. `msdmd/readers.py` owns executable selection and machine manifests;
 these readers through the default schema-2 collector. No MSDMD redeclaration is
 required. Pin dependencies from `msdmd/requirements.txt` and `package-lock.json`.
 
+The shared tree-sitter runtime is pinned to 0.25.2. Version 0.26.0 crashed in
+native node traversal during the OpenBao source trial despite passing small
+fixtures; the Go suite includes a subprocess traversal regression.
+The pinned Go grammar does not fully accept `new(expression)` forms introduced
+in [Go 1.26](https://go.dev/doc/go1.26#language). A grammar diagnostic limits
+extraction; it is not evidence that the program fails to compile.
+
 | Owning convention | Implemented extraction | Explicit limit |
 |---|---|---|
 | Python AST/tokenize, PEP 257 | Qualified symbols, signatures, decorators, structurally attached comments/docstrings, imports, literal `__all__`, SPDX headers | Running Python grammar; no target import, call graph, dynamic exports or rename inference |
 | ReST/Sphinx, Google and NumPy docstrings | Structured parameters/returns/raises and descriptive fields with raw text, using docstring-parser 0.18.0 | Parser-supported dialect fields; ambiguous/custom constructs retain source and diagnostics |
 | JavaScript/TypeScript/JSDoc | TypeScript 5.8.3 AST, nested declarations, multiline signatures, static imports/exports, compiler-attached repeated documentation tags, actual comments | No target config, module resolution, decorators or runtime execution; full TSDoc validation not claimed |
 | Rustdoc / Java Javadoc / C and C++ Doxygen source | Pinned tree-sitter grammar declarations, lexical scope, attached raw docs and repeated tags, source attributes/imports, SPDX | Grammar subsets, not compiler semantics. Macros/conditional compilation unresolved. `.h` is ambiguous, not guessed |
+| Go source / doc comments | tree-sitter-go 0.25.0 declarations, receiver-qualified methods, declaration groups, actual comment attachment, import and struct-tag literals, inert build/generation directives, SPDX | No type checking, build selection, import resolution, rendered Go documentation, struct-tag interpretation or target execution |
+| Go module / workspace / checksum files | Ordered go.mod and go.work directive tokens, package identity, direct/indirect requirements, replacements, workspace members, go.sum h1 rows | No module-path/version validation, resolution, download or checksum verification. Unknown directives remain unsupported; multiline string tokens are outside this subset |
 | JSON / TOML | Complete typed document tree; duplicate/nonfinite JSON rejection; TOML dates/times explicitly tagged | Syntax preservation is not domain-schema validation |
 | YAML / Markdown frontmatter | Maintained PyYAML syntax parser, explicit YAML 1.2 core resolution, nested/flow structures, block strings, bounded acyclic aliases; typed scalar-key maps tagged for JSON | No custom tags, cycles, merge-key dialect or complex keys; errors remain visible |
 | Python / npm / Cargo manifests | Package identity, dependency classes, Cargo conditional dependencies, raw owning trees | No installation, resolution or scripts; Python imports are not calls |
@@ -50,6 +59,7 @@ Resource limits are declared before extraction; all excluded scope is reported.
 
 ```bash
 python -m unittest tests.test_native_collection tests.test_native_standards
+python -m unittest tests.test_go_metadata
 python -m unittest tests.test_module_projection tests.test_collect tests.test_visualize
 python -m msdmd.collect --root . --repo The-Interdependency/skill-lib \
   --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check

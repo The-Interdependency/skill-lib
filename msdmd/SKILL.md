@@ -26,7 +26,8 @@ facts and supplemental blocks in `collection.ts`. The registry in `readers.py`
 declares each shipped extraction subset. Python uses the same syntax-aware
 attachment implementation as `module_projection.py`; TypeScript uses its compiler
 API; Rust, Java, C and C++ use pinned syntax grammars. Structured standards feed
-this same collector, not separate disconnected reports. See the executable
+this same collector, as do the pinned Go grammar and static Go module readers.
+These are integrated readers, not separate disconnected reports. See the executable
 [reader support matrix](references/implemented-readers.md) before asserting coverage.
 
 Install the declared parser runtimes once:

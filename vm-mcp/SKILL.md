@@ -182,6 +182,17 @@ Personal-console is intentionally high authority. Anyone able to invoke
 when that authority matches the owner's intent and the MCP transport/account is
 private and controlled by that owner.
 
+## Provider credentials
+
+For OpenBao installation, provider-key migration, CLI launch, rotation, or recovery,
+read [OPENBAO.md](OPENBAO.md) and use its shipped `openbao/` helpers. Keep vault
+administration distinct from MCP caller authentication: preserve this skill's
+root-only token-file/stdin boundary and the independent human recovery route.
+Resolve actual host access before deployment; repository tests cannot establish
+live vault readiness. Fetch each provider key only for its selected process,
+remove legacy tmux propagation at cutover, and preserve same-UID/root exposure
+as an explicit limitation. Never request secret values in chat or tool arguments.
+
 ## Tools
 
 | Tool | read-only | workspace | personal-console | Boundary |

@@ -175,6 +175,16 @@ script continue.
   narrow named operation, not `sudo bash -c <model-or-user-text>`.
 - Never solve sudo prompting by forcing a PTY and piping a password.
 
+## VM provider-key launch
+
+For the canonical `tools/ai.sh` route, consume
+[the OpenBao VM contract](../vm-mcp/OPENBAO.md). SSH carries agent selection and
+commands; provider secrets are fetched on the VM. Do not restore login-shell-to-
+tmux key propagation. A successful tmux spawn is scheduling evidence: verify the
+selected CLI is ready separately. Preserve independent SSH recovery when the
+vault is sealed or unavailable, and keep migration/renewal credentials outside
+model context. `ai.sh keys` performs presence-safe retrieval/revocation checks.
+
 ## Remote command and data boundary
 
 OpenSSH remote command arguments are joined with spaces before sending one command

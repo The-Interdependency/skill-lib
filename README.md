@@ -159,9 +159,9 @@ bash tools/install_ai.sh
 On Termux the installer symlinks `ai.sh` and `work.sh` into `$PREFIX/bin`;
 elsewhere it falls back to `~/.local/bin`. `ai.sh status` reports remote pane state,
 `ai.sh restart deepcode` repairs a missing/dead DeepCode window, and pane output
-persists on the VM under `~/.local/state/a0/logs`. `ai.sh keys` only propagates
-already-present VM login-environment keys into tmux and reports
-`present`/`missing`, never values.
+persists on the VM under `~/.local/state/a0/logs`. `ai.sh keys` verifies provider-scoped OpenBao retrieval and temporary-token
+revocation without printing values. Provision the [VM vault](vm-mcp/OPENBAO.md)
+before updating the launcher; legacy tmux key propagation has been removed.
 
 Run `work.sh` for the combined menu, or `work.sh cloud` for Google Cloud Shell
 through Ubuntu. See [launcher usage and repository-managed updates](tools/WORK.md).

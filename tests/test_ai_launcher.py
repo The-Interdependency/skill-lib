@@ -18,9 +18,9 @@ class AILauncherTests(unittest.TestCase):
 
     def test_launcher_keeps_ratio_seals_as_literal_boundaries(self) -> None:
         lines = LAUNCHER.read_text(encoding="utf-8").splitlines()
-        self.assertEqual(lines[0], RATIO)
+        self.assertEqual(lines[0], "#!/usr/bin/env bash")
+        self.assertEqual(lines[1], RATIO)
         self.assertEqual(lines[-1], RATIO)
-        self.assertFalse(lines[0].startswith("#!"))
 
     def test_launcher_is_termux_side_remote_tmux_controller(self) -> None:
         text = LAUNCHER.read_text(encoding="utf-8")
@@ -57,21 +57,32 @@ class AILauncherTests(unittest.TestCase):
         self.assertIn('if [[ "$existed" == 0 || "$dead" == 1 ]]; then', text)
         self.assertIn('respawn "$name" "$command_line"', text)
 
-    def test_keys_only_propagate_existing_vm_environment_into_tmux(self) -> None:
+    def test_keys_use_vault_and_remove_legacy_tmux_values(self) -> None:
         text = LAUNCHER.read_text(encoding="utf-8")
-        for phrase in (
-            "OPENAI_API_KEY",
-            "XAI_API_KEY",
-            "DEEPSEEK_API_KEY",
-            "ANTHROPIC_API_KEY",
-            "printenv",
-            "tmux set-environment",
-            "present",
-            "missing",
-        ):
-            self.assertIn(phrase, text)
-        self.assertNotIn("read -s", text)
-        self.assertNotIn("KEY=", text)
+        self.assertIn('/opt/a0-openbao/launch.py', text)
+        self.assertIn('tmux set-environment -gu', text)
+        self.assertIn('tmux set-environment -r', text)
+        self.assertNotIn('printenv', text)
+        self.assertNotIn('sync_keys', text)
+
+    def test_aggregate_does_not_hide_pane_lookup_failure(self) -> None:
+        source = LAUNCHER.read_text().split('case "${1:-menu}" in')[0]
+        script = source + '\nwindow_exists() { return 0; }\nensure_window_shell() { return 0; }\npane_dead() { return 23; }\nif start_all; then exit 99; else exit "$?"; fi\n'
+        result = subprocess.run(["bash", "-c", script], capture_output=True)
+        self.assertEqual(result.returncode, 1)
+
+    def test_failed_preflight_never_respawns_existing_pane(self) -> None:
+        source = LAUNCHER.read_text().split('case "${1:-menu}" in')[0]
+        script = source + '\nremote() {\n  case "$1" in\n    *\'--check\'*) return 23 ;;\n    *\'respawn-pane\'*) echo WRONG ;;\n  esac\n  return 0\n}\nif respawn codex codex; then exit 99; else exit "$?"; fi\n'
+        result = subprocess.run(["bash", "-c", script], capture_output=True)
+        self.assertEqual(result.returncode, 23)
+        self.assertNotIn(b"WRONG", result.stdout)
+
+    def test_respawn_transport_failure_is_preserved(self) -> None:
+        source = LAUNCHER.read_text().split('case "${1:-menu}" in')[0]
+        script = source + '\nclear_legacy_keys() { return 0; }\nremote() { case "$1" in *respawn-pane*) return 24 ;; esac; return 0; }\nif respawn codex codex; then exit 99; else exit "$?"; fi\n'
+        result = subprocess.run(["bash", "-c", script], capture_output=True)
+        self.assertEqual(result.returncode, 24)
 
     def test_installer_places_ai_sh_on_termux_path_without_copying(self) -> None:
         text = INSTALLER.read_text(encoding="utf-8")

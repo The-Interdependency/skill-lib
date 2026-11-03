@@ -58,9 +58,11 @@ ai.sh codex
 ```
 
 Provider credentials remain the responsibility of the VM/provider CLIs.
-`ai.sh keys` only copies already-present VM login-environment values into the
-remote tmux environment so restarted CLIs can see them; it prints only
-`present`/`missing` and never stores or displays key values.
+`ai.sh keys` verifies OpenBao retrieval/revocation for each provider without
+printing keys. Launches use `/opt/a0-openbao/launch.py` on the VM; configure the
+[vault and scoped AppRoles](../vm-mcp/OPENBAO.md) before updating the phone launcher.
+The launcher clears legacy provider keys from tmux; existing processes need
+explicit restart after their work is checkpointed.
 
 ## Drift checker
 

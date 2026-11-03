@@ -574,6 +574,20 @@
       "decisions": [
         "Remove introductory topic list already expressed by frontmatter and section titles."
       ]
+    },
+    {
+      "name": "github-tests",
+      "path": "github-tests/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "reviewed-retained",
+      "before_words": 0,
+      "after_words": 1211,
+      "decisions": [
+        "New procedural skill: keep ordered audit work, gate rules, and evidence boundaries in separate semantic homes.",
+        "Keep current primary references external; reuse repo-audit-repair classifications and test-build ownership rather than duplicating schemas.",
+        "Preserve audit-only scope, archive exclusions, resource limits, and unresolved enforcement."
+      ]
     }
   ],
   "remaining_families": [],

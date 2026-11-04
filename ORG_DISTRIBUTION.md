@@ -62,6 +62,7 @@ dependency graphs fail; unrelated unvendored skills remain outside the subset.
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `wdll/` — executive job selection, state-transition scope, falsifiable completion, and strategic advancement for spawned work
 * `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification
+* `github-tests/` — behavioral tests and GitHub CI evidence, exact-revision audits, truthful gates, reproducibility, security, and resource cost
 * `skill-build/` — skill authoring, compliance, and individualized test-suite question workflow
 * `skill-usage/` — evidence-bearing local invocation counts and maturity designations
 * `ssh-automation/` — fail-closed SSH scripting and copy-paste automation doctrine

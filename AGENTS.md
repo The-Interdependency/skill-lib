@@ -85,7 +85,7 @@ When creating or revising any skill narrative, load `skill-build/SKILL.md` and a
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -184,6 +184,7 @@ propagate from here.
 - If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
 - If a spawn or newly-scoped unit of work must choose consequential work, define scope/completion, or advance through uncertainty, load `wdll/SKILL.md` before execution. It owns job selection and falsifiable completion; domain skills own their own doctrine.
 - If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
+- If you are designing or auditing test suites or GitHub test gates, load `github-tests/SKILL.md`. Trace actual execution and assertions, bind run evidence to exact revisions, preserve lifecycle exclusions, and distinguish product failures from blocked execution.
 - If you are giving an MCP-capable agent operational contact with a private VM,
   load `vm-mcp/SKILL.md`; keep credentials outside the model path and choose
   the authority profile explicitly. Shared or first-contact deployments should

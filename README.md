@@ -68,6 +68,7 @@ Narrative maintenance: see the [reviewed compression inventory and preservation 
 | [`action-calibration/`](action-calibration/SKILL.md) | Chooses the smallest decisive action versus the maximal coherent program, with complete cost vectors, three-outcome branching, frozen escalation rules, and explicit prerequisite/containment boundaries. Independent of msdmd. |
 | [`wdll/`](wdll/SKILL.md) | Executive task selection and falsifiable completion for spawned or newly-scoped work under uncertainty and constraint. Chooses the consequential job, bounds it by required state transition, and returns changed/proof/next/hmmm. Independent of msdmd. |
 | [`repo-audit-repair/`](repo-audit-repair/SKILL.md) | Evidence-led repository auditing and authorized repair from exact starting identity through classified findings, truthful gates, owning-layer fixes, and authoritative terminal verification. Independent of msdmd. |
+| [`github-tests/`](github-tests/SKILL.md) | Behavioral test strategy and GitHub CI audits: discovery, failure-sensitive assertions, exact run evidence, required gates, release artifacts, isolation, security, and resource cost. |
 | [`skill-build/`](skill-build/SKILL.md) | Skill authoring and compliance workflow. Guides agents through the question set for creating or revising skills, choosing metadata-block vs procedural shape, designing individualized test suites, and bringing existing skills into a shared compliance pattern. Independent of msdmd. |
 | [`skill-usage/`](skill-usage/SKILL.md) | Evidence-bearing local usage maturity. Counts material skill invocations, preserves unknown outcomes as `hmmm`, and separates nominal exposure from effective maturity across experimental, field-test, operational, reliable, and daily-use designations. Independent of msdmd. |
 | [`ssh-automation/`](ssh-automation/SKILL.md) | Fail-closed SSH scripting and terminal-delivery doctrine. Preserves endpoint identity, verified host trust, explicit authentication, local/remote shell boundaries, stdin and PTY semantics, bounded retries, idempotent activation and rollback, and child-shell containment for one-box Cloud Shell pastes. Independent of msdmd. |
@@ -290,10 +291,25 @@ and link it from the table above.
 
 ## Testing
 
-Run the stdlib editorial test suite after changing skills or parser files:
+Use Python 3.13, matching [CI](.github/workflows/ci.yml), for local collection
+generation and the test suite. Native Python facts record the
+interpreter's major/minor version, so another version produces collection drift.
+Install the reader and VM test dependencies before running the full suite:
 
 ```bash
+python3.13 -m venv ../skill-lib-venv
+. ../skill-lib-venv/bin/activate
+python -m pip install -r msdmd/requirements.txt -r vm-mcp/requirements.txt
+npm ci --ignore-scripts --prefix msdmd
 python -m unittest discover -s tests
+```
+
+After changing collection inputs, regenerate with the same interpreter, then
+check the stored output:
+
+```bash
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
 ```
 
 The suite checks skill/index consistency, skills.json semantics, per-skill

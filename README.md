@@ -291,10 +291,25 @@ and link it from the table above.
 
 ## Testing
 
-Run the stdlib editorial test suite after changing skills or parser files:
+Use Python 3.13, matching [CI](.github/workflows/ci.yml), for local collection
+generation and the test suite. Native Python facts record the
+interpreter's major/minor version, so another version produces collection drift.
+Install the reader and VM test dependencies before running the full suite:
 
 ```bash
+python3.13 -m venv ../skill-lib-venv
+. ../skill-lib-venv/bin/activate
+python -m pip install -r msdmd/requirements.txt -r vm-mcp/requirements.txt
+npm ci --ignore-scripts --prefix msdmd
 python -m unittest discover -s tests
+```
+
+After changing collection inputs, regenerate with the same interpreter, then
+check the stored output:
+
+```bash
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict
+python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
 ```
 
 The suite checks skill/index consistency, skills.json semantics, per-skill

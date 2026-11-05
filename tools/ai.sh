@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 set -euo pipefail
 
@@ -5,14 +6,14 @@ set -euo pipefail
 # id: skill_lib_ai_launcher
 #   module_name: ai
 #   module_kind: cli
-#   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, key propagation, and persistent remote pane logs
+#   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, OpenBao key retrieval, and persistent remote pane logs
 #   owner: skill-lib
 #   public_surface: ai.sh start|attach|status|restart|logs|keys|grok|codex|deepcode|shell
-#   internal_surface: remote bash quoting, tmux session/window lifecycle, key-to-tmux propagation
+#   internal_surface: remote bash quoting, tmux session/window lifecycle, provider-scoped OpenBao launch
 #   auth_boundary: SSH host alias and third-party CLIs own authentication; launcher never prints key values
 #   storage_boundary: remote pane logs under ~/.local/state/a0/logs; no secret persistence
 #   network_boundary: SSH to configured VM host only
-#   user_data_boundary: provider key values are only copied from the VM login environment into the VM tmux server environment
+#   user_data_boundary: provider keys enter only the selected CLI process through the VM OpenBao helper
 #   admin_only: false
 #   tests: tests/test_ai_launcher.py
 #   rollout: explicit install via tools/install_ai.sh
@@ -29,7 +30,7 @@ GROK_CMD="${A0_GROK_CMD:-grok}"
 CODEX_CMD="${A0_CODEX_CMD:-codex --yolo}"
 DEEPCODE_CMD="${A0_DEEPCODE_CMD:-deepcodei}"
 SHELL_CMD="${A0_SHELL_CMD:-exec \"\${SHELL:-/bin/bash}\" -l}"
-KEY_VARS="${A0_AI_KEY_VARS:-OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY}"
+VAULT_HELPER="/opt/a0-openbao/launch.py"
 
 usage() {
   cat <<'EOF'
@@ -42,7 +43,7 @@ commands:
   restart NAME          restart grok, codex, deepcode, shell, or all
   -restart NAME         compatibility alias for restart
   logs [NAME]           tail persistent remote pane log (default: deepcode)
-  keys                  propagate VM login-shell provider keys into tmux; print presence only
+  keys                  verify OpenBao retrieval per provider; print status only
   grok | -grok          ensure/select Grok and attach
   codex | -codex        ensure/select Codex and attach
   deepcode|-deepcode|-deepcodei
@@ -52,7 +53,7 @@ commands:
 
 configuration:
   A0_AI_HOST, A0_AI_SESSION, A0_GROK_CMD, A0_CODEX_CMD,
-  A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_KEY_VARS
+  A0_DEEPCODE_CMD, A0_SHELL_CMD
 EOF
 }
 
@@ -76,7 +77,7 @@ require_remote() {
 }
 
 session_exists() {
-  remote "tmux has-session -t $(q "$SESSION") 2>/dev/null"
+  remote "tmux has-session -t $(q "$SESSION") 2>/dev/null" || return
 }
 
 window_exists() {
@@ -86,38 +87,36 @@ window_exists() {
 
 pane_dead() {
   local name="$1"
-  remote "tmux display-message -p -t $(q "$SESSION:$name.0") '#{pane_dead}'"
+  remote "tmux display-message -p -t $(q "$SESSION:$name.0") '#{pane_dead}'" || return
 }
 
 pipe_log() {
   local name="$1" target="$SESSION:$1.0" command
   command="cat >> \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\""
-  remote "mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"; tmux pipe-pane -o -t $(q "$target") $(q "$command")"
+  remote "mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"; tmux pipe-pane -o -t $(q "$target") $(q "$command")" || return
 }
 
-sync_keys() {
-  session_exists || return 0
-  local script
-  script="for key in $KEY_VARS; do value=\"\$(printenv \"\$key\" 2>/dev/null || true)\"; if [[ -n \"\$value\" ]]; then tmux set-environment -t $(q "$SESSION") \"\$key\" \"\$value\"; fi; done"
-  remote "$script"
+clear_legacy_keys() {
+  remote "for key in OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY; do tmux set-environment -gu \"\$key\"; tmux set-environment -r -t $(q "$SESSION") \"\$key\"; done" || return
 }
 
 keys_status() {
-  ensure_session
-  sync_keys
-  local script
-  script="for key in $KEY_VARS; do if tmux show-environment -t $(q "$SESSION") \"\$key\" >/dev/null 2>&1; then printf '%-18s present\\n' \"\$key\"; else printf '%-18s missing\\n' \"\$key\"; fi; done"
-  remote "$script"
+  require_remote || return
+  local name result=0
+  for name in grok codex deepcode; do
+    remote "python3 -I $(q "$VAULT_HELPER") $name --check" || result=1
+  done
+  return "$result"
 }
 
 ensure_session() {
-  require_remote
+  require_remote || return
   if ! session_exists; then
-    remote "tmux new-session -d -s $(q "$SESSION") -n shell"
+    remote "tmux new-session -d -s $(q "$SESSION") -n shell" || return
   fi
-  remote "tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\""
+  remote "tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"" || return
   pipe_log shell || true
-  sync_keys || true
+  clear_legacy_keys || return
 }
 
 spec() {
@@ -132,9 +131,9 @@ spec() {
 
 ensure_window_shell() {
   local index="$1" name="$2"
-  ensure_session
+  ensure_session || return
   if window_exists "$name"; then
-    remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on"
+    remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on" || return
     pipe_log "$name" || true
     return 0
   fi
@@ -145,8 +144,8 @@ ensure_window_shell() {
     printf 'ERROR: expected window %s at index %s, but %s occupies it\n' "$name" "$index" "$occupied" >&2
     return 3
   fi
-  remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")"
-  remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on"
+  remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")" || return
+  remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on" || return
   pipe_log "$name" || true
 }
 
@@ -157,9 +156,10 @@ respawn() {
     printf 'ERROR: %s is not installed on %s\n' "$binary" "$HOST" >&2
     return 127
   fi
-  sync_keys || true
-  pane_command="exec bash -lc $(q "$command_line")"
-  remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
+  remote "python3 -I $(q "$VAULT_HELPER") $(q "$name") --check" || return
+  clear_legacy_keys || return
+  pane_command="exec python3 -I $(q "$VAULT_HELPER") $(q "$name") -- $(q "$command_line")"
+  remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")" || return
   pipe_log "$name" || true
 }
 
@@ -170,18 +170,21 @@ ensure_agent() {
   if window_exists "$name"; then
     existed=1
   fi
-  ensure_window_shell "$index" "$name"
-  dead="$(pane_dead "$name")"
+  ensure_window_shell "$index" "$name" || return
+  dead="$(pane_dead "$name")" || return
+  [[ "$dead" == 0 || "$dead" == 1 ]] || { printf 'ERROR: invalid pane state\n' >&2; return 1; }
   if [[ "$existed" == 0 || "$dead" == 1 ]]; then
-    respawn "$name" "$command_line"
+    respawn "$name" "$command_line" || return
   fi
 }
 
 start_all() {
-  ensure_window_shell 0 shell
-  ensure_agent grok || true
-  ensure_agent codex || true
-  ensure_agent deepcode || true
+  ensure_window_shell 0 shell || return
+  local result=0
+  ensure_agent grok || result=1
+  ensure_agent codex || result=1
+  ensure_agent deepcode || result=1
+  return "$result"
 }
 
 restart_one() {
@@ -191,14 +194,14 @@ restart_one() {
     return 2
   }
   IFS='|' read -r index name command_line <<<"$row"
-  ensure_window_shell "$index" "$name"
+  ensure_window_shell "$index" "$name" || return
   if [[ "$agent" == shell ]]; then
     local pane_command
     pane_command="exec bash -lc $(q "$command_line")"
-    remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
+    remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")" || return
     pipe_log "$name" || true
   else
-    respawn "$name" "$command_line"
+    respawn "$name" "$command_line" || return
   fi
 }
 
@@ -206,10 +209,12 @@ restart() {
   local target="${1:-all}"
   case "$target" in
     all)
-      restart_one shell || true
-      restart_one grok || true
-      restart_one codex || true
-      restart_one deepcode || true
+      local result=0
+      restart_one shell || result=1
+      restart_one grok || result=1
+      restart_one codex || result=1
+      restart_one deepcode || result=1
+      return "$result"
       ;;
     grok|codex|deepcode|shell) restart_one "$target" ;;
     *) printf 'ERROR: restart target must be grok, codex, deepcode, shell, or all\n' >&2; return 2 ;;
@@ -217,12 +222,12 @@ restart() {
 }
 
 status() {
-  require_remote
+  require_remote || return
   if ! session_exists; then
     printf 'session %-12s missing on %s\n' "$SESSION" "$HOST"
     return 1
   fi
-  remote "tmux list-panes -s -t $(q "$SESSION") -F '#{window_index}\\t#{window_name}\\tdead=#{pane_dead}\\tpid=#{pane_pid}\\tcommand=#{pane_current_command}' | sort -n"
+  remote "tmux list-panes -s -t $(q "$SESSION") -F '#{window_index}\\t#{window_name}\\tdead=#{pane_dead}\\tpid=#{pane_pid}\\tcommand=#{pane_current_command}' | sort -n" || return
 }
 
 attach_window() {
@@ -237,10 +242,11 @@ open_agent() {
   if window_exists "$name"; then
     existed=1
   fi
-  ensure_window_shell "$index" "$name"
-  dead="$(pane_dead "$name")"
+  ensure_window_shell "$index" "$name" || return
+  dead="$(pane_dead "$name")" || return
+  [[ "$dead" == 0 || "$dead" == 1 ]] || { printf 'ERROR: invalid pane state\n' >&2; return 1; }
   if [[ "$agent" != shell && ( "$existed" == 0 || "$dead" == 1 ) ]]; then
-    respawn "$name" "$command_line"
+    respawn "$name" "$command_line" || return
   fi
   attach_window "$name"
 }
@@ -248,12 +254,12 @@ open_agent() {
 logs() {
   local name="${1:-deepcode}"
   case "$name" in shell|grok|codex|deepcode) ;; *) printf 'ERROR: unknown log: %s\n' "$name" >&2; return 2 ;; esac
-  ensure_session
-  remote "file=\"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; if [[ -f \"\$file\" ]]; then tail -n ${A0_AI_LOG_LINES:-200} \"\$file\"; else printf 'no log yet: %s\\n' \"\$file\"; exit 1; fi"
+  ensure_session || return
+  remote "file=\"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; if [[ -f \"\$file\" ]]; then tail -n ${A0_AI_LOG_LINES:-200} \"\$file\"; else printf 'no log yet: %s\\n' \"\$file\"; exit 1; fi" || return
 }
 
 menu() {
-  ensure_session
+  ensure_session || return
   while true; do
     cat <<'EOF'
 

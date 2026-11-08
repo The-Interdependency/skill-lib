@@ -100,6 +100,44 @@ class VaultTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)  # Existing Codex account login remains possible.
         self.assertNotEqual(self.invoke('exec', 'deepcode', '--', 'true').returncode, 0)
 
+    def test_launcher_carries_login_cli_and_runtime_path_into_stale_tmux(self):
+        login = self.root / 'login bin'
+        login.mkdir()
+        helper = self.root / 'a0-vault'
+        helper.write_text(HELPER.read_text())
+        helper.chmod(0o700)
+        cli = login / 'fixture-cli'
+        cli.write_text('#!/usr/bin/env fixture-runtime\n')
+        runtime = login / 'fixture-runtime'
+        runtime.write_text('''#!/bin/bash
+set -eu
+[[ "$2" == 'literal argument' ]]
+[[ -n "$OPENAI_API_KEY" && -z "${XAI_API_KEY+x}" && -z "${BAO_TOKEN+x}" ]]
+printf '%s\\n' LOGIN-PATH-AND-KEY-OK
+''')
+        tmux = login / 'tmux'
+        tmux.write_text('''#!/bin/bash
+set -eu
+if [[ "$1" == respawn-pane ]]; then
+  PATH=/usr/bin:/bin /bin/bash -c "$5"
+fi
+''')
+        for file in (cli, runtime, tmux):
+            file.chmod(0o700)
+        script = '''source "$1" help >/dev/null
+remote() { PATH="$LOGIN_PATH" /bin/bash -c "$1"; }
+pipe_log() { :; }
+respawn codex 'fixture-cli "literal argument"'
+'''
+        result = subprocess.run(['/bin/bash', '-c', script, 'fixture', str(HELPER.with_name('ai.sh'))],
+            env={**os.environ, 'LOGIN_PATH': str(login) + ':' + os.environ['PATH'],
+                 'A0_AI_VAULT_HELPER': str(helper), 'A0_CLI_VAULT_CONFIG': str(self.config),
+                 'OPENAI_API_KEY': 'stale', 'XAI_API_KEY': 'stale', 'BAO_TOKEN': 'stale'},
+            capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), 'LOGIN-PATH-AND-KEY-OK')
+        self.assertNotIn(CANARY, result.stdout + result.stderr)
+
     def test_unavailable_identity_seal_and_root_token_never_dispatch_child(self):
         for attr, value in [('sealed', True), ('initialized', False), ('cluster', 'wrong'), ('policies', ['root']), ('expired', True), ('redirect', True)]:
             with self.subTest(attr=attr):

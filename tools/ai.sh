@@ -203,14 +203,22 @@ ensure_window_shell() {
 
 respawn() {
   resolve_vault_helper
-  local name="$1" command_line="$2" binary pane_command
+  local name="$1" command_line="$2" binary pane_command launch_env resolved_binary runtime_path
   binary="${command_line%% *}"
-  if ! remote "command -v $(q "$binary") >/dev/null 2>&1"; then
+  if ! launch_env="$(remote "resolved=\$(type -P $(q "$binary")) || exit 127; printf '%s\\n%s' \"\$resolved\" \"\$PATH\"")"; then
     printf 'ERROR: %s is not installed on %s\n' "$binary" "$HOST" >&2
     return 127
   fi
+  resolved_binary="${launch_env%%$'\n'*}"
+  runtime_path="${launch_env#*$'\n'}"
+  [[ "$resolved_binary" == /* && -n "$runtime_path" && "$runtime_path" != *$'\n'* ]] || {
+    printf 'ERROR: remote CLI executable/PATH could not be resolved safely\n' >&2; return 127;
+  }
+  # Resolve login-shell tools (including nvm runtimes) before credentials enter
+  # the child. A long-lived tmux server may have an older PATH.
+  command_line="$(q "$resolved_binary")${command_line#"$binary"}"
   clear_stale_keys
-  pane_command="exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
+  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
   remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
   pipe_log "$name" || true
 }

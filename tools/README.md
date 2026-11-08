@@ -57,10 +57,19 @@ ai.sh logs deepcode
 ai.sh codex
 ```
 
-Provider credentials remain the responsibility of the VM/provider CLIs.
-`ai.sh keys` only copies already-present VM login-environment values into the
-remote tmux environment so restarted CLIs can see them; it prints only
-`present`/`missing` and never stores or displays key values.
+Provider credentials now come from the VM's pinned OpenBao store. `ai.sh keys`
+reports readiness and presence only. Each restarted agent receives only its
+provider key; missing keys never fall back to stale login-shell values. Codex
+can retain its existing account login when no OpenAI API key is configured.
+The recovery shell stays available when the vault is unavailable. Existing
+running panes retain their environment until explicitly restarted.
+
+After deploying A0's vault administration tools, use `ai.sh vault install`,
+`ai.sh vault setup`, and `ai.sh keys`. The separate `a0-cli` policy reads only
+the four provider paths; an hourly VM timer renews scoped credentials.
+`ai.sh site pair FILE` pairs the private Site over SSH stdin; `site status`,
+`site handoffs`, and `site handoff ID` inspect its status and inert handoff inbox.
+See [the activation guide](A0-VAULT.md) for prerequisites and recovery.
 
 ## Drift checker
 

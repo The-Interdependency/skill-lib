@@ -27,8 +27,8 @@ class AILauncherTests(unittest.TestCase):
         for phrase in (
             'HOST="${A0_AI_HOST:-a0}"',
             'SESSION="${A0_AI_SESSION:-a0}"',
-            'ssh "$HOST"',
-            'ssh -tt "$HOST"',
+            'StrictHostKeyChecking=yes',
+            'ssh -tt -o StrictHostKeyChecking=yes',
             "remain-on-exit on",
             "tmux pipe-pane",
             "#{pane_dead}",
@@ -57,21 +57,16 @@ class AILauncherTests(unittest.TestCase):
         self.assertIn('if [[ "$existed" == 0 || "$dead" == 1 ]]; then', text)
         self.assertIn('respawn "$name" "$command_line"', text)
 
-    def test_keys_only_propagate_existing_vm_environment_into_tmux(self) -> None:
+    def test_vault_launch_has_no_key_value_in_ssh_or_tmux_arguments(self) -> None:
         text = LAUNCHER.read_text(encoding="utf-8")
-        for phrase in (
-            "OPENAI_API_KEY",
-            "XAI_API_KEY",
-            "DEEPSEEK_API_KEY",
-            "ANTHROPIC_API_KEY",
-            "printenv",
-            "tmux set-environment",
-            "present",
-            "missing",
-        ):
-            self.assertIn(phrase, text)
-        self.assertNotIn("read -s", text)
-        self.assertNotIn("KEY=", text)
+        self.assertNotIn("printenv", text)
+        self.assertNotIn('tmux set-environment -t', text)
+        self.assertIn('tmux set-environment -r -t', text)
+        self.assertNotIn('tmux set-environment -g', text)
+        self.assertIn('keys_status() { resolve_vault_helper; remote', text)
+        self.assertIn('exec $(q "$VAULT_HELPER") exec', text)
+        self.assertIn('-- bash -c', text)
+        self.assertIn('site pair FILE', text)
 
     def test_installer_places_ai_sh_on_termux_path_without_copying(self) -> None:
         text = INSTALLER.read_text(encoding="utf-8")

@@ -48,7 +48,8 @@ work.sh gcloud projects list
 ```
 
 `ai.sh` remains independently callable, with its current SSH configuration,
-remote tmux layout, provider-key handling, and command overrides unchanged.
+remote tmux layout and command overrides. Provider credentials now use the
+[OpenBao boundary](A0-VAULT.md); the parent menu delegates to that canonical path.
 The parent resolves `ai.sh` beside its own real repository source, even when
 called through the installed symlink. Stale PATH or home-directory copies,
 including the former download's `WORK_AI` override, are not fallback authorities.

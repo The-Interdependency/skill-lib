@@ -6,8 +6,8 @@ merged October 10, 2026 as `19b1988706a91ba305834613facb907cb175ef71`.
 
 This is an editorial implementation of `skill-build`'s narrative invariant.
 It changes no product runtime implementation or domain doctrine.
-[The inventory](inventory.json) records all 45 canonical skills, their kinds,
-families, decisions, and before/after word counts. Generated `skills/` adapters
+[The inventory](inventory.json) records every canonical skill, with its kind,
+family, decisions, and before/after word counts. Generated `skills/` adapters
 are discovery projections, not additional canonical skills.
 
 ## WDLL decision

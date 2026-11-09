@@ -588,6 +588,20 @@
         "Keep current primary references external; reuse repo-audit-repair classifications and test-build ownership rather than duplicating schemas.",
         "Preserve audit-only scope, archive exclusions, resource limits, and unresolved enforcement."
       ]
+    },
+    {
+      "name": "agent-ops",
+      "path": "agent-ops/SKILL.md",
+      "kind": "procedural",
+      "family": "executive-and-runtime",
+      "status": "reviewed-retained",
+      "before_words": 0,
+      "after_words": 1138,
+      "decisions": [
+        "New procedural skill: keep tool-effect controls in their own home and cross-load loop-eng, risk-boundary-build, action-calibration, and github-tests.",
+        "Keep OWASP, NIST, CISA, and NCSC documents external; the checklist is the adopted procedure.",
+        "Preserve hmmm for enforcement verification, a log schema, and any future metadata block."
+      ]
     }
   ],
   "remaining_families": [],

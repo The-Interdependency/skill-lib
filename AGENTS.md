@@ -85,7 +85,7 @@ When creating or revising any skill narrative, load `skill-build/SKILL.md` and a
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `agent-ops`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -177,6 +177,7 @@ propagate from here.
 - If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
 - Before modifying any file in `The-Interdependency/The-Interdependency.github.io`, load `website-builder-journal/SKILL.md`. Every website change transaction must append a new `By the builder` record with date, time, model provenance per `website-builder-journal/SKILL.md`, and model-discretionary prose before terminal validation; read-only inspection is the non-trigger.
 - If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
+- If you are designing, reviewing, hardening, or implementing a tool-using bot or agent — permissions, approval gates, untrusted tool or retrieval content, run lifecycle and idempotency, evals, memory write rules, redacted logging, tool allowlists, or budget preflight — load `agent-ops/SKILL.md`. Cross-load `loop-eng` when the work is iterative. For a0 or a0p instance surgery use the lifecycle skill; for CI gate audits use `github-tests`.
 - If authoritative inputs changed and stored collections, documentation,
   projections, package indexes, or other derived artifacts may be stale, load
   `fresh-making/SKILL.md`; bind exact inputs and generator/verifier identities,

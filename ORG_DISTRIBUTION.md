@@ -58,6 +58,7 @@ dependency graphs fail; unrelated unvendored skills remain outside the subset.
 * `distributed-publication/` — provenance-bearing materialization of one ordered publication from independently owned source units
 * `website-builder-journal/` — append-only model-attributed By the builder expansion required for every interdependentway.org modification
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
+* `agent-ops/` — tool-using agent controls for permissions, approval, untrusted content, idempotent runs, evals, memory, redacted logs, and preflight
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `wdll/` — executive job selection, state-transition scope, falsifiable completion, and strategic advancement for spawned work
@@ -336,6 +337,24 @@ full build, agents should read:
 Name the decision, preserve load-bearing invariants, compare complete cost vectors,
 freeze outcome-conditioned escalation rules, and let `loop-eng` execute the selected
 bounded loop.
+
+Before designing, reviewing, hardening, or implementing a tool-using bot or agent,
+agents should read:
+
+```text
+.agents/skills/agent-ops/SKILL.md
+```
+
+Bind least privilege, human approval for irreversible effects, untrusted-content
+fences, idempotent side effects, evals, partitioned memory, and redacted logs.
+Cross-load `loop-eng` for iterative execution, `risk-boundary-build` for effect
+declarations, `action-calibration` for action size, and `github-tests` for CI
+evidence. Selected propagation installs `loop-eng`, `risk-boundary-build`, and
+`action-calibration` with this skill, including the `msdmd` and
+`meta-module-build` closure of `risk-boundary-build`. `github-tests` stays a
+prose cross-load: its `repo-audit-repair`, `test-build`, and `msdmd` closure is
+not an install requirement. Public OWASP, NIST, CISA, and NCSC documents remain
+external recommendations.
 
 Before auditing or auditing and repairing an existing repository, agents should read:
 

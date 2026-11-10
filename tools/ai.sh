@@ -5,16 +5,16 @@ set -euo pipefail
 # id: skill_lib_ai_launcher
 #   module_name: ai
 #   module_kind: cli
-#   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, key propagation, and persistent remote pane logs
+#   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, vault-backed credentials, and persistent remote pane logs
 #   owner: skill-lib
-#   public_surface: ai.sh start|attach|status|restart|logs|keys|grok|codex|deepcode|shell
-#   internal_surface: remote bash quoting, tmux session/window lifecycle, key-to-tmux propagation
+#   public_surface: ai.sh start|attach|status|restart|logs|keys|vault|site|grok|codex|deepcode|shell
+#   internal_surface: remote bash quoting, tmux session/window lifecycle, VM-local vault execution
 #   auth_boundary: SSH host alias and third-party CLIs own authentication; launcher never prints key values
-#   storage_boundary: remote pane logs under ~/.local/state/a0/logs; no secret persistence
+#   storage_boundary: owner-only remote pane logs; protected VM credential files are provisioned separately
 #   network_boundary: SSH to configured VM host only
-#   user_data_boundary: provider key values are only copied from the VM login environment into the VM tmux server environment
+#   user_data_boundary: provider keys are resolved by a0-vault inside the VM child environment only
 #   admin_only: false
-#   tests: tests/test_ai_launcher.py
+#   tests: tests/test_ai_launcher.py; tests/test_a0_vault.py
 #   rollout: explicit install via tools/install_ai.sh
 #   rollback: remove installed ai.sh symlink; canonical source remains in skill-lib
 #   requires: local bash + ssh; remote bash + tmux; optional remote grok/codex/deepcodei CLIs
@@ -29,7 +29,8 @@ GROK_CMD="${A0_GROK_CMD:-grok}"
 CODEX_CMD="${A0_CODEX_CMD:-codex --yolo}"
 DEEPCODE_CMD="${A0_DEEPCODE_CMD:-deepcodei}"
 SHELL_CMD="${A0_SHELL_CMD:-exec \"\${SHELL:-/bin/bash}\" -l}"
-KEY_VARS="${A0_AI_KEY_VARS:-OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY}"
+VAULT_HELPER="${A0_AI_VAULT_HELPER:-}"
+KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN"
 
 usage() {
   cat <<'EOF'
@@ -42,7 +43,12 @@ commands:
   restart NAME          restart grok, codex, deepcode, shell, or all
   -restart NAME         compatibility alias for restart
   logs [NAME]           tail persistent remote pane log (default: deepcode)
-  keys                  propagate VM login-shell provider keys into tmux; print presence only
+  keys                  report OpenBao readiness and provider presence; never copy keys
+  vault install|setup|status
+                        install helper, provision via existing A0, or inspect vault
+  site pair FILE        send owner-downloaded Site pairing file to VM over SSH stdin
+  site status|handoffs   inspect the authenticated bridge or queued handoffs
+  site handoff ID        print one queued handoff for the VM coding agent
   grok | -grok          ensure/select Grok and attach
   codex | -codex        ensure/select Codex and attach
   deepcode|-deepcode|-deepcodei
@@ -52,7 +58,7 @@ commands:
 
 configuration:
   A0_AI_HOST, A0_AI_SESSION, A0_GROK_CMD, A0_CODEX_CMD,
-  A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_KEY_VARS
+  A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_VAULT_HELPER
 EOF
 }
 
@@ -60,16 +66,16 @@ q() { printf '%q' "$1"; }
 
 remote() {
   local script="$1"
-  ssh "$HOST" "bash -lc $(q "$script")"
+  ssh -o StrictHostKeyChecking=yes -o ForwardAgent=no "$HOST" "bash -lc $(q "$script")"
 }
 
 remote_tty() {
   local script="$1"
-  ssh -tt "$HOST" "bash -lc $(q "$script")"
+  ssh -tt -o StrictHostKeyChecking=yes -o ForwardAgent=no "$HOST" "bash -lc $(q "$script")"
 }
 
 require_remote() {
-  if ! ssh -o BatchMode=yes -o ConnectTimeout=8 "$HOST" 'command -v tmux >/dev/null 2>&1'; then
+  if ! ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ForwardAgent=no -o ConnectTimeout=8 "$HOST" 'command -v tmux >/dev/null 2>&1'; then
     printf 'ERROR: cannot reach %s non-interactively with remote tmux available\n' "$HOST" >&2
     return 1
   fi
@@ -91,23 +97,68 @@ pane_dead() {
 
 pipe_log() {
   local name="$1" target="$SESSION:$1.0" command
-  command="cat >> \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\""
-  remote "mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"; tmux pipe-pane -o -t $(q "$target") $(q "$command")"
+  command="umask 077; cat >> \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\""
+  remote "umask 077; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"; chmod 700 \"\$HOME/$REMOTE_LOG_SUBDIR\"; touch \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; chmod 600 \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; tmux pipe-pane -o -t $(q "$target") $(q "$command")"
 }
 
-sync_keys() {
-  session_exists || return 0
+clear_stale_keys() {
   local script
-  script="for key in $KEY_VARS; do value=\"\$(printenv \"\$key\" 2>/dev/null || true)\"; if [[ -n \"\$value\" ]]; then tmux set-environment -t $(q "$SESSION") \"\$key\" \"\$value\"; fi; done"
+  # Mask inherited legacy credentials in A0 only; unrelated tmux sessions are untouched.
+  script="for key in $KEY_VARS; do tmux set-environment -r -t $(q "$SESSION") \"\$key\"; done"
   remote "$script"
 }
 
-keys_status() {
-  ensure_session
-  sync_keys
-  local script
-  script="for key in $KEY_VARS; do if tmux show-environment -t $(q "$SESSION") \"\$key\" >/dev/null 2>&1; then printf '%-18s present\\n' \"\$key\"; else printf '%-18s missing\\n' \"\$key\"; fi; done"
-  remote "$script"
+resolve_vault_helper() {
+  if [[ -z "$VAULT_HELPER" ]]; then
+    VAULT_HELPER="$(remote 'printf "%s/.local/bin/a0-vault" "$HOME"')"
+  fi
+  [[ "$VAULT_HELPER" == /* && "$VAULT_HELPER" != *$'\n'* ]] || { printf 'A0_AI_VAULT_HELPER must resolve to an absolute VM path.\n' >&2; return 2; }
+}
+
+keys_status() { resolve_vault_helper; remote "$(q "$VAULT_HELPER") status"; }
+
+vault_command() {
+  case "${1:-status}" in
+    status) keys_status ;;
+    install)
+      local source_dir helper install_script
+      source_dir="$(dirname "$(readlink -f "$0")")"
+      helper="$source_dir/a0_vault.py"
+      [[ -f "$helper" ]] || { printf 'Missing canonical a0_vault.py beside ai.sh\n' >&2; return 1; }
+      install_script="$(cat <<'REMOTE_INSTALL'
+set -e
+umask 077
+mkdir -p "$HOME/.local/bin"
+tmp=$(mktemp "$HOME/.local/bin/.a0-vault.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+cat > "$tmp"
+python3 -c 'import ast,sys; ast.parse(open(sys.argv[1]).read())' "$tmp"
+chmod 700 "$tmp"
+mv "$tmp" "$HOME/.local/bin/a0-vault"
+printf 'VM vault helper installed.\n'
+REMOTE_INSTALL
+)"
+      remote "$install_script" < "$helper"
+      ;;
+    setup) remote 'sudo -n python3 /usr/local/lib/a0/configure-vault.py --cli-user "$(id -un)"' ;;
+    *) printf 'usage: ai.sh vault install|setup|status\n' >&2; return 2 ;;
+  esac
+}
+
+site_command() {
+  resolve_vault_helper
+  case "${1:-status}" in
+    pair)
+      [[ -n "${2:-}" && -f "$2" ]] || { printf 'usage: ai.sh site pair /path/to/a0-site-connection.json\n' >&2; return 2; }
+      remote 'sudo -n python3 /usr/local/lib/a0/configure-vault.py --pair-site --cli-user "$(id -un)"' < "$2"
+      ;;
+    status|handoffs) remote "$(q "$VAULT_HELPER") site $(q "$1")" ;;
+    handoff)
+      [[ "${2:-}" =~ ^[a-f0-9]{64}$ ]] || { printf 'Handoff ID must be the 64-character receipt ID.\n' >&2; return 2; }
+      remote "$(q "$VAULT_HELPER") site handoff $(q "$2")"
+      ;;
+    *) printf 'usage: ai.sh site pair FILE|status|handoffs|handoff ID\n' >&2; return 2 ;;
+  esac
 }
 
 ensure_session() {
@@ -115,9 +166,9 @@ ensure_session() {
   if ! session_exists; then
     remote "tmux new-session -d -s $(q "$SESSION") -n shell"
   fi
-  remote "tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\""
+  remote "umask 077; tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\""
   pipe_log shell || true
-  sync_keys || true
+  clear_stale_keys
 }
 
 spec() {
@@ -151,14 +202,23 @@ ensure_window_shell() {
 }
 
 respawn() {
-  local name="$1" command_line="$2" binary pane_command
+  resolve_vault_helper
+  local name="$1" command_line="$2" binary pane_command launch_env resolved_binary runtime_path
   binary="${command_line%% *}"
-  if ! remote "command -v $(q "$binary") >/dev/null 2>&1"; then
+  if ! launch_env="$(remote "resolved=\$(type -P $(q "$binary")) || exit 127; printf '%s\\n%s' \"\$resolved\" \"\$PATH\"")"; then
     printf 'ERROR: %s is not installed on %s\n' "$binary" "$HOST" >&2
     return 127
   fi
-  sync_keys || true
-  pane_command="exec bash -lc $(q "$command_line")"
+  resolved_binary="${launch_env%%$'\n'*}"
+  runtime_path="${launch_env#*$'\n'}"
+  [[ "$resolved_binary" == /* && -n "$runtime_path" && "$runtime_path" != *$'\n'* ]] || {
+    printf 'ERROR: remote CLI executable/PATH could not be resolved safely\n' >&2; return 127;
+  }
+  # Resolve login-shell tools (including nvm runtimes) before credentials enter
+  # the child. A long-lived tmux server may have an older PATH.
+  command_line="$(q "$resolved_binary")${command_line#"$binary"}"
+  clear_stale_keys
+  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
   remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
   pipe_log "$name" || true
 }
@@ -266,6 +326,7 @@ AI on a0:
   6) Status
   7) Restart
   8) Logs
+  9) Vault status
   0) Quit
 EOF
     read -r -p '> ' choice
@@ -278,6 +339,7 @@ EOF
       6) status || true ;;
       7) read -r -p 'restart [grok/codex/deepcode/shell/all]: ' target; restart "${target:-all}" || true ;;
       8) read -r -p 'log [deepcode/codex/grok/shell]: ' target; logs "${target:-deepcode}" || true ;;
+      9) keys_status || true ;;
       0) return 0 ;;
       *) printf 'unknown choice\n' ;;
     esac
@@ -292,6 +354,8 @@ case "${1:-menu}" in
   -restart) shift; restart "${1:-all}" ;;
   logs) shift; logs "${1:-deepcode}" ;;
   keys) keys_status ;;
+  vault) shift; vault_command "${1:-status}" ;;
+  site) shift; site_command "${1:-status}" "${2:-}" ;;
   grok|-grok) open_agent grok ;;
   codex|-codex) open_agent codex ;;
   deepcode|-deepcode|-deepcodei) open_agent deepcode ;;

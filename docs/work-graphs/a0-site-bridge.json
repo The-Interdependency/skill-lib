@@ -1,0 +1,49 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "work_graph_sha256": "73be9885ca4239018c7420fd595e4bd3ab318b85fb5beefaeee1f19edfa24316",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "46ba3e680c21434dd03e79c0cbf900881829701e",
+      "authority": "launcher and VM CLI credential consumer",
+      "relation": "launcher implementation input; executable bytes preserved by reconciliation"
+    },
+    {
+      "repository": "The-Interdependency/a0",
+      "commit": "f97c7c85e31b9324caf642b41a170b7e32ee9911",
+      "authority": "vault provisioning, application status and handoff inbox",
+      "relation": "merged producer; cross-repository fixture source"
+    },
+    {
+      "repository": "Sites/a0-reliability-console",
+      "commit": "7bbe73ba4e5e0ea99dd4f7e293eea309c77cfd0d",
+      "authority": "owner-authenticated reliability presentation and evidence",
+      "relation": "consumer; source identity carried from reviewed A0 record, hosted deployment unverified"
+    },
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "8ee77a6630379e48844350d8666515389b94f4c8",
+      "authority": "current build doctrine and agent-ops addition",
+      "relation": "integration-base; owning collector regenerates combined source metadata"
+    },
+    {
+      "repository": "The-Interdependency/a0",
+      "commit": "12b64724145dac9591ca650f5d0fd3b573d4ae7d",
+      "authority": "current A0 main including GUI repairs",
+      "relation": "observed descendant; provisioning, vault, bridge and reliability tests identical to merged producer"
+    }
+  ],
+  "boundaries": {
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "external-provenance",
+    "agent_scope": "cross-repository-work-graph",
+    "hmmm": [
+      "This graph pins reconciliation inputs; the containing commit and PR #137 receipt identify the resulting output.",
+      "Repair and merge after review are authorized; VM activation remains a separate operation.",
+      "Live VM provisioning/recovery, off-VM backup retrieval, sustained renewal, real provider requests, hosted Site state and physical-phone acceptance remain unverified."
+    ]
+  }
+}

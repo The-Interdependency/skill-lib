@@ -7,12 +7,12 @@ set -euo pipefail
 #   module_kind: cli
 #   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, vault-backed credentials, and persistent remote pane logs
 #   owner: skill-lib
-#   public_surface: ai.sh start|attach|status|restart|logs|keys|vault|site|grok|codex|deepcode|shell
+#   public_surface: ai.sh start|attach|status|restart|logs|keys|vault|github|site|grok|codex|deepcode|shell
 #   internal_surface: remote bash quoting, tmux session/window lifecycle, VM-local vault execution
 #   auth_boundary: SSH host alias and third-party CLIs own authentication; launcher never prints key values
 #   storage_boundary: owner-only remote pane logs; protected VM credential files are provisioned separately
 #   network_boundary: SSH to configured VM host only
-#   user_data_boundary: provider keys are resolved by a0-vault inside the VM child environment only
+#   user_data_boundary: provider and enabled GitHub credentials are resolved by a0-vault inside the VM child environment only; GitHub input uses direct unlogged SSH terminal
 #   admin_only: false
 #   tests: tests/test_ai_launcher.py; tests/test_a0_vault.py
 #   rollout: explicit install via tools/install_ai.sh
@@ -30,7 +30,7 @@ CODEX_CMD="${A0_CODEX_CMD:-codex --yolo}"
 DEEPCODE_CMD="${A0_DEEPCODE_CMD:-deepcodei}"
 SHELL_CMD="${A0_SHELL_CMD:-exec \"\${SHELL:-/bin/bash}\" -l}"
 VAULT_HELPER="${A0_AI_VAULT_HELPER:-}"
-KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN"
+KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN GH_TOKEN GITHUB_TOKEN"
 
 usage() {
   cat <<'EOF'
@@ -46,6 +46,8 @@ commands:
   keys                  report OpenBao readiness and provider presence; never copy keys
   vault install|setup|status
                         install helper, provision via existing A0, or inspect vault
+  github set|status|check
+                        replace GitHub token in OpenBao, inspect presence, or verify login
   site pair FILE        send owner-downloaded Site pairing file to VM over SSH stdin
   site status|handoffs   inspect the authenticated bridge or queued handoffs
   site handoff ID        print one queued handoff for the VM coding agent
@@ -142,6 +144,23 @@ REMOTE_INSTALL
       ;;
     setup) remote 'sudo -n python3 /usr/local/lib/a0/configure-vault.py --cli-user "$(id -un)"' ;;
     *) printf 'usage: ai.sh vault install|setup|status\n' >&2; return 2 ;;
+  esac
+}
+
+github_command() {
+  [[ $# -le 1 ]] || { printf 'usage: ai.sh github set|status|check (never pass a token as an argument)\n' >&2; return 2; }
+  case "${1:-status}" in
+    set)
+      [[ -t 0 && -t 1 ]] || { printf 'Run ai.sh github set directly in an interactive terminal; piped token input is refused.\n' >&2; return 2; }
+      # The operator enters the token with terminal echo disabled by the root-owned
+      # provisioner. Do not run this inside a logged tmux pane or capture its input.
+      remote_tty 'sudo -n python3 /usr/local/lib/a0/configure-vault.py --set-github-token --cli-user "$(id -un)"'
+      ;;
+    status|check)
+      resolve_vault_helper
+      remote "$(q "$VAULT_HELPER") github $(q "${1:-status}")"
+      ;;
+    *) printf 'usage: ai.sh github set|status|check\n' >&2; return 2 ;;
   esac
 }
 
@@ -355,6 +374,7 @@ case "${1:-menu}" in
   logs) shift; logs "${1:-deepcode}" ;;
   keys) keys_status ;;
   vault) shift; vault_command "${1:-status}" ;;
+  github) shift; github_command "$@" ;;
   site) shift; site_command "${1:-status}" "${2:-}" ;;
   grok|-grok) open_agent grok ;;
   codex|-codex) open_agent codex ;;

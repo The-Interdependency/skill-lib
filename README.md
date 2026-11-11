@@ -160,10 +160,13 @@ bash tools/install_ai.sh
 
 On Termux the installer symlinks `ai.sh` and `work.sh` into `$PREFIX/bin`;
 elsewhere it falls back to `~/.local/bin`. `ai.sh status` reports remote pane state,
-`ai.sh restart deepcode` repairs a missing/dead DeepCode window, and pane output
-persists on the VM under `~/.local/state/a0/logs`. `ai.sh keys` only propagates
-already-present VM login-environment keys into tmux and reports
-`present`/`missing`, never values.
+`ai.sh restart deepcode` restarts the selected DeepCode pane, and pane output
+persists on the VM under `~/.local/state/a0/logs`. `ai.sh keys` reports OpenBao
+readiness and provider presence without printing values. The vault helper
+retrieves credentials only inside the selected agent's child environment.
+`ai.sh github set` accepts a replacement GitHub token at a hidden terminal
+prompt and stores it in OpenBao; `github status|check` reports presence or
+authentication. See [vault setup and GitHub refresh](tools/A0-VAULT.md).
 
 Run `work.sh` for the combined menu, or `work.sh cloud` for Google Cloud Shell
 through Ubuntu. See [launcher usage and repository-managed updates](tools/WORK.md).

@@ -51,6 +51,87 @@ never paste an administrator password into chat. Existing SSH host trust is
 required and is never bypassed. Existing agent panes retain old environment
 values until you explicitly restart each chosen agent.
 
+## GitHub token refresh through OpenBao
+
+Use matching reviewed A0 and skill-lib releases containing this repair. First
+install A0's current `operations/install-vault-tools.sh` from the deployed
+checkout. Then update the phone launcher and run `ai.sh vault install` and
+`ai.sh vault setup` as above. Setup adds read-only CLI access to the exact KV v2
+path `integration/github`; it preserves any existing GitHub activation.
+
+Generate or regenerate the intended token in GitHub's
+[token settings](https://github.com/settings/personal-access-tokens), preserving
+the required owner, repositories and permissions. Classic tokens are managed
+[separately](https://github.com/settings/tokens). Run this as its own command
+directly in Termux's interactive terminal:
+
+```bash
+ai.sh github set
+```
+
+Paste the replacement only at `New GitHub token (hidden):`. The command uses
+direct SSH outside the recorded tmux panes and refuses piped input or a token
+argument. The root-owned VM provisioner verifies the existing vault, scoped
+credentials and CLI read permission before asking. It verifies authentication
+at GitHub, uses a version-checked write to OpenBao, reads the value back through
+the CLI's read-only credential, and enables DeepCode's vault retrieval. It
+neither writes a GitHub login file nor prints the token. Routine refresh uses
+the scoped application credential; it does not read the recovery root token.
+
+Check presence and authentication without printing credentials:
+
+```bash
+ai.sh github status
+ai.sh github check
+```
+
+`status` reports `disabled`, `missing` or `present`, with the selected agents.
+`check` contacts GitHub and reports the authenticated account. A successful
+check does not prove access to any particular repository or permission to push
+or modify workflows; those remain constrained by the token's own grant.
+
+An existing DeepCode process retains its previous environment. After its
+current work is saved, adopt the replacement with:
+
+```bash
+ai.sh restart deepcode
+ai.sh deepcode
+```
+
+Each enabled launch reads OpenBao again and supplies `GH_TOKEN` only to the
+selected child. Inherited `GH_TOKEN` and `GITHUB_TOKEN` are stripped first.
+Missing, malformed or inaccessible credentials prevent that child from
+starting, so it cannot silently use an old `gh` login. Existing installations
+without GitHub activation continue their provider-only launch behavior.
+
+For token-free GitHub HTTPS remotes, the child uses `gh auth git-credential`
+through process-local Git configuration. It resets previous credential helpers
+for that host and clears GitHub authorization headers visible in the launch
+configuration, including more-specific URL paths. It preserves ordinary Git
+identity/settings and stores no token in Git configuration. `gh` and `git` must
+already be installed on the VM. SSH remotes, credentials embedded in a remote
+URL, explicit later `git -c` overrides, and repository-local authorization
+headers first discovered after changing directories remain separate routes;
+remove such legacy authentication before treating those repositories as migrated.
+
+This is credential delivery within the trusted VM account, not isolation from
+other processes running as that account or from VM administrators. The scoped
+application identity can also read this secret under its existing policy.
+Neither the model provider nor the bridge receives the vault credential.
+
+On a rejected GitHub token, failed preflight or failed compare-and-set, the
+previous stored value remains. A failure after the write may leave the new
+value stored but CLI activation unfinished; the command reports that boundary
+without claiming rollback. Inspect status before retrying. A sealed/wrong store
+is never initialized by rotation. Roll back code only through a reviewed
+compatible release; preserve vault history and protected configuration. A
+source rollback does not revoke the GitHub token or undo a credential change.
+
+The shared inputs and evidence boundaries are recorded in the
+[GitHub/OpenBao work graph](../docs/work-graphs/github-openbao-refresh.md).
+
+## Private Site pairing
+
 In the private reliability Site, open **Live VM → Download pairing file**.
 In Termux, after allowing its normal Downloads access:
 

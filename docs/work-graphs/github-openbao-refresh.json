@@ -1,0 +1,29 @@
+{
+  "schema": "the-interdependency.stack-manifest",
+  "version": "1.0.0",
+  "work_graph_sha256": "2e01a0ee2228fa80715fa93ea8ef5f814aada47fe2f4bb3bebada3e574b8cc28",
+  "repositories": [
+    {
+      "repository": "The-Interdependency/a0",
+      "commit": "8df2a2acce916e1e3993089e9cdabd4266768939",
+      "authority": "VM vault provisioning, policies, operator credential replacement and protected CLI configuration",
+      "relation": "producer of the OpenBao integration/github token and CLI activation configuration"
+    },
+    {
+      "repository": "The-Interdependency/skill-lib",
+      "commit": "446a99d2fa283d5503c99666551e465b12c1a3e9",
+      "authority": "Canonical ai.sh launcher and a0-vault child credential delivery",
+      "relation": "consumer of the A0-produced vault policy/configuration and owner of the phone refresh entrypoint"
+    }
+  ],
+  "boundaries": {
+    "authority_transfer": false,
+    "proof_status_transfer": false,
+    "measurement_status_transfer": false,
+    "semantic_mapping": "declared mapping",
+    "agent_scope": "cross-repository-work-graph",
+    "hmmm": [
+      "Source and inert fixture verification do not establish deployment on the private VM, a live GitHub grant, or actual phone acceptance."
+    ]
+  }
+}

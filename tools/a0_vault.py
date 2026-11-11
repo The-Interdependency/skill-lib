@@ -2,9 +2,11 @@
 # ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 """VM-local OpenBao credential boundary for ai.sh.
 
-Usage: a0-vault status; a0-vault exec codex -- codex --yolo.
+Usage: a0-vault status; a0-vault github status|check;
+       a0-vault exec deepcode -- deepcodei.
 Provision /etc/a0/cli/<uid>.json with A0 operations/configure-vault.py.
 Never initializes/unseals Bao. Secrets enter only the selected child environment.
+GitHub activation/rotation belongs to the operator's ai.sh github set command.
 The VM account and its executed CLI remain trusted; this is not a sandbox.
 """
 from __future__ import annotations
@@ -14,7 +16,9 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import stat
+import subprocess
 import sys
 import urllib.error
 import urllib.parse
@@ -23,9 +27,10 @@ import urllib.request
 PROVIDERS = {"openai": "OPENAI_API_KEY", "xai": "XAI_API_KEY",
              "deepseek": "DEEPSEEK_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
 AGENTS = {"codex": "openai", "grok": "xai", "deepcode": "deepseek"}
+GITHUB_PATH = "integration/github"
 SECRET_ENV = set(PROVIDERS.values()) | {"BAO_TOKEN", "VAULT_TOKEN", "BAO_TOKEN_FILE",
     "VAULT_TOKEN_FILE", "BAO_ADDR", "VAULT_ADDR", "A0_DATABASE_URL", "A0_SESSION_SECRET",
-    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN"}
+    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"}
 
 
 class BoundaryError(Exception):
@@ -61,6 +66,15 @@ def load_config(path: str) -> dict:
     address(data.get("addr", ""))
     if not data.get("cluster_id") or not re.fullmatch(r"[A-Za-z0-9_-]+", data.get("mount", "")):
         raise BoundaryError("Pin the vault cluster identity and KV mount before use.")
+    if "github" in data:
+        github = data["github"]
+        if not isinstance(github, dict) or github.get("path") != GITHUB_PATH:
+            raise BoundaryError("GitHub must use the provisioned integration/github path.")
+        agents = github.get("agents")
+        if (not isinstance(agents, list) or not agents
+                or any(not isinstance(agent, str) or agent not in AGENTS for agent in agents)
+                or len(set(agents)) != len(agents)):
+            raise BoundaryError("GitHub must name a nonempty, unique set of supported coding agents.")
     return data
 
 
@@ -132,6 +146,104 @@ def key_for(config: dict, token: str, provider: str):
     return value
 
 
+def github_token(config: dict, token: str):
+    """Read only the selected GitHub integration; never return a cached login."""
+    result = request(config["addr"], f'/{config["mount"]}/data/{GITHUB_PATH}', token)
+    if result is None:
+        return None
+    outer = result.get("data") if isinstance(result, dict) else None
+    fields = outer.get("data") if isinstance(outer, dict) else None
+    if not isinstance(fields, dict):
+        raise BoundaryError("Stored GitHub response has an invalid shape.")
+    value = fields.get("token")
+    if value is None or value == "":
+        return None
+    if not isinstance(value, str) or not re.fullmatch(r"[\x21-\x7e]{1,4096}", value):
+        raise BoundaryError("Stored GitHub credential has an invalid shape.")
+    return value
+
+
+def github_identity(value: str) -> dict:
+    """Authenticate at GitHub's fixed endpoint; this does not prove repo access."""
+    req = urllib.request.Request("https://api.github.com/user", headers={
+        "Authorization": "Bearer " + value,
+        "Accept": "application/vnd.github+json", "User-Agent": "a0-vault"})
+    try:
+        with urllib.request.build_opener(NoRedirect, urllib.request.ProxyHandler({})).open(req, timeout=15) as response:
+            raw = response.read(262145)
+            if len(raw) > 262144:
+                raise BoundaryError("GitHub response exceeds the protocol limit.")
+            data = json.loads(raw)
+    except urllib.error.HTTPError as err:
+        raise BoundaryError(f"GitHub authentication failed (HTTP {err.code}); replace the token with ai.sh github set.") from None
+    except (urllib.error.URLError, TimeoutError, ValueError):
+        raise BoundaryError("GitHub authentication could not be checked.") from None
+    login = data.get("login") if isinstance(data, dict) else None
+    if not isinstance(login, str) or not re.fullmatch(r"[A-Za-z0-9-]{1,100}", login):
+        raise BoundaryError("GitHub returned an invalid account identity.")
+    return {"authenticated": True, "login": login}
+
+
+def git_environment(result: dict) -> None:
+    """Select gh for GitHub HTTPS in this child only, without storing the PAT."""
+    if not shutil.which("gh", path=result.get("PATH", os.defpath)):
+        raise BoundaryError("Install GitHub CLI (gh) on the VM before launching a GitHub-enabled agent.")
+    count = result.get("GIT_CONFIG_COUNT", "0")
+    if not re.fullmatch(r"[0-9]{1,3}", count) or int(count) > 256:
+        raise BoundaryError("Inherited Git configuration count is invalid.")
+    index = int(count)
+    if any(f"GIT_CONFIG_KEY_{n}" not in result or f"GIT_CONFIG_VALUE_{n}" not in result for n in range(index)):
+        raise BoundaryError("Inherited Git configuration entries are incomplete.")
+    # Older inherited command parameters can otherwise override the new helper.
+    result.pop("GIT_CONFIG_PARAMETERS", None)
+    for key in ("GH_DEBUG", "GIT_TRACE_CURL", "GIT_CURL_VERBOSE"):
+        result.pop(key, None)
+    # HTTP options choose the most specific matching URL, before config scope.
+    # Clear visible path/user-specific GitHub headers as well as the host default.
+    try:
+        configured = subprocess.run(
+            ["git", "config", "--null", "--name-only", "--get-regexp", r"^http\..*\.extraheader$"],
+            env=result, capture_output=True, timeout=10, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        raise BoundaryError("Git configuration could not be checked before GitHub activation.") from None
+    if configured.returncode not in (0, 1) or len(configured.stdout) > 65536:
+        raise BoundaryError("Git configuration could not be checked before GitHub activation.")
+    header_keys = {"http.https://github.com/.extraHeader"}
+    for raw in configured.stdout.split(b"\0"):
+        if not raw:
+            continue
+        key = raw.decode("utf-8")
+        scope = key[len("http."):-len(".extraheader")]
+        url = urllib.parse.urlsplit(scope)
+        if url.scheme == "https" and url.hostname == "github.com":
+            header_keys.add(key)
+    entries = [
+        ("credential.https://github.com.helper", ""),
+        ("credential.https://github.com.helper", "!gh auth git-credential"),
+    ] + [(key, "") for key in sorted(header_keys)]
+    for key, value in entries:
+        result[f"GIT_CONFIG_KEY_{index}"] = key
+        result[f"GIT_CONFIG_VALUE_{index}"] = value
+        index += 1
+    result["GIT_CONFIG_COUNT"] = str(index)
+    result["GIT_TERMINAL_PROMPT"] = "0"
+
+
+def github_status(config: dict, token: str, check: bool = False) -> dict:
+    github = config.get("github")
+    if github is None:
+        if check:
+            raise BoundaryError("GitHub is not enabled for this account; run ai.sh github set.")
+        return {"github": "disabled", "agents": []}
+    value = github_token(config, token)
+    result = {"github": "present" if value else "missing", "agents": github["agents"]}
+    if check:
+        if not value:
+            raise BoundaryError("No GitHub credential is configured in OpenBao; run ai.sh github set.")
+        result.update(github_identity(value))
+    return result
+
+
 def child_environment(config: dict, token: str, agent: str) -> dict:
     result = {k: v for k, v in os.environ.items() if k not in SECRET_ENV}
     provider = AGENTS[agent]
@@ -141,6 +253,12 @@ def child_environment(config: dict, token: str, agent: str) -> dict:
     elif agent != "codex":
         raise BoundaryError(f"No {provider} credential is configured in OpenBao.")
     # Codex can use its existing account login when no OpenAI API key is stored.
+    if agent in config.get("github", {}).get("agents", []):
+        value = github_token(config, token)
+        if not value:
+            raise BoundaryError("No GitHub credential is configured in OpenBao; run ai.sh github set.")
+        result["GH_TOKEN"] = value
+        git_environment(result)
     return result
 
 
@@ -170,6 +288,8 @@ def main() -> int:
     parser.add_argument("--config", default=os.environ.get("A0_CLI_VAULT_CONFIG", f"/etc/a0/cli/{os.getuid()}.json"))
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("status")
+    github = commands.add_parser("github")
+    github.add_argument("operation", choices=("status", "check"))
     site = commands.add_parser("site")
     site.add_argument("operation", choices=("status", "handoffs", "handoff"))
     site.add_argument("identity", nargs="?", default="")
@@ -183,6 +303,9 @@ def main() -> int:
             site_request(config, args.operation, args.identity)
             return 0
         token = connect(config)
+        if args.action == "github":
+            print(json.dumps(github_status(config, token, args.operation == "check")))
+            return 0
         if args.action == "status":
             states = {p: "present" if key_for(config, token, p) else "missing" for p in PROVIDERS}
             print(json.dumps({"vault": "ready", "cluster_id": config["cluster_id"], "providers": states}))

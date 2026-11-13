@@ -42,6 +42,16 @@ RATIO = "# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 #   call: self::test_vault_check_mask_and_respawn_errors_are_not_hidden_by_logging
 #   mutates: none
 #   cleanup: none
+# id: check_ai_launcher_new_window_retry
+#   proves: ai_launcher_new_window_retry
+#   call: self::test_failed_first_launch_creates_no_placeholder_and_retries_normally
+#   mutates: none
+#   cleanup: none
+# id: check_ai_launcher_menu_recovery
+#   proves: ai_launcher_menu_recovery
+#   call: self::test_menu_reports_failed_actions_and_accepts_recovery_commands
+#   mutates: none
+#   cleanup: none
 # === END CHECKS ===
 
 
@@ -88,7 +98,7 @@ class AILauncherTests(unittest.TestCase):
     def test_start_repairs_missing_or_dead_agents_without_restarting_healthy_ones(self) -> None:
         text = LAUNCHER.read_text(encoding="utf-8")
         self.assertIn('if window_exists "$name"; then', text)
-        self.assertIn('if [[ "$existed" == 0 || "$dead" == 1 ]]; then', text)
+        self.assertIn('elif [[ "$force" == 1 || "$dead" == 1 ]]; then', text)
         self.assertIn('respawn "$name" "$command_line"', text)
 
     def test_vault_launch_has_no_key_value_in_ssh_or_tmux_arguments(self) -> None:
@@ -122,11 +132,11 @@ class AILaunchFailureTests(unittest.TestCase):
     No SSH connection, tmux pane or credential is used by these fixtures.
     """
 
-    def shell(self, script, **env):
+    def shell(self, script, *, input=None, **env):
         return subprocess.run(['bash', '-c',
             'source "$1" help >/dev/null\n' + script, 'fixture', str(LAUNCHER)],
             env={**os.environ, 'A0_AI_VAULT_HELPER': '/fixture helper/a0-vault', **env},
-            capture_output=True, text=True, timeout=10)
+            input=input, capture_output=True, text=True, timeout=10)
 
     def test_aggregate_actions_attempt_each_agent_and_report_any_failure(self):
         for action, agents in (('start_all', ['grok', 'codex', 'deepcode']),
@@ -178,6 +188,66 @@ if ensure_agent codex; then exit 0; else exit "$?"; fi
 ''')
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout, '')
+
+    def test_failed_first_launch_creates_no_placeholder_and_retries_normally(self):
+        for action in ('ensure_agent codex', 'open_agent codex', 'restart_one codex'):
+            with self.subTest(action=action):
+                result = self.shell('''
+created=0
+failed=23
+window_exists() { [[ "$created" == 1 ]]; }
+ensure_window_shell() {
+  if [[ "$created" == 0 ]]; then
+    created=1
+    printf 'CREATED\\n'
+    [[ -n "${3:-}" ]] && printf 'LAUNCH-COMMAND\\n'
+  fi
+  return 0
+}
+pane_dead() { printf '0'; }
+attach_window() { printf 'ATTACHED\\n'; }
+pipe_log() { :; }
+remote() {
+  case "$1" in
+    resolved=*) printf '/fixture cli/agent\\n/fixture runtime:/usr/bin' ;;
+    *' check '*) return "$failed" ;;
+    *set-environment*) return 0 ;;
+    *respawn-pane*) printf 'REPLACED\\n' ;;
+    *) return 99 ;;
+  esac
+}
+if ''' + action + '''; then first=0; else first=$?; fi
+printf 'first=%s created=%s\\n' "$first" "$created"
+failed=0
+''' + action + '''
+ensure_agent codex
+''')
+                self.assertEqual(result.returncode, 0, result.stderr)
+                lines = result.stdout.splitlines()
+                self.assertEqual(lines[0], 'first=23 created=0')
+                self.assertEqual(lines.count('CREATED'), 1)
+                self.assertEqual(lines.count('LAUNCH-COMMAND'), 1)
+                self.assertNotIn('REPLACED', lines)
+                self.assertEqual(lines.count('ATTACHED'), int(action.startswith('open_agent')))
+
+    def test_menu_reports_failed_actions_and_accepts_recovery_commands(self):
+        for choice in ('1', '2', '3', '4', '5', '7', '8', '9'):
+            with self.subTest(choice=choice):
+                answer = choice + ('\ncodex' if choice in ('7', '8') else '') + '\n6\n0\n'
+                result = self.shell('''
+ensure_session() { :; }
+open_agent() { return 23; }
+keys_status() { return 23; }
+restart() { return 23; }
+logs() { return 23; }
+status() { printf 'RECOVERY-STATUS\\n'; }
+menu
+printf 'MENU-RETURNED\\n'
+''', input=answer)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn('RECOVERY-STATUS', result.stdout)
+                self.assertIn('MENU-RETURNED', result.stdout)
+                self.assertIn('status 23', result.stderr)
 
     def test_failed_vault_preflight_preserves_the_pane_and_its_environment(self):
         result = self.shell('''

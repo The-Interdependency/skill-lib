@@ -16,6 +16,34 @@ LAUNCHER = ROOT / "tools" / "ai.sh"
 INSTALLER = ROOT / "tools" / "install_ai.sh"
 RATIO = "# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm"
 
+# === CHECKS ===
+# id: check_ai_launcher_aggregate_failure
+#   proves: ai_launcher_aggregate_failure
+#   call: self::test_aggregate_actions_attempt_each_agent_and_report_any_failure
+#   mutates: none
+#   cleanup: none
+# id: check_ai_launcher_bootstrap_failure
+#   proves: ai_launcher_aggregate_failure, ai_launcher_phase_failure
+#   call: self::test_start_bootstrap_failure_does_not_attempt_agents
+#   mutates: none
+#   cleanup: none
+# id: check_ai_launcher_pane_state
+#   proves: ai_launcher_phase_failure
+#   call: self::test_setup_or_unknown_pane_state_never_replaces_or_attaches
+#   mutates: none
+#   cleanup: none
+# id: check_ai_launcher_preflight_preserves_pane
+#   proves: ai_launcher_preflight_preserves_pane
+#   call: self::test_failed_vault_preflight_preserves_the_pane_and_its_environment
+#   mutates: none
+#   cleanup: none
+# id: check_ai_launcher_respawn_failure
+#   proves: ai_launcher_phase_failure
+#   call: self::test_vault_check_mask_and_respawn_errors_are_not_hidden_by_logging
+#   mutates: none
+#   cleanup: none
+# === END CHECKS ===
+
 
 class AILauncherTests(unittest.TestCase):
     def test_shell_syntax(self) -> None:
@@ -69,7 +97,7 @@ class AILauncherTests(unittest.TestCase):
         self.assertNotIn('tmux set-environment -t', text)
         self.assertIn('tmux set-environment -r -t', text)
         self.assertNotIn('tmux set-environment -g', text)
-        self.assertIn('keys_status() { resolve_vault_helper; remote', text)
+        self.assertIn('keys_status() { resolve_vault_helper || return; remote', text)
         self.assertIn('exec $(q "$VAULT_HELPER") exec', text)
         self.assertIn('-- bash -c', text)
         self.assertIn('site pair FILE', text)
@@ -85,6 +113,109 @@ class AILauncherTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
         self.assertNotIn('cp "$SOURCE" "$TARGET"', text)
+
+
+class AILaunchFailureTests(unittest.TestCase):
+    """Run the real Bash functions with inert remote/process boundaries.
+
+    Usage: python -m unittest discover -s tests -p test_ai_launcher.py.
+    No SSH connection, tmux pane or credential is used by these fixtures.
+    """
+
+    def shell(self, script, **env):
+        return subprocess.run(['bash', '-c',
+            'source "$1" help >/dev/null\n' + script, 'fixture', str(LAUNCHER)],
+            env={**os.environ, 'A0_AI_VAULT_HELPER': '/fixture helper/a0-vault', **env},
+            capture_output=True, text=True, timeout=10)
+
+    def test_aggregate_actions_attempt_each_agent_and_report_any_failure(self):
+        for action, agents in (('start_all', ['grok', 'codex', 'deepcode']),
+                               ('restart all', ['shell', 'grok', 'codex', 'deepcode'])):
+            for failed in ['', *agents]:
+                with self.subTest(action=action, failed=failed):
+                    result = self.shell('''
+ensure_window_shell() { :; }
+ensure_agent() { printf '%s\\n' "$1"; [[ "$1" != "$FAILED" ]]; }
+restart_one() { printf '%s\\n' "$1"; [[ "$1" != "$FAILED" ]]; }
+if ''' + action + '''; then exit 0; else exit "$?"; fi
+''', FAILED=failed)
+                    self.assertEqual(result.returncode, 1 if failed else 0, result.stderr)
+                    self.assertEqual(result.stdout.splitlines(), agents)
+
+    def test_start_bootstrap_failure_does_not_attempt_agents(self):
+        result = self.shell('''
+ensure_window_shell() { return 23; }
+ensure_agent() { printf 'AGENT-RAN'; }
+if start_all; then exit 0; else exit "$?"; fi
+''')
+        self.assertEqual(result.returncode, 23, result.stderr)
+        self.assertEqual(result.stdout, '')
+
+    def test_setup_or_unknown_pane_state_never_replaces_or_attaches(self):
+        for action in ('ensure_agent codex', 'open_agent codex'):
+            for setup, lookup, state, expected in ((23, 0, '0', 23),
+                                                   (0, 24, '', 24),
+                                                   (0, 0, 'unknown', 1)):
+                with self.subTest(action=action, setup=setup, lookup=lookup, state=state):
+                    result = self.shell('''
+window_exists() { return 0; }
+ensure_window_shell() { return "$SETUP"; }
+pane_dead() { printf '%s' "$STATE"; return "$LOOKUP"; }
+respawn() { printf 'REPLACED'; }
+attach_window() { printf 'ATTACHED'; }
+if ''' + action + '''; then exit 0; else exit "$?"; fi
+''', SETUP=str(setup), LOOKUP=str(lookup), STATE=state)
+                    self.assertEqual(result.returncode, expected, result.stderr)
+                    self.assertEqual(result.stdout, '')
+
+    def test_healthy_existing_agent_is_preserved_without_credential_reads(self):
+        result = self.shell('''
+window_exists() { return 0; }
+ensure_window_shell() { :; }
+pane_dead() { printf '0'; }
+respawn() { printf 'REPLACED'; return 23; }
+if ensure_agent codex; then exit 0; else exit "$?"; fi
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, '')
+
+    def test_failed_vault_preflight_preserves_the_pane_and_its_environment(self):
+        result = self.shell('''
+remote() {
+  case "$1" in
+    resolved=*) printf '/fixture cli/agent\\n/fixture runtime:/usr/bin' ;;
+    *' check '*) return 23 ;;
+    *) printf 'MUTATED'; return 0 ;;
+  esac
+}
+pipe_log() { printf 'LOGGED'; }
+if respawn codex codex; then exit 0; else exit "$?"; fi
+''')
+        self.assertEqual(result.returncode, 23, result.stderr)
+        self.assertEqual(result.stdout, '')
+
+    def test_vault_check_mask_and_respawn_errors_are_not_hidden_by_logging(self):
+        for failed, expected in (('', 0), ('mask', 24), ('respawn', 25)):
+            with self.subTest(failed=failed):
+                result = self.shell('''
+remote() {
+  case "$1" in
+    resolved=*) printf '/fixture cli/agent\\n/fixture runtime:/usr/bin' ;;
+    *' check '*) printf 'check\\n' >&2 ;;
+    *set-environment*) printf 'mask\\n' >&2; [[ "$FAILED" != mask ]] || return 24 ;;
+    *respawn-pane*) printf 'respawn\\n' >&2; [[ "$FAILED" != respawn ]] || return 25 ;;
+    *) return 99 ;;
+  esac
+}
+pipe_log() { printf 'log\\n' >&2; }
+if respawn codex codex; then exit 0; else exit "$?"; fi
+''', FAILED=failed)
+                self.assertEqual(result.returncode, expected, result.stderr)
+                steps = ['check', 'mask', 'respawn', 'log']
+                if failed:
+                    steps = steps[:steps.index(failed) + 1]
+                self.assertEqual(result.stderr.splitlines(), steps)
+                self.assertEqual(result.stdout, '')
 
 
 class AIGitHubLauncherTests(unittest.TestCase):

@@ -15,6 +15,34 @@ HELPER = Path(__file__).resolve().parents[1] / 'tools/a0_vault.py'
 CANARY = 'fixture-provider-secret-not-for-output'
 GITHUB_CANARY = 'fixture-github-secret-not-for-output'
 
+# === CHECKS ===
+# id: check_a0_vault_selected_preflight
+#   proves: a0_vault_selected_preflight
+#   call: self::test_check_reads_only_the_selected_provider_without_dispatch_or_disclosure
+#   mutates: filesystem, loopback_http_fixture
+#   cleanup: tempdir_teardown, fixture_server_shutdown
+# id: check_a0_vault_preflight_account_login
+#   proves: a0_vault_selected_preflight
+#   call: self::test_check_preserves_codex_account_login_and_refuses_missing_required_keys
+#   mutates: filesystem, loopback_http_fixture
+#   cleanup: tempdir_teardown, fixture_server_shutdown
+# id: check_a0_vault_preflight_github
+#   proves: a0_vault_selected_preflight
+#   call: self::test_check_uses_the_same_github_requirements_as_child_dispatch
+#   mutates: filesystem, loopback_http_fixture
+#   cleanup: tempdir_teardown, fixture_server_shutdown
+# id: check_a0_vault_preflight_refusal
+#   proves: a0_vault_selected_preflight
+#   call: self::test_check_refuses_unavailable_or_wrong_vault_before_any_mutation
+#   mutates: filesystem, loopback_http_fixture
+#   cleanup: tempdir_teardown, fixture_server_shutdown
+# id: check_a0_vault_launcher_preserves_pane
+#   proves: a0_vault_selected_preflight, ai_launcher_preflight_preserves_pane
+#   call: self::test_launcher_preflight_failure_preserves_existing_pane_with_real_helper
+#   mutates: filesystem, loopback_http_fixture
+#   cleanup: tempdir_teardown, fixture_server_shutdown
+# === END CHECKS ===
+
 
 class VaultTests(unittest.TestCase):
     def setUp(self):
@@ -176,6 +204,60 @@ runpy.run_path({str(HELPER)!r}, run_name='__main__')
         self.assertEqual(result.returncode, 0)  # Existing Codex account login remains possible.
         self.assertNotEqual(self.invoke('exec', 'deepcode', '--', 'true').returncode, 0)
 
+    def test_check_reads_only_the_selected_provider_without_dispatch_or_disclosure(self):
+        for agent, provider in (('codex', 'openai'), ('grok', 'xai'), ('deepcode', 'deepseek')):
+            with self.subTest(agent=agent):
+                self.paths.clear()
+                result = self.invoke('check', agent)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(json.loads(result.stdout), {'agent': agent, 'preflight': 'passed'})
+                self.assertEqual(self.paths, ['/v1/sys/seal-status', '/v1/auth/token/lookup-self',
+                    f'/v1/a0/data/provider/{provider}'])
+                self.assertNotIn(CANARY, result.stdout + result.stderr)
+        marker = self.root / 'must-not-dispatch'
+        invalid = self.invoke('check', 'codex', '--', sys.executable, '-c',
+            f'from pathlib import Path; Path({str(marker)!r}).touch()')
+        self.assertNotEqual(invalid.returncode, 0)
+        self.assertFalse(marker.exists())
+
+    def test_check_preserves_codex_account_login_and_refuses_missing_required_keys(self):
+        self.missing = True
+        for agent, expected in (('codex', 0), ('grok', 1), ('deepcode', 1)):
+            with self.subTest(agent=agent):
+                result = self.invoke('check', agent, env={'OPENAI_API_KEY': CANARY,
+                    'XAI_API_KEY': CANARY, 'DEEPSEEK_API_KEY': CANARY})
+                self.assertEqual(result.returncode, expected, result.stderr)
+                self.assertNotIn(CANARY, result.stdout + result.stderr)
+
+    def test_check_uses_the_same_github_requirements_as_child_dispatch(self):
+        self.configure_github()
+        ready = self.invoke('check', 'deepcode')
+        self.assertEqual(ready.returncode, 0, ready.stderr)
+        self.assertIn('/v1/a0/data/integration/github', self.paths)
+        for status in (404, 403):
+            with self.subTest(status=status):
+                self.github_status = status
+                failed = self.invoke('check', 'deepcode')
+                self.assertEqual(failed.returncode, 1)
+                self.assertNotIn(GITHUB_CANARY, failed.stdout + failed.stderr)
+        self.github_status = 200
+        no_gh = self.invoke('check', 'deepcode', with_gh=False,
+            env={'PATH': str(self.root / 'empty-bin')})
+        self.assertEqual(no_gh.returncode, 1)
+
+    def test_check_refuses_unavailable_or_wrong_vault_before_any_mutation(self):
+        for attr, value in [('sealed', True), ('initialized', False), ('cluster', 'wrong'),
+                            ('policies', ['root']), ('expired', True), ('redirect', True)]:
+            with self.subTest(attr=attr):
+                old = getattr(self, attr)
+                setattr(self, attr, value)
+                result = self.invoke('check', 'codex')
+                setattr(self, attr, old)
+                self.assertEqual(result.returncode, 1)
+                self.assertNotIn(CANARY, result.stdout + result.stderr)
+        self.assertFalse(any('/data/' in path or '/init' in path or '/unseal' in path
+            or path == '/leak' for path in self.paths))
+
     def test_launcher_carries_login_cli_and_runtime_path_into_stale_tmux(self):
         login = self.root / 'login bin'
         login.mkdir()
@@ -213,6 +295,39 @@ respawn codex 'fixture-cli "literal argument"'
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), 'LOGIN-PATH-AND-KEY-OK')
         self.assertNotIn(CANARY, result.stdout + result.stderr)
+
+    def test_launcher_preflight_failure_preserves_existing_pane_with_real_helper(self):
+        helper = self.root / 'a0-vault'
+        helper.write_text(HELPER.read_text())
+        helper.chmod(0o700)
+        cli = self.bin / 'fixture-cli'
+        cli.write_text('#!/bin/bash\nprintf CHILD-RAN\n')
+        tmux = self.bin / 'tmux'
+        marker = self.root / 'tmux-mutated'
+        tmux.write_text('#!/bin/bash\nprintf MUTATED > "$PANE_MARKER"\n')
+        for file in (cli, tmux):
+            file.chmod(0o700)
+        script = '''source "$1" help >/dev/null
+remote() { PATH="$LOGIN_PATH" /bin/bash -c "$1"; }
+pipe_log() { printf LOGGED; }
+if respawn deepcode fixture-cli; then exit 0; else exit "$?"; fi
+'''
+        self.configure_github()
+        for attr, value in [('sealed', True), ('cluster', 'wrong'), ('missing', True),
+                            ('github_status', 404)]:
+            with self.subTest(attr=attr):
+                old = getattr(self, attr)
+                setattr(self, attr, value)
+                result = subprocess.run(['/bin/bash', '-c', script, 'fixture', str(HELPER.with_name('ai.sh'))],
+                    env={**os.environ, 'LOGIN_PATH': str(self.bin) + ':' + os.environ['PATH'],
+                         'A0_AI_VAULT_HELPER': str(helper), 'A0_CLI_VAULT_CONFIG': str(self.config),
+                         'PANE_MARKER': str(marker)}, capture_output=True, text=True, timeout=10)
+                setattr(self, attr, old)
+                self.assertEqual(result.returncode, 1, result.stderr)
+                self.assertEqual(result.stdout, '')
+                self.assertFalse(marker.exists(), 'Failed preflight reached tmux mutation')
+                self.assertNotIn(CANARY, result.stdout + result.stderr)
+                self.assertNotIn(GITHUB_CANARY, result.stdout + result.stderr)
 
     def test_unavailable_identity_seal_and_root_token_never_dispatch_child(self):
         for attr, value in [('sealed', True), ('initialized', False), ('cluster', 'wrong'), ('policies', ['root']), ('expired', True), ('redirect', True)]:

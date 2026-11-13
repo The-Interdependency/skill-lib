@@ -8,7 +8,7 @@ set -euo pipefail
 #   summary: canonical Termux-side SSH/tmux launcher for coding-agent CLIs on the a0 development VM with health, restart, vault-backed credentials, and persistent remote pane logs
 #   owner: skill-lib
 #   public_surface: ai.sh start|attach|status|restart|logs|keys|vault|github|site|grok|codex|deepcode|shell
-#   internal_surface: remote bash quoting, tmux session/window lifecycle, VM-local vault execution
+#   internal_surface: remote bash quoting, tmux session/window lifecycle, launch preparation, VM-local vault execution, interactive failure recovery
 #   auth_boundary: SSH host alias and third-party CLIs own authentication; launcher never prints key values
 #   storage_boundary: owner-only remote pane logs; protected VM credential files are provisioned separately
 #   network_boundary: SSH to configured VM host only
@@ -21,6 +21,28 @@ set -euo pipefail
 #   since: 2026-09-12
 #   unresolved: third-party CLI executable names and provider authentication methods may change
 # === END MODULE_BUILD ===
+# === CONTRACTS ===
+# id: ai_launcher_aggregate_failure
+#   given: one or more agent starts or restarts fail
+#   then: attempt the remaining agents and return nonzero; failed initial session setup prevents agent starts
+#   class: correctness
+# id: ai_launcher_preflight_preserves_pane
+#   given: respawn's selected-agent credential preflight fails
+#   then: return its failure before respawn masks credentials or replaces the existing pane
+#   class: safety
+# id: ai_launcher_phase_failure
+#   given: required setup, pane-state lookup, credential masking or respawn fails
+#   then: preserve the failure and perform no later dependent action; reject unknown pane state
+#   class: correctness
+# id: ai_launcher_new_window_retry
+#   given: a first launch fails credential preflight before an agent window exists
+#   then: create no placeholder window; a later start, open or restart can launch normally after repair
+#   class: correctness
+# id: ai_launcher_menu_recovery
+#   given: an interactive menu action fails after initial session setup
+#   then: report its failure status and keep accepting recovery commands
+#   class: correctness
+# === END CONTRACTS ===
 
 HOST="${A0_AI_HOST:-a0}"
 SESSION="${A0_AI_SESSION:-a0}"
@@ -117,7 +139,7 @@ resolve_vault_helper() {
   [[ "$VAULT_HELPER" == /* && "$VAULT_HELPER" != *$'\n'* ]] || { printf 'A0_AI_VAULT_HELPER must resolve to an absolute VM path.\n' >&2; return 2; }
 }
 
-keys_status() { resolve_vault_helper; remote "$(q "$VAULT_HELPER") status"; }
+keys_status() { resolve_vault_helper || return; remote "$(q "$VAULT_HELPER") status"; }
 
 vault_command() {
   case "${1:-status}" in
@@ -165,7 +187,7 @@ github_command() {
 }
 
 site_command() {
-  resolve_vault_helper
+  resolve_vault_helper || return
   case "${1:-status}" in
     pair)
       [[ -n "${2:-}" && -f "$2" ]] || { printf 'usage: ai.sh site pair /path/to/a0-site-connection.json\n' >&2; return 2; }
@@ -181,13 +203,13 @@ site_command() {
 }
 
 ensure_session() {
-  require_remote
+  require_remote || return
   if ! session_exists; then
-    remote "tmux new-session -d -s $(q "$SESSION") -n shell"
+    remote "tmux new-session -d -s $(q "$SESSION") -n shell" || return
   fi
-  remote "umask 077; tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\""
+  remote "umask 077; tmux set-option -w -t $(q "$SESSION:shell") remain-on-exit on 2>/dev/null || true; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"" || return
   pipe_log shell || true
-  clear_stale_keys
+  clear_stale_keys || return
 }
 
 spec() {
@@ -201,10 +223,10 @@ spec() {
 }
 
 ensure_window_shell() {
-  local index="$1" name="$2"
-  ensure_session
+  local index="$1" name="$2" pane_command="${3:-}"
+  ensure_session || return
   if window_exists "$name"; then
-    remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on"
+    remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on" || return
     pipe_log "$name" || true
     return 0
   fi
@@ -215,13 +237,17 @@ ensure_window_shell() {
     printf 'ERROR: expected window %s at index %s, but %s occupies it\n' "$name" "$index" "$occupied" >&2
     return 3
   fi
-  remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")"
-  remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on"
+  if [[ -n "$pane_command" ]]; then
+    remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name") $(q "$pane_command")" || return
+  else
+    remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")" || return
+  fi
+  remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on" || return
   pipe_log "$name" || true
 }
 
-respawn() {
-  resolve_vault_helper
+prepare_launch() {
+  resolve_vault_helper || return
   local name="$1" command_line="$2" binary pane_command launch_env resolved_binary runtime_path
   binary="${command_line%% *}"
   if ! launch_env="$(remote "resolved=\$(type -P $(q "$binary")) || exit 127; printf '%s\\n%s' \"\$resolved\" \"\$PATH\"")"; then
@@ -236,31 +262,49 @@ respawn() {
   # Resolve login-shell tools (including nvm runtimes) before credentials enter
   # the child. A long-lived tmux server may have an older PATH.
   command_line="$(q "$resolved_binary")${command_line#"$binary"}"
-  clear_stale_keys
+  # Check the same selected credentials without disturbing the running pane.
+  # Exec reads again: this check does not reserve credentials or prove CLI login.
+  remote "PATH=$(q "$runtime_path") $(q "$VAULT_HELPER") check $(q "$name")" >/dev/null || return
   pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
-  remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
+  printf '%s' "$pane_command"
+}
+
+respawn() {
+  local name="$1" pane_command
+  pane_command="$(prepare_launch "$name" "$2")" || return
+  clear_stale_keys || return
+  remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")" || return
   pipe_log "$name" || true
 }
 
 ensure_agent() {
-  local agent="$1" row index name command_line dead existed=0
-  row="$(spec "$agent")"
+  local agent="$1" force="${2:-0}" row index name command_line dead existed=0 pane_command=""
+  row="$(spec "$agent")" || return
   IFS='|' read -r index name command_line <<<"$row"
   if window_exists "$name"; then
     existed=1
+  else
+    # Prepare before creating any window. A rejected first launch leaves no
+    # live placeholder that a later invocation could mistake for the agent.
+    pane_command="$(prepare_launch "$name" "$command_line")" || return
   fi
-  ensure_window_shell "$index" "$name"
-  dead="$(pane_dead "$name")"
-  if [[ "$existed" == 0 || "$dead" == 1 ]]; then
-    respawn "$name" "$command_line"
+  ensure_window_shell "$index" "$name" "$pane_command" || return
+  dead="$(pane_dead "$name")" || return
+  [[ "$dead" == 0 || "$dead" == 1 ]] || { printf 'ERROR: invalid pane state\n' >&2; return 1; }
+  if [[ "$existed" == 0 ]]; then
+    [[ "$dead" == 0 ]] || { printf 'ERROR: %s exited during launch; inspect its log\n' "$name" >&2; return 1; }
+  elif [[ "$force" == 1 || "$dead" == 1 ]]; then
+    respawn "$name" "$command_line" || return
   fi
 }
 
 start_all() {
-  ensure_window_shell 0 shell
-  ensure_agent grok || true
-  ensure_agent codex || true
-  ensure_agent deepcode || true
+  ensure_window_shell 0 shell || return
+  local result=0
+  ensure_agent grok || result=1
+  ensure_agent codex || result=1
+  ensure_agent deepcode || result=1
+  return "$result"
 }
 
 restart_one() {
@@ -270,25 +314,27 @@ restart_one() {
     return 2
   }
   IFS='|' read -r index name command_line <<<"$row"
-  ensure_window_shell "$index" "$name"
-  if [[ "$agent" == shell ]]; then
-    local pane_command
-    pane_command="exec bash -lc $(q "$command_line")"
-    remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
-    pipe_log "$name" || true
-  else
-    respawn "$name" "$command_line"
+  if [[ "$agent" != shell ]]; then
+    ensure_agent "$agent" 1 || return
+    return 0
   fi
+  ensure_window_shell "$index" "$name" || return
+  local pane_command
+  pane_command="exec bash -lc $(q "$command_line")"
+  remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")" || return
+  pipe_log "$name" || true
 }
 
 restart() {
   local target="${1:-all}"
   case "$target" in
     all)
-      restart_one shell || true
-      restart_one grok || true
-      restart_one codex || true
-      restart_one deepcode || true
+      local result=0
+      restart_one shell || result=1
+      restart_one grok || result=1
+      restart_one codex || result=1
+      restart_one deepcode || result=1
+      return "$result"
       ;;
     grok|codex|deepcode|shell) restart_one "$target" ;;
     *) printf 'ERROR: restart target must be grok, codex, deepcode, shell, or all\n' >&2; return 2 ;;
@@ -296,7 +342,7 @@ restart() {
 }
 
 status() {
-  require_remote
+  require_remote || return
   if ! session_exists; then
     printf 'session %-12s missing on %s\n' "$SESSION" "$HOST"
     return 1
@@ -310,16 +356,13 @@ attach_window() {
 }
 
 open_agent() {
-  local agent="$1" row index name command_line dead existed=0
-  row="$(spec "$agent")"
+  local agent="$1" row index name command_line
+  row="$(spec "$agent")" || return
   IFS='|' read -r index name command_line <<<"$row"
-  if window_exists "$name"; then
-    existed=1
-  fi
-  ensure_window_shell "$index" "$name"
-  dead="$(pane_dead "$name")"
-  if [[ "$agent" != shell && ( "$existed" == 0 || "$dead" == 1 ) ]]; then
-    respawn "$name" "$command_line"
+  if [[ "$agent" == shell ]]; then
+    ensure_window_shell "$index" "$name" || return
+  else
+    ensure_agent "$agent" || return
   fi
   attach_window "$name"
 }
@@ -327,12 +370,22 @@ open_agent() {
 logs() {
   local name="${1:-deepcode}"
   case "$name" in shell|grok|codex|deepcode) ;; *) printf 'ERROR: unknown log: %s\n' "$name" >&2; return 2 ;; esac
-  ensure_session
+  ensure_session || return
   remote "file=\"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; if [[ -f \"\$file\" ]]; then tail -n ${A0_AI_LOG_LINES:-200} \"\$file\"; else printf 'no log yet: %s\\n' \"\$file\"; exit 1; fi"
 }
 
+menu_action() {
+  local result
+  if "$@"; then
+    return 0
+  else
+    result=$?
+    printf 'ERROR: action failed (status %s); menu remains available\n' "$result" >&2
+  fi
+}
+
 menu() {
-  ensure_session
+  ensure_session || return
   while true; do
     cat <<'EOF'
 
@@ -350,15 +403,15 @@ AI on a0:
 EOF
     read -r -p '> ' choice
     case "$choice" in
-      1) open_agent grok ;;
-      2) open_agent codex ;;
-      3) open_agent deepcode ;;
-      4) open_agent shell ;;
-      5) keys_status ;;
-      6) status || true ;;
-      7) read -r -p 'restart [grok/codex/deepcode/shell/all]: ' target; restart "${target:-all}" || true ;;
-      8) read -r -p 'log [deepcode/codex/grok/shell]: ' target; logs "${target:-deepcode}" || true ;;
-      9) keys_status || true ;;
+      1) menu_action open_agent grok ;;
+      2) menu_action open_agent codex ;;
+      3) menu_action open_agent deepcode ;;
+      4) menu_action open_agent shell ;;
+      5) menu_action keys_status ;;
+      6) menu_action status ;;
+      7) read -r -p 'restart [grok/codex/deepcode/shell/all]: ' target; menu_action restart "${target:-all}" ;;
+      8) read -r -p 'log [deepcode/codex/grok/shell]: ' target; menu_action logs "${target:-deepcode}" ;;
+      9) menu_action keys_status ;;
       0) return 0 ;;
       *) printf 'unknown choice\n' ;;
     esac

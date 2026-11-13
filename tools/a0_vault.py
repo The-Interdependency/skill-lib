@@ -2,13 +2,19 @@
 # ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 """VM-local OpenBao credential boundary for ai.sh.
 
-Usage: a0-vault status; a0-vault github status|check;
+Usage: a0-vault status; a0-vault check deepcode; a0-vault github status|check;
        a0-vault exec deepcode -- deepcodei.
 Provision /etc/a0/cli/<uid>.json with A0 operations/configure-vault.py.
 Never initializes/unseals Bao. Secrets enter only the selected child environment.
 GitHub activation/rotation belongs to the operator's ai.sh github set command.
 The VM account and its executed CLI remain trusted; this is not a sandbox.
 """
+# === CONTRACTS ===
+# id: a0_vault_selected_preflight
+#   given: check AGENT with the existing pinned CLI vault configuration
+#   then: apply the same selected-provider and enabled-GitHub requirements as exec; return status without dispatch, secret output or vault writes; retain Codex account-login compatibility
+#   class: safety
+# === END CONTRACTS ===
 from __future__ import annotations
 
 import argparse
@@ -288,6 +294,8 @@ def main() -> int:
     parser.add_argument("--config", default=os.environ.get("A0_CLI_VAULT_CONFIG", f"/etc/a0/cli/{os.getuid()}.json"))
     commands = parser.add_subparsers(dest="action", required=True)
     commands.add_parser("status")
+    preflight = commands.add_parser("check")
+    preflight.add_argument("agent", choices=AGENTS)
     github = commands.add_parser("github")
     github.add_argument("operation", choices=("status", "check"))
     site = commands.add_parser("site")
@@ -309,6 +317,10 @@ def main() -> int:
         if args.action == "status":
             states = {p: "present" if key_for(config, token, p) else "missing" for p in PROVIDERS}
             print(json.dumps({"vault": "ready", "cluster_id": config["cluster_id"], "providers": states}))
+            return 0
+        if args.action == "check":
+            child_environment(config, token, args.agent)
+            print(json.dumps({"agent": args.agent, "preflight": "passed"}))
             return 0
         command = args.command[1:] if args.command[:1] == ["--"] else args.command
         if not command:

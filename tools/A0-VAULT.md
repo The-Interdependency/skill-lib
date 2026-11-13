@@ -51,6 +51,54 @@ never paste an administrator password into chat. Existing SSH host trust is
 required and is never bypassed. Existing agent panes retain old environment
 values until you explicitly restart each chosen agent.
 
+### Launcher checks and failure status
+
+After updating the phone checkout, run `ai.sh vault install` to update the VM
+helper before restarting an agent. An older helper lacks the selected-agent
+`check` action; the launcher then refuses that replacement and leaves the pane
+running. For a direct check in the existing VM account:
+
+```bash
+~/.local/bin/a0-vault check deepcode
+```
+
+The check reads the pinned store and applies the same selected-provider and
+enabled-GitHub requirements as launch, without dispatching a child, printing
+secrets or writing the vault. Codex keeps its existing account-login option when
+no OpenAI key is stored. A pass does not verify provider authentication, billing,
+CLI readiness or future credential availability. Launch reads the credentials
+again; the check does not reserve them.
+
+`ai.sh start` and `ai.sh restart all` attempt the remaining agents after an
+individual failure and return nonzero if any attempt fails. Initial session
+setup failure stops `start` before agent attempts. Required setup, pane-state,
+credential masking and respawn failures stop their dependent actions. Existing
+healthy panes are left running by `start`. A first launch checks credentials
+before creating its window and starts the prepared command directly, so a
+rejected check cannot leave a live placeholder shell that blocks later retries.
+Investigate a nonzero status with
+`ai.sh status` and the selected agent's log before retrying; the interactive
+menu reports the failed action's status and remains available for recovery.
+
+These safeguards carry forward the remaining launcher work from superseded
+draft #135 onto the merged #137/#139 credential path. The draft's separate
+fresh-install server, AppRole provisioning and renewal route are not installed
+or revived. Existing-store provisioning and recovery remain owned by A0 and
+the instructions above. Roll back through a reviewed compatible Git revert;
+keep the current vault configuration and credential history.
+
+Offline reproduction (Bash and the existing Python test environment required):
+
+```bash
+python -m unittest discover -s tests -p test_ai_launcher.py
+python -m unittest discover -s tests -p test_a0_vault.py
+```
+
+The Bash fixtures use inert remote boundaries; the helper tests use a temporary
+loopback HTTP server. They establish failure handling and selected credential
+checks within that scope. Live SSH, provider calls and physical-phone acceptance
+remain hmmm until separately observed.
+
 ## GitHub token refresh through OpenBao
 
 Use matching reviewed A0 and skill-lib releases containing this repair. First

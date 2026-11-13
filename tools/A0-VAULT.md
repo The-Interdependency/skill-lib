@@ -73,9 +73,12 @@ again; the check does not reserve them.
 individual failure and return nonzero if any attempt fails. Initial session
 setup failure stops `start` before agent attempts. Required setup, pane-state,
 credential masking and respawn failures stop their dependent actions. Existing
-healthy panes are left running by `start`. Investigate a nonzero status with
+healthy panes are left running by `start`. A first launch checks credentials
+before creating its window and starts the prepared command directly, so a
+rejected check cannot leave a live placeholder shell that blocks later retries.
+Investigate a nonzero status with
 `ai.sh status` and the selected agent's log before retrying; the interactive
-menu remains available after an action fails.
+menu reports the failed action's status and remains available for recovery.
 
 These safeguards carry forward the remaining launcher work from superseded
 draft #135 onto the merged #137/#139 credential path. The draft's separate

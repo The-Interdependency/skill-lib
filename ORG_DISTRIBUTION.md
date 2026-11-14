@@ -59,6 +59,7 @@ dependency graphs fail; unrelated unvendored skills remain outside the subset.
 * `website-builder-journal/` — append-only model-attributed By the builder expansion required for every interdependentway.org modification
 * `loop-eng/` — closed-loop engineering doctrine for repeatable Discover→Plan→Execute→Verify→Iterate workflows
 * `agent-ops/` — tool-using agent controls for permissions, approval, untrusted content, idempotent runs, evals, memory, redacted logs, and preflight
+* `pstack-orchestration/` — evidence-bound GitHub repo and code-task orchestration: task contract, skill dispatch, baseline, PASS/FAIL/NOT_RUN evidence, bounded repair, and autonomy gates
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `wdll/` — executive job selection, state-transition scope, falsifiable completion, and strategic advancement for spawned work
@@ -355,6 +356,22 @@ evidence. Selected propagation installs `loop-eng`, `risk-boundary-build`, and
 prose cross-load: its `repo-audit-repair`, `test-build`, and `msdmd` closure is
 not an install requirement. Public OWASP, NIST, CISA, and NCSC documents remain
 external recommendations.
+
+Before starting GitHub repository or other code-checkout work that needs a bound
+task contract, evidence, or autonomy gates, agents should read:
+
+```text
+.agents/skills/pstack-orchestration/SKILL.md
+```
+
+Bind repo, task, observable success, scope, access, stop conditions, baseline
+commit/diff, and rollback before editing. Reproduce the baseline before patching.
+Record each required check as PASS, FAIL, or NOT_RUN bound to the tested SHA.
+Do not fan out until one unit verifies. Do not merge, force-push, or push to a
+protected branch without the owner's explicit go-ahead; when merge is approved,
+pin a merge commit to the verified head SHA. An agent's say-so is never approval.
+Cross-load `agent-ops` for irreversible-effect approval and `github-tests` for
+CI evidence; those remain prose cross-loads, not install dependencies.
 
 Before auditing or auditing and repairing an existing repository, agents should read:
 

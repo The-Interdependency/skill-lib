@@ -3,6 +3,13 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: pstack-orchestration skill
+
+New procedural skill `pstack-orchestration/` for evidence-bound GitHub repo and
+code-task work, distilled from Lauren Tan's pstack / poteto-mode. Consumers that
+want the workflow should vendor `pstack-orchestration/` (no `depends_on` install
+closure). It is a prose sibling of `agent-ops` and `github-tests`, not a replacement.
+
 ## Unreleased: vm-mcp installer reruns on existing VMs
 
 VMs re-running `vm-mcp/install.sh` over an existing install get:

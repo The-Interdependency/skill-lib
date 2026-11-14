@@ -590,6 +590,21 @@
       ]
     },
     {
+      "name": "pstack-orchestration",
+      "path": "pstack-orchestration/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "reviewed-retained",
+      "before_words": 0,
+      "after_words": 1682,
+      "decisions": [
+        "New procedural skill: distill Lauren Tan's pstack / poteto-mode into a host-neutral GitHub repo workflow; do not vendor substantial pstack or grok-pstack text.",
+        "Keep official pstack, community grok-pstack ports, and the 0xChonsy prompt-cards as external provenance; this skill is the adopted procedure.",
+        "Cross-load agent-ops and github-tests in prose rather than adding a depends_on install closure.",
+        "Preserve autonomy gates: verification before parallel work, owner go-ahead for merge, merge commits pinned to the verified head SHA, and an agent's say-so is never approval."
+      ]
+    },
+    {
       "name": "agent-ops",
       "path": "agent-ops/SKILL.md",
       "kind": "procedural",

@@ -14,6 +14,8 @@ import unittest
 HELPER = Path(__file__).resolve().parents[1] / 'tools/a0_vault.py'
 CANARY = 'fixture-provider-secret-not-for-output'
 GITHUB_CANARY = 'fixture-github-secret-not-for-output'
+SITE_TOKEN = 'c' * 64
+HANDOFF_ID = 'd' * 64
 
 
 class VaultTests(unittest.TestCase):
@@ -44,6 +46,9 @@ class VaultTests(unittest.TestCase):
                     self.send_response(302)
                     self.send_header('Location', '/leak')
                     self.end_headers()
+                    return
+                if self.path.startswith('/api/reliability/'):
+                    test.site_route(self)
                     return
                 if self.path == '/v1/sys/seal-status':
                     data = {'initialized': test.initialized, 'sealed': test.sealed, 'cluster_id': test.cluster}
@@ -89,6 +94,41 @@ print('username=fixture-github')
 print('password=' + os.environ.get('GH_TOKEN', 'stale-disk-cache-credential'))
 ''')
         self.gh.chmod(0o700)
+
+    def site_route(self, handler):
+        """Inert reliability bridge whose bodies carry fields that must never print."""
+        if handler.headers.get('Authorization') != 'Bearer ' + SITE_TOKEN:
+            status, data = 401, {'error': 'bridge_unauthorized', 'detail': CANARY}
+        elif handler.path == '/api/reliability/status':
+            status, data = 200, {'schema': 'a0.reliability/1', 'observedAt': '2026-11-16T00:00:00.000Z',
+                'build': {'commit': 'a' * 40, 'dirty': False, 'builtAt': None, 'token': CANARY},
+                'services': {'app': 'ready', 'database': 'ready', 'secret': CANARY,
+                    'vault': {'state': 'ready', 'initialized': True, 'sealed': False, 'version': '2.1.0',
+                              'clusterId': 'fixture-cluster', 'rootToken': CANARY}},
+                'providers': [{'provider': 'openai', 'credential': 'present', 'api_key': CANARY}],
+                'evidence': [{'id': 'e1', 'commit': 'b' * 40, 'observedAt': '2026-11-16T00:00:00.000Z',
+                              'scope': 'vm', 'status': 'passed', 'summary': CANARY + '\x1b[2J'}],
+                'evidenceState': 'reported', 'capabilities': [CANARY], 'debug': CANARY}
+        elif handler.path == '/api/reliability/handoffs':
+            status, data = 200, {'schema': 'a0.handoff-list/1', 'extra': CANARY, 'items': [
+                {'id': HANDOFF_ID, 'target': 'Codex', 'state': 'received',
+                 'receivedAt': '2026-11-16T00:00:00.000Z', 'text': CANARY}]}
+        elif handler.path == '/api/reliability/handoffs/' + HANDOFF_ID:
+            status, data = 200, {'schema': 'a0.handoff/1', 'id': HANDOFF_ID, 'text': 'fixture handoff text'}
+        else:
+            status, data = 404, {'error': 'unknown_bridge_operation'}
+        handler.send_response(status)
+        handler.send_header('Content-Type', 'application/json')
+        handler.end_headers()
+        handler.wfile.write(json.dumps(data).encode())
+
+    def configure_site(self, token=SITE_TOKEN):
+        bridge_token = self.root / 'bridge-token'
+        bridge_token.write_text(token)
+        bridge_token.chmod(0o600)
+        config = json.loads(self.config.read_text())
+        config['bridge'] = {'addr': f'http://127.0.0.1:{self.server.server_port}', 'token_file': str(bridge_token)}
+        self.config.write_text(json.dumps(config))
 
     def tearDown(self):
         self.server.shutdown()
@@ -176,6 +216,22 @@ runpy.run_path({str(HELPER)!r}, run_name='__main__')
         self.assertEqual(result.returncode, 0)  # Existing Codex account login remains possible.
         self.assertNotEqual(self.invoke('exec', 'deepcode', '--', 'true').returncode, 0)
 
+    def bash_env_file(self):
+        startup = self.root / 'stale-startup.sh'
+        startup.write_text('export OPENAI_API_KEY=stale-openai XAI_API_KEY=stale-xai BAO_TOKEN=stale-bao\n')
+        return {**os.environ, 'BASH_ENV': str(startup), 'ENV': str(startup),
+                'OPENAI_API_KEY': 'stale-openai', 'XAI_API_KEY': 'stale-xai', 'BAO_TOKEN': 'stale-bao'}
+
+    def test_bash_child_cannot_restore_stale_keys_through_shell_startup_files(self):
+        probe = ('printf "%s|%s|%s|%s|%s\\n" "${OPENAI_API_KEY:-unset}" "${XAI_API_KEY-unset}" '
+                 '"${BAO_TOKEN-unset}" "${BASH_ENV-unset}" "${ENV-unset}"')
+        for missing, openai in ((False, CANARY), (True, 'unset')):
+            with self.subTest(missing=missing):
+                self.missing = missing
+                result = self.invoke('exec', 'codex', '--', '/bin/bash', '-c', probe, env=self.bash_env_file())
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stdout.strip(), f'{openai}|unset|unset|unset|unset')
+
     def test_launcher_carries_login_cli_and_runtime_path_into_stale_tmux(self):
         login = self.root / 'login bin'
         login.mkdir()
@@ -206,7 +262,7 @@ pipe_log() { :; }
 respawn codex 'fixture-cli "literal argument"'
 '''
         result = subprocess.run(['/bin/bash', '-c', script, 'fixture', str(HELPER.with_name('ai.sh'))],
-            env={**os.environ, 'LOGIN_PATH': str(login) + ':' + os.environ['PATH'],
+            env={**self.bash_env_file(), 'LOGIN_PATH': str(login) + ':' + os.environ['PATH'],
                  'A0_AI_VAULT_HELPER': str(helper), 'A0_CLI_VAULT_CONFIG': str(self.config),
                  'OPENAI_API_KEY': 'stale', 'XAI_API_KEY': 'stale', 'BAO_TOKEN': 'stale'},
             capture_output=True, text=True)
@@ -468,6 +524,51 @@ print(json.dumps({
                 result, calls = self.guarded_github('check')
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(calls, [])
+
+    def site(self, *args):
+        result = self.invoke('site', *args)
+        self.assertNotIn(CANARY, result.stdout + result.stderr)
+        self.assertNotIn(SITE_TOKEN, result.stdout + result.stderr)
+        self.assertNotIn('\x1b', result.stdout + result.stderr)
+        return result
+
+    def test_site_status_and_handoffs_print_only_allowlisted_fields(self):
+        self.configure_site()
+        status = self.site('status')
+        self.assertEqual(status.returncode, 0, status.stderr)
+        view = json.loads(status.stdout)
+        self.assertEqual(set(view), {'schema', 'observedAt', 'build', 'services', 'providers', 'evidenceState', 'evidence'})
+        self.assertEqual(view['build'], {'commit': 'a' * 40, 'dirty': False, 'builtAt': None})
+        self.assertEqual(view['services']['vault']['clusterId'], 'fixture-cluster')
+        self.assertEqual(view['providers'], [{'provider': 'openai', 'credential': 'present'}])
+        self.assertEqual(set(view['evidence'][0]), {'id', 'commit', 'observedAt', 'scope', 'status'})
+        listing = self.site('handoffs')
+        self.assertEqual(listing.returncode, 0, listing.stderr)
+        self.assertEqual(json.loads(listing.stdout), {'schema': 'a0.handoff-list/1', 'items': [
+            {'id': HANDOFF_ID, 'target': 'Codex', 'state': 'received', 'receivedAt': '2026-11-16T00:00:00.000Z'}]})
+        one = self.site('handoff', HANDOFF_ID)
+        self.assertEqual((one.returncode, one.stdout.strip()), (0, 'fixture handoff text'))
+        self.assertTrue(all(p.startswith('/api/reliability/') for p in self.paths))  # Never the vault API.
+
+    def test_site_bad_bridge_token_and_redirects_fail_closed_without_body(self):
+        self.configure_site('e' * 64)
+        denied = self.site('status')
+        self.assertNotEqual(denied.returncode, 0)
+        self.assertIn('HTTP 401', denied.stderr)
+        self.assertEqual(denied.stdout, '')
+        self.configure_site('not-a-bridge-token')
+        malformed = self.site('status')
+        self.assertNotEqual(malformed.returncode, 0)
+        self.assertIn('malformed', malformed.stderr)
+        self.configure_site()
+        self.redirect = True
+        for operation in (('status',), ('handoffs',), ('handoff', HANDOFF_ID)):
+            with self.subTest(operation=operation):
+                result = self.site(*operation)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn('redirects are refused', result.stderr)
+                self.assertEqual(result.stdout, '')
+        self.assertNotIn('/leak', self.paths)
 
 
 if __name__ == '__main__':

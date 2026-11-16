@@ -28,9 +28,12 @@ PROVIDERS = {"openai": "OPENAI_API_KEY", "xai": "XAI_API_KEY",
              "deepseek": "DEEPSEEK_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
 AGENTS = {"codex": "openai", "grok": "xai", "deepcode": "deepseek"}
 GITHUB_PATH = "integration/github"
+# ai.sh KEY_VARS must name exactly this set (tests/test_ai_launcher.py enforces it).
+# BASH_ENV/ENV are startup files a later shell would source after this cleanup,
+# restoring stale keys; exported BASH_FUNC_* only run when called, so they stay.
 SECRET_ENV = set(PROVIDERS.values()) | {"BAO_TOKEN", "VAULT_TOKEN", "BAO_TOKEN_FILE",
     "VAULT_TOKEN_FILE", "BAO_ADDR", "VAULT_ADDR", "A0_DATABASE_URL", "A0_SESSION_SECRET",
-    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"}
+    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN", "BASH_ENV", "ENV"}
 
 
 class BoundaryError(Exception):
@@ -278,9 +281,47 @@ def site_request(config: dict, operation: str, identity: str = ""):
             if len(raw) > 262144:
                 raise BoundaryError("Bridge response is too large.")
             data = json.loads(raw)
+    except urllib.error.HTTPError as err:
+        raise BoundaryError(f"VM bridge rejected the request (HTTP {err.code}); inspect pairing.") from None
     except (urllib.error.URLError, TimeoutError, ValueError):
         raise BoundaryError("VM bridge request failed; inspect pairing and the A0 service.") from None
-    print(data.get("text", "") if operation == "handoff" else json.dumps(data, indent=2))
+    if not isinstance(data, dict):
+        raise BoundaryError("VM bridge returned an invalid response.")
+    if operation == "handoff":
+        text = data.get("text")
+        print(text if isinstance(text, str) else "")
+    else:
+        print(json.dumps(site_view(operation, data), indent=2))
+
+
+def scalar(value):
+    """Printable bridge field: bool/null or short printable ASCII, else 'invalid'."""
+    if value is None or isinstance(value, bool):
+        return value
+    return value if isinstance(value, str) and re.fullmatch(r"[\x20-\x7e]{0,200}", value) else "invalid"
+
+
+def pick(value, fields) -> dict:
+    return {k: scalar(value.get(k)) for k in fields} if isinstance(value, dict) else {}
+
+
+def rows(value, fields) -> list:
+    return [pick(item, fields) for item in value[:100]] if isinstance(value, list) else []
+
+
+def site_view(operation: str, data: dict) -> dict:
+    """Allowlist bridge fields like vault status; never echo the raw response body."""
+    if operation == "handoffs":
+        return {"schema": scalar(data.get("schema")),
+                "items": rows(data.get("items"), ("id", "target", "state", "receivedAt"))}
+    services = data.get("services") if isinstance(data.get("services"), dict) else {}
+    return {"schema": scalar(data.get("schema")), "observedAt": scalar(data.get("observedAt")),
+        "build": pick(data.get("build"), ("commit", "dirty", "builtAt")),
+        "services": {"app": scalar(services.get("app")), "database": scalar(services.get("database")),
+            "vault": pick(services.get("vault"), ("state", "initialized", "sealed", "version", "clusterId"))},
+        "providers": rows(data.get("providers"), ("provider", "credential")),
+        "evidenceState": scalar(data.get("evidenceState")),
+        "evidence": rows(data.get("evidence"), ("id", "commit", "observedAt", "scope", "status"))}
 
 
 def main() -> int:

@@ -30,7 +30,8 @@ CODEX_CMD="${A0_CODEX_CMD:-codex --yolo}"
 DEEPCODE_CMD="${A0_DEEPCODE_CMD:-deepcodei}"
 SHELL_CMD="${A0_SHELL_CMD:-exec \"\${SHELL:-/bin/bash}\" -l}"
 VAULT_HELPER="${A0_AI_VAULT_HELPER:-}"
-KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN GH_TOKEN GITHUB_TOKEN"
+# Exactly a0_vault.py SECRET_ENV (tests enforce); the recovery shell sees none of them.
+KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN BAO_TOKEN_FILE VAULT_TOKEN_FILE BAO_ADDR VAULT_ADDR A0_DATABASE_URL A0_SESSION_SECRET A0_BOOTSTRAP_CODE A0_BRIDGE_TOKEN GH_TOKEN GITHUB_TOKEN BASH_ENV ENV"
 
 usage() {
   cat <<'EOF'
@@ -237,7 +238,10 @@ respawn() {
   # the child. A long-lived tmux server may have an older PATH.
   command_line="$(q "$resolved_binary")${command_line#"$binary"}"
   clear_stale_keys
-  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
+  # The pane shell splits the operator command into argv before credentials
+  # exist; a0-vault then execs that argv directly, so no shell (or BASH_ENV)
+  # runs after the environment is cleaned. The command must be a simple command.
+  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- $command_line"
   remote "tmux respawn-pane -k -t $(q "$SESSION:$name.0") $(q "$pane_command")"
   pipe_log "$name" || true
 }

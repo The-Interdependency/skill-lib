@@ -71,7 +71,8 @@ class AILauncherTests(unittest.TestCase):
         self.assertNotIn('tmux set-environment -g', text)
         self.assertIn('keys_status() { resolve_vault_helper; remote', text)
         self.assertIn('exec $(q "$VAULT_HELPER") exec', text)
-        self.assertIn('-- bash -c', text)
+        self.assertIn('exec $(q "$name") -- $command_line"', text)
+        self.assertNotIn('-- bash', text)  # No shell may run after a0-vault cleans the environment.
         self.assertIn('site pair FILE', text)
 
     def test_installer_places_ai_sh_on_termux_path_without_copying(self) -> None:
@@ -213,6 +214,18 @@ with open(os.environ[{variable!r}], 'a') as out:
         self.assertTrue(all(row[:4] == ['set-environment', '-r', '-t', 'fixture-session'] for row in mutations))
         self.assertNotIn(self.env['GH_TOKEN'], json.dumps(calls + mutations))
         self.assertNotIn(self.env['GITHUB_TOKEN'], json.dumps(calls + mutations))
+
+    def test_masked_tmux_variables_match_the_vault_secret_set(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("a0_vault_fixture", LAUNCHER.with_name("a0_vault.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        line = next(row for row in LAUNCHER.read_text(encoding="utf-8").splitlines() if row.startswith("KEY_VARS="))
+        names = line.split("=", 1)[1].strip('"').split()
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(set(names), module.SECRET_ENV)
+        for name in ("A0_BRIDGE_TOKEN", "A0_SESSION_SECRET", "A0_BOOTSTRAP_CODE", "A0_DATABASE_URL", "BASH_ENV", "ENV"):
+            self.assertIn(name, names)
 
 
 if __name__ == "__main__":

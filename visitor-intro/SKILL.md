@@ -65,8 +65,9 @@ Name these only as needed. Do not lecture.
   Memory-Short. Inference is a six-step pipeline over these rings.
   Defined in `a0`'s `python/engine/pcna.py` and documented in `a0/spec.md`.
 - **EDCM** — Behavioural directive scoring (CM, DA, DRIFT, DVG, INT, TBF)
-  that guides LLM selection and fires corrective actions. Lives in
-  `a0/python/services/edcm.py`; measurement doctrine in `edcm`
+  that guides LLM selection and fires corrective actions. The archived
+  implementation lives in `a0/archive/python/services/edcm.py`;
+  measurement doctrine in `edcm`
   (`edcmbone`, archived 2026-07-28, is superseded by `edcm`).
 - **SigmaCore** — Encodes the workspace filesystem as a prime-ring
   tensor; the Psi ring's filesystem companion.

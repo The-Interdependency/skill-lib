@@ -236,6 +236,21 @@ class SkillSpecCoverageTest(unittest.TestCase):
             "visitor-intro",
         )
 
+    def test_visitor_intro_cites_archived_a0_edcm_implementation(self) -> None:
+        text = read_skill("visitor-intro")
+        stale = "`a0/" + "python/services/edcm.py`"
+        archived = "`a0/archive/python/services/edcm.py`"
+        self.assertNotIn(stale, text)
+        self.assertIn(archived, text)
+        self.assertIn("The archived", text)
+        self.assertIn("implementation lives in " + archived, text)
+        hits = []
+        for path in list(ROOT.glob("*/SKILL.md")) + list(ROOT.glob("skills/*/SKILL.md")):
+            body = path.read_text(encoding="utf-8")
+            if stale in body:
+                hits.append(str(path.relative_to(ROOT)))
+        self.assertEqual(hits, [], f"stale a0 edcm.py path still cited in {hits}")
+
     def test_adaptive_elicitation_spec(self) -> None:
         text = read_skill("adaptive-elicitation")
         self.assertContainsAll(

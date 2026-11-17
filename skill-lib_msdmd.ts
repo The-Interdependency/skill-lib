@@ -23,10 +23,10 @@ export default defineMsdmdCollectionV2({
       "OWNERS": 0
     },
     "denominator": {
-      "count": 288,
+      "count": 287,
       "kind": "discovered-files"
     },
-    "excluded_files": 1,
+    "excluded_files": 0,
     "excluded_subtrees": 13,
     "information_availability": "not-evaluated-without-obligation-policy",
     "invalid_files": 0,
@@ -3976,14 +3976,6 @@ export default defineMsdmdCollectionV2({
       ],
       "size": 24695,
       "status": "supported"
-    },
-    {
-      "content_sha256": "ce33325c6b80334be5a5dafc1a6516997540120de716c00eb4ed9afd28c9855e",
-      "entry_kind": "file",
-      "file": "msdmd/node_modules",
-      "reader_ids": [],
-      "reason": "symlink-not-followed",
-      "status": "excluded"
     },
     {
       "content_sha256": "aaa0e822e8c9ec33c97b31a1a72622d427814b29ce21d9884514cc009ed60e67",
@@ -241837,7 +241829,7 @@ export default defineMsdmdCollectionV2({
     "revision": "snapshot:ad89f340d26927201473393182b72d88f8c1e900eb5829ba1389bcc594e02907",
     "revision_kind": "content-snapshot",
     "scope": "configured in-scope files; excluded subtrees are reported without traversing",
-    "snapshot_complete": false,
-    "snapshot_sha256": "a9087a92f4aef62b2973b1cc5d5a5e67df33bfda2d67eec0635e9023c27582a9"
+    "snapshot_complete": true,
+    "snapshot_sha256": "ef079b628e2e6bf207111ca38123cc106ed4cfbcee1d980ea07461549fcdbd41"
   }
 });

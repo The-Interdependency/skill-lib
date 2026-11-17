@@ -75,8 +75,8 @@ on, not something it overwrites.
 When a text carries footnotes, caveats, or dissent, treat the body as one
 speaker and the annotations as a second, and report the tension between
 them. This is an **EDCM-style heuristic** (Energy–Dissonance Circuit
-Model framing), illustrative only — it is not an edcmbone metric runtime,
-and you must not claim edcmbone status for it. Compute it transparently
+Model framing), illustrative only — it is not an EDCM metric runtime,
+and you must not claim EDCM measurement status for it. Compute it transparently
 (ship the math next to the output) over families such as:
 
 - intensity / valence per speaker (caps, terminal punctuation, charged
@@ -110,13 +110,13 @@ A good plain-lens deliverable is:
   in the name of simplicity.
 - Do not adopt a reassuring, hand-holding, or "explained for dummies"
   register; concreteness is the tool, not condescension.
-- Do not present the EDCM-style reading as an edcmbone measurement or
+- Do not present the EDCM-style reading as an EDCM measurement or
   claim unearned theorem/metric status.
 
 ## hmmm
 
 - The EDCM-style reading here is an illustrative heuristic, not an
-  edcmbone runtime; precise cross-speaker metric formulas live in
-  `edcmbone` / `a0`, not in this skill.
+  EDCM runtime; precise cross-speaker metric formulas live in
+  `edcm` (`docs/EDCM_MATHEMATICS.md`) / `a0`, not in this skill.
 - "Without talking down" is a judgement call; this skill gives rules and
   registers, not a measurable condescension score.

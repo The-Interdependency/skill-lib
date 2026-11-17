@@ -168,8 +168,8 @@
     },
     "visitor-intro": {
       "fenced_and_table_sha256": [
-        "afb9bea6ec30e299d2873570b9fe03e9d30b8a9981a071c4a0d1cc0ea5ba3dad",
-        "b0b4aaae226c3e314d450e595d67abb46fc8314904cbe7dfab8e7427a24c0e04"
+        "4668b4c7c6ae5c02cc361f038ae1fd7d51066e08c37958d169ea7a1b9579a46e",
+        "ce2d0d072b4463914a9154d362335f0be262f86c44f74035c549722605f7f317"
       ],
       "hmmm_tail": null
     },
@@ -194,7 +194,7 @@
     },
     "plain-lens": {
       "fenced_and_table_sha256": [],
-      "hmmm_tail": "- The EDCM-style reading here is an illustrative heuristic, not an\n  edcmbone runtime; precise cross-speaker metric formulas live in\n  `edcmbone` / `a0`, not in this skill.\n- \"Without talking down\" is a judgement call; this skill gives rules and\n  registers, not a measurable condescension score."
+      "hmmm_tail": "- The EDCM-style reading here is an illustrative heuristic, not an\n  EDCM runtime; precise cross-speaker metric formulas live in\n  `edcm` (`docs/EDCM_MATHEMATICS.md`) / `a0`, not in this skill.\n- \"Without talking down\" is a judgement call; this skill gives rules and\n  registers, not a measurable condescension score."
     },
     "thought-lens": {
       "fenced_and_table_sha256": [
@@ -262,7 +262,7 @@
     },
     "the-interdependency": {
       "fenced_and_table_sha256": [],
-      "hmmm_tail": "- Precise harness integration for automatically fetching current METAPAT after this gate triggers; the skill currently defines the decision rule and source-of-truth boundary, while the consuming agent uses its available GitHub/local-repo access.\n- Whether the historical `meta` skill should remain as a compatibility router or be removed after all consumers propagate this gate.\n- Whether a companion metadata-block skill (e.g. `# === TIW_WORKFLOW ===` or `# === INTERDEPENDENCY ===`) should be added for self-declaring modules inside The-Interdependency repos.\n- Exact canonical reference for the full EDCMBONE transcript assembly protocol — should the detailed steps live in this skill or be expanded inside the edcmbone repo's own skill definitions?\n- Actual VM state, current client/private-tunnel state, provider sessions, and quotas remain runtime evidence outside this skill."
+      "hmmm_tail": "- Precise harness integration for automatically fetching current METAPAT after this gate triggers; the skill currently defines the decision rule and source-of-truth boundary, while the consuming agent uses its available GitHub/local-repo access.\n- Whether the historical `meta` skill should remain as a compatibility router or be removed after all consumers propagate this gate.\n- Whether a companion metadata-block skill (e.g. `# === TIW_WORKFLOW ===` or `# === INTERDEPENDENCY ===`) should be added for self-declaring modules inside The-Interdependency repos.\n- Exact canonical reference for the full EDCM transcript assembly protocol — should the detailed steps live in this skill or be expanded inside the `edcm` repo's own skill definitions?\n- Actual VM state, current client/private-tunnel state, provider sessions, and quotas remain runtime evidence outside this skill."
     },
     "interdependent-work-graph": {
       "fenced_and_table_sha256": [

@@ -241,7 +241,7 @@ char-compress/fixtures.json
 
 This is not a full natural-language compressor. It is a guardrail runner for
 minimum preservation claims: negation, quantifier, order, values, statuses,
-secrets, `hmmm`, and no UCNS-A / edcmbone status leakage.
+secrets, `hmmm`, and no UCNS-A / EDCM status leakage.
 
 ## CI
 

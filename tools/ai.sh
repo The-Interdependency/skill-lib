@@ -42,6 +42,10 @@ set -euo pipefail
 #   given: an interactive menu action fails after initial session setup
 #   then: report its failure status and keep accepting recovery commands
 #   class: correctness
+# id: ai_launcher_first_launch_diagnostics
+#   given: a first-launch CLI exits immediately or retention/log setup fails
+#   then: configure retention and logging before dispatch; retain fast-failure diagnostics and remove an unlaunched staging window after setup failure
+#   class: correctness
 # === END CONTRACTS ===
 
 HOST="${A0_AI_HOST:-a0}"
@@ -119,10 +123,20 @@ pane_dead() {
   remote "tmux display-message -p -t $(q "$SESSION:$name.0") '#{pane_dead}'"
 }
 
+setup_log() {
+  local name="$1" target="$2" directory="$HOME/$3" command
+  umask 077
+  mkdir -p "$directory" || return
+  chmod 700 "$directory" || return
+  touch "$directory/$name.log" || return
+  chmod 600 "$directory/$name.log" || return
+  command="umask 077; exec cat >> $(q "$directory/$name.log")"
+  tmux pipe-pane -o -t "$target" "$command"
+}
+
 pipe_log() {
-  local name="$1" target="$SESSION:$1.0" command
-  command="umask 077; cat >> \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\""
-  remote "umask 077; mkdir -p \"\$HOME/$REMOTE_LOG_SUBDIR\"; chmod 700 \"\$HOME/$REMOTE_LOG_SUBDIR\"; touch \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; chmod 600 \"\$HOME/$REMOTE_LOG_SUBDIR/$name.log\"; tmux pipe-pane -o -t $(q "$target") $(q "$command")"
+  remote "$(declare -f q setup_log)
+setup_log $(q "$1") $(q "$SESSION:$1.0") $(q "$REMOTE_LOG_SUBDIR")"
 }
 
 clear_stale_keys() {
@@ -238,10 +252,19 @@ ensure_window_shell() {
     return 3
   fi
   if [[ -n "$pane_command" ]]; then
-    remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name") $(q "$pane_command")" || return
-  else
-    remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")" || return
+    # Keep the new window inert until both observation channels are installed.
+    # A stable tmux ID confines failure cleanup to this newly created window.
+    remote "$(declare -f q setup_log)
+set -e
+window=\$(tmux new-window -P -F '#{window_id}' -d -t $(q "$SESSION:$index") -n $(q "$name") 'exec sleep 2147483647')
+trap 'rc=\$?; tmux kill-window -t \"\$window\" 2>/dev/null || true; exit \"\$rc\"' EXIT
+tmux set-option -w -t \"\$window\" remain-on-exit on
+setup_log $(q "$name") \"\$window.0\" $(q "$REMOTE_LOG_SUBDIR")
+tmux respawn-pane -k -t \"\$window.0\" $(q "$pane_command")
+trap - EXIT" || return
+    return 0
   fi
+  remote "tmux new-window -d -t $(q "$SESSION:$index") -n $(q "$name")" || return
   remote "tmux set-option -w -t $(q "$SESSION:$name") remain-on-exit on" || return
   pipe_log "$name" || true
 }

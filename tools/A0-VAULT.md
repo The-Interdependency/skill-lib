@@ -74,8 +74,10 @@ individual failure and return nonzero if any attempt fails. Initial session
 setup failure stops `start` before agent attempts. Required setup, pane-state,
 credential masking and respawn failures stop their dependent actions. Existing
 healthy panes are left running by `start`. A first launch checks credentials
-before creating its window and starts the prepared command directly, so a
-rejected check cannot leave a live placeholder shell that blocks later retries.
+before creating its window. It stages an inert window, enables retention and
+logging, then dispatches the prepared command. A rejected check creates no
+window; failed staging removes only its newly created window. A CLI that exits
+immediately retains its pane, exit status and log for inspection.
 Investigate a nonzero status with
 `ai.sh status` and the selected agent's log before retrying; the interactive
 menu reports the failed action's status and remains available for recovery.
@@ -95,9 +97,12 @@ python -m unittest discover -s tests -p test_a0_vault.py
 ```
 
 The Bash fixtures use inert remote boundaries; the helper tests use a temporary
-loopback HTTP server. They establish failure handling and selected credential
-checks within that scope. Live SSH, provider calls and physical-phone acceptance
-remain hmmm until separately observed.
+loopback HTTP server. A real-tmux witness uses a private socket/server and a
+key-free, immediately exiting CLI. Install tmux and run with
+`A0_REQUIRE_REAL_TMUX=1` to require that witness; hosted CI enforces it. A local
+sandbox that denies Unix sockets reports that witness skipped rather than
+claiming real lifecycle acceptance. Live SSH, provider calls and physical-phone
+acceptance remain hmmm until separately observed.
 
 ## GitHub token refresh through OpenBao
 

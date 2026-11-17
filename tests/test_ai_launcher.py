@@ -5,9 +5,12 @@ import os
 from pathlib import Path
 import pty
 import shlex
+import shutil
+import socket
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 
@@ -52,6 +55,17 @@ RATIO = "# ratios: loc_comments=hmmm imports_exports=hmmm calls_definitions=hmmm
 #   call: self::test_menu_reports_failed_actions_and_accepts_recovery_commands
 #   mutates: none
 #   cleanup: none
+# id: check_ai_launcher_fast_exit_diagnostics
+#   proves: ai_launcher_first_launch_diagnostics
+#   call: self::test_first_launch_retains_fast_failure_and_its_diagnostic
+#   requires: bash, tmux
+#   mutates: filesystem
+#   cleanup: private_tmux_server_and_tempdir
+# id: check_ai_launcher_first_launch_setup
+#   proves: ai_launcher_first_launch_diagnostics
+#   call: self::test_first_launch_stages_logging_and_cleans_failed_setup
+#   mutates: filesystem
+#   cleanup: tempdir_teardown
 # === END CHECKS ===
 
 
@@ -286,6 +300,123 @@ if respawn codex codex; then exit 0; else exit "$?"; fi
                     steps = steps[:steps.index(failed) + 1]
                 self.assertEqual(result.stderr.splitlines(), steps)
                 self.assertEqual(result.stdout, '')
+
+    def test_first_launch_stages_logging_and_cleans_failed_setup(self):
+        for failed, expected in (('', 0), ('retention', 24), ('logging', 25), ('launch', 26)):
+            with self.subTest(failed=failed), tempfile.TemporaryDirectory() as temp:
+                result = self.shell('''
+ensure_session() { :; }
+window_exists() { return 1; }
+tmux() {
+  case "$1" in
+    list-windows) return 0 ;;
+    new-window)
+      printf 'create\\n' >&2
+      if [[ "${*: -1}" == fixture-agent-command ]]; then
+        [[ -f "$FIXTURE/retention" && -f "$FIXTURE/logging" ]] || return 23
+      fi
+      [[ "$*" != *' -P '* ]] || printf '@1\\n'
+      ;;
+    set-option)
+      printf 'retention\\n' >&2
+      [[ "$FAILED" != retention ]] || return 24
+      touch "$FIXTURE/retention"
+      ;;
+    pipe-pane)
+      printf 'logging\\n' >&2
+      [[ "$FAILED" != logging ]] || return 25
+      touch "$FIXTURE/logging"
+      ;;
+    respawn-pane)
+      [[ -f "$FIXTURE/retention" && -f "$FIXTURE/logging" ]] || return 23
+      printf 'launch\\n' >&2
+      [[ "$FAILED" != launch ]] || return 26
+      touch "$FIXTURE/launched"
+      ;;
+    kill-window) touch "$FIXTURE/cleaned" ;;
+    *) return 99 ;;
+  esac
+  return 0
+}
+export -f tmux
+remote() { bash -c "$1"; }
+REMOTE_LOG_SUBDIR="$FIXTURE_REL/logs"
+if ensure_window_shell 2 codex fixture-agent-command; then exit 0; else exit "$?"; fi
+''', FAILED=failed, FIXTURE=temp, FIXTURE_REL=os.path.relpath(temp, Path.home()))
+                self.assertEqual(result.returncode, expected, result.stderr)
+                steps = ['create', 'retention', 'logging', 'launch']
+                if failed:
+                    steps = steps[:steps.index(failed) + 1]
+                self.assertEqual(result.stderr.splitlines(), steps)
+                self.assertEqual((Path(temp) / 'launched').exists(), not failed)
+                self.assertEqual((Path(temp) / 'cleaned').exists(), bool(failed))
+
+
+@unittest.skipUnless(shutil.which('tmux'), 'real lifecycle witness requires tmux')
+class AIRealTmuxTests(unittest.TestCase):
+    """Exercise the real launcher and a private tmux server, without SSH or keys.
+
+    Usage: install tmux, then run the normal test_ai_launcher.py suite.
+    A delayed transport response makes an immediately exiting CLI deterministic.
+    """
+
+    def test_first_launch_retains_fast_failure_and_its_diagnostic(self):
+        try:
+            with socket.socket(socket.AF_UNIX):
+                pass
+        except PermissionError:
+            if os.environ.get('A0_REQUIRE_REAL_TMUX') == '1':
+                raise
+            self.skipTest('sandbox denies Unix sockets; required hosted tmux lane remains authoritative')
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            binary = shutil.which('tmux')
+            socket_path = root / 'tmux.sock'
+            wrapper = root / 'tmux'
+            wrapper.write_text('#!/bin/sh\nexec ' + shlex.quote(binary) +
+                               ' -S ' + shlex.quote(str(socket_path)) + ' -f /dev/null "$@"\n')
+            wrapper.chmod(0o700)
+            agent = root / 'instant-agent'
+            agent.write_text('#!/bin/sh\nprintf "first-launch-diagnostic\\n"\nexit 7\n')
+            agent.chmod(0o700)
+            helper = root / 'a0-vault'
+            helper.write_text('#!/bin/bash\ncase "$1" in\ncheck) exit 0;;\n'
+                              'exec) shift 2; shift; exec "$@";;\nesac\nexit 2\n')
+            helper.chmod(0o700)
+            env = {**os.environ, 'PATH': str(root) + os.pathsep + os.environ['PATH'],
+                   'A0_AI_SESSION': 'fixture', 'A0_CODEX_CMD': str(agent),
+                   'A0_AI_VAULT_HELPER': str(helper),
+                   'A0_AI_REMOTE_LOG_SUBDIR': os.path.relpath(root / 'logs', Path.home())}
+            subprocess.run([str(wrapper), 'new-session', '-d', '-s', 'fixture', '-n', 'shell'],
+                           env=env, check=True, capture_output=True)
+            try:
+                result = subprocess.run(['bash', '-c', '''
+source "$1" help >/dev/null
+require_remote() { :; }
+remote() {
+  local rc=0
+  bash -c "$1" || rc=$?
+  if [[ "$1" == *new-window* ]]; then sleep 0.2; fi
+  return "$rc"
+}
+if ensure_agent codex; then exit 0; else exit "$?"; fi
+''', 'fixture', str(LAUNCHER)], env=env, capture_output=True, text=True, timeout=10)
+                state = subprocess.run([str(wrapper), 'display-message', '-p', '-t',
+                                        'fixture:codex.0', '#{pane_dead}:#{pane_dead_status}'],
+                                       env=env, capture_output=True, text=True)
+                self.assertEqual(state.returncode, 0, result.stderr + state.stderr)
+                self.assertEqual(state.stdout.strip(), '1:7')
+                self.assertNotEqual(result.returncode, 0, result.stderr)
+                log = root / 'logs' / 'codex.log'
+                deadline = time.monotonic() + 2
+                while time.monotonic() < deadline:
+                    if log.exists() and 'first-launch-diagnostic' in log.read_text():
+                        break
+                    time.sleep(0.02)
+                self.assertTrue(log.exists(), result.stderr)
+                self.assertIn('first-launch-diagnostic', log.read_text())
+            finally:
+                subprocess.run([str(wrapper), 'kill-server'], env=env, capture_output=True)
 
 
 class AIGitHubLauncherTests(unittest.TestCase):

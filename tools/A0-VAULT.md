@@ -174,8 +174,10 @@ Remove provider and vault exports (`OPENAI_API_KEY`, `XAI_API_KEY`,
 never read them after a0-vault cleans the environment, but the `0:shell`
 recovery pane is a login shell (`bash -lc`) and re-reads those files, so any
 export left there returns in that shell. `ai.sh vault status` warns on stderr
-with the variable names (never values) it finds assigned in those files; it is
-a line scan, so files sourced from them are not checked.
+with the variable names (never values) it finds assigned in those files
+(leading `NAME=`, every `NAME=` after `export`, and after `declare`, `typeset` or
+`readonly` with an `x` flag); it is a line scan, so files sourced from them are
+not checked.
 
 This is credential delivery within the trusted VM account, not isolation from
 other processes running as that account or from VM administrators. The scoped

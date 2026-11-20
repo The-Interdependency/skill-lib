@@ -90,8 +90,9 @@ configuration:
   A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_VAULT_HELPER
 
   A0_GROK_CMD, A0_CODEX_CMD and A0_DEEPCODE_CMD must be plain commands
-  (program and arguments, optionally quoted). Values containing
-  $ ` \ ; & | < > ( ) * ? ! { } or a newline are refused.
+  (program and arguments, optionally quoted with balanced quotes). Values
+  containing $ ` \ ; & | < > ( ) * ? ! { } [ ] # ~, a tab or a newline, or
+  that do not parse, are refused.
 EOF
 }
 
@@ -285,8 +286,13 @@ require_plain_command() {
     deepcode) variable=A0_DEEPCODE_CMD ;;
     *) variable="A0_${name^^}_CMD" ;;
   esac
-  if [[ -z "${command_line//[[:space:]]/}" || "$command_line" == *[\$\`\\\;\&\|\<\>\(\)\*\?\!\{\}]* || "$command_line" == *$'\n'* || "$command_line" == *$'\r'* ]]; then
-    printf 'ERROR: %s must be a plain command (program and arguments only); shell characters $ ` \\ ; & | < > ( ) * ? ! { } and newlines are refused\n' "$variable" >&2
+  if [[ -z "${command_line//[[:space:]]/}" || "$command_line" == *[\$\`\\\;\&\|\<\>\(\)\*\?\!\{\}\[\]\#\~]* || "$command_line" == *[$'\t\n\r']* ]]; then
+    printf 'ERROR: %s must be a plain command (program and arguments only); shell characters $ ` \\ ; & | < > ( ) * ? ! { } [ ] # ~, tabs and newlines are refused\n' "$variable" >&2
+    return 2
+  fi
+  # An unbalanced quote would kill the pane after respawn-pane -k; parse locally first.
+  if ! bash -n -c "$command_line" 2>/dev/null; then
+    printf 'ERROR: %s is not a valid plain command (check its quoting)\n' "$variable" >&2
     return 2
   fi
 }

@@ -22,6 +22,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -44,7 +45,8 @@ SECRET_ENV = set(PROVIDERS.values()) | {"BAO_TOKEN", "VAULT_TOKEN", "BAO_TOKEN_F
 
 # Login-shell startup files the ai.sh recovery shell (bash -l) re-reads.
 STARTUP_FILES = (".bash_profile", ".bash_login", ".profile", ".bashrc")
-STARTUP_ASSIGNMENT = re.compile(r"\s*(?:export\s+|declare\s+-x\s+|typeset\s+-x\s+)?([A-Za-z_][A-Za-z0-9_]*)=")
+ASSIGNMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=")
+EXPORT_BUILTINS = ("declare", "typeset", "readonly")
 # Terminal escape sequences, then remaining C0/DEL/C1 controls except tab and newline.
 TERMINAL_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?")
 CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
@@ -322,10 +324,34 @@ def startup_exports(home: Path) -> list:
         except OSError:
             continue
         for line in lines:
-            match = STARTUP_ASSIGNMENT.match(line)
-            if match and match.group(1) in SECRET_ENV:
-                names.add(match.group(1))
+            names.update(n for n in assigned_names(line) if n in SECRET_ENV)
     return sorted(names)
+
+
+def assigned_names(line: str) -> set:
+    """Names a startup line assigns: leading NAME=, every NAME= after export, and
+    every NAME= after declare/typeset/readonly when a flag includes x."""
+    names = set()
+    for part in re.split(r";|&&|\|\|", line):
+        try:
+            words = shlex.split(part, comments=True)
+        except ValueError:
+            words = part.split()
+        if not words:
+            continue
+        if words[0] == "export":
+            candidates = words[1:]
+        elif words[0] in EXPORT_BUILTINS:
+            flags = [w for w in words[1:] if w.startswith("-")]
+            candidates = words[1:] if any("x" in flag[1:] for flag in flags) else []
+        else:
+            candidates = []
+            for word in words:  # NAME=value prefixes, later exported by name.
+                if not ASSIGNMENT.match(word):
+                    break
+                candidates.append(word)
+        names.update(m.group(1) for m in map(ASSIGNMENT.match, candidates) if m)
+    return names
 
 
 def scalar(value):

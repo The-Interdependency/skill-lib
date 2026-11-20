@@ -236,6 +236,24 @@ runpy.run_path({str(HELPER)!r}, run_name='__main__')
         self.assertNotIn(CANARY, stale.stdout + stale.stderr)
         self.assertEqual(json.loads(stale.stdout)['vault'], 'ready')
 
+    def test_status_warning_covers_multi_name_export_and_exporting_builtins(self):
+        home = self.root / 'home'
+        home.mkdir()
+        (home / '.bash_profile').write_text(
+            'export A=1 OPENAI_API_KEY=' + CANARY + '\n'
+            'declare -gx DEEPSEEK_API_KEY=' + CANARY + '\n'
+            'readonly -x ANTHROPIC_API_KEY=' + CANARY + '\n'
+            'typeset -x BAO_TOKEN=' + CANARY + '\n'
+            'true && export X=1 VAULT_ADDR=' + CANARY + '\n'
+            'declare -g VAULT_TOKEN=' + CANARY + '\n'          # not exported: no x flag
+            'echo export GITHUB_TOKEN=' + CANARY + '\n')        # not an assignment
+        result = self.invoke('status', env={'HOME': str(home)})
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('ANTHROPIC_API_KEY, BAO_TOKEN, DEEPSEEK_API_KEY, OPENAI_API_KEY, VAULT_ADDR', result.stderr)
+        for name in ('VAULT_TOKEN', 'GITHUB_TOKEN'):
+            self.assertNotIn(name, result.stderr)
+        self.assertNotIn(CANARY, result.stdout + result.stderr)
+
     def test_status_redacts_values_and_reads_exact_a0_paths(self):
         result = self.invoke('status')
         self.assertEqual(result.returncode, 0, result.stderr)

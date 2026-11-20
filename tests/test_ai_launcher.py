@@ -551,7 +551,8 @@ with open(os.environ[{variable!r}], 'a') as out:
         for variable, agent in (('A0_GROK_CMD', 'grok'), ('A0_CODEX_CMD', 'codex'), ('A0_DEEPCODE_CMD', 'deepcode')):
             for value in ('cli; touch /tmp/pwned', 'cli $(id)', 'cli `id`', 'cli && x', 'cli | tee',
                           'cli > out', 'cli < in', 'cli *', 'cli ?', 'cli !x', 'cli {a,b}', 'cli \\x',
-                          'cli (x)', 'cli\nid', 'cli $HOME'):
+                          'cli (x)', 'cli\nid', 'cli $HOME', 'cli [ab]', 'cli a]', 'cli #rest',
+                          'cli ~/x', 'cli\targ', 'cli "unbalanced', "cli 'unbalanced", 'if'):
                 with self.subTest(variable=variable, value=value):
                     if self.trace.exists():
                         self.trace.unlink()
@@ -560,9 +561,13 @@ with open(os.environ[{variable!r}], 'a') as out:
                         'fixture', str(LAUNCHER), agent],
                         capture_output=True, text=True, env={**self.env, variable: value})
                     self.assertNotEqual(result.returncode, 0)
-                    self.assertIn(f'ERROR: {variable} must be a plain command', result.stderr)
+                    self.assertRegex(result.stderr, f'ERROR: {variable} (must be a|is not a valid) plain command')
+                    if len(value) > 3:
+                        self.assertNotIn(value, result.stderr)  # The value itself is never echoed.
                     self.assertEqual(self.calls(), [])  # Refused before any SSH/tmux contact.
-        self.assertIn('must be plain commands', self.invoke('help').stdout)
+        help_text = self.invoke('help').stdout
+        self.assertIn('must be plain commands', help_text)
+        self.assertIn('{ } [ ] # ~, a tab or a newline', help_text)
         for value in ('grok', 'codex --yolo', 'fixture-cli "literal argument"', "cli 'two words' --flag=x"):
             with self.subTest(allowed=value):
                 result = subprocess.run(['bash', '-c', 'source "$1" help >/dev/null; require_plain_command grok "$2"',

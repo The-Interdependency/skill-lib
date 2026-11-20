@@ -22,6 +22,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -34,9 +35,21 @@ PROVIDERS = {"openai": "OPENAI_API_KEY", "xai": "XAI_API_KEY",
              "deepseek": "DEEPSEEK_API_KEY", "anthropic": "ANTHROPIC_API_KEY"}
 AGENTS = {"codex": "openai", "grok": "xai", "deepcode": "deepseek"}
 GITHUB_PATH = "integration/github"
+# ai.sh KEY_VARS must name exactly this set (tests/test_ai_launcher.py enforces it).
+# BASH_ENV/ENV are startup files a later shell would source after this cleanup,
+# restoring stale keys; exported BASH_FUNC_* only run when called, so they stay.
 SECRET_ENV = set(PROVIDERS.values()) | {"BAO_TOKEN", "VAULT_TOKEN", "BAO_TOKEN_FILE",
     "VAULT_TOKEN_FILE", "BAO_ADDR", "VAULT_ADDR", "A0_DATABASE_URL", "A0_SESSION_SECRET",
-    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN"}
+    "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN", "BASH_ENV", "ENV"}
+
+
+# Login-shell startup files the ai.sh recovery shell (bash -l) re-reads.
+STARTUP_FILES = (".bash_profile", ".bash_login", ".profile", ".bashrc")
+ASSIGNMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)=")
+EXPORT_BUILTINS = ("declare", "typeset", "readonly")
+# Terminal escape sequences, then remaining C0/DEL/C1 controls except tab and newline.
+TERMINAL_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?")
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
 
 
 class BoundaryError(Exception):
@@ -284,9 +297,91 @@ def site_request(config: dict, operation: str, identity: str = ""):
             if len(raw) > 262144:
                 raise BoundaryError("Bridge response is too large.")
             data = json.loads(raw)
+    except urllib.error.HTTPError as err:
+        raise BoundaryError(f"VM bridge rejected the request (HTTP {err.code}); inspect pairing.") from None
     except (urllib.error.URLError, TimeoutError, ValueError):
         raise BoundaryError("VM bridge request failed; inspect pairing and the A0 service.") from None
-    print(data.get("text", "") if operation == "handoff" else json.dumps(data, indent=2))
+    if not isinstance(data, dict):
+        raise BoundaryError("VM bridge returned an invalid response.")
+    if operation == "handoff":
+        text = data.get("text")
+        print(printable_text(text) if isinstance(text, str) else "")
+    else:
+        print(json.dumps(site_view(operation, data), indent=2))
+
+
+def printable_text(text: str) -> str:
+    """Handoff text for a terminal: keep newlines and tabs, drop escapes and controls."""
+    return CONTROL_CHARS.sub("", TERMINAL_ESCAPE.sub("", text))
+
+
+def startup_exports(home: Path) -> list:
+    """Names (never values) of SECRET_ENV variables assigned in login startup files."""
+    names = set()
+    for name in STARTUP_FILES:
+        try:
+            lines = (home / name).read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            names.update(n for n in assigned_names(line) if n in SECRET_ENV)
+    return sorted(names)
+
+
+def assigned_names(line: str) -> set:
+    """Names a startup line assigns: leading NAME=, every NAME= after export, and
+    every NAME= after declare/typeset/readonly when a flag includes x."""
+    names = set()
+    for part in re.split(r";|&&|\|\|", line):
+        try:
+            words = shlex.split(part, comments=True)
+        except ValueError:
+            words = part.split()
+        if not words:
+            continue
+        if words[0] == "export":
+            candidates = words[1:]
+        elif words[0] in EXPORT_BUILTINS:
+            flags = [w for w in words[1:] if w.startswith("-")]
+            candidates = words[1:] if any("x" in flag[1:] for flag in flags) else []
+        else:
+            candidates = []
+            for word in words:  # NAME=value prefixes, later exported by name.
+                if not ASSIGNMENT.match(word):
+                    break
+                candidates.append(word)
+        names.update(m.group(1) for m in map(ASSIGNMENT.match, candidates) if m)
+    return names
+
+
+def scalar(value):
+    """Printable bridge field: bool/null or short printable ASCII, else 'invalid'."""
+    if value is None or isinstance(value, bool):
+        return value
+    return value if isinstance(value, str) and re.fullmatch(r"[\x20-\x7e]{0,200}", value) else "invalid"
+
+
+def pick(value, fields) -> dict:
+    return {k: scalar(value.get(k)) for k in fields} if isinstance(value, dict) else {}
+
+
+def rows(value, fields) -> list:
+    return [pick(item, fields) for item in value[:100]] if isinstance(value, list) else []
+
+
+def site_view(operation: str, data: dict) -> dict:
+    """Allowlist bridge fields like vault status; never echo the raw response body."""
+    if operation == "handoffs":
+        return {"schema": scalar(data.get("schema")),
+                "items": rows(data.get("items"), ("id", "target", "state", "receivedAt"))}
+    services = data.get("services") if isinstance(data.get("services"), dict) else {}
+    return {"schema": scalar(data.get("schema")), "observedAt": scalar(data.get("observedAt")),
+        "build": pick(data.get("build"), ("commit", "dirty", "builtAt")),
+        "services": {"app": scalar(services.get("app")), "database": scalar(services.get("database")),
+            "vault": pick(services.get("vault"), ("state", "initialized", "sealed", "version", "clusterId"))},
+        "providers": rows(data.get("providers"), ("provider", "credential")),
+        "evidenceState": scalar(data.get("evidenceState")),
+        "evidence": rows(data.get("evidence"), ("id", "commit", "observedAt", "scope", "status"))}
 
 
 def main() -> int:
@@ -315,6 +410,11 @@ def main() -> int:
             print(json.dumps(github_status(config, token, args.operation == "check")))
             return 0
         if args.action == "status":
+            stale = startup_exports(Path.home())
+            if stale:
+                print("a0-vault: warning: VM login startup files still assign " + ", ".join(stale)
+                      + "; the ai.sh recovery shell will re-export them. Remove them (see A0-VAULT.md).",
+                      file=sys.stderr)
             states = {p: "present" if key_for(config, token, p) else "missing" for p in PROVIDERS}
             print(json.dumps({"vault": "ready", "cluster_id": config["cluster_id"], "providers": states}))
             return 0

@@ -64,6 +64,13 @@ can retain its existing account login when no OpenAI API key is configured.
 The recovery shell stays available when the vault is unavailable. Existing
 running panes retain their environment until explicitly restarted.
 
+`A0_GROK_CMD`, `A0_CODEX_CMD` and `A0_DEEPCODE_CMD` must be plain commands: a
+program and its arguments, optionally quoted with balanced quotes. The pane shell
+splits them into argv before a0-vault runs, so values containing `$`, `` ` ``,
+`\`, `;`, `&`, `|`, `<`, `>`, `(`, `)`, `*`, `?`, `!`, `{`, `}`, `[`, `]`, `#`,
+`~`, a tab or a newline, or that `bash -n` cannot parse (such as an unbalanced
+quote), are refused locally before any SSH, with an error naming the variable. Put wrappers in a script on the VM PATH instead.
+
 After deploying A0's vault administration tools, use `ai.sh vault install`,
 `ai.sh vault setup`, and `ai.sh keys`. The separate `a0-cli` policy reads only
 the four provider paths; an hourly VM timer renews scoped credentials.

@@ -56,7 +56,8 @@ CODEX_CMD="${A0_CODEX_CMD:-codex --yolo}"
 DEEPCODE_CMD="${A0_DEEPCODE_CMD:-deepcodei}"
 SHELL_CMD="${A0_SHELL_CMD:-exec \"\${SHELL:-/bin/bash}\" -l}"
 VAULT_HELPER="${A0_AI_VAULT_HELPER:-}"
-KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN GH_TOKEN GITHUB_TOKEN"
+# Exactly a0_vault.py SECRET_ENV (tests enforce); the recovery shell sees none of them.
+KEY_VARS="OPENAI_API_KEY XAI_API_KEY DEEPSEEK_API_KEY ANTHROPIC_API_KEY BAO_TOKEN VAULT_TOKEN BAO_TOKEN_FILE VAULT_TOKEN_FILE BAO_ADDR VAULT_ADDR A0_DATABASE_URL A0_SESSION_SECRET A0_BOOTSTRAP_CODE A0_BRIDGE_TOKEN GH_TOKEN GITHUB_TOKEN BASH_ENV ENV"
 
 usage() {
   cat <<'EOF'
@@ -87,6 +88,11 @@ commands:
 configuration:
   A0_AI_HOST, A0_AI_SESSION, A0_GROK_CMD, A0_CODEX_CMD,
   A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_VAULT_HELPER
+
+  A0_GROK_CMD, A0_CODEX_CMD and A0_DEEPCODE_CMD must be plain commands
+  (program and arguments, optionally quoted with balanced quotes). Values
+  containing $ ` \ ; & | < > ( ) * ? ! { } [ ] # ~, a tab or a newline, or
+  that do not parse, are refused.
 EOF
 }
 
@@ -269,9 +275,32 @@ trap - EXIT" || return
   pipe_log "$name" || true
 }
 
+# Agent commands are pasted unquoted into the pane shell, which splits them into
+# argv before a0-vault runs. Only plain words and quotes are allowed; any shell
+# metacharacter could run code there, so refuse it before contacting the VM.
+require_plain_command() {
+  local name="$1" command_line="$2" variable
+  case "$name" in
+    grok) variable=A0_GROK_CMD ;;
+    codex) variable=A0_CODEX_CMD ;;
+    deepcode) variable=A0_DEEPCODE_CMD ;;
+    *) variable="A0_${name^^}_CMD" ;;
+  esac
+  if [[ -z "${command_line//[[:space:]]/}" || "$command_line" == *[\$\`\\\;\&\|\<\>\(\)\*\?\!\{\}\[\]\#\~]* || "$command_line" == *[$'\t\n\r']* ]]; then
+    printf 'ERROR: %s must be a plain command (program and arguments only); shell characters $ ` \\ ; & | < > ( ) * ? ! { } [ ] # ~, tabs and newlines are refused\n' "$variable" >&2
+    return 2
+  fi
+  # An unbalanced quote would kill the pane after respawn-pane -k; parse locally first.
+  if ! bash -n -c "$command_line" 2>/dev/null; then
+    printf 'ERROR: %s is not a valid plain command (check its quoting)\n' "$variable" >&2
+    return 2
+  fi
+}
+
 prepare_launch() {
-  resolve_vault_helper || return
   local name="$1" command_line="$2" binary pane_command launch_env resolved_binary runtime_path
+  require_plain_command "$name" "$command_line" || return
+  resolve_vault_helper || return
   binary="${command_line%% *}"
   if ! launch_env="$(remote "resolved=\$(type -P $(q "$binary")) || exit 127; printf '%s\\n%s' \"\$resolved\" \"\$PATH\"")"; then
     printf 'ERROR: %s is not installed on %s\n' "$binary" "$HOST" >&2
@@ -288,7 +317,10 @@ prepare_launch() {
   # Check the same selected credentials without disturbing the running pane.
   # Exec reads again: this check does not reserve credentials or prove CLI login.
   remote "PATH=$(q "$runtime_path") $(q "$VAULT_HELPER") check $(q "$name")" >/dev/null || return
-  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- bash -c $(q "$command_line")"
+  # The pane shell splits the operator command into argv before credentials
+  # exist; a0-vault then execs that argv directly, so no shell (or BASH_ENV)
+  # runs after the environment is cleaned. The command must be a plain command.
+  pane_command="PATH=$(q "$runtime_path") exec $(q "$VAULT_HELPER") exec $(q "$name") -- $command_line"
   printf '%s' "$pane_command"
 }
 

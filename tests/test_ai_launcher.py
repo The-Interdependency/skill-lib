@@ -215,6 +215,28 @@ with open(os.environ[{variable!r}], 'a') as out:
         self.assertNotIn(self.env['GH_TOKEN'], json.dumps(calls + mutations))
         self.assertNotIn(self.env['GITHUB_TOKEN'], json.dumps(calls + mutations))
 
+    def test_agent_command_overrides_must_be_plain_commands(self):
+        for variable, agent in (('A0_GROK_CMD', 'grok'), ('A0_CODEX_CMD', 'codex'), ('A0_DEEPCODE_CMD', 'deepcode')):
+            for value in ('cli; touch /tmp/pwned', 'cli $(id)', 'cli `id`', 'cli && x', 'cli | tee',
+                          'cli > out', 'cli < in', 'cli *', 'cli ?', 'cli !x', 'cli {a,b}', 'cli \\x',
+                          'cli (x)', 'cli\nid', 'cli $HOME'):
+                with self.subTest(variable=variable, value=value):
+                    if self.trace.exists():
+                        self.trace.unlink()
+                    result = subprocess.run(['bash', '-c',
+                        'source "$1" help >/dev/null; respawn "$2" "$(spec "$2" | cut -d"|" -f3-)"',
+                        'fixture', str(LAUNCHER), agent],
+                        capture_output=True, text=True, env={**self.env, variable: value})
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn(f'ERROR: {variable} must be a plain command', result.stderr)
+                    self.assertEqual(self.calls(), [])  # Refused before any SSH/tmux contact.
+        self.assertIn('must be plain commands', self.invoke('help').stdout)
+        for value in ('grok', 'codex --yolo', 'fixture-cli "literal argument"', "cli 'two words' --flag=x"):
+            with self.subTest(allowed=value):
+                result = subprocess.run(['bash', '-c', 'source "$1" help >/dev/null; require_plain_command grok "$2"',
+                    'fixture', str(LAUNCHER), value], capture_output=True, text=True, env=self.env)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
     def test_masked_tmux_variables_match_the_vault_secret_set(self):
         import importlib.util
         spec = importlib.util.spec_from_file_location("a0_vault_fixture", LAUNCHER.with_name("a0_vault.py"))

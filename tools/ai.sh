@@ -62,6 +62,10 @@ commands:
 configuration:
   A0_AI_HOST, A0_AI_SESSION, A0_GROK_CMD, A0_CODEX_CMD,
   A0_DEEPCODE_CMD, A0_SHELL_CMD, A0_AI_VAULT_HELPER
+
+  A0_GROK_CMD, A0_CODEX_CMD and A0_DEEPCODE_CMD must be plain commands
+  (program and arguments, optionally quoted). Values containing
+  $ ` \ ; & | < > ( ) * ? ! { } or a newline are refused.
 EOF
 }
 
@@ -221,9 +225,27 @@ ensure_window_shell() {
   pipe_log "$name" || true
 }
 
+# Agent commands are pasted unquoted into the pane shell, which splits them into
+# argv before a0-vault runs. Only plain words and quotes are allowed; any shell
+# metacharacter could run code there, so refuse it before contacting the VM.
+require_plain_command() {
+  local name="$1" command_line="$2" variable
+  case "$name" in
+    grok) variable=A0_GROK_CMD ;;
+    codex) variable=A0_CODEX_CMD ;;
+    deepcode) variable=A0_DEEPCODE_CMD ;;
+    *) variable="A0_${name^^}_CMD" ;;
+  esac
+  if [[ -z "${command_line//[[:space:]]/}" || "$command_line" == *[\$\`\\\;\&\|\<\>\(\)\*\?\!\{\}]* || "$command_line" == *$'\n'* || "$command_line" == *$'\r'* ]]; then
+    printf 'ERROR: %s must be a plain command (program and arguments only); shell characters $ ` \\ ; & | < > ( ) * ? ! { } and newlines are refused\n' "$variable" >&2
+    return 2
+  fi
+}
+
 respawn() {
-  resolve_vault_helper
   local name="$1" command_line="$2" binary pane_command launch_env resolved_binary runtime_path
+  require_plain_command "$name" "$command_line" || return
+  resolve_vault_helper
   binary="${command_line%% *}"
   if ! launch_env="$(remote "resolved=\$(type -P $(q "$binary")) || exit 127; printf '%s\\n%s' \"\$resolved\" \"\$PATH\"")"; then
     printf 'ERROR: %s is not installed on %s\n' "$binary" "$HOST" >&2

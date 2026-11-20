@@ -114,7 +114,7 @@ print('password=' + os.environ.get('GH_TOKEN', 'stale-disk-cache-credential'))
                 {'id': HANDOFF_ID, 'target': 'Codex', 'state': 'received',
                  'receivedAt': '2026-11-16T00:00:00.000Z', 'text': CANARY}]}
         elif handler.path == '/api/reliability/handoffs/' + HANDOFF_ID:
-            status, data = 200, {'schema': 'a0.handoff/1', 'id': HANDOFF_ID, 'text': 'fixture handoff text'}
+            status, data = 200, {'schema': 'a0.handoff/1', 'id': HANDOFF_ID, 'text': 'fixture \x1b[31mhandoff\x07 text\x1b]0;title\x07\n\tline two\x1b[0m\x00'}
         else:
             status, data = 404, {'error': 'unknown_bridge_operation'}
         handler.send_response(status)
@@ -191,6 +191,22 @@ runpy.run_path({str(HELPER)!r}, run_name='__main__')
 ''')
         result = subprocess.run([sys.executable, str(wrapper)], capture_output=True, text=True)
         return result, json.loads(trace.read_text())
+
+    def test_status_warns_by_name_only_about_startup_file_secret_exports(self):
+        home = self.root / 'home'
+        home.mkdir()
+        clean = self.invoke('status', env={'HOME': str(home)})
+        self.assertEqual(clean.returncode, 0, clean.stderr)
+        self.assertNotIn('warning', clean.stderr)
+        (home / '.bashrc').write_text('export PATH=$PATH:/opt\nexport XAI_API_KEY=' + CANARY + '\n')
+        (home / '.profile').write_text('  GH_TOKEN="' + CANARY + '"; export GH_TOKEN\n# OPENAI_API_KEY=commented\n')
+        stale = self.invoke('status', env={'HOME': str(home)})
+        self.assertEqual(stale.returncode, 0, stale.stderr)
+        self.assertIn('GH_TOKEN, XAI_API_KEY', stale.stderr)
+        self.assertNotIn('OPENAI_API_KEY', stale.stderr)
+        self.assertNotIn('PATH', stale.stderr.replace('A0-VAULT', ''))
+        self.assertNotIn(CANARY, stale.stdout + stale.stderr)
+        self.assertEqual(json.loads(stale.stdout)['vault'], 'ready')
 
     def test_status_redacts_values_and_reads_exact_a0_paths(self):
         result = self.invoke('status')
@@ -547,7 +563,8 @@ print(json.dumps({
         self.assertEqual(json.loads(listing.stdout), {'schema': 'a0.handoff-list/1', 'items': [
             {'id': HANDOFF_ID, 'target': 'Codex', 'state': 'received', 'receivedAt': '2026-11-16T00:00:00.000Z'}]})
         one = self.site('handoff', HANDOFF_ID)
-        self.assertEqual((one.returncode, one.stdout.strip()), (0, 'fixture handoff text'))
+        self.assertEqual((one.returncode, one.stdout), (0, 'fixture handoff text\n\tline two\n'))
+        self.assertNotIn('\x07', one.stdout)  # Escapes and controls are stripped; newline/tab survive.
         self.assertTrue(all(p.startswith('/api/reliability/') for p in self.paths))  # Never the vault API.
 
     def test_site_bad_bridge_token_and_redirects_fail_closed_without_body(self):

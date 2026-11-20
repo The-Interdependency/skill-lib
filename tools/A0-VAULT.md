@@ -114,6 +114,16 @@ URL, explicit later `git -c` overrides, and repository-local authorization
 headers first discovered after changing directories remain separate routes;
 remove such legacy authentication before treating those repositories as migrated.
 
+Remove provider and vault exports (`OPENAI_API_KEY`, `XAI_API_KEY`,
+`DEEPSEEK_API_KEY`, `ANTHROPIC_API_KEY`, `GH_TOKEN`, `GITHUB_TOKEN`, `BAO_*`,
+`VAULT_*`, `A0_*` secrets, `BASH_ENV`, `ENV`) from the VM's login startup files
+(`~/.bash_profile`, `~/.bash_login`, `~/.profile`, `~/.bashrc`). Agent panes
+never read them after a0-vault cleans the environment, but the `0:shell`
+recovery pane is a login shell (`bash -lc`) and re-reads those files, so any
+export left there returns in that shell. `ai.sh vault status` warns on stderr
+with the variable names (never values) it finds assigned in those files; it is
+a line scan, so files sourced from them are not checked.
+
 This is credential delivery within the trusted VM account, not isolation from
 other processes running as that account or from VM administrators. The scoped
 application identity can also read this secret under its existing policy.
@@ -156,7 +166,8 @@ check without changing its assessment automatically.
 Generate a Codex or DeepSeek handoff and choose **Send to VM**. Identical target
 and text produce the same receipt, including concurrent retries. `received`
 means stored, not executed. On the VM, `~/.local/bin/a0-vault site handoffs` lists
-receipts; `~/.local/bin/a0-vault site handoff ID` reads one. From Termux the
+receipts; `~/.local/bin/a0-vault site handoff ID` reads one, with terminal
+escape sequences and control characters other than newline and tab removed. From Termux the
 corresponding commands are `ai.sh site handoffs` and `ai.sh site handoff ID`.
 
 The bridge cannot run a shell or access ordinary A0 chat/key routes. A builder

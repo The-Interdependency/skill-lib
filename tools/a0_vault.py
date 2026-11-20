@@ -36,6 +36,14 @@ SECRET_ENV = set(PROVIDERS.values()) | {"BAO_TOKEN", "VAULT_TOKEN", "BAO_TOKEN_F
     "A0_BOOTSTRAP_CODE", "A0_BRIDGE_TOKEN", "GH_TOKEN", "GITHUB_TOKEN", "BASH_ENV", "ENV"}
 
 
+# Login-shell startup files the ai.sh recovery shell (bash -l) re-reads.
+STARTUP_FILES = (".bash_profile", ".bash_login", ".profile", ".bashrc")
+STARTUP_ASSIGNMENT = re.compile(r"\s*(?:export\s+|declare\s+-x\s+|typeset\s+-x\s+)?([A-Za-z_][A-Za-z0-9_]*)=")
+# Terminal escape sequences, then remaining C0/DEL/C1 controls except tab and newline.
+TERMINAL_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)?")
+CONTROL_CHARS = re.compile(r"[\x00-\x08\x0b-\x1f\x7f-\x9f]")
+
+
 class BoundaryError(Exception):
     """A redacted operational failure; never carries a remote response body."""
 
@@ -289,9 +297,29 @@ def site_request(config: dict, operation: str, identity: str = ""):
         raise BoundaryError("VM bridge returned an invalid response.")
     if operation == "handoff":
         text = data.get("text")
-        print(text if isinstance(text, str) else "")
+        print(printable_text(text) if isinstance(text, str) else "")
     else:
         print(json.dumps(site_view(operation, data), indent=2))
+
+
+def printable_text(text: str) -> str:
+    """Handoff text for a terminal: keep newlines and tabs, drop escapes and controls."""
+    return CONTROL_CHARS.sub("", TERMINAL_ESCAPE.sub("", text))
+
+
+def startup_exports(home: Path) -> list:
+    """Names (never values) of SECRET_ENV variables assigned in login startup files."""
+    names = set()
+    for name in STARTUP_FILES:
+        try:
+            lines = (home / name).read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            match = STARTUP_ASSIGNMENT.match(line)
+            if match and match.group(1) in SECRET_ENV:
+                names.add(match.group(1))
+    return sorted(names)
 
 
 def scalar(value):
@@ -348,6 +376,11 @@ def main() -> int:
             print(json.dumps(github_status(config, token, args.operation == "check")))
             return 0
         if args.action == "status":
+            stale = startup_exports(Path.home())
+            if stale:
+                print("a0-vault: warning: VM login startup files still assign " + ", ".join(stale)
+                      + "; the ai.sh recovery shell will re-export them. Remove them (see A0-VAULT.md).",
+                      file=sys.stderr)
             states = {p: "present" if key_for(config, token, p) else "missing" for p in PROVIDERS}
             print(json.dumps({"vault": "ready", "cluster_id": config["cluster_id"], "providers": states}))
             return 0

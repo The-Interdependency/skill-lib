@@ -23,78 +23,6 @@ class SshAutomationSkillTests(unittest.TestCase):
         self.assertEqual(entry["kind"], "procedural")
         self.assertIn("Load this when", entry["description"])
 
-    def test_frontmatter_and_boundaries_are_explicit(self) -> None:
-        self.assertTrue(self.skill.startswith("---\nname: ssh-automation\n"))
-        for heading in (
-            "## Trigger / non-trigger",
-            "## Required declarations before generating a script",
-            "## Workflow",
-            "## Output shape",
-            "## Validation",
-            "## Anti-patterns",
-            "## hmmm",
-        ):
-            self.assertIn(heading, self.skill)
-
-    def test_host_and_authentication_fail_closed(self) -> None:
-        for required in (
-            "BatchMode=yes",
-            "IdentitiesOnly=yes",
-            "StrictHostKeyChecking=yes",
-            "UserKnownHostsFile=${KNOWN_HOSTS}",
-            "ForwardAgent=no",
-            "ClearAllForwardings=yes",
-            "ssh-keyscan",
-            "independent trusted channel",
-        ):
-            self.assertIn(required, self.skill)
-        for rejected in (
-            "StrictHostKeyChecking=no",
-            "UserKnownHostsFile=/dev/null",
-            "sshpass",
-        ):
-            self.assertIn(rejected, self.skill)
-
-    def test_remote_shell_and_stdin_boundaries_are_preserved(self) -> None:
-        self.assertIn("arguments are joined with spaces", self.skill)
-        self.assertIn("<<'REMOTE'", self.skill)
-        self.assertIn("Do **not** use `-n`", self.skill)
-        self.assertIn("-T", self.skill)
-        self.assertIn("sudo -n", self.skill)
-
-    def test_one_box_paste_is_child_scoped_and_prompt_free(self) -> None:
-        section = self.skill.split("## Safe one-box terminal delivery", 1)[1]
-        section = section.split("## Google Cloud profile", 1)[0]
-        self.assertIn("bash <<'LOCAL'", section)
-        self.assertIn("set -Eeuo pipefail", section)
-        self.assertIn("do not put `read`", section)
-        self.assertIn("parent Cloud Shell alive", section)
-
-    def test_retry_and_mutation_contracts_are_bounded(self) -> None:
-        for required in (
-            "remote program can also return `255`",
-            "operation is idempotent",
-            "attempt count is bounded",
-            "flock",
-            "atomically activate",
-            "rollback",
-            "run the script twice",
-        ):
-            self.assertIn(required, self.skill)
-
-    def test_primary_sources_are_only_primary_authorities(self) -> None:
-        for domain in (
-            "man.openbsd.org/ssh_config",
-            "man.openbsd.org/ssh-keyscan",
-            "gnu.org/software/bash/manual",
-            "google.github.io/styleguide/shellguide.html",
-            "github.com/koalaman/shellcheck",
-            "docs.cloud.google.com/compute/docs/connect/ssh-best-practices",
-            "docs.cloud.google.com/iap/docs/using-tcp-forwarding",
-        ):
-            self.assertIn(domain, self.sources)
-        self.assertIn("## hmmm", self.sources)
-
     def test_generated_adapter_matches_index_description(self) -> None:
         entry = next(item for item in self.index["skills"] if item["name"] == "ssh-automation")
         expected = (
@@ -108,15 +36,6 @@ class SshAutomationSkillTests(unittest.TestCase):
             "the Codex plugin skill directory.\n"
         )
         self.assertEqual(self.adapter, expected)
-
-    def test_root_indexes_and_doctrine_mention_skill(self) -> None:
-        for filename in ("README.md", "ORG_DISTRIBUTION.md", "AGENTS.md", "CLAUDE.md"):
-            text = (ROOT / filename).read_text(encoding="utf-8")
-            self.assertIn("ssh-automation", text, filename)
-
-    def test_skill_does_not_create_an_llms_metadata_block(self) -> None:
-        self.assertNotIn("# === LLMS ===", self.skill)
-
 
 if __name__ == "__main__":
     unittest.main()

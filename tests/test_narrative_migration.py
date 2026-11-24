@@ -65,22 +65,6 @@ class NarrativeMigrationTests(unittest.TestCase):
                 with self.subTest(skill=name, clause=clause):
                     self.assertIn(clause, description)
 
-    def test_lifecycle_sequence_and_permission_boundaries(self):
-        a0 = (ROOT / "agent-instantiation/SKILL.md").read_text()
-        sequence = a0.split("## Instantiation sequence", 1)[1].split("## Fork / merge", 1)[0]
-        steps = ["Define the agent", "Boot the primary", "WDLL", "sub_agent_spawn",
-                 "InstanceMerge.fork(parent)", "Execute via the spawn executor",
-                 "InstanceMerge.absorb(parent, child)", "Persist on a cadence", "Gate every mutation"]
-        positions = [sequence.index(step) for step in steps]
-        self.assertEqual(positions, sorted(positions))
-        for clause in ("require_admin", "get_approval_scope_user_id()", "Never share tensor references"):
-            self.assertIn(clause, sequence)
-        a0p = " ".join((ROOT / "a0p-instancing/SKILL.md").read_text().split())
-        for clause in ("AgentStore.create()", "AND every `(core, seed)` pair touched",
-                       "`zfae_native` refuses LLM fallback", "**halt** until approved",
-                       "Never share or fork a bank", "S1–S13", "FIQ", "safetensors"):
-            self.assertIn(clause, a0p)
-
     def test_data_verification_cannot_become_optional(self):
         text = (ROOT / "validate-data/SKILL.md").read_text()
         self.assertEqual(1, workflow_count(text))

@@ -445,18 +445,18 @@
         "4c518976586ff63bf24ba71d140b8d68f87a3906a9c91b1c6261157d4be2f8f8",
         "4ef235cabe1d6b71d81c9efbeac22757d35724c9d8a27ba340dd17bfc5f35322",
         "5a9197854af1523f4830ab7bbf2cea984655fc84e45a677c7b567b7eb54d00d2",
-        "6a19032f51b376a1d85f7e35f385fa6377d6c900c43c5bde5aeb1ae09d318083",
+        "626b0a39813602bb758bf700ce798bf4579c91d19b77980d8307c2b1f01ac090",
         "75b8ca57b481327f92686f7d47f75c755900b887e707e6353a675e87f1b9c40d",
         "7ffa840c734ce08a3f1ee231f2cda774a9668bb5ca649c7993de827eb06dc11d",
         "8943535f8dfadf1a72205fc6d843af70b19926bef35987f703f1a851acf2c7cb",
-        "a7ff15901d3fcc99aad65169e745490a7517c98968934effc8decffb42ca1412",
+        "ab54e48a94e2acd86b9767379f1b3a9244bf5e7017a897e41932aa428d5da697",
         "c138422b46c6e2ad6fbc04eb938cfab38b1bcd33f98e78222911fc7587362485",
         "c4a174b151f50a8a3abc2be60ac21c94747352810c7f6052438fcc7a47a9a069",
         "cbe1de2cab7e650edfb404a46c1873cb804e500ad5d4d544ddce464143204d10",
         "d4ac3604ddcd7a2f85f47e069e7bd4c1c2f9a14934ab6d92e554bc3992eee01f",
         "f869f4018647bf9e2fc0f9dc72a3ca6bd34be5b43eb6dce2f12f116aba23e9e6"
       ],
-      "hmmm_tail": "- Dialect coverage drifts as warehouses evolve; no pinned version matrix yet.\n- Advisory skill — no runner ships; whether example queries should become tested fixtures is open.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
+      "hmmm_tail": "- Dialect coverage drifts as warehouses evolve; no pinned version matrix yet.\n- Advisory skill — no runner ships; only the percent-of-total and funnel examples run in tests (`tests/test_sql_queries_examples.py`, SQLite); whether the rest should become tested fixtures is open.\n- Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible."
     },
     "statistical-analysis": {
       "fenced_and_table_sha256": [

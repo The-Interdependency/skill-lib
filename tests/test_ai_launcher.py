@@ -123,7 +123,8 @@ class AILauncherTests(unittest.TestCase):
         self.assertNotIn('tmux set-environment -g', text)
         self.assertIn('keys_status() { resolve_vault_helper || return; remote', text)
         self.assertIn('exec $(q "$VAULT_HELPER") exec', text)
-        self.assertIn('-- bash -c', text)
+        self.assertIn('exec $(q "$name") -- $command_line"', text)
+        self.assertNotIn('-- bash', text)  # No shell may run after a0-vault cleans the environment.
         self.assertIn('site pair FILE', text)
 
     def test_installer_places_ai_sh_on_termux_path_without_copying(self) -> None:
@@ -545,6 +546,45 @@ with open(os.environ[{variable!r}], 'a') as out:
         self.assertTrue(all(row[:4] == ['set-environment', '-r', '-t', 'fixture-session'] for row in mutations))
         self.assertNotIn(self.env['GH_TOKEN'], json.dumps(calls + mutations))
         self.assertNotIn(self.env['GITHUB_TOKEN'], json.dumps(calls + mutations))
+
+    def test_agent_command_overrides_must_be_plain_commands(self):
+        for variable, agent in (('A0_GROK_CMD', 'grok'), ('A0_CODEX_CMD', 'codex'), ('A0_DEEPCODE_CMD', 'deepcode')):
+            for value in ('cli; touch /tmp/pwned', 'cli $(id)', 'cli `id`', 'cli && x', 'cli | tee',
+                          'cli > out', 'cli < in', 'cli *', 'cli ?', 'cli !x', 'cli {a,b}', 'cli \\x',
+                          'cli (x)', 'cli\nid', 'cli $HOME', 'cli [ab]', 'cli a]', 'cli #rest',
+                          'cli ~/x', 'cli\targ', 'cli "unbalanced', "cli 'unbalanced", 'if'):
+                with self.subTest(variable=variable, value=value):
+                    if self.trace.exists():
+                        self.trace.unlink()
+                    result = subprocess.run(['bash', '-c',
+                        'source "$1" help >/dev/null; respawn "$2" "$(spec "$2" | cut -d"|" -f3-)"',
+                        'fixture', str(LAUNCHER), agent],
+                        capture_output=True, text=True, env={**self.env, variable: value})
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertRegex(result.stderr, f'ERROR: {variable} (must be a|is not a valid) plain command')
+                    if len(value) > 3:
+                        self.assertNotIn(value, result.stderr)  # The value itself is never echoed.
+                    self.assertEqual(self.calls(), [])  # Refused before any SSH/tmux contact.
+        help_text = self.invoke('help').stdout
+        self.assertIn('must be plain commands', help_text)
+        self.assertIn('{ } [ ] # ~, a tab or a newline', help_text)
+        for value in ('grok', 'codex --yolo', 'fixture-cli "literal argument"', "cli 'two words' --flag=x"):
+            with self.subTest(allowed=value):
+                result = subprocess.run(['bash', '-c', 'source "$1" help >/dev/null; require_plain_command grok "$2"',
+                    'fixture', str(LAUNCHER), value], capture_output=True, text=True, env=self.env)
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_masked_tmux_variables_match_the_vault_secret_set(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("a0_vault_fixture", LAUNCHER.with_name("a0_vault.py"))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        line = next(row for row in LAUNCHER.read_text(encoding="utf-8").splitlines() if row.startswith("KEY_VARS="))
+        names = line.split("=", 1)[1].strip('"').split()
+        self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(set(names), module.SECRET_ENV)
+        for name in ("A0_BRIDGE_TOKEN", "A0_SESSION_SECRET", "A0_BOOTSTRAP_CODE", "A0_DATABASE_URL", "BASH_ENV", "ENV"):
+            self.assertIn(name, names)
 
 
 if __name__ == "__main__":

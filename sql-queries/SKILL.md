@@ -295,9 +295,9 @@ LEAD(value, 1) OVER (PARTITION BY entity ORDER BY date_col) as next_value
 FIRST_VALUE(status) OVER (PARTITION BY user_id ORDER BY created_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 LAST_VALUE(status) OVER (PARTITION BY user_id ORDER BY created_at ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
 
--- Percent of total
-revenue / SUM(revenue) OVER () as pct_of_total
-revenue / SUM(revenue) OVER (PARTITION BY category) as pct_of_category
+-- Percent of total (promote to a fractional type first: integer / integer truncates in PostgreSQL, SQL Server, etc.)
+1.0 * revenue / NULLIF(SUM(revenue) OVER (), 0) as pct_of_total
+1.0 * revenue / NULLIF(SUM(revenue) OVER (PARTITION BY category), 0) as pct_of_category
 ```
 
 ### CTEs for Readability
@@ -373,28 +373,53 @@ ORDER BY c.cohort_month;
 
 ### Funnel Analysis
 
+Each step counts only users who reached every preceding step, in order, inside the window. Do not divide independent per-event flags: a user with a later event but no earlier one would inflate the conversion rate (even past 100%).
+
 ```sql
-WITH funnel AS (
-    SELECT
-        user_id,
-        MAX(CASE WHEN event = 'page_view' THEN 1 ELSE 0 END) as step_1_view,
-        MAX(CASE WHEN event = 'signup_start' THEN 1 ELSE 0 END) as step_2_start,
-        MAX(CASE WHEN event = 'signup_complete' THEN 1 ELSE 0 END) as step_3_complete,
-        MAX(CASE WHEN event = 'first_purchase' THEN 1 ELSE 0 END) as step_4_purchase
+WITH windowed AS (
+    SELECT user_id, event, event_time
     FROM events
-    WHERE event_date >= CURRENT_DATE - INTERVAL '30 days'
+    WHERE event_time >= CURRENT_DATE - INTERVAL '30 days'
+),
+step_1 AS (
+    SELECT user_id, MIN(event_time) as reached_at
+    FROM windowed
+    WHERE event = 'page_view'
     GROUP BY user_id
+),
+step_2 AS (
+    SELECT s.user_id, MIN(w.event_time) as reached_at
+    FROM step_1 s
+    JOIN windowed w
+      ON w.user_id = s.user_id AND w.event = 'signup_start' AND w.event_time >= s.reached_at
+    GROUP BY s.user_id
+),
+step_3 AS (
+    SELECT s.user_id, MIN(w.event_time) as reached_at
+    FROM step_2 s
+    JOIN windowed w
+      ON w.user_id = s.user_id AND w.event = 'signup_complete' AND w.event_time >= s.reached_at
+    GROUP BY s.user_id
+),
+step_4 AS (
+    SELECT s.user_id, MIN(w.event_time) as reached_at
+    FROM step_3 s
+    JOIN windowed w
+      ON w.user_id = s.user_id AND w.event = 'first_purchase' AND w.event_time >= s.reached_at
+    GROUP BY s.user_id
 )
 SELECT
-    COUNT(*) as total_users,
-    SUM(step_1_view) as viewed,
-    SUM(step_2_start) as started_signup,
-    SUM(step_3_complete) as completed_signup,
-    SUM(step_4_purchase) as purchased,
-    ROUND(100.0 * SUM(step_2_start) / NULLIF(SUM(step_1_view), 0), 1) as view_to_start_pct,
-    ROUND(100.0 * SUM(step_3_complete) / NULLIF(SUM(step_2_start), 0), 1) as start_to_complete_pct,
-    ROUND(100.0 * SUM(step_4_purchase) / NULLIF(SUM(step_3_complete), 0), 1) as complete_to_purchase_pct
-FROM funnel;
+    COUNT(s1.user_id) as viewed,
+    COUNT(s2.user_id) as started_signup,
+    COUNT(s3.user_id) as completed_signup,
+    COUNT(s4.user_id) as purchased,
+    ROUND(100.0 * COUNT(s2.user_id) / NULLIF(COUNT(s1.user_id), 0), 1) as view_to_start_pct,
+    ROUND(100.0 * COUNT(s3.user_id) / NULLIF(COUNT(s2.user_id), 0), 1) as start_to_complete_pct,
+    ROUND(100.0 * COUNT(s4.user_id) / NULLIF(COUNT(s3.user_id), 0), 1) as complete_to_purchase_pct
+FROM step_1 s1
+LEFT JOIN step_2 s2 ON s2.user_id = s1.user_id
+LEFT JOIN step_3 s3 ON s3.user_id = s1.user_id
+LEFT JOIN step_4 s4 ON s4.user_id = s1.user_id;
 ```
 
 ### Deduplication
@@ -444,9 +469,11 @@ When a query fails:
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/sql-queries/`), Apache-2.0.
 Local modifications: trigger phrasing normalized to skill-lib convention; this
 Workflow/Anti-patterns/Provenance/hmmm bookend appended. Upstream body above is
-otherwise unmodified except for removal of the redundant opening summary. See `ATTRIBUTION.md` at repo root.
+otherwise unmodified except for removal of the redundant opening summary, and
+the percent-of-total and funnel examples, corrected locally (fractional
+division; ordered funnel steps). See `ATTRIBUTION.md` at repo root.
 
 hmmm
 - Dialect coverage drifts as warehouses evolve; no pinned version matrix yet.
-- Advisory skill — no runner ships; whether example queries should become tested fixtures is open.
+- Advisory skill — no runner ships; only the percent-of-total and funnel examples run in tests (`tests/test_sql_queries_examples.py`, SQLite); whether the rest should become tested fixtures is open.
 - Upstream re-sync cadence with `anthropics/knowledge-work-plugins` is undecided; drift against upstream is currently invisible.

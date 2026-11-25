@@ -1,297 +1,66 @@
 # CLAUDE.md — skill-lib
 
-AI-assistant guidance for `The-Interdependency/skill-lib`.
+Assistant guidance for `The-Interdependency/skill-lib` (MPL-2.0).
 
-## Core facts
+## Entry points & delegation
 
-- `skill-lib` is the canonical organization-wide source for reusable agent skills.
-- Other The Interdependency repos vendor repo-local copies from here.
-- Edit skills here first; propagate later with the source commit SHA.
-- License: MPL-2.0 (relicensed from MIT; weak/file-level copyleft — embed anywhere, changes to these files must be published).
-- Entry points: `README.md`, `AGENTS.md`, `skills.json`, `ORG_DISTRIBUTION.md`, `llms.txt`, each `<skill>/SKILL.md`.
-- CI workflows: `.github/workflows/hygiene.yml` guards against tracked Python bytecode, `.github/workflows/ci.yml` runs the editorial/helper verification stack, and `.github/workflows/consumer-drift.yml` is a scheduled/dispatch detector that runs `tools/check_consumer_drift.py` against each consumer repo (the consumer repos are public, so it uses the default `GITHUB_TOKEN`).
-- Validation here is editorial plus pure-stdlib helper scripts in `tools/`, `ratios/`, `llms/`, and the RepoLOTO check module.
-- `tools/ai.sh` is the canonical Termux-side SSH/tmux launcher for the `a0` VM. `tools/work.sh` adds a parent menu with Ubuntu-hosted Google Cloud access; `tools/install_ai.sh` installs both commands as canonical-source symlinks (Termux `$PREFIX/bin`, otherwise `~/.local/bin`). See [tools/WORK.md](tools/WORK.md) for usage, updates, and rollback.
-- The `llms/` package exists only to expose the stdlib `python -m llms.build` runner for `llms-build`.
+- [`AGENTS.md`](AGENTS.md) — **authoritative agent entry point**: binding
+  agent-context and resource-run invariants, skill-loading protocol, repo
+  editing doctrine, and per-skill routing.
+- [`README.md`](README.md) — human overview, `What's inside` skill summaries,
+  Codex plugin install, `msdmd` block syntax, and `ai.sh` / `work.sh` launcher
+  overview ([`tools/WORK.md`](tools/WORK.md), [`tools/A0-VAULT.md`](tools/A0-VAULT.md)).
+- [`ORG_DISTRIBUTION.md`](ORG_DISTRIBUTION.md) — `.agents/skills/<skill-name>/`
+  install convention, target repos, and propagation contract.
+- [`tools/README.md`](tools/README.md) — pure-stdlib helpers (`propagate_skills.py`,
+  `check_consumer_drift.py`, `check_skill_lib_drift.py`, `check_skill_compliance.py`,
+  `ratios_check.py`, `char_compress_check.py`, `build_codex_plugin_skills.py`).
+- `llms/` — stdlib `python -m llms.build` runner (`llms-build/SKILL.md`).
 
-## Layout
+## Skill index
 
-```text
-README.md              # human-facing overview and skill index
-AGENTS.md              # agent-facing entry point
-ORG_DISTRIBUTION.md    # canonical-source rule, target repos, propagation rule
-skills.json            # machine-readable skill index
-llms.txt               # generated root LLM instructions from LLMS blocks
-CLAUDE.md              # assistant guidance
-LICENSE                # MPL-2.0
-tools/README.md        # local maintenance helper documentation
-tools/*.py             # pure-stdlib helper scripts
-llms/                  # python -m llms.build reference runner
-<skill-name>/SKILL.md  # required skill spec
-<skill-name>/<helpers> # optional parsers, runners, examples
-```
+Every skill in [`skills.json`](skills.json) (see `README.md` for descriptions and `AGENTS.md` for loading triggers):
 
-## Skills
+- **metadata-block**: `msdmd`, `doc-build`, `cap-build`, `deps-build`,
+  `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
+  `ratios`, `manifest`, `llms-build`, `typed-meta-frontend`.
+- **procedural**: `canon`, `domain-claims`, `visitor-intro`,
+  `adaptive-elicitation`, `char-compress`, `agent-instantiation`, `a0p-instancing`,
+  `plain-lens`, `thought-lens`, `gonol-build` (Stack language-construction research discipline),
+  `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
+  `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`,
+  `distributed-publication`, `website-builder-journal`, `loop-eng`, `agent-ops`,
+  `pstack-orchestration`, `fresh-making`, `action-calibration`, `wdll`,
+  `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
+  `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`,
+  `explore-data`, `validate-data`, `data-visualization`.
 
-| Skill | Kind | Depends on | Purpose |
-|---|---|---|---|
-| `msdmd/` | metadata-block | — | Native-first metadata contract and convention catalogue; supplemental block syntax, provenance, and information coverage. The schema-2 collector integrates supported native source/document readers with supplemental blocks; unsupported conventions remain explicit unknowns. Python module projections share its syntax-aware attachment discipline. |
-| `doc-build/` | metadata-block | `msdmd` | Consumes native documentation at its owning scope; supplemental `DOCS` entries add otherwise unexpressed information. Missing blocks alone do not establish missing documentation. |
-| `cap-build/` | metadata-block | `msdmd` | Consumes native signatures, exports, and API schemas; supplemental `CAPABILITIES` entries add remaining intent. Declared surfaces are not verified behavior. |
-| `deps-build/` | metadata-block | `msdmd` | Consumes native imports, manifests, and build metadata; supplemental `DEPENDENCIES` entries add remaining architectural intent. |
-| `owner-build/` | metadata-block | `msdmd`, `risk-boundary-build` | Consumes provider-specific native ownership/review rules; supplemental `OWNERS` entries add missing stewardship information. Review assignment does not establish operational ownership. |
-| `test-build/` | metadata-block | `msdmd` | Consumes supported native obligations and witnesses or supplemental `CONTRACTS` / `CHECKS`; source modules own promises and test modules own evidence. Native readers remain a contract. |
-| `meta-module-build/` | metadata-block | `msdmd` | Consumes native manifests, schemas, and design records before supplemental `MODULE_BUILD` information. Purpose, surfaces, boundaries, tests, rollout, and rollback remain required before implementation. |
-| `risk-boundary-build/` | metadata-block | `msdmd`, `meta-module-build` | Consumes native permissions, configuration, and effect declarations before supplemental `BOUNDARIES` information. Declared controls are not verified enforcement. |
-| `ratios/` | metadata-block | `msdmd` | Self-declaring module composition ratios for executable source files. Each computer-covered module records `loc_comments`, `imports_exports`, and `calls_definitions` at its opening and closing source boundaries (not a fenced block); a valid line-1 shebang may precede opening RATIOS. The reference `ratios_check.py` recomputes Python values, fails on drift or misplacement, and reports visible gaps without applying Python semantics to other languages. |
-| `manifest/` | metadata-block | `msdmd` | Living-spec generator. Derives observable repo facts from `pyproject.toml` + the file tree and splices them into a machine-owned marked block in `CLAUDE.md`, with a CI `--check` drift gate. |
-| `llms-build/` | metadata-block | `msdmd` | Native-first instruction-publication contract; shipped `python -m llms.build` generates root `llms.txt` from existing `LLMS` blocks only. Native readers remain unimplemented. |
-| `typed-meta-frontend/` | metadata-block | `msdmd`, `meta-module-build`, `doc-build` | TypeScript self-building frontend generation from backend-owned module metadata. Modules declare `# === FRONTEND_META ===` blocks or equivalent backend metadata; the UI renders every module living spec, exposes every editable field, preserves read-only reasons and `hmmm`, and tests metadata-to-field coverage. |
-| `canon/` | procedural | — | Canonical-source and doctrine maintenance. Helps agents distinguish source-backed canon, proposed canon, repo-local practice, and `hmmm`. No metadata block. |
-| `domain-claims/` | procedural | — | Domain-first lexical and semantic governance. Establishes the domain-qualified sense, scope, exclusions, collision result, and standing that must precede a canonical definition, conversational provenance, or structural encoding. No metadata block. |
-| `visitor-intro/` | procedural | — | Onboarding tour. Lets any agent give a coherent, repo-aware orientation to newcomers at any org repo without inventing org-level facts. No metadata block. |
-| `adaptive-elicitation/` | procedural | — | Context-first semi-structured interviewing. Harvest known facts before asking, ask one neutral construct at a time, adapt from each answer, consume volunteered facts, and preserve unresolved material as `hmmm`. No metadata block. |
-| `char-compress/` | procedural | — | Skill-lib-owned bone/flesh context compression; historical notation is not current UCNS mathematics. Carry flesh, frozen bones, transforms, and `hmmm`; drop only safely regenerable scaffold. Do not claim unearned theorem/status support or EDCM metric status. |
-| `agent-instantiation/` | procedural | — | a0/a0ucns agent lifecycle methodology. Spawn sub-agents via the `sub_agent_spawn` tool → spawn executor; fork/merge `PCNAEngine` instances via `InstanceMerge` (fork/absorb/converge); compose identities per the canonical `username(a0(energy)auditor)` grammar; honor spawn caps + write-route gating. Canonical source is `a0`; `a0-betatest` diverged (per-user native-ZFAE) and is out of scope. Repo-specific runtime doctrine (no theorem transfer). |
-| `a0p-instancing/` | procedural | — | Peer for a0-betatest (a0p): agents are per-user CRUD `AgentInstance` + `CharacterSheet`, each owning a trained native ZFAE weight bank (three 157-seed cores); no `sub_agent_spawn`/executor/`InstanceMerge` — only volatile `MemoryCore.spawn_sub/merge_sub`. Sequence: create→distill-train→readiness gate→mode inference→sentinel/pending-override→safetensors checkpoint. Canonical source is `a0-betatest`. |
-| `plain-lens/` | procedural | — | Plain-language, multi-lens companion views of dense canonical text. Build easier on-ramps (domain/audience/role lens selectors, progressive disclosure) that never replace or talk down to the source, keep a static fallback under any dynamic layer, preserve operators/negations/quantifiers, and report an EDCM-style body-vs-footnote tension reading as an illustrative heuristic (not an EDCM metric runtime). |
-| `gonol-build/` | procedural | — | UCNS gonol objects/constructors/geometry + Stack language-construction research discipline. Resolve the owning Stack workspace, preserve closure, atomic participation, occurrence identity, constitutive relations, provenance, and required replay; EDCM is measurement/evaluation only. |
-| `ucns-option-selection/` | procedural | — | Fail-closed scoped UCNS option selection. Freezes candidates, authority, gates, evidence, and policies; requires complete evaluation, replay, purpose-relative comparison, explicit ratification, rollback, and non-transfer. Hard-gate failures cannot be compensated by scores. |
-| `epac-selection-display/` | procedural | — | Evidence-bound EPAC display selection. Resolves an exact provisional source, target, receipt, and available representation; preserves status, nonclaims, sealed-comparison boundaries, and `hmmm`; and keeps WebMCP as a read-only handoff rather than a research-code executor. |
-| `meta/` | procedural | — | Meta Energy Theory axioms. Extract and preserve Energy Theory axioms from resonances among small network architectures, with formula-backed examples and overlap grids; keep Energy Theory distinct from EDCM flesh/bone and FLAR implementation detail. |
-| `the-interdependency/` | procedural | — | Workflow protocol for The Interdependency org: code/research/GitHub maintenance, EDCM transcript assembly and analysis, and mandatory usage-guidance + structure-preservation doctrine across artifacts. |
-| `interdependent-work-graph/` | procedural | — | Cross-repository coordination. Resolves exact participant identities, authority roles, relations, non-transfer boundaries, shared graph manifests, and validation/materialization order before selecting edit locations. Related doctrine: `the-interdependency`, `canon`. |
-| `stack-update/` | procedural | — | Fail-closed structural update protocol for `The-Interdependency/stack`. Structural changes to participants, pins, authorities, relations, workspaces, BASE records, or lifecycle standing must update all affected projections, recompute the work-graph identity, and pass the deterministic stack checker as one transaction. |
-| `project-incubation-graduation/` | procedural | — | Lifecycle doctrine for emergent components born inside a forge/incubator. Requires qualification before extraction, provenance-preserving repository creation, explicit implementation-authority transfer, released distribution, and successful reconsumption by the former forge before graduation is complete. |
-| `distributed-publication/` | procedural | — | Provenance-bearing publication from distributed source owners. Preserves exact source identities, source-local licenses and statuses, correction routing, fail-closed retrieval, explicit fallback, and publication build provenance. Loads with `interdependent-work-graph`. |
-| `website-builder-journal/` | procedural | — | Requires every `interdependentway.org` website modification transaction to append a By the builder entry with date, time, model provenance per `website-builder-journal/SKILL.md`, and model-discretionary prose after its independent research phase; prior entries remain immutable and the public journal remains collapsible. |
-| `loop-eng/` | procedural | — | Loop engineering doctrine for closed feedback cycles (Discover→Plan→Execute→Verify→Iterate), maker/checker subagent separation, and autonomous verify-iterate workflows integrated with a0p/AIMMH and EDCM Verify stages. |
-| `agent-ops/` | procedural | `loop-eng`, `risk-boundary-build`, `action-calibration` | Tool-using agent controls: least privilege, human approval, untrusted content, idempotent lifecycle, evals, partitioned memory, redacted logs, and preflight. OWASP, NIST, CISA, and NCSC documents remain external recommendations. |
-| `pstack-orchestration/` | procedural | — | Evidence-bound GitHub repo/code-task orchestration distilled from Lauren Tan's pstack: task contract, demonstrated-need skill dispatch, baseline reproduction, PASS/FAIL/NOT_RUN evidence, bounded repair, and merge only on the owner's explicit go-ahead. |
-| `action-calibration/` | procedural | — | Action sizing and escalation doctrine for choosing a smallest decisive experiment, maximal coherent program, prerequisite repair, or containment after preflighting scarce resources. |
-| `wdll/` | procedural | — | Executive task selection, state-transition scope, falsifiable completion, and strategic advancement under uncertainty and constraint. |
-| `repo-audit-repair/` | procedural | — | Evidence-led repository audit and authorized repair from exact starting identity through applicable checks, classified findings, owning-layer fixes, and authoritative terminal verification. |
-| `github-tests/` | procedural | `repo-audit-repair`, `test-build` | Behavioral testing and GitHub CI evidence, discovery, required gates, release artifacts, isolation, security, and resource cost. |
-| `skill-build/` | procedural | — | Skill authoring and compliance workflow. Provides the required question set for creating/revising skills, choosing metadata-block vs procedural shape, designing individualized skill test suites, and bringing existing skills into compliance. |
-| `skill-usage/` | procedural | — | Evidence-bearing local usage maturity. Counts material invocations, preserves unobserved outcomes as `hmmm`, and separates nominal exposure thresholds from quality-capped effective maturity. |
-| `ssh-automation/` | procedural | — | Fail-closed SSH automation and copy-paste delivery. Preserves verified endpoint identity, explicit authentication, local/remote shell and stdin boundaries, bounded retries, idempotent activation and rollback, and child-shell containment for bulk terminal pastes. |
-| `vm-mcp/` | procedural | — | Private VM MCP control-plane doctrine. Keeps SSH credentials outside the model path, starts loopback-only and non-root, proves read-only contact first, and exposes privileged actions only as named bounded capabilities. |
-| `sql-queries/` | procedural | — | Correct, performant SQL across major warehouse dialects (Snowflake, BigQuery, Databricks, PostgreSQL): dialect reference, CTE/window patterns, optimization, debugging checklist. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
-| `statistical-analysis/` | procedural | — | Statistical methods for analyses: descriptive stats, assumption checks, hypothesis testing, outlier detection, effect sizes, and plain-language interpretation. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
-| `explore-data/` | procedural | — | Dataset profiling: shape, grain, null/duplicate/quality checks, distributions, and which dimensions and metrics merit analysis. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
-| `validate-data/` | procedural | — | Pre-share QA of analyses: methodology, accuracy, and bias checks; reproduce key numbers independently; attack conclusions before sign-off. Imported from `anthropics/knowledge-work-plugins` (Apache-2.0); see `ATTRIBUTION.md`. |
-| `data-visualization/` | procedural | — | Effective chart-building doctrine with Python (matplotlib, seaborn, plotly): chart-type selection, honest encoding, accessibility. Only `SKILL.md` is imported from `anthropics/knowledge-work-plugins@94e1a08`; the whole `SKILL.md`, including its local additions, is Apache-2.0. The four information-design extension files (skill-lib `868de86`) are original under MPL-2.0; see `ATTRIBUTION.md`. |
+## Verification & runtime boundaries
 
----
-
-## Anatomy of a skill
-
-Every skill is a directory at the repo root containing **at least a `SKILL.md`**. Optional
-supporting files (parsers, executors, examples) live alongside it. Repo-level helper packages may
-also exist when a skill exposes a module command, as `llms-build` does with `llms/build.py`.
-
-### SKILL.md frontmatter
-
-`SKILL.md` opens with YAML frontmatter:
-
-```yaml
----
-name: <slug>
-description: <load-bearing trigger paragraph>
----
-```
-
-The `description` is the loading contract. Keep it specific. List triggers. Do not bury operative conditions in prose.
-
-Two kinds:
-
-- **Metadata-block skills** apply the msdmd convention to a named block (`DOCS`, `CAPABILITIES`, `DEPENDENCIES`, `OWNERS`, `CONTRACTS`,
-  `CHECKS`, `MODULE_BUILD`, `BOUNDARIES`, `RATIOS`, `MANIFEST`, `LLMS`, `FRONTEND_META`, …). They define a field schema, a thin executor that consumes parsed
-  entries, and a runner contract with visible coverage findings. Native-first
-  applications consume supported owning conventions before requesting supplemental
-  blocks. Block absence measures adoption, not missing information; unsupported
-  extraction remains `hmmm`. `test-build/` is the canonical worked
-  example; `doc-build/`, `cap-build/`, `deps-build/`, `owner-build/`,
-  `risk-boundary-build/`, `ratios/`, `manifest/`, `llms-build/`, and `typed-meta-frontend/` define adjacent applications. `msdmd` itself is the foundation.
-- **Procedural skills** define an agent behaviour with no msdmd block. They state the doctrine
-  they enforce and the output shape they produce. `canon/`, `domain-claims/`, `visitor-intro/`, `adaptive-elicitation/`, `char-compress/`, `agent-instantiation/`, `a0p-instancing/`, `plain-lens/`, `thought-lens/`, `gonol-build/`, `ucns-option-selection/`, `epac-selection-display/`, `meta/`, `the-interdependency/`, `interdependent-work-graph/`, `stack-update/`, `project-incubation-graduation/`, `loop-eng/`, `agent-ops/`, `pstack-orchestration/`, `fresh-making/`, `action-calibration/`, `wdll/`, `repo-audit-repair/`, `github-tests/`, `skill-build/`, `skill-usage/`, `ssh-automation/`, `vm-mcp/`, `sql-queries/`, `statistical-analysis/`, `explore-data/`, `validate-data/`, `data-visualization/` are the examples.
-
-## msdmd block syntax
-
-```python
-# === <BLOCK_NAME> ===
-# id: <unique_snake_case_id>
-#   <field>: <value>
-#   <field>: <value>
-# === END <BLOCK_NAME> ===
-```
-
-- The comment marker is whatever is idiomatic for the file's language; the
-  reference registry covers `#`, `//`, `--`, `%`, `;`, `!`, `'`, and `*>`
-  line-comment families. Fence text and field structure are identical across
-  languages; ambiguous extensions are not guessed.
-- `BLOCK_NAME` is uppercase snake case. Every entry begins with `id:` (unique within the block,
-  stable across refactors). Field lines are indented one level beneath the id.
-- A file may contain multiple blocks of the same or different types; parsers concatenate entries.
-- See `msdmd/SKILL.md` for the authoritative spec, reserved field names, and runner protocol.
-
-### The reference parsers (`msdmd/parsers/`)
-
-| File | Public API | Notes |
-|---|---|---|
-| `universal.py` | `parse_text(text, block_name, marker="#")`, `parse_file(path, block_name)`, `walk_tree(root, block_name, *, skip=None, extensions=None)`, `marker_for(path)`, `COMMENT_MARKERS` | Pure Python stdlib. `walk_tree` returns `(annotated, untested)` so coverage gaps stay observable. |
-| `universal.ts` | `parseText`, `parseFile`, `walkTree`, `markerFor`, `COMMENT_MARKERS`, `Entry`, `WalkOptions` | Pure Node stdlib (`node:fs`, `node:path`). TypeScript counterpart; its extension registry is regression-checked against Python. |
-| `__init__.py` | — | Package marker / docstring. |
-
-`msdmd/collection.ts` defines the TypeScript shapes for generated repo-level
-`<reponame>_msdmd.ts` collection points. `msdmd/collect.py` is the schema-2
-collector; its core is stdlib, while the complete shipped native-reader matrix
-requires the pinned Python packages in `msdmd/requirements.txt` and the
-TypeScript runtime in `msdmd/package.json`. Install them with
-`python -m pip install -r msdmd/requirements.txt` and
-`npm ci --ignore-scripts --prefix msdmd` before full native-reader validation.
-The collector reads supported native conventions through `msdmd/readers.py` and
-supplemental MSDMD blocks through the universal parser path. Its explicit
-legacy/block mode is compatibility-only and cannot silently stand in for native
-facts.
-
-`msdmd/module_projection.py` is a separate partial Python native reader using
-`msdmd/module-projection.schema.json`; it emits source-bound per-module JSONL
-sidecars and shares the syntax-aware attachment discipline. Unsupported
-standards, ambiguous source, build/compiler context, cross-source semantic
-reconciliation, and independent signature/evidence verification remain visible
-`hmmm` rather than block-helper gaps. With `--strict`, a zero collection exit validates only the implemented required
-scope for that run; without `--strict`, zero means rendering completed and the
-reported diagnostics and requirements still determine whether coverage is
-incomplete. Neither mode proves complete information coverage.
-The root collection's regeneration command and lexical scan limitations are
-documented in `ORG_DISTRIBUTION.md`; native discovery and exclusions are
-governed by `docs/runner-config-guidance.md`.
-`msdmd/visualize.py` renders a minimal Mermaid graph from JSON or generated
-TypeScript collection points.
-
-Both parsers commit to **zero non-stdlib dependencies** and auto-detect the comment marker by
-file extension. They are designed to be copied verbatim into any consuming project. A parser is
-a pure function over file text: it returns all entries from all matching blocks, does not
-interpret field semantics (that is the executor's job), and returns an empty list for files
-with no block of the requested type.
-
-Flesh to preserve:
-
-- comment marker is language-idiomatic;
-- fence text and field structure are identical across languages;
-- `BLOCK_NAME` is uppercase snake case;
-- every entry begins with stable `id:`;
-- field lines are indented beneath the id;
-- files may contain multiple blocks;
-- parsers concatenate matching entries;
-- unknown fields stay visible as `hmmm` where the skill requires it.
-
-Reference parsers:
-
-```text
-msdmd/parsers/universal.py  # Python stdlib
-msdmd/parsers/universal.ts  # Node stdlib
-```
-
-Parser contract:
-
-- pure functions over file text;
-- no non-stdlib dependencies;
-- auto-detect comment marker by extension;
-- return entries, not interpreted semantics;
-- return empty list when no matching block exists;
-- runners must report gap lists visibly.
-
-## llms-build runner
-
-`llms-build/SKILL.md` defines the `LLMS` metadata block. The reference command is:
-
-```bash
-python -m llms.build --root . --out llms.txt
-python -m llms.build --root . --out llms.txt --apply
-python -m llms.build --root . --out llms.txt --check
-```
-
-The runner lives in `llms/build.py`. It parses `LLMS` blocks, ignores Markdown fenced-code examples,
-generates the canonical root `llms.txt`, and reports drift in `--check` mode. Edit source `LLMS`
-blocks first; do not hand-edit `llms.txt` as independent doctrine.
-
-## Maintenance tools
-
-```bash
-python -m unittest discover -s tests
-bash tools/check_gonol_authority.sh
-python tools/check_skill_lib_drift.py --warnings-fail
-python tools/check_skill_compliance.py --warnings-fail
-python ratios/ratios_check.py --strict
-python -m llms.build --root . --out llms.txt --check
-python tests/test_repo_loto.py --audit
-python tests/test_repo_loto.py
-python tools/char_compress_check.py
-python tools/propagate_skills.py ../target-repo          # dry-run
-python tools/propagate_skills.py ../target-repo --apply  # local copy
-python tools/check_consumer_drift.py ../target-repo --sha <sha>  # detect vendored-copy drift
-```
-
-Tool boundaries:
-
-There is a small stdlib Python editorial test suite. There is still no `package.json`,
-`pyproject.toml`, or `Makefile`. Do not invent commands beyond the checks that exist here.
-
-- Run `python -m unittest discover -s tests` to validate skill registration,
-  skills.json semantics, per-skill spec coverage, SKILL.md frontmatter, README
-  index coverage, collection-point schema/generator/visualizer coverage, universal parser
-  behavior, llms-build behavior, and parser ratio bookends.
-- `tools/ai.sh` is the canonical Termux-side controller for the remote `a0` tmux coding-agent session; `tools/install_ai.sh` installs `ai.sh` into caller PATH, preferring Termux `$PREFIX/bin`.
-- The parsers are reference implementations; the test suite covers core parser
-  behavior and library integration, not every consuming-runner contract.
-- `check_gonol_authority.sh` fails closed when active skill-lib surfaces restore EDCM construction ownership.
-- `check_skill_lib_drift.py` checks editorial agreement among skill directories, `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt`.
-- `check_skill_compliance.py` checks baseline `skill-build` invariants for each `SKILL.md`.
-- `ratios_check.py --strict` verifies opening/closing ratios seals for
-  Python files, including the shebang-safe opening exception; other
-  parser-supported languages remain visible outside the Python computer scope.
-- `tests/test_repo_loto.py --audit` reconciles RepoLOTO source `CONTRACTS` against test `CHECKS`; `tests/test_repo_loto.py` executes those checks.
-- `char_compress_check.py` runs preservation fixtures from `char-compress/fixtures.json`; it is not the full Unit Circle Number System compression engine.
-- `propagate_skills.py` copies canonical skill directories into a checked-out target repo, and carries any shared `doctrine/<file>` docs the propagated skills link to into `.agents/skills/doctrine/`; it does not commit, push, open pull requests, or contact GitHub.
-- `check_consumer_drift.py` is the read-only counterpart: given a checked-out consumer repo it auto-detects the vendored skill subset and reports canonical-file drift, stale `manifest/generate.py.sha256` pins, missing/stale referenced `doctrine/<file>` docs, and (with `--sha`) a missing README source-commit citation. The scheduled `consumer-drift.yml` workflow runs it against every consumer repo; the consumer repos are public, so it uses the default `GITHUB_TOKEN`.
-- Runner sections in application SKILLs are contracts or patterns for *consuming* repos to
-  implement against their own source trees, not scripts that live or run here unless the skill
-  directory includes a helper file or package module.
-- Validation here is editorial: keep `SKILL.md` frontmatter accurate, keep `skills.json` and the
-  README table in sync with the directories present, keep generated files in sync with declarations,
-  and keep the parsers/runners stdlib-only.
-
-## Consumption and propagation
-
-- Canonical install path inside consuming repos: `.agents/skills/<skill-name>/`.
-- Other paths may work only if the harness walks them.
-- Copy skill directories verbatim.
-- Add or preserve a target `.agents/skills/README.md` citing this repo and source commit SHA.
-- Repo-local copies are never the source of truth.
-- Target repos are listed in `ORG_DISTRIBUTION.md`.
-
-## Editing doctrine
-
-1. Edit here first.
-2. Keep `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`, `AGENTS.md`, `CLAUDE.md`, and generated `llms.txt` synchronized when adding, renaming, or removing a skill.
-3. Preserve load-bearing descriptions.
-4. Mark unknowns as `hmmm`; do not guess.
-5. New module work starts with source-linked native planning information. Use supplemental `MODULE_BUILD` entries only for otherwise unexpressed information; purpose, surfaces, boundaries, tests, rollout, and rollback remain required. Unsupported extraction stays `hmmm`.
-6. Source modules own `CONTRACTS`; test modules own `CHECKS`; do not put test `call:` topology in source contracts.
-7. Do not fork parser dialects; propose an `msdmd` extension instead.
-8. Do not invent undeclared package/build commands for this repo.
-9. Apply `char-compress` when compressing repo context: carry flesh, frozen bones, transforms, and hmmm; drop only safely regenerable scaffold.
-10. Treat `char-compress` as a skill-lib-owned compression procedure, but do not claim unearned theorem/status support or EDCM metric status.
-11. Before promoting a word into canon, a theorem term, ontology primitive, schema field, encoding label, or cross-domain mapping, apply `domain-claims`: establish the domain-qualified sense and resolve collisions before attaching provenance; then apply `canon` to assess authority.
-12. Before constructing, reviewing, replaying, or extending language-gonol research, apply `gonol-build`: resolve current UCNS gonol-object/constructor/geometry authority and the exact owning Stack research workspace; EDCM is measurement/evaluation only. Preserve closure and atomic participation, require declared constitutive relations, and keep incomplete geometry visible as `hmmm`.
-13. Before selecting among UCNS options, apply `ucns-option-selection`: freeze the scoped decision boundary, enforce noncompensable eligibility and evidence gates, require explicit ratification, and preserve non-transfer, rollback, negative evidence, and `hmmm`.
-14. Before selecting and displaying an EPAC artifact, apply `epac-selection-display`: pin the provisional source, exact target, receipt, and available renderer; preserve status, nonclaims, sealed comparison, and `hmmm`; and keep WebMCP read-only.
-15. Before mutating `The-Interdependency/stack` structure, apply `stack-update` with `interdependent-work-graph`; update every affected authority/provenance projection, remove superseded claims, recompute the work-graph digest, and require the deterministic stack checker before merge.
-16. For LLM instructions, edit `LLMS` source blocks and regenerate `llms.txt` with `python -m llms.build --root . --out llms.txt --apply`.
-17. For SSH automation and large terminal pastes containing SSH, apply `ssh-automation`: verify endpoint identity and host trust, preserve local and remote interpreter boundaries, make retries and rollback explicit, and contain option/trap/exit effects inside a child shell.
-18. When an emergent component is incubated inside a forge and may become independently authoritative, apply `project-incubation-graduation`: qualify it before extraction, preserve provenance, publish from the new authority, require downstream reconsumption, then sever the incubated implementation path before declaring graduation.
+- **No invented build commands**: There is no root `package.json`,
+  `pyproject.toml`, or `Makefile`. CI runs `.github/workflows/ci.yml`,
+  `hygiene.yml` (no tracked Python bytecode), and scheduled `consumer-drift.yml`
+  (public repos via `GITHUB_TOKEN`).
+- **Native-reader deps for full `msdmd` collection**: `msdmd/parsers/universal.{py,ts}`
+  are pure stdlib; full schema-2 collection (`msdmd/collect.py`) also needs
+  `python -m pip install -r msdmd/requirements.txt` and `npm ci --ignore-scripts --prefix msdmd`.
+  With `--strict`, exit 0 validates only implemented required scope; unsupported
+  conventions stay visible as `hmmm`.
+- **Core gates** (see `.github/workflows/ci.yml` for exact flags):
+  ```bash
+  python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
+  node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+  python -m unittest discover -s tests
+  bash tools/check_gonol_authority.sh
+  python tools/check_skill_lib_drift.py --warnings-fail
+  python tools/check_skill_compliance.py --warnings-fail
+  python tools/build_codex_plugin_skills.py --check
+  python ratios/ratios_check.py --strict
+  python -m llms.build --root . --out llms.txt --check
+  python tests/test_repo_loto.py --audit && python tests/test_repo_loto.py
+  ```
+- **Runner sections** in application `SKILL.md` files are contracts for consuming
+  repos unless a helper file ships under that skill or package.
 
 ## hmmm
 

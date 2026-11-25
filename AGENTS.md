@@ -6,10 +6,10 @@ description: |
 
 # You are an agent in The-Interdependency/skill-lib
 
-This repository is the canonical home for the organization's reusable
-agent skills. Every other repo in the org carries a repo-local copy of
-this lib under `.agents/skills/`; this is the source of truth those
-copies are propagated from.
+This repository is the canonical home for the organization's reusable agent
+skills. Consuming repos vendor copies under `.agents/skills/<skill-name>/`;
+repo-local copies are never the source of truth (edit here first, then
+propagate per [`ORG_DISTRIBUTION.md`](ORG_DISTRIBUTION.md)).
 
 ## Agent-context invariant — binding
 
@@ -18,21 +18,20 @@ copies are propagated from.
 At **every agent instantiation**, before that agent may reason about or execute
 org work, resolve the available skill-lib entrypoint/index and the governing
 repository instructions. Load `wdll/SKILL.md` for any nontrivial spawned or
-newly-scoped work whose target state, scope, or proof is not already explicit. At **the start of every unit of work**, reevaluate the
-current request against skill descriptions and read every applicable `SKILL.md`
-before acting. A child/sub-agent inherits the parent's already-resolved
-repository identities, governing contracts, and applicable skill context, then
-reevaluates triggers for its own assigned work; it does not reconstruct stable
-project semantics from the conversational prompt.
+newly-scoped work whose target state, scope, or proof is not already explicit.
+At **the start of every unit of work**, reevaluate the current request against
+skill descriptions and read every applicable `SKILL.md` before acting. A
+child/sub-agent inherits the parent's already-resolved repository identities,
+governing contracts, and applicable skill context, then reevaluates triggers
+for its own assigned work; it does not reconstruct stable project semantics from
+the conversational prompt.
 
 Previously resolved authoritative instructions remain resolved until their
-source changes, conflicts, becomes unavailable, or is explicitly superseded.
-Do not ask the user to restate repository knowledge that an authoritative
-source already resolves. If required authority cannot be resolved, stop that
-work boundary as `hmmm`; do not guess and do not substitute conversational
-repetition for source resolution.
-
-In compact form:
+source changes, conflicts, becomes unavailable, or is explicitly superseded. Do
+not ask the user to restate repository knowledge that an authoritative source
+already resolves. If required authority cannot be resolved, stop that work
+boundary as `hmmm`; do not guess and do not substitute conversational repetition
+for source resolution.
 
 ```text
 agent birth -> resolve repo instructions + skill-lib -> inherit authority -> ready
@@ -42,171 +41,95 @@ missing authority -> hmmm, not invention or user repetition
 
 ## Resource-run invariant — binding
 
-Read [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) before any compute run whose completion depends materially on scarce resources.
+Read [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) before any
+compute run whose completion depends materially on scarce resources.
 
-**Resource scarcity requires contemplation BEFORE a compute run begins. Once begun, let it finish. If there is doubt you can finish it, do not start it.** Do not invent a wall-clock cutoff merely to make a healthy computation bounded or falsifiable; runtime is a stopping criterion only when it is actually load-bearing to the claim, safety boundary, or an externally imposed hard limit.
+**Resource scarcity requires contemplation BEFORE a compute run begins. Once
+begun, let it finish. If there is doubt you can finish it, do not start it.** Do
+not invent a wall-clock cutoff merely to make a healthy computation bounded or
+falsifiable; runtime is a stopping criterion only when it is actually
+load-bearing to the claim, safety boundary, or an externally imposed hard limit.
 
-## What lives here
+## How to load and maintain skills
 
-```text
-<skill-name>/SKILL.md          # required: the skill itself
-<skill-name>/<helpers>...      # optional: parsers, executors, examples
-llms/                          # stdlib module for python -m llms.build
-tools/ai.sh                    # canonical Termux -> a0 SSH/tmux coding-agent launcher
-tools/work.sh                  # parent menu: canonical ai.sh + Ubuntu Google Cloud
-tools/install_ai.sh            # installs ai.sh and work.sh into caller PATH (Termux $PREFIX/bin first)
-```
+1. Walk the skills root (repo root here; `.agents/skills/` in consumers) for
+   `<skill-name>/SKILL.md`, or read [`skills.json`](skills.json).
+2. Match the YAML `description` triggers (`Load this when …` / `Use this when …`)
+   and read the full `SKILL.md` before acting. Treat `description` as a
+   load-bearing public contract.
+3. Treat per-skill runner sections as consumer contracts unless a helper lives
+   in that skill directory or package (e.g. `msdmd/collect.py`,
+   `llms/build.py`).
 
-Every skill is a directory at the repo root containing at least a
-`SKILL.md`. The `SKILL.md` opens with YAML frontmatter:
+## Repo editing doctrine
 
-```yaml
----
-name: <slug>
-description: <one paragraph; ends with explicit "Load this when …" triggers>
----
-```
+- **Edit here first; keep indexes honest**: When adding, renaming, or removing a
+  skill, synchronize `skills.json`, `README.md`, `ORG_DISTRIBUTION.md`,
+  `AGENTS.md`, `CLAUDE.md`, `skills/` Codex adapters (`tools/build_codex_plugin_skills.py --apply`),
+  `llms.txt`, and `skill-lib_msdmd.ts`. See [`skill-build/SKILL.md`](skill-build/SKILL.md)
+  (including the narrative compression invariant: one authoritative home per
+  concept, one semantic job per clause, repetition only when it changes execution).
+- **Unknowns stay `hmmm`**: Never guess missing metadata or unsupported reader
+  fields.
+- **Native-first modules**: New module work starts with native manifests,
+  schemas, and design records; use supplemental `MODULE_BUILD` blocks only for
+  unexpressed facts (purpose, surfaces, boundaries, tests, rollout, rollback
+  required; see `meta-module-build/SKILL.md`).
+- **Source vs test ownership**: Source modules own `CONTRACTS`; test modules own
+  `CHECKS`. Never put test `call:` topology in source contracts.
+- **No parser forks or invented build commands**: Propose extensions in `msdmd`
+  rather than forking parser dialects. This repo has no root `package.json`,
+  `pyproject.toml`, or `Makefile`; use only the declared checks in
+  [`tools/README.md`](tools/README.md) and `.github/workflows/ci.yml`.
+- **LLM instructions**: Edit source `LLMS` blocks first, then run
+  `python -m llms.build --root . --out llms.txt --apply` (`llms-build/SKILL.md`).
 
-The `description` is what your harness uses to decide whether to load
-the rest. Treat it as the public contract.
+## Skill routing
 
-When creating or revising any skill narrative, load `skill-build/SKILL.md` and apply its narrative compression invariant: one authoritative home per concept, one semantic job per clause, and repetition only when it changes execution. This applies to every skill kind.
+Load the matching `<skill>/SKILL.md` whenever work enters its scope:
 
-## How to load a skill
-
-1. Walk the configured skills root (commonly `.agents/skills/` in
-   consuming repos) for directories containing `SKILL.md`.
-2. Parse the YAML frontmatter; index by `name` and `description`.
-3. When a user request matches the triggers in a `description`, read
-   that skill's full `SKILL.md` before acting.
-4. Some skills (currently `msdmd`, `doc-build`, `cap-build`, `deps-build`,
-   `owner-build`, `test-build`, `meta-module-build`, `risk-boundary-build`,
-   `ratios`, `manifest`, `llms-build`, and `typed-meta-frontend`) define metadata blocks that other
-   modules declare inside their own source files. Other skills (currently
-   `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
-   `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `agent-ops`, `pstack-orchestration`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
-   `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
-   define no block.
-
-A machine-readable index is also available at `skills.json` if you
-prefer not to walk the tree.
-
-This repo ships the universal msdmd parser implementations plus skill
-specifications. Treat per-skill runner sections as contracts for consuming
-repos unless the skill directory or repo package includes an actual helper
-script. `llms-build` includes the stdlib command module `llms/build.py`.
-
-## How to install this lib into another repo
-
-The canonical install path inside a consuming repo is:
-
-```text
-.agents/skills/<skill-name>/
-```
-
-Copy the skill directory there verbatim. Add a short
-`.agents/skills/README.md` in the target repo that cites this repo and
-the source commit SHA. Every target repo in The Interdependency
-already follows this convention; see `ORG_DISTRIBUTION.md` for the
-list and the propagation rule.
-
-Repo-local copies are not the source of truth. Edit skills here first;
-propagate from here.
-
-## Doctrine while editing skills
-
-- A `SKILL.md`'s `description` field is load-bearing — your harness
-  uses it to decide whether to read the rest. Keep it specific. List
-  the triggers explicitly. Do not bury them.
-- Unknown fields are written `hmmm`, not guessed. This applies to any
-  metadata block declared via `msdmd`.
-- New module work starts with source-linked planning information; consume
-  existing native manifests, schemas, and design records first. Use supplemental
-  `MODULE_BUILD` entries only for otherwise unexpressed information; see
-  `meta-module-build/SKILL.md`. Purpose, surfaces, boundaries, tests, rollout,
-  and rollback remain required. Unsupported extraction stays `hmmm`, not absent.
-- If you are creating or maintaining a root `llms.txt`, load
-  `llms-build/SKILL.md`, edit source `LLMS` blocks first, then run
-  `python -m llms.build --root . --out llms.txt --apply`.
-- If you are deciding whether repo-local practice should become org doctrine,
-  load `canon/SKILL.md` and keep unsupported claims as `hmmm`.
-- If a word or phrase is being promoted into canon, a theorem term, ontology
-  primitive, schema field, encoding label, cross-domain mapping, or other
-  meaning-bearing control surface, load `domain-claims/SKILL.md` before
-  attaching provenance. Establish the domain-qualified sense, scope, exclusions,
-  and collision result first; then use `canon` to evaluate authority.
-- If you are compressing a thread, document, repo audit, canon handoff, or
-  working-memory state, load `char-compress/SKILL.md`; carry flesh, frozen
-  bones, transforms, and `hmmm`; drop only safely regenerable scaffold.
-- If you are an agent introducing a newcomer to the org, load
-  `visitor-intro/SKILL.md` and follow its output rubric.
-- If a task requires recovering several missing user-supplied facts, especially when prior context or source material may already answer some of them, load
-  `adaptive-elicitation/SKILL.md`; harvest known context first, ask exactly one highest-value unresolved question per turn, consume volunteered facts, and recompute the remaining gaps before asking again.
-- If you are instantiating, forking, merging, or retiring an agent or
-  sub-agent in `a0` / `a0ucns`, load `agent-instantiation/SKILL.md` and
-  follow its instantiation sequence. For `a0-betatest` (a0p), whose model
-  diverges, load `a0p-instancing/SKILL.md` instead.
-- If you are making a dense document approachable — a plain-language or
-  multi-lens companion view, a progressive-disclosure reader, or a dynamic
-  page that must keep a static fallback — load `plain-lens/SKILL.md`; keep the
-  paraphrase subordinate to the canon and mark uncertain mappings as `hmmm`.
-- If you are translating raw, recursive, fragmentary, coined, or private-language
-  thought for strangers or a specific audience, load `thought-lens/SKILL.md`;
-  freeze the claim kernel before changing vocabulary and back-check the result.
-- If you are constructing, reviewing, replaying, or continuing language-gonol
-  research, including lexical floors, morphology, definitions, punctuation
-  functions, closure, atomic promotion, or recursive relations, load
-  `gonol-build/SKILL.md`. Resolve current UCNS gonol-object/constructor/geometry
-  authority and the exact owning Stack research workspace first. EDCM is
-  measurement/evaluation only; never impose a universal adjacent-scale ladder
-  or restore historical `gonal-morphology` doctrine as current canon.
-- If you are comparing UCNS options, deciding whether evidence authorizes a
-  winner, or issuing a scoped selection receipt, load
-  `ucns-option-selection/SKILL.md`. Hard eligibility and evidence gates cannot
-  be compensated by scores; selection requires explicit scoped ratification.
-- If you are selecting an EPAC element, molecule, receipt, comparison, or
-  available visualization for display, or exposing that workflow through
-  WebMCP, load `epac-selection-display/SKILL.md`. Pin the provisional source and
-  target, verify the receipt and renderer, preserve nonclaims and `hmmm`, and do
-  not turn presentation into canon selection or MCP execution authority.
-- If you are building code, researching, performing GitHub maintenance or updates, assembling EDCM transcripts for analysis, or any work that touches The Interdependency organization, The Interdependent Way projects, or related assets (edcm, ucns, pcea, skill-lib, a0, aimmh, etc.), load `the-interdependency/SKILL.md` and follow its structure-preservation, EDCM framework, mandatory usage-guidance, and org-workflow rules.
-- If the task spans, consumes, compares, publishes to, or changes the contract between multiple repositories, load `interdependent-work-graph/SKILL.md` before choosing an edit workspace. Resolve exact commits, authority roles, relations, non-transfer boundaries, and one shared graph record.
-- If you are changing `The-Interdependency/stack` structure — participants, source pins, authorities, relations, research workspaces, BASE records, extraction/graduation standing, or architecture projections — load `stack-update/SKILL.md` with `interdependent-work-graph`. Treat the mutation as one coherent transaction, remove superseded claims, recompute the work-graph identity, and require the stack's deterministic consistency gate before merge.
-- If a new component is born inside a stack, integration, laboratory, or incubator repository and may become an independent repository/package, load `project-incubation-graduation/SKILL.md`. Qualify it before extraction, preserve provenance, create a new implementation-authority boundary explicitly, release it through its declared distribution surface, and require the former forge to reconsume the released artifact before declaring graduation. Load `interdependent-work-graph` once the transition crosses repositories.
-- If one ordered textbook, report, standard, corpus, archive, or public reading surface displays source-owned content from multiple repositories or independently owned files, load `distributed-publication/SKILL.md` with `interdependent-work-graph`. Preserve exact source identities, source-local licenses and statuses, correction routing, fail-closed production retrieval, explicit fallback, and publication build provenance.
-- Before modifying any file in `The-Interdependency/The-Interdependency.github.io`, load `website-builder-journal/SKILL.md`. Every website change transaction must append a new `By the builder` record with date, time, model provenance per `website-builder-journal/SKILL.md`, and model-discretionary prose after the skill's independent research phase and before terminal validation; read-only inspection is the non-trigger.
-- If you are designing, implementing, or reviewing agent feedback loops, closed cycles, subagent fleets (maker vs checker), orchestration in a0p/AIMMH, or any repeatable AI workflow that should run autonomously with Verify → Iterate stages, load `loop-eng/SKILL.md` and apply its 5-stage cycle, 6 building blocks, and structure-preserving closed-loop principles.
-- If you are designing, reviewing, hardening, or implementing a tool-using bot or agent — permissions, approval gates, untrusted tool or retrieval content, run lifecycle and idempotency, evals, memory write rules, redacted logging, tool allowlists, or budget preflight — load `agent-ops/SKILL.md`. Cross-load `loop-eng` when the work is iterative. For a0 or a0p instance surgery use the lifecycle skill; for CI gate audits use `github-tests`.
-- If you are starting, planning, fixing, reviewing, or verifying GitHub repository or other code-checkout work that needs a bound task contract, skill dispatch, baseline reproduction, PASS/FAIL/NOT_RUN evidence, or autonomy gates before parallel work, push, or merge, load `pstack-orchestration/SKILL.md`. Cross-load `agent-ops` for irreversible-effect approval and `github-tests` for CI evidence.
-- If authoritative inputs changed and stored collections, documentation,
-  projections, package indexes, or other derived artifacts may be stale, load
-  `fresh-making/SKILL.md`; bind exact inputs and generator/verifier identities,
-  rebuild only the affected closure, and accept freshness only after verification.
-- If you are deciding between the smallest decisive experiment and a maximal coherent program, choosing the highest-leverage next action under time, attention, money, compute, or coordination constraints, or deciding whether a bounded falsifier should precede a full build, load `action-calibration/SKILL.md`. It sizes the action; `loop-eng` executes the selected loop.
-- If a spawn or newly-scoped unit of work must choose consequential work, define scope/completion, or advance through uncertainty, load `wdll/SKILL.md` before execution. It owns job selection and falsifiable completion; domain skills own their own doctrine.
-- If you are auditing, assessing, hardening, cleaning up, or auditing and repairing an existing repository, load `repo-audit-repair/SKILL.md`. Resolve exact repository identity, select checks from actual claims, classify findings before mutation, preserve audit-only requests as read-only, repair the owning layer, and verify merge/release/deployment states separately when applicable.
-- If you are designing or auditing test suites or GitHub test gates, load `github-tests/SKILL.md`. Trace actual execution and assertions, bind run evidence to exact revisions, preserve lifecycle exclusions, and distinguish product failures from blocked execution.
-- If you are giving an MCP-capable agent operational contact with a private VM,
-  load `vm-mcp/SKILL.md`; keep credentials outside the model path and choose
-  the authority profile explicitly. Shared or first-contact deployments should
-  stay bounded; a single-owner `personal-console` may intentionally expose broad
-  `user_exec` plus visibly separate root `admin_exec`.
-- If you are creating a new skill, revising an existing skill, bringing skills into compliance, or designing a skill-specific test suite, load `skill-build/SKILL.md` and answer its trigger, source-of-truth, workflow, validation, and `hmmm` question sets before patching.
-- If you are writing, reviewing, or troubleshooting SSH automation, non-interactive remote commands, deployment scripts over SSH, or Cloud Shell copy-paste SSH blocks, load `ssh-automation/SKILL.md`; fail closed on host trust and identity, preserve stdin and PTY boundaries, quote remote scripts, and keep bulk pastes inside a child shell.
-- If any skill-lib skill materially shapes a task, also load `skill-usage/SKILL.md` and record exactly one use after its contribution is observable. Record unknown outcomes as `hmmm`; do not infer success from silence.
+- **Metadata & module specs**: `msdmd` (native-first metadata & blocks),
+  `doc-build` (docs/docstrings), `cap-build` (capabilities/APIs), `deps-build`
+  (dependencies), `owner-build` (stewardship), `test-build` (contracts/checks),
+  `meta-module-build` (module build contracts), `risk-boundary-build` (effect &
+  trust boundaries), `ratios` (`loc_comments`, `imports_exports`, `calls_definitions`),
+  `manifest` (living spec in `CLAUDE.md`), `llms-build` (`llms.txt`),
+  `typed-meta-frontend` (metadata-driven TypeScript UI).
+- **Canon, prose & elicitation**: `canon` (org doctrine vs local practice),
+  `domain-claims` (domain-qualified terms before canon/provenance),
+  `char-compress` (context compression preserving flesh, frozen bones, transforms, `hmmm`),
+  `visitor-intro` (repo onboarding tour), `adaptive-elicitation` (one neutral
+  question per turn after harvesting context), `plain-lens` (subordinate
+  plain-language/multi-lens views), `thought-lens` (freeze claim kernel before
+  translating coined/fragmentary thought).
+- **UCNS, EPAC & Stack**: `gonol-build` (resolve current UCNS authority and exact owning Stack research workspace first; EDCM is measurement/evaluation only),
+  `ucns-option-selection` (hard eligibility/evidence gates + scoped ratification),
+  `epac-selection-display` (pin source/receipt/renderer; read-only WebMCP),
+  `interdependent-work-graph` (multi-repo authority/provenance before choosing an
+  edit workspace), `stack-update` (coherent `The-Interdependency/stack` mutations),
+  `project-incubation-graduation` (qualify, extract, reconsumption, sever),
+  `distributed-publication` (multi-source books/reports/archives).
+- **Agents, orchestration & verification**: `the-interdependency` (org-wide
+  protocol, EDCM transcripts, mandatory usage guidance), `agent-instantiation`
+  (`a0`/`a0ucns` lifecycle; use `a0p-instancing` for `a0-betatest`),
+  `loop-eng` (closed Verify→Iterate loops), `agent-ops` (bot permissions,
+  approvals, untrusted data, evals, memory, budgets), `pstack-orchestration`
+  (bound repo contracts & PASS/FAIL/NOT_RUN evidence), `wdll` (job selection &
+  falsifiable completion), `action-calibration` (minimal falsifier vs maximal
+  build), `fresh-making` (rebuild stale derived artifacts), `repo-audit-repair`
+  (evidence-led repo audits/repairs), `github-tests` (CI/test execution audits),
+  `skill-build` (authoring/compliance/tests), `skill-usage` (record material skill
+  use; `hmmm` on unknown outcome), `website-builder-journal` (`The-Interdependency.github.io`
+  builder records).
+- **Infrastructure & data**: `vm-mcp` (keep credentials out of model path; choose
+  bounded vs `personal-console` explicitly), `ssh-automation` (host trust, stdin/PTY
+  boundaries, child-shell isolation), `sql-queries`, `statistical-analysis`,
+  `explore-data`, `validate-data`, `data-visualization`.
 
 ## Pointers
 
-- `README.md` — human-facing overview, what's-inside table, msdmd
-  block syntax.
-- `RESOURCE_RUN_INVARIANT.md` — binding preflight-and-finish execution doctrine for scarce compute/resources.
-- `ORG_DISTRIBUTION.md` — canonical-source rule, target repos,
-  propagation contract.
-- `skills.json` — machine-readable skill index.
-- `llms.txt` — generated LLM-facing root instructions.
-- Each `<skill>/SKILL.md` — the authoritative skill spec.
-- `llms/build.py` — reference runner for `llms-build`.
-- `tools/ai.sh` — canonical Termux-side launcher for the remote `a0` tmux coding-agent session.
-- `tools/install_ai.sh` — installs canonical `ai.sh` and `work.sh` symlinks into caller PATH, preferring Termux `$PREFIX/bin`.
-- `tools/work.sh` — combined AI / Ubuntu Google Cloud menu; [tools/WORK.md](tools/WORK.md) owns usage, updates, and rollback.
+- [`README.md`](README.md) — human overview, skill table, Codex plugin install, launchers, `msdmd` block syntax.
+- [`ORG_DISTRIBUTION.md`](ORG_DISTRIBUTION.md) — target repos, `.agents/skills/` install rule, propagation workflow.
+- [`RESOURCE_RUN_INVARIANT.md`](RESOURCE_RUN_INVARIANT.md) — binding preflight-and-finish compute doctrine.
+- [`skills.json`](skills.json) — machine-readable skill index; [`llms.txt`](llms.txt) — generated root LLM instructions.
+- [`tools/README.md`](tools/README.md), [`tools/WORK.md`](tools/WORK.md), [`tools/A0-VAULT.md`](tools/A0-VAULT.md) — helper CLIs, `ai.sh`/`work.sh`/`install_ai.sh`, OpenBao vault setup.

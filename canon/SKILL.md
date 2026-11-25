@@ -3,7 +3,7 @@ name: canon
 description: Canonical-source and doctrine maintenance for The Interdependency skill library. Use this when deciding whether a claim, pattern, ratio, workflow, or repo-local practice should become canon; when moving source-backed behavior into a SKILL.md; when reconciling canonical skill-lib with repo-local `.agents/skills/` copies; or when preserving unresolved doctrine as `hmmm` instead of guessing. Also load when editing skill activation descriptions.
 ---
 
-
+# canon — Maintaining source-backed doctrine
 
 ## Canon test
 

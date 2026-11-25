@@ -1,12 +1,9 @@
 ---
 name: explore-data
 description: Profile and explore a dataset to understand its shape, quality, and patterns. Use this when encountering a new table or file, checking null rates and column distributions, spotting data quality issues like duplicates or suspicious values, or deciding which dimensions and metrics to analyze.
-argument-hint: "<table or file>"
 ---
 
 # /explore-data - Profile and Explore a Dataset
-
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
 Generate a comprehensive data profile for a table or uploaded file. Understand its shape, quality, and patterns before diving into analysis.
 
@@ -333,7 +330,7 @@ When exploring an unfamiliar data environment:
 ## Provenance
 
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/explore-data/`), Apache-2.0.
-Local modifications: trigger phrasing normalized; anti-patterns, provenance and
+Local modifications: trigger phrasing normalized; Cowork-only frontmatter and broken relative link removed; anti-patterns, provenance and
 hmmm added; duplicate workflow consolidated into the main workflow under the
 narrative compression invariant. See `ATTRIBUTION.md` at repo root.
 

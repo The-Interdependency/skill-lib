@@ -24,9 +24,12 @@ jobs:
       matrix:
         # ORG_DISTRIBUTION.md "Active vendoring consumers" -- the repos that
         # carry a top-level `.agents/skills/<skill>/` subset. Keep this list and
-        # that section in sync; the targets excluded there (a0ucns aggregator
-        # and superseded PTCA/pcna) are deliberately absent
-        # because `--require-vendored` would fail a repo with no subset.
+        # that section in sync. Targets excluded there (a0 and a0-betatest have
+        # no top-level subset; a0-betatest is also an observe-only mirror;
+        # pubskill-lib has its own publication model; a0ucns is an aggregator;
+        # PTCA/pcna are superseded) are deliberately absent because
+        # `--require-vendored` or a verbatim compare would fail them for reasons
+        # that are not "canonical moved ahead".
         consumer:
           - interdependent-lib
           - ucns
@@ -34,13 +37,10 @@ jobs:
           - zfae
           - eml_ucns
           - ai-tiw
-          - a0-betatest
           - metapat
-          - a0
           - aimmh
           - pcea
           - ptcna
-          - pubskill-lib
           - epac
           - stack
           - uchc

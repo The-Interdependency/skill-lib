@@ -4,7 +4,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from llms.build import collect, generate, parse_text
+import contextlib
+import io
+import subprocess
+
+from llms.build import collect, generate, main as llms_main, parse_text, resolve_repo_name
 
 
 class LlmsBuildTest(unittest.TestCase):
@@ -89,6 +93,65 @@ class LlmsBuildTest(unittest.TestCase):
         self.assertIn("- **demo** = exact definition", generated)
         self.assertIn("- One module.", generated)
         self.assertIn("- Read source first.", generated)
+
+
+    def test_resolve_repo_name_from_git_remote_when_dir_renamed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "arbitrary-clone-folder"
+            root.mkdir()
+            subprocess.run(["git", "init", str(root)], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-C", str(root), "remote", "add", "origin", "https://github.com/The-Interdependency/demo-repo.git"],
+                check=True,
+                capture_output=True,
+            )
+            (root / "module.py").write_text("# === LLMS ===\n# id: project_overview\n#   content: Demo.\n# === END LLMS ===\n")
+            expected = generate(collect(root), repo_name="demo-repo")
+            (root / "llms.txt").write_text(expected, encoding="utf-8")
+
+            self.assertEqual("demo-repo", resolve_repo_name(root))
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(0, llms_main(["--root", str(root), "--out", "llms.txt", "--check"]))
+
+    def test_resolve_repo_name_from_ssh_remote_and_skills_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "renamed-dir"
+            root.mkdir()
+            (root / "skills.json").write_text('{"repo": "The-Interdependency/my-lib"}\n', encoding="utf-8")
+            self.assertEqual("my-lib", resolve_repo_name(root))
+
+            ssh_root = Path(tmp) / "ssh-renamed-dir"
+            ssh_root.mkdir()
+            subprocess.run(["git", "init", str(ssh_root)], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-C", str(ssh_root), "remote", "add", "origin", "git@github.com:The-Interdependency/ssh-repo.git"],
+                check=True,
+                capture_output=True,
+            )
+            self.assertEqual("ssh-repo", resolve_repo_name(ssh_root))
+
+    def test_subdir_inside_git_repo_does_not_inherit_parent_remote(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            parent = Path(tmp) / "parent-repo"
+            parent.mkdir()
+            subprocess.run(["git", "init", str(parent)], check=True, capture_output=True)
+            subprocess.run(
+                ["git", "-C", str(parent), "remote", "add", "origin", "https://github.com/The-Interdependency/parent-repo.git"],
+                check=True,
+                capture_output=True,
+            )
+            sub = parent / "nested-dir"
+            sub.mkdir()
+            self.assertEqual("nested-dir", resolve_repo_name(sub))
+            self.assertEqual("override", resolve_repo_name(sub, repo="The-Interdependency/override"))
+
+    def test_repo_llms_txt_matches_named_skill_lib_byte_for_byte(self) -> None:
+        repo_root = Path(__file__).resolve().parents[1]
+        committed = (repo_root / "llms.txt").read_text(encoding="utf-8")
+        generated = generate(collect(repo_root), repo_name=resolve_repo_name(repo_root))
+        named = generate(collect(repo_root), repo_name="skill-lib")
+        self.assertEqual(committed, named)
+        self.assertEqual(named, generated)
 
 
 if __name__ == "__main__":

@@ -116,11 +116,11 @@ def has_mention(text: str, skill: str) -> bool:
 def llms_drift_finding() -> Finding | None:
     sys.path.insert(0, str(ROOT))
     try:
-        from llms.build import collect, generate
+        from llms.build import collect, generate, resolve_repo_name
     except Exception as exc:  # pragma: no cover - defensive editorial check
         return Finding("error", "llms_build_import_failed", f"could not import llms.build: {exc}")
 
-    generated = generate(collect(ROOT), repo_name=ROOT.name)
+    generated = generate(collect(ROOT), repo_name=resolve_repo_name(ROOT))
     try:
         current = LLMS_TXT.read_text(encoding="utf-8")
     except FileNotFoundError:

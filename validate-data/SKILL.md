@@ -1,12 +1,9 @@
 ---
 name: validate-data
 description: QA an analysis before sharing -- methodology, accuracy, and bias checks. Use this when reviewing an analysis before a stakeholder presentation, spot-checking calculations and aggregation logic, verifying a SQL query's results look right, or assessing whether conclusions are actually supported by the data.
-argument-hint: "<analysis to review>"
 ---
 
 # /validate-data - Validate Analysis Before Sharing
-
-> If you see unfamiliar placeholders or need to check which tools are connected, see [CONNECTORS.md](../../CONNECTORS.md).
 
 Review an analysis for accuracy, methodology, and potential biases before sharing with stakeholders. Generates a confidence assessment and improvement suggestions.
 
@@ -398,7 +395,7 @@ Output:
 ## Provenance
 
 Imported from `anthropics/knowledge-work-plugins` @ `94e1a08` (`data/skills/validate-data/`), Apache-2.0.
-Local modifications: trigger phrasing normalized; anti-patterns, provenance and
+Local modifications: trigger phrasing normalized; Cowork-only frontmatter and broken relative link removed; anti-patterns, provenance and
 hmmm added; duplicate workflow consolidated into the main workflow under the
 narrative compression invariant. See `ATTRIBUTION.md` at repo root.
 

@@ -3,7 +3,7 @@ name: typed-meta-frontend
 description: TypeScript frontend generation from backend-owned module metadata and living specs. Load this when building, reviewing, or refactoring a self-building UI that reads backend metadata, exposes every editable field per module, renders each module's living spec, generates TypeScript types/forms/routes from metadata, or keeps admin/editor frontends synchronized with msdmd-style source declarations.
 ---
 
-
+# typed-meta-frontend — metadata-built TypeScript editors
 
 ## Core contract
 

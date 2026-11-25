@@ -3,7 +3,7 @@ name: the-interdependency
 description: Protocol and workflow for all tasks involving The Interdependency organization, its repositories, The Interdependent Way projects, EDCM transcript analysis, code building, research, GitHub maintenance and updates. Load this whenever the task or context touches The-Interdependency assets, interdependentway.org, Harrison Hovel, or on phrases like "assemble EDCM transcripts for analysis", the legacy "assemble edcmbone transcripts for analysis", "write code that...", or any GitHub/research/build work on org projects.
 ---
 
-
+# the-interdependency — Workflow Protocol for The Interdependency Projects
 
 ## Core Doctrine
 

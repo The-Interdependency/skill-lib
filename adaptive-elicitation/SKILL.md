@@ -3,7 +3,7 @@ name: adaptive-elicitation
 description: Adaptive, context-first interviewing for recovering missing information without making the user answer a questionnaire. Load this when a task requires eliciting facts, preferences, requirements, incident details, form fields, debugging context, or other missing inputs across turns; when prior conversation, files, connected sources, or authoritative records may already answer part of the question set; or when the user asks to be interviewed one question at a time. Do not load for a one-shot clarification that can be asked and resolved in a single ordinary prompt. This includes missing facts in forms, filings, reports, applications, audits, or debugging; questionnaire replacement; debriefing; and sensitive, stressful, or non-linear recall.
 ---
 
-
+# adaptive-elicitation — ask only the next useful question
 
 ## Source and evidence boundary
 

@@ -1,11 +1,14 @@
-# ratios: loc_comments=229:5 imports_exports=6:7 calls_definitions=66:12
+# ratios: loc_comments=314:6 imports_exports=9:8 calls_definitions=94:17
 from __future__ import annotations
 
 import argparse
+import json
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
+from urllib.parse import urlparse
 
 
 _MARKERS: dict[str, str] = {
@@ -242,10 +245,104 @@ def generate(entries: list[Entry], repo_name: str) -> str:
     )
 
 
+def _repo_name_from_slug_or_url(raw: str) -> str | None:
+    cleaned = raw.strip().rstrip("/")
+    if not cleaned or cleaned == "hmmm":
+        return None
+    if "://" in cleaned:
+        path = urlparse(cleaned).path.strip("/")
+        if not path:
+            return None
+        cleaned = path
+    elif ":" in cleaned and not cleaned.startswith("/"):
+        _, _, after_colon = cleaned.partition(":")
+        cleaned = after_colon.strip("/")
+        if not cleaned:
+            return None
+    name = cleaned.rsplit("/", 1)[-1]
+    if name.endswith(".git"):
+        name = name[:-4]
+    return name or None
+
+
+def _repo_name_from_skills_json(root: Path) -> str | None:
+    index_path = root / "skills.json"
+    if not index_path.is_file():
+        return None
+    try:
+        data = json.loads(index_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    repo = data.get("repo")
+    if not isinstance(repo, str):
+        return None
+    return _repo_name_from_slug_or_url(repo)
+
+
+def _repo_name_from_git(root: Path) -> str | None:
+    def run_git(*git_args: str) -> str | None:
+        try:
+            proc = subprocess.run(
+                ["git", "-C", str(root), *git_args],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+        except OSError:
+            return None
+        if proc.returncode != 0:
+            return None
+        return proc.stdout.strip()
+
+    toplevel = run_git("rev-parse", "--show-toplevel")
+    if not toplevel:
+        return None
+    try:
+        if Path(toplevel).resolve() != root.resolve():
+            return None
+    except OSError:
+        return None
+
+    remotes_raw = run_git("remote")
+    remotes = [line.strip() for line in (remotes_raw or "").splitlines() if line.strip()]
+    ordered_remotes: list[str] = []
+    for preferred in ("origin", "upstream"):
+        if preferred in remotes:
+            ordered_remotes.append(preferred)
+    for remote in remotes:
+        if remote not in ordered_remotes:
+            ordered_remotes.append(remote)
+
+    for remote in ordered_remotes:
+        url = run_git("remote", "get-url", remote)
+        if not url:
+            continue
+        name = _repo_name_from_slug_or_url(url)
+        if name:
+            return name
+    return None
+
+
+def resolve_repo_name(root: Path, *, repo: str | None = None) -> str:
+    """Derive repository display name from explicit override, manifest, git remote, or folder."""
+    resolved_root = root.resolve()
+    if repo:
+        explicit = _repo_name_from_slug_or_url(repo)
+        if explicit:
+            return explicit
+    for candidate in (_repo_name_from_skills_json(resolved_root), _repo_name_from_git(resolved_root)):
+        if candidate:
+            return candidate
+    return resolved_root.name
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a canonical root llms.txt from LLMS blocks.")
     parser.add_argument("--root", default=".", help="Repository root to scan.")
     parser.add_argument("--out", default="llms.txt", help="Output path, relative to --root unless absolute.")
+    parser.add_argument("--repo", default=None, help="Repository name or owner/repo override.")
     parser.add_argument("--apply", action="store_true", help="Write the generated file.")
     parser.add_argument("--check", action="store_true", help="Exit non-zero if the committed output differs.")
     args = parser.parse_args(argv)
@@ -255,7 +352,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not out_path.is_absolute():
         out_path = root / out_path
 
-    generated = generate(collect(root), repo_name=root.name)
+    generated = generate(collect(root), repo_name=resolve_repo_name(root, repo=args.repo))
 
     if args.apply:
         out_path.write_text(generated, encoding="utf-8")
@@ -280,4 +377,4 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=229:5 imports_exports=6:7 calls_definitions=66:12
+# ratios: loc_comments=314:6 imports_exports=9:8 calls_definitions=94:17

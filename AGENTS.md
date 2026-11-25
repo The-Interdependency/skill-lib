@@ -85,7 +85,7 @@ When creating or revising any skill narrative, load `skill-build/SKILL.md` and a
    modules declare inside their own source files. Other skills (currently
    `canon`, `domain-claims`, `char-compress`, `visitor-intro`, `adaptive-elicitation`, `agent-instantiation`,
    `a0p-instancing`, `plain-lens`, `thought-lens`, `gonol-build`, `ucns-option-selection`, `epac-selection-display`, `meta`, `the-interdependency`,
-   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `agent-ops`, `pstack-orchestration`, `fresh-making`, `action-calibration`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
+   `interdependent-work-graph`, `stack-update`, `project-incubation-graduation`, `distributed-publication`, `website-builder-journal`, `loop-eng`, `agent-ops`, `pstack-orchestration`, `fresh-making`, `action-calibration`, `app-build`, `wdll`, `repo-audit-repair`, `github-tests`, `skill-build`, `skill-usage`,
    `ssh-automation`, `vm-mcp`, `sql-queries`, `statistical-analysis`, `explore-data`, `validate-data`, `data-visualization`) are procedural and
    define no block.
 
@@ -192,6 +192,7 @@ propagate from here.
   the authority profile explicitly. Shared or first-contact deployments should
   stay bounded; a single-owner `personal-console` may intentionally expose broad
   `user_exec` plus visibly separate root `admin_exec`.
+- If you are building, extending, or repairing an interactive app or web surface, load `app-build/SKILL.md`. Decide persistence and auth before styling. A signed-out gate must contain a real sign-in control. Do not load it to author a skill or to edit interdependentway.org.
 - If you are creating a new skill, revising an existing skill, bringing skills into compliance, or designing a skill-specific test suite, load `skill-build/SKILL.md` and answer its trigger, source-of-truth, workflow, validation, and `hmmm` question sets before patching.
 - If you are writing, reviewing, or troubleshooting SSH automation, non-interactive remote commands, deployment scripts over SSH, or Cloud Shell copy-paste SSH blocks, load `ssh-automation/SKILL.md`; fail closed on host trust and identity, preserve stdin and PTY boundaries, quote remote scripts, and keep bulk pastes inside a child shell.
 - If any skill-lib skill materially shapes a task, also load `skill-usage/SKILL.md` and record exactly one use after its contribution is observable. Record unknown outcomes as `hmmm`; do not infer success from silence.

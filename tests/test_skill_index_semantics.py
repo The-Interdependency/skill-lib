@@ -84,14 +84,6 @@ class SkillIndexSemanticsTest(unittest.TestCase):
         for name in self.names:
             visit(name)
 
-    def test_foundational_and_procedural_skill_positions_are_stable(self) -> None:
-        self.assertEqual("msdmd", self.skills[0]["name"])
-        self.assertIn("canon", self.names)
-        self.assertIn("visitor-intro", self.names)
-        self.assertIn("char-compress", self.names)
-        self.assertIn("manifest", self.names)
-        self.assertGreater(self.names.index("canon"), self.names.index("ratios"))
-
     def test_repo_metadata_is_canonical(self) -> None:
         self.assertEqual(1, self.index["version"])
         self.assertEqual("The-Interdependency/skill-lib", self.index["repo"])

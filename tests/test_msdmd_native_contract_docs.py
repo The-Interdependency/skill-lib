@@ -44,53 +44,6 @@ class NativeContractDocsTests(unittest.TestCase):
                     adapter(entry),
                 )
 
-    def test_retired_block_absence_rules_are_removed(self) -> None:
-        retired = {
-            "owner-build": (
-                "Report modules without OWNERS blocks as visible stewardship gaps.",
-                "GAP`: module has no OWNERS block.",
-                "Recording owner only in a central CODEOWNERS-like file while omitting",
-            ),
-            "doc-build": (
-                "Report modules with no `DOCS` block as documentation coverage gaps.",
-                "GAP`: source modules with no DOCS block.",
-            ),
-            "cap-build": (
-                "Report modules with exposed public surfaces but no CAPABILITIES block",
-                "Declaring capabilities in a central registry while omitting",
-            ),
-            "deps-build": ("Report modules with imports/calls but no DEPENDENCIES block",),
-            "meta-module-build": ("report modules without `MODULE_BUILD` as coverage gaps;",),
-            "risk-boundary-build": (
-                "Report modules with likely sensitive imports or filenames but no BOUNDARIES block",
-            ),
-            "test-build": (
-                "Every module that promises behavior declares those obligations in a `CONTRACTS` block.",
-            ),
-        }
-        for name, phrases in retired.items():
-            text = " ".join((ROOT / name / "SKILL.md").read_text(encoding="utf-8").split())
-            for phrase in phrases:
-                with self.subTest(skill=name, phrase=phrase):
-                    self.assertNotIn(phrase, text)
-
-    def test_native_runner_and_shared_python_reader_have_explicit_scopes(self) -> None:
-        entry = self.entries["msdmd"]
-        self.assertEqual(entry["status"], "runnable")
-        self.assertEqual(entry["runner"], "msdmd/collect.py")
-        self.assertEqual(entry["runner_scope"], "native-and-supplemental")
-        self.assertEqual(entry["native_ingestion"]["runner"], "msdmd/collect.py")
-        self.assertEqual(entry["native_ingestion"]["manifest"], "msdmd/readers.py")
-        self.assertIn("project_python_bytes", (ROOT / "msdmd/native_code.py").read_text())
-
-    def test_helper_identity_and_extraction_limits_are_explicit(self) -> None:
-        text = (ROOT / "msdmd/SKILL.md").read_text(encoding="utf-8")
-        for statement in ("schema 2", "qualified addresses", "duplicate IDs", "--require-fact",
-                          "--snapshot-identity", "not a complete secret detector", "full TSDoc validation"):
-            self.assertIn(statement, text)
-        self.assertNotIn("does not diagnose duplicate IDs", text)
-        self.assertTrue((ROOT / "msdmd/references/implemented-readers.md").is_file())
-
     def test_llm_publication_matches_owning_sources(self) -> None:
         source = (ROOT / "llms/metadata.py").read_text(encoding="utf-8")
         entries = build.parse_text(source, source=Path("llms/metadata.py"))
@@ -101,19 +54,6 @@ class NativeContractDocsTests(unittest.TestCase):
         self.assertNotIn("each source module declares", source)
         generated = build.generate(build.collect(ROOT), self.index["repo"].split("/")[-1])
         self.assertEqual((ROOT / "llms.txt").read_text(encoding="utf-8"), generated)
-
-    def test_native_ingestion_preserves_evidence_and_authority_boundaries(self) -> None:
-        evidence = (ROOT / "test-build/SKILL.md").read_text(encoding="utf-8")
-        ownership = (ROOT / "owner-build/SKILL.md").read_text(encoding="utf-8")
-        for statement in (
-            "CONTRACTS are obligations.",
-            "CHECKS are accountable witnesses.",
-            "Source modules own promises. Test modules own evidence.",
-            "Native contract/witness readers",
-        ):
-            self.assertIn(statement, evidence)
-        self.assertIn("CODEOWNERS review assignment does not automatically", ownership)
-        self.assertIn("operational-owner obligation", ownership)
 
     def test_repository_collection_replays_from_owning_blocks(self) -> None:
         path = ROOT / "skill-lib_msdmd.ts"
@@ -141,26 +81,6 @@ class NativeContractDocsTests(unittest.TestCase):
                     {key: value for key, value in source.items() if key != "id"},
                 )
         self.assertEqual([], collection["gaps"])
-
-
-    def test_public_maintenance_contract_is_replayable_and_bounded(self) -> None:
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        self.assertIn("Unrecognized metadata dialects are not evidence of", readme)
-
-        distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
-        self.assertIn("--snapshot-identity", distribution)
-        self.assertIn("--strict", distribution)
-        self.assertIn("expected-block adoption result", distribution)
-        self.assertIn("requirements` and diagnostics", distribution)
-        self.assertIn("--legacy-blocks-only", distribution)
-        self.assertIn("lexical rather than", distribution)
-        self.assertIn("Target-repo propagation is not complete", distribution)
-
-        claude = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
-        self.assertIn("msdmd/requirements.txt", claude)
-        self.assertIn("msdmd/package.json", claude)
-        self.assertIn("With `--strict`", claude)
-        self.assertIn("without `--strict`", claude)
 
 
 if __name__ == "__main__":

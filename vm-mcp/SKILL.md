@@ -130,52 +130,15 @@ whole service lifetime.) Tokens never belong in tool arguments, URLs,
 workspace files, or chat. The installer does not generate or disclose one.
 Provisioning or rotating access is a separate operator-authorized action.
 
-The server disables Linux process dumpability as its first statement, before
-importing `mcp` or `uvicorn`, and again before serving or spawning shell
-commands. Right after that, still before the heavy imports, it exits if
-`TracerPid` in `/proc/self/status` is nonzero, then reads the token from fd 0
-and closes it. In the `workspace` and `personal-console` profiles it also
-refuses a `VM_MCP_AUTH_TOKEN` environment fallback, because Yama does not gate
-`/proc/<pid>/environ` reads.
-
-Shell profiles need Yama `kernel.yama.ptrace_scope` >= 1 for the instant before
-the process is non-dumpable: `pidfd_getfd` needs `PTRACE_MODE_ATTACH`, so with
-scope >= 1 a same-UID `shell_exec` child (never an ancestor of the service)
-cannot copy the token descriptor, even by killing the server to force a
-restart. The unit's `ProcSubset=pid` hides `/proc/sys` from the server, so the
-check is a root pre-start gate, `ExecStartPre=+... yama_gate.py`: the `+` runs
-it as root outside the sandbox, and if it exits nonzero systemd never starts
-`server.py`, so the token fd is never handed over. `StandardInput=` applies to
-every executed process, `ExecStartPre=` included (systemd opens the token file
-again for each one, so the gate cannot consume the server's copy); the gate
-never reads fd 0 and replaces it with `/dev/null` first. All components resolve
-the profile through one helper (`profiles.resolve_profile`). For shell profiles
-the installer writes `kernel.yama.ptrace_scope` (1, or the existing higher
-value) to `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`, which sorts last, applies
-it, warns if `systemd-sysctl --cat-config` shows a later override to 0, and
-exits 7 if Yama is unavailable. `read-only` runs no shell children, so the
-installer never raises the scope for it; when a host moves back to `read-only`
-it deletes only its own `99-zz-vm-mcp-ptrace.conf` (a file it did not write is
-kept with a warning), and only after `/etc/vm-mcp.env` is written and the
-service has restarted, so a failed install never leaves the old shell-profile
-config without its boot-time scope. The live value is left alone until the
-next reboot or `sysctl --system`. The override warning also matches sysctl.d globs such as
-`kernel.yama.* = 0`.
-
-`VM_MCP_ROOT` is writable by the service user while root runs code from the
-install root (`/opt/vm-mcp`, including the pre-start gate), so the installer
-rejects a workspace that is `/`, equal to, inside, or a parent of the install
-root, comparing `realpath`-resolved paths. The install root is fixed at
-`/opt/vm-mcp` (both units hardcode it); `VM_MCP_INSTALL_ROOT` is no longer
-read.
-
-The server also checks the token descriptor itself (`fstat` on fd 0): it must
-be a regular file owned by root with no group or other permission bits,
-otherwise the service refuses to start. Same-UID shell children therefore cannot inspect its memory,
-environment or descriptors to steal caller credentials. Children receive only
-the sanitized execution environment. Root remains outside this protection.
-The broker queries systemd for the live main-process identity on every request;
-standalone personal-console launches without the managed service are refused.
+The server disables Linux dumpability and checks `TracerPid` before importing
+`mcp` or `uvicorn`, reads the token once from root-owned `0600` fd 0 (with
+`fstat` verification), and refuses `VM_MCP_AUTH_TOKEN` env fallback in shell
+profiles. `workspace` and `personal-console` require Yama
+`kernel.yama.ptrace_scope >= 1` enforced via `ExecStartPre=+... yama_gate.py`
+and `/etc/sysctl.d/99-zz-vm-mcp-ptrace.conf`. The installer rejects `VM_MCP_ROOT`
+paths equal to, inside, or enclosing `/opt/vm-mcp`, and the broker verifies
+systemd's live main-process identity on every request.
+See [references/security-and-auth.md](references/security-and-auth.md) for the exact isolation, Yama, and `fstat` mechanics.
 
 Personal-console is intentionally high authority. Anyone able to invoke
 `admin_exec` effectively controls the host. Therefore it is appropriate only
@@ -243,77 +206,11 @@ sudo VM_MCP_ROOT=/srv/vm-mcp/workspace \
   bash vm-mcp/install.sh
 ```
 
-### Upgrading an existing install (fails closed until a token exists)
-
-Installs from before caller authentication have no token. After this upgrade:
-
-- the installer exits 3 without changing anything until one token source is given;
-- the new `vm-mcp.service` unit does not start until
-  `/etc/credstore/vm-mcp-token` exists and holds a valid token, so the MCP path
-  stays down rather than open;
-- updated server code under an old unit (no token file configured) falls back
-  to a `VM_MCP_AUTH_TOKEN` in `/etc/vm-mcp.env` and logs a warning; with neither,
-  it refuses to start. Re-running the installer removes the variable from
-  `/etc/vm-mcp.env` and moves the token to the root-only file;
-- clients without the `Authorization` header get `401` on every request.
-- `workspace`/`personal-console` need Yama: the installer sets
-  `kernel.yama.ptrace_scope` >= 1 persistently (exit 7 if Yama is missing), and
-  the root pre-start gate refuses to start the service in those profiles while
-  the scope is 0 or absent. A later sysctl.d file that sets it back to 0 stops
-  the service rather than weakening it. Those profiles also refuse the
-  `VM_MCP_AUTH_TOKEN` environment fallback; re-run the installer.
-
-### Rerunning the installer on a VM that already has vm-mcp
-
-- **Settings carry over.** When `/etc/vm-mcp.env` exists, `VM_MCP_ROOT`,
-  `VM_MCP_PROFILE`, `VM_MCP_PORT` and `VM_MCP_ADMIN_SOCKET` default to its values
-  instead of `/srv/vm-mcp/workspace`, `read-only` and `8765`. The existing profile is
-  resolved with `profiles.py` (the same resolver the service uses), so a legacy
-  env with only `VM_MCP_SHELL_ENABLED=1` stays `workspace` and the new env file
-  records it as `VM_MCP_PROFILE=workspace`.
-- **Changes are explicit.** A different workspace root or profile from the
-  installed one exits 3 unless `VM_MCP_ALLOW_RECONFIGURE=1` is set (any other
-  value is rejected). Restating the same values is fine.
-- **Backup first.** Before anything is overwritten, the installer copies the
-  previous `/opt/vm-mcp` (without `.venv`), both units, the
-  `vm-mcp.service.d` drop-in, `/etc/vm-mcp.env` and the ptrace sysctl.d file into
-  a new root-only (`0700`) directory under `/var/backups/vm-mcp/` and prints its
-  path (also in the final summary). If the backup fails it exits 9 with nothing
-  changed. Old backups are not pruned.
-- **Busy service user.** `usermod` refuses a user with running processes (the
-  exit 8 seen on upgrades). The installer skips `usermod` when the home is
-  unchanged and otherwise stops `vm-mcp.service` and `vm-mcp-admin.service`
-  first; both are restarted at the end.
-- **ptrace sysctl file order.** The Yama availability check still runs before
-  anything changes, but `99-zz-vm-mcp-ptrace.conf` is written only after the
-  user step, and if the install then fails the file is restored to its previous
-  content (or removed if this run created it). The live value is left as is.
-
-#### One-time real-unit check on the VM (after the first install of this version)
-
-Run as root through the human path, in the deployed profile (stack runs
-`personal-console`):
-
-1. `cat /proc/sys/kernel/yama/ptrace_scope` prints 1 or more, and
-   `systemctl is-active vm-mcp.service` prints `active`;
-   `journalctl -u vm-mcp.service -b | grep yama-gate` shows nothing.
-2. The gate does not consume stdin: `systemctl show -p ExecStartPre vm-mcp.service`
-   shows `status=0`, and an authenticated `vm_info` succeeds (the server read the
-   token from its own fd 0).
-3. Refusal: `sysctl -w kernel.yama.ptrace_scope=0; systemctl restart vm-mcp.service`
-   fails, `journalctl -u vm-mcp.service -n 20` shows
-   `vm-mcp-yama-gate: profile personal-console requires kernel.yama.ptrace_scope >= 1`,
-   and no `server.py` process starts (`systemctl show -p MainPID` is 0).
-4. Restore: `sysctl --system` (or `sysctl -w kernel.yama.ptrace_scope=1`), then
-   `systemctl restart vm-mcp.service` and repeat step 1.
-
-Upgrade order: (1) create the root-owned `0600` token file through the human
-SSH/OS Login/IAP path; (2) re-run the installer with `VM_MCP_AUTH_TOKEN_FILE`
-and the same profile and root as before; (3) add the header to the MCP client's
-secure configuration; (4) verify an unauthenticated request returns `401` and an
-authenticated `vm_info` succeeds; (5) delete or keep the token file under the
-operator's own secret handling. Recovery while the MCP path is down uses the same
-human path; never restore an unauthenticated listener to regain access.
+Upgrades fail closed until a valid token exists; reruns carry over
+`/etc/vm-mcp.env` defaults, require `VM_MCP_ALLOW_RECONFIGURE=1` to change
+workspace/profile, create a `0700` backup under `/var/backups/vm-mcp/`, stop
+busy service units before `usermod`, and preserve sysctl state on rollback.
+See [references/installer-and-upgrade.md](references/installer-and-upgrade.md) for full upgrade order, rerun rules, and the one-time real-unit check.
 
 Important ownership rule: if `VM_MCP_ROOT` already exists, the installer leaves
 that directory's ownership unchanged. It creates/chowns the root only when the
@@ -443,56 +340,15 @@ This is an observability rule, not a capability prohibition.
 SSH/OS Login/IAP remains bootstrap, rescue, and break-glass access. Do not remove
 it merely because MCP works.
 
-## Personal-console examples
-
-Repository work as its owning service account:
-
-```text
-user_exec(
-  user="stackorchestrator",
-  cwd="/srv/stack",
-  command="python -m frontend.cli.stackctl fresh status"
-)
-```
-
-Host service inspection:
-
-```text
-admin_exec(
-  cwd="/",
-  command="systemctl --no-pager --full status stack-orchestrator-worker.service"
-)
-```
-
-Package or host maintenance is also possible through `admin_exec`; the tool is
-not artificially limited to a predefined command vocabulary. That breadth is
-the point of the single-owner profile.
-
 ## Validation
 
-The shipped suite must cover at least:
-
-- parent/symlink path escape rejection;
-- bounded file/directory/process output;
-- read-only default and backward compatibility for the historical shell flag;
-- workspace write gating and path confinement;
-- shell cwd confinement, timeout, output bound, and environment sanitization;
-- personal-console gate before broker use;
-- root rejection through `user_exec`;
-- root selection through `admin_exec`;
-- broker root-process requirement;
-- `SO_PEERCRED` UID plus current systemd MainPID verification;
-- caller authentication before HTTP request parsing, including loopback callers;
-- same-UID shell denial and non-dumpable service credential isolation;
-- move/remove operate on final symlinks themselves, including broken links;
-- root:vmmcp socket permissions;
-- non-root MCP systemd hardening remaining intact;
-- loopback-only MCP listener and metadata-address denial;
-- installer preserving ownership of an existing `VM_MCP_ROOT`.
-
-Actual VM acceptance must additionally exercise a real non-root `user_exec`, a
-real root `admin_exec`, journald evidence, service restart, and rollback on the
-target host.
+The shipped test suite and real-VM acceptance must cover path/symlink escape,
+bounded output, profile defaults and backward compatibility, workspace/shell
+confinement, caller auth before parsing, `SO_PEERCRED` + MainPID + non-dumpable
+isolation, `user_exec`/`admin_exec` root separation, systemd hardening,
+loopback/metadata denial, preserved `VM_MCP_ROOT` ownership, and real-host
+restart/rollback.
+See [references/validation-and-examples.md](references/validation-and-examples.md) for personal-console examples and the complete 17-item validation checklist.
 
 ## Rollback
 

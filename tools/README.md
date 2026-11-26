@@ -171,8 +171,8 @@ directories with the canonical ones), so no per-repo config is needed. It:
   subset, so an empty vendored set is itself a regression.
 
 Read-only: it never writes to the consumer repo. The scheduled workflow
-`.github/workflows/consumer-drift.yml` runs it against every consumer repo
-weekly (and on demand); the consumer repos are public, so it checks them out
+`.github/workflows/consumer-drift.yml` runs it against every active vendoring
+consumer in the `ORG_DISTRIBUTION.md` matrix weekly (and on demand); the consumer repos are public, so it checks them out
 with the default `GITHUB_TOKEN` — no extra secret required.
 
 ## Org recommendation aggregator
@@ -258,8 +258,8 @@ compliance, ratios strict gate, llms-build drift, RepoLOTO audit, and RepoLOTO
 checks.
 
 `.github/workflows/consumer-drift.yml` runs `check_consumer_drift.py` against
-every consumer repo on a weekly schedule (and on demand) to detect vendored-copy
-drift. The consumer repos are public, so it uses the default `GITHUB_TOKEN` — no
+every active vendoring consumer in the `ORG_DISTRIBUTION.md` matrix on a weekly
+schedule (and on demand) to detect vendored-copy drift. The consumer repos are public, so it uses the default `GITHUB_TOKEN` — no
 extra secret required.
 
 ## hmmm

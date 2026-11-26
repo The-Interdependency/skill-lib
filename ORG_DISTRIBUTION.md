@@ -82,7 +82,6 @@ dependency graphs fail; unrelated unvendored skills remain outside the subset.
 subset copied from here. These are exactly the repos the scheduled drift
 detector (`.github/workflows/consumer-drift.yml`) checks:
 
-* `The-Interdependency/a0`
 * `The-Interdependency/ucns`
 * `The-Interdependency/edcm`
 * `The-Interdependency/interdependent-lib`
@@ -91,10 +90,8 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/eml_ucns`
 * `The-Interdependency/zfae`
 * `The-Interdependency/pcea`
-* `The-Interdependency/a0-betatest`
 * `The-Interdependency/metapat`
 * `The-Interdependency/ptcna`
-* `The-Interdependency/pubskill-lib`
 * `The-Interdependency/epac`
 * `The-Interdependency/stack`
 * `The-Interdependency/uchc`
@@ -102,12 +99,23 @@ detector (`.github/workflows/consumer-drift.yml`) checks:
 * `The-Interdependency/The-Interdependency.github.io`
 * `The-Interdependency/openbao`
 
-**Targets not in the drift matrix** (do not vendor a top-level subset yet, so
-`--require-vendored` would fail them):
+**Targets not in the drift matrix** (the scheduled verbatim checker would
+misreport them, so they stay off the matrix until the reason below changes):
 
 * `The-Interdependency/a0ucns` — an aggregator that embeds whole copies of other
   repos rather than vendoring a top-level `.agents/skills/` subset. Its nested
   embeds carry their own copies; re-sync those from their source repos.
+* `The-Interdependency/a0` — no longer vendors a top-level `.agents/skills/`
+  subset (historical copies live under `archive/`). `--require-vendored` would
+  fail every run. Add it back once it carries a subset.
+* `The-Interdependency/a0-betatest` — observe-only mirror (propagation
+  checklist hard stop). It also has no top-level subset; historical copies live
+  under `archive/`. Do not propagate into it.
+* `The-Interdependency/pubskill-lib` — follows its own publication model:
+  pinned exact copies and declared redacted/derived copies. Exact-copy identity
+  is checked by pubskill-lib's `skill-source.yml`, not by this verbatim
+  consumer-drift job, which would treat the declared char-compress redaction as
+  drift.
 
 **Archived or superseded** — not active drift consumers:
 

@@ -40,6 +40,27 @@ class ConsumerMatrixTests(unittest.TestCase):
         for repo in ("uchc", "tiwcg", "The-Interdependency.github.io"):
             self.assertIn(repo, consumers)
 
+
+    def test_non_verbatim_targets_are_not_active_drift_consumers(self) -> None:
+        """a0 and a0-betatest have no top-level subset; pubskill-lib has its own publication model."""
+        distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
+        active, excluded = distribution.split(
+            "**Targets not in the drift matrix**",
+            maxsplit=1,
+        )
+        workflow = (
+            ROOT / ".github" / "workflows" / "consumer-drift.yml"
+        ).read_text(encoding="utf-8")
+        consumers = set(
+            re.findall(r"^\s{10}- ([A-Za-z0-9_.-]+)$", workflow, re.MULTILINE)
+        )
+        for repo in ("a0", "a0-betatest", "pubskill-lib"):
+            item = f"* `The-Interdependency/{repo}`"
+            self.assertNotIn(item, active)
+            self.assertIn(item, excluded)
+            self.assertNotIn(repo, consumers)
+
+
     def test_archived_edcmbone_is_not_an_active_drift_consumer(self) -> None:
         distribution = (ROOT / "ORG_DISTRIBUTION.md").read_text(encoding="utf-8")
         active, excluded = distribution.split(

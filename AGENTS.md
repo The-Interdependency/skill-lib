@@ -90,7 +90,9 @@ When creating or revising any skill narrative, load `skill-build/SKILL.md` and a
    define no block.
 
 A machine-readable index is also available at `skills.json` if you
-prefer not to walk the tree.
+prefer not to walk the tree. When a selected skill declares `load_with`,
+load each named skill first or alongside it. The declaration applies in
+the direction listed. Installation dependencies use `depends_on`.
 
 This repo ships the universal msdmd parser implementations plus skill
 specifications. Treat per-skill runner sections as contracts for consuming

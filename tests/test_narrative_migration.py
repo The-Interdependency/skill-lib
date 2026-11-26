@@ -45,7 +45,12 @@ class NarrativeMigrationTests(unittest.TestCase):
         for name, guards in fixture["skills"].items():
             with self.subTest(skill=name):
                 text = (ROOT / name / "SKILL.md").read_text()
-                self.assertTrue(set(guards["fenced_and_table_sha256"]).issubset(fragments(text)))
+                found = fragments(text)
+                refs_dir = ROOT / name / "references"
+                if refs_dir.is_dir():
+                    for ref in sorted(refs_dir.glob("*.md")):
+                        found |= fragments(ref.read_text())
+                self.assertTrue(set(guards["fenced_and_table_sha256"]).issubset(found))
                 if guards["hmmm_tail"]:
                     self.assertIn(guards["hmmm_tail"], text)
 

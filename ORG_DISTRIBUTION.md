@@ -61,7 +61,7 @@ dependency graphs fail; unrelated unvendored skills remain outside the subset.
 * `agent-ops/` — tool-using agent controls for permissions, approval, untrusted content, idempotent runs, evals, memory, redacted logs, and preflight
 * `pstack-orchestration/` — evidence-bound GitHub repo and code-task orchestration: task contract, skill dispatch, baseline, PASS/FAIL/NOT_RUN evidence, bounded repair, and autonomy gates
 * `fresh-making/` — deterministic derivation freshness, minimal affected rebuild closure, executor-independent restoration, verification, and receipts
-* `app-build/` — interactive app and web-surface sequence; loads msdmd and generates the docs from the metadata at the code
+* `app-build/` — interactive app and web-surface sequence; durable store before rebuild, msdmd generates the docs from the metadata at the code
 * `action-calibration/` — action sizing doctrine for minimal decisive experiments, maximal coherent programs, prerequisite repair, and immediate containment
 * `wdll/` — executive job selection, state-transition scope, falsifiable completion, and strategic advancement for spawned work
 * `repo-audit-repair/` — evidence-led repository audit, classified findings, authorized repair, and terminal verification

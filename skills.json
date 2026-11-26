@@ -277,7 +277,7 @@
       "name": "app-build",
       "path": "app-build/SKILL.md",
       "kind": "procedural",
-      "description": "Load this when building, extending, or repairing an interactive app or web surface \u2014 a desk, form, dashboard, page, or sign-in path. Load msdmd and generate the docs from the metadata at the code. Do not load to author or revise a skill; use skill-build. Do not load for interdependentway.org file edits; use website-builder-journal. Do not load for a static document or a skill-only module declaration."
+      "description": "Load this when building, extending, or repairing an interactive app or web surface \u2014 a desk, form, dashboard, page, or sign-in path. Load msdmd and generate the docs from the metadata at the code. Data that must survive a wipe does not live in the preview in-memory store. Do not load to author or revise a skill; use skill-build. Do not load for interdependentway.org file edits; use website-builder-journal. Do not load for a static document or a skill-only module declaration."
     },
     {
       "name": "wdll",

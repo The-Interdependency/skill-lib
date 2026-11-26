@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Local standalone MCP package builds
+/build/
+/dist/
+/*.egg-info/
+
 # Test / tooling caches
 .pytest_cache/
 .ruff_cache/

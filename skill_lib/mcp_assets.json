@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "skills": {
+    "action-calibration": {
+      "examples/cases.json": "e1e6268e5b1b3187fb4d7d870d7e0a0e2c2f0615d1a035edbcdfff5a86910aa4",
+      "references/savings-skill-audit.md": "74f5494de0153e37e65f10abc06512e6fbfc327c77862720cc9707e3c2d1b6c4",
+      "references/thread-derived-criteria.md": "1be4c8be7d75114b06c3df800508f6c294db7bff3c865f60a3da0f568f01a54c"
+    },
+    "agent-ops": {
+      "references/authoring.md": "bc84bae4c149f30789657643dec3c949c605db2e04bda04d98ace5c1a085a452",
+      "references/intake.md": "4bb2c9ad1875aa416d29887d9e0d26520a1ec55816285afe1e9327164be7c5b4",
+      "references/overlap.md": "c1ee961eba39e0579d19818f97a573c1d85779b1def33982f9e665491fcf69db",
+      "references/sources.md": "09f55c2c02a81eb93db8187af7ca9c68d6a8e8b870d9c66f53f1b296843897bf"
+    },
+    "char-compress": {
+      "fixtures.json": "999f567ba66107c5077992c5a3682ee2d6151dcf33589c5ef02bb8e5fdf62474"
+    },
+    "data-visualization": {
+      "examples/information-design-manifest.json": "c92106fe2317f42e3757201b6a93e4ab58675c5ee3c7c5f7b58aa36f759924a6",
+      "references/information-design-evidence.md": "ba90247e86dea8f9a1aae76a348d714d05e7061a79082925a527edb125606bad",
+      "visual-grammar.json": "62eecb020ce1099ea4e5b2a982f12b34f1f849e152b12e0b642c0429a31a139b"
+    },
+    "distributed-publication": {
+      "README.md": "8f23e0596b40d9a042699c0183dfe4e28d6456dbd8d7433de25f6de0469d6fc3",
+      "examples/manifest.json": "b680e7de8a1d32b0a2d23cbb7d183c77b8bc5b7366a23f7a99739027516dc582"
+    },
+    "epac-selection-display": {
+      "STACK_SOURCE_FIXTURE.json": "8ef696d80e1c13f44039cae09965aa87927b3ed65e0c726eb0aa9f637f1af788"
+    },
+    "github-tests": {
+      "references/sources.md": "53c989352e7bf8fe4572d5c6dc2784f9d5117b3ca5e66696b6045dd747c09672"
+    },
+    "interdependent-work-graph": {
+      "PORTFOLIO_PLAN.md": "8a9c7fadaa39fe38c31baf49f542681184619b60beac4f553cb3f5e1be9b9c10",
+      "portfolio-plan.schema.json": "5a40c0c7362e1a1fa77d8e8132084e3deac927d870ac57dc760c2c85d08c925a",
+      "repository-plan-report.schema.json": "f04f1583be8725511113e2bb3280bf28459ad39824687bf8bcd0761c1bd14e80"
+    },
+    "msdmd": {
+      "module-projection.schema.json": "4e973475096ba1f38de2cedadc6335af19d93ec6f7b6d591d832359a324d8eca",
+      "references/implemented-readers.md": "b4cd2a8bccd78fa81f3b3938156a4e2fbba622ab382797c0b27e9b6114a91b4e",
+      "references/metadata-conventions.md": "74709f8fa3ea0ea3216347d265743b2bfdf3cb5a72cfbe7fbb63bae57b7b818b"
+    },
+    "pstack-orchestration": {
+      "references/sources.md": "3e88bf4de6d33e4d1c7d24031149311453ab78cc6e6a4a5997e828418bfbf7d5"
+    },
+    "ratios": {
+      "HARMONICS.md": "44479e9a5546453d142ca6958c499f9ee1e858c850a1d6b9f2bfb12298109d02"
+    },
+    "ssh-automation": {
+      "references/primary-sources.md": "ab76d6cb5b334330e727b1edf55b86421f3c072014e48ae144bffe0fdc9f0309"
+    },
+    "thought-lens": {
+      "fixtures.json": "97518234e1d6ff442262d993f5d1393f64540bb4cb256ecc31a7421e05b82eda"
+    },
+    "website-builder-journal": {
+      "README.md": "45a2bf60e3b8fdc8f9b06e57549732f23e3fbf33644c73181543d5d64be514f8"
+    }
+  }
+}

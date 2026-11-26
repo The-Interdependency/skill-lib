@@ -27,6 +27,16 @@ jobs:
         run: |
           python -m msdmd.collect --root . --repo The-Interdependency/skill-lib --snapshot-identity --import-path ./msdmd/collection --out skill-lib_msdmd.ts --strict --check
           node msdmd/node_modules/typescript/bin/tsc --noEmit --strict --skipLibCheck --target ES2022 --module commonjs msdmd/collection.ts skill-lib_msdmd.ts
+      - name: Verify the standalone wheel with an MCP client
+        env:
+          SKILL_LIB_REQUIRE_MCP: "1"
+        run: |
+          mkdir -p "$RUNNER_TEMP/skill-mcp-src" "$RUNNER_TEMP/skill-mcp-dist"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP/skill-mcp-src"
+          python -m pip wheel --no-deps "$RUNNER_TEMP/skill-mcp-src" --wheel-dir "$RUNNER_TEMP/skill-mcp-dist"
+          python -m pip install "$RUNNER_TEMP"/skill-mcp-dist/*.whl
+          cd "$RUNNER_TEMP"
+          python -m unittest discover -s "$GITHUB_WORKSPACE/tests" -p 'test_mcp_server.py' -v
       - name: Unit tests
         env:
           A0_REQUIRE_REAL_TMUX: "1"

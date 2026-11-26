@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "interdependency-skill-lib-mcp"
+version = "0.1.0"
+description = "The Interdependency's canonical agent skills served through MCP"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MPL-2.0 AND Apache-2.0"
+license-files = ["LICENSE", "ATTRIBUTION.md", "LICENSES/*.txt"]
+dependencies = ["mcp==2.3.0"]
+
+[project.urls]
+Repository = "https://github.com/The-Interdependency/skill-lib"
+
+[project.scripts]
+skill-lib-mcp = "skill_lib.mcp_server:main"
+
+[tool.setuptools]
+packages = ["skill_lib"]
+include-package-data = false
+
+[tool.setuptools.package-data]
+skill_lib = ["mcp_assets.json"]

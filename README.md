@@ -28,6 +28,46 @@ into [`llms.txt`](llms.txt) from self-declared `LLMS` blocks.
 
 Narrative maintenance: see the [reviewed compression inventory and preservation checks](docs/narrative-migration/README.md).
 
+## Run skill-lib as an MCP server
+
+From this checkout, install with `python -m pip install .` in a Python 3.10+
+environment. The wheel includes the canonical catalog, skill instructions and
+indexed supporting files. An MCP client can launch the installed server over
+stdio with this configuration. Use the executable's absolute path if the client
+runs with a different `PATH`.
+
+```json
+{
+  "mcpServers": {
+    "skill-lib": { "command": "skill-lib-mcp", "args": [] }
+  }
+}
+```
+
+The server also accepts local Streamable HTTP connections. Run
+`skill-lib-mcp --transport streamable-http` and connect to
+`http://127.0.0.1:8000/mcp`. Use `--port` to select another port.
+
+| MCP tool | What the client receives |
+|---|---|
+| `list_skills` | Names, descriptions and instruction hashes. An optional `query` filters the list. |
+| `activate_skills` | For the requested `roots`, each skill in the declared dependency and co-load closure appears once, with its inclusion reasons. Hard prerequisites come first. |
+| `read_skill` | The exact Markdown and SHA-256 of one named skill. |
+| `list_skill_files` | The skill's indexed supporting files and their revision-specific resource URIs. |
+| `read_skill_file` | The text of a listed file. |
+
+Clients that use resources can read `skill-lib://catalog/index`,
+`skill-lib://catalog/skills/msdmd`, or a URI returned by `list_skill_files`.
+To restrict disclosure, repeat `--allow-skill NAME` for every permitted skill.
+Activation fails if a required dependency falls outside that scope.
+
+On first activation, send just the roots, for example
+`{"roots":["typed-meta-frontend","distributed-publication"]}`. On later calls,
+the client can send a `retained` object mapping skill names to the SHA-256 of
+the instructions still present in the current model context. The server omits
+those bodies and resends missing or changed ones. After compaction, omit any
+revision whose full text the client can no longer confirm.
+
 ## What's inside
 
 | Skill | Purpose |

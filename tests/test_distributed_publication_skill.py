@@ -25,6 +25,7 @@ class DistributedPublicationSkillTest(unittest.TestCase):
         self.assertEqual(record["path"], "distributed-publication/SKILL.md")
         self.assertEqual(record["kind"], "procedural")
         self.assertNotIn("depends_on", record)
+        self.assertEqual(record["load_with"], ["interdependent-work-graph"])
         self.assertIn("Load `interdependent-work-graph/SKILL.md` first or alongside this skill", self.text)
 
     def test_reference_contract_binds_order_identity_and_license(self) -> None:

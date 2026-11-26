@@ -230,6 +230,9 @@
       "name": "distributed-publication",
       "path": "distributed-publication/SKILL.md",
       "kind": "procedural",
+      "load_with": [
+        "interdependent-work-graph"
+      ],
       "description": "Provenance-bearing publication from distributed source owners. Load this when assembling, displaying, or maintaining one ordered textbook, report, standard, corpus, archive, knowledge surface, or public reading sequence whose authoritative units live in multiple repositories or independently owned files; when a publication consumer must retrieve exact commits, blobs, and content digests; when source order, source-local license or status, explicit fallback, correction routing, or public build identity must remain intact. Load interdependent-work-graph with it. Do not load for ordinary single-repository documentation, a link index that does not reproduce source content, or cross-repository code coordination with no publication artifact."
     },
     {

@@ -66,6 +66,15 @@ class SkillIndexSemanticsTest(unittest.TestCase):
             self.assertEqual(len(depends_on), len(set(depends_on)), skill["name"])
             self.assertNotIn(skill["name"], depends_on, skill["name"])
 
+    def test_load_with_names_distinct_other_skills_in_the_index(self) -> None:
+        for skill in self.skills:
+            with self.subTest(skill=skill["name"]):
+                companions = skill.get("load_with", [])
+                self.assertIsInstance(companions, list)
+                self.assertTrue(all(name in self.names for name in companions))
+                self.assertEqual(len(companions), len(set(companions)))
+                self.assertNotIn(skill["name"], companions)
+
     def test_skill_dependency_graph_is_acyclic(self) -> None:
         dependencies = {entry["name"]: entry.get("depends_on", []) for entry in self.skills}
         visiting: set[str] = set()

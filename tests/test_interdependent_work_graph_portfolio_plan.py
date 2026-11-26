@@ -117,7 +117,7 @@ class PortfolioPlanTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bad-action.json"
             path.write_text(json.dumps(bad), encoding="utf-8")
-            with self.assertRaisesRegex(ValueError, "next_actions\[0\] has missing or unknown fields"):
+            with self.assertRaisesRegex(ValueError, r"next_actions\[0\] has missing or unknown fields"):
                 portfolio_plan.load_report(path)
 
     def test_relation_extras_cannot_override_derived_endpoints(self):

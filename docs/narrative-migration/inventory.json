@@ -617,6 +617,20 @@
         "Keep OWASP, NIST, CISA, and NCSC documents external; the checklist is the adopted procedure.",
         "Preserve hmmm for enforcement verification, a log schema, and any future metadata block."
       ]
+    },
+    {
+      "name": "app-build",
+      "path": "app-build/SKILL.md",
+      "kind": "procedural",
+      "family": "repository-and-delivery",
+      "status": "reviewed-retained",
+      "before_words": 0,
+      "after_words": 541,
+      "decisions": [
+        "New procedural skill: route interactive app/web surface work here; msdmd generates docs from metadata at the code.",
+        "Preserve the durable-store boundary: the preview in-memory store is a wipeable cache, never the desk.",
+        "Non-triggers stay explicit: skill authoring uses skill-build; interdependentway.org edits use website-builder-journal."
+      ]
     }
   ],
   "remaining_families": [],

@@ -1,4 +1,4 @@
-# ratios: loc_comments=209:37 imports_exports=6:5 calls_definitions=81:16
+# ratios: loc_comments=214:38 imports_exports=6:5 calls_definitions=83:16
 """manifest — generate the mechanical half of a repo's CLAUDE.md from source.
 
 Living-spec tool (msdmd family). It derives *observable* facts about a repo —
@@ -225,8 +225,9 @@ def render(facts: dict, refresh_cmd: str) -> str:
 def splice(text: str, block: str) -> str:
     """Replace an existing manifest block, or append one if none is present.
 
-    Fails loudly on a malformed doc (only one marker, or duplicates) so a broken
-    block is repaired rather than silently compounded by a second one.
+    Fails loudly on a malformed doc (only one marker, duplicates, or END before
+    BEGIN) so a broken block is repaired rather than silently compounded by a
+    second one.
     """
     n_begin, n_end = text.count(BEGIN), text.count(END)
     if n_begin != n_end or n_begin > 1:
@@ -235,6 +236,11 @@ def splice(text: str, block: str) -> str:
             "repair the file so it has exactly one matched pair (or none)."
         )
     if n_begin == 1:
+        if text.index(END) < text.index(BEGIN):
+            raise ManifestError(
+                "malformed manifest markers in document (END precedes BEGIN); "
+                "repair the file so the block opens with BEGIN and closes with END."
+            )
         pre = text.split(BEGIN, 1)[0]
         post = text.split(END, 1)[1]
         return pre + block + post
@@ -300,4 +306,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=209:37 imports_exports=6:5 calls_definitions=81:16
+# ratios: loc_comments=214:38 imports_exports=6:5 calls_definitions=83:16

@@ -1,4 +1,4 @@
-# ratios: loc_comments=218:33 imports_exports=6:7 calls_definitions=86:10
+# ratios: loc_comments=217:33 imports_exports=6:7 calls_definitions=86:10
 """ratios skill executor — recompute the canonical ratios and gate on drift.
 
 Reference runner for the ``ratios`` skill. It reads the single-line RATIOS
@@ -33,7 +33,6 @@ from pathlib import Path
 # from a vendored ``.agents/skills/ratios/`` directory.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from msdmd.parsers.universal import (  # noqa: E402
-    RATIO_IDS,
     marker_for,
     parse_ratios,
     ratios_placement,
@@ -289,4 +288,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=218:33 imports_exports=6:7 calls_definitions=86:10
+# ratios: loc_comments=217:33 imports_exports=6:7 calls_definitions=86:10

@@ -1,4 +1,4 @@
-# ratios: loc_comments=46:33 imports_exports=5:1 calls_definitions=15:1
+# ratios: loc_comments=53:40 imports_exports=5:2 calls_definitions=19:2
 """Unix-socket client for the vm-mcp personal-console broker.
 
 Usage guidance: call :func:`request_exec` only from the non-root MCP service.
@@ -43,6 +43,22 @@ from typing import Any
 # === END BOUNDARIES ===
 
 MAX_RESPONSE_BYTES = 2 * 1024 * 1024
+# json.dumps escapes each control byte (and each U+FFFD that replaces an
+# undecodable byte) as a six-byte \uXXXX sequence, so a response can be up to
+# six times the raw bytes it carries.
+JSON_ESCAPE_FACTOR = 6
+RESPONSE_ENVELOPE_BYTES = 64 * 1024
+
+
+def response_limit(*, command: str, cwd: str, max_output_bytes: int) -> int:
+    """Largest serialized broker response a request can legitimately produce.
+
+    Covers both output streams at their raw limit plus the echoed command and
+    working directory, each at worst-case JSON expansion, plus envelope fields.
+    """
+    echoed = len(command.encode("utf-8")) + len(cwd.encode("utf-8"))
+    worst_case = JSON_ESCAPE_FACTOR * (2 * max(0, int(max_output_bytes)) + echoed)
+    return max(MAX_RESPONSE_BYTES, worst_case + RESPONSE_ENVELOPE_BYTES)
 
 
 def request_exec(
@@ -68,6 +84,7 @@ def request_exec(
         client.connect(str(socket_path))
         client.sendall(encoded)
         client.shutdown(socket.SHUT_WR)
+        limit = response_limit(command=command, cwd=cwd, max_output_bytes=max_output_bytes)
         chunks: list[bytes] = []
         size = 0
         while True:
@@ -75,7 +92,7 @@ def request_exec(
             if not chunk:
                 break
             size += len(chunk)
-            if size > MAX_RESPONSE_BYTES:
+            if size > limit:
                 raise RuntimeError("admin broker response exceeded client limit")
             chunks.append(chunk)
     payload = b"".join(chunks).decode("utf-8")
@@ -85,4 +102,4 @@ def request_exec(
     if not response.get("ok"):
         raise RuntimeError(str(response.get("error", "admin broker request failed")))
     return response
-# ratios: loc_comments=46:33 imports_exports=5:1 calls_definitions=15:1
+# ratios: loc_comments=53:40 imports_exports=5:2 calls_definitions=19:2

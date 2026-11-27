@@ -1,4 +1,4 @@
-# ratios: loc_comments=230:30 imports_exports=5:4 calls_definitions=96:11
+# ratios: loc_comments=221:35 imports_exports=5:4 calls_definitions=92:11
 """Pure-stdlib harmonic math used by ratios/harmonics.py.
 
 Usage:
@@ -216,39 +216,36 @@ def graph_harmonics(
     }
 
 
-def _solve3(matrix: list[list[float]], rhs: list[float]) -> list[float] | None:
-    aug = [matrix[i][:] + [rhs[i]] for i in range(3)]
-    for col in range(3):
-        pivot = max(range(col, 3), key=lambda row: abs(aug[row][col]))
-        if abs(aug[pivot][col]) <= 1e-12:
-            return None
-        aug[col], aug[pivot] = aug[pivot], aug[col]
-        scale = aug[col][col]
-        aug[col] = [value / scale for value in aug[col]]
-        for row in range(3):
-            if row == col:
-                continue
-            factor = aug[row][col]
-            if factor:
-                aug[row] = [a - factor * b for a, b in zip(aug[row], aug[col])]
-    return [aug[i][3] for i in range(3)]
+def _least_squares_fit(columns: list[list[float]], y: list[float], *, tol: float = 1e-9) -> list[float]:
+    """Fitted values of ``y`` projected onto the span of the independent columns.
+
+    Columns that are numerically dependent on earlier ones (for example a sine
+    column that vanishes at the Nyquist frequency) are dropped instead of making
+    the whole fit fail, so the remaining basis still yields its least-squares fit.
+    """
+    basis: list[list[float]] = []
+    for column in columns:
+        vector = column[:]
+        for _ in range(2):  # re-orthogonalize once for numerical stability
+            for unit in basis:
+                weight = _dot(unit, vector)
+                vector = [a - weight * b for a, b in zip(vector, unit)]
+        norm = math.sqrt(_dot(vector, vector))
+        if norm <= tol * max(1.0, math.sqrt(_dot(column, column))):
+            continue
+        basis.append([value / norm for value in vector])
+    fitted = [0.0] * len(y)
+    for unit in basis:
+        weight = _dot(unit, y)
+        fitted = [f + weight * b for f, b in zip(fitted, unit)]
+    return fitted
 
 
 def _sinusoid_power(x: list[float], y: list[float], omega: float) -> float:
     n = len(x)
     cosines = [math.cos(omega * value) for value in x]
     sines = [math.sin(omega * value) for value in x]
-    cross = sum(c * s for c, s in zip(cosines, sines))
-    matrix = [
-        [float(n), sum(cosines), sum(sines)],
-        [sum(cosines), sum(c * c for c in cosines), cross],
-        [sum(sines), cross, sum(s * s for s in sines)],
-    ]
-    rhs = [sum(y), sum(v * c for v, c in zip(y, cosines)), sum(v * s for v, s in zip(y, sines))]
-    beta = _solve3(matrix, rhs)
-    if beta is None:
-        return 0.0
-    fitted = [beta[0] + beta[1] * c + beta[2] * s for c, s in zip(cosines, sines)]
+    fitted = _least_squares_fit([[1.0] * n, cosines, sines], y)
     mean = sum(y) / n
     sst = sum((value - mean) ** 2 for value in y)
     if sst <= 0.0:
@@ -295,4 +292,4 @@ def harmonic_scan(
         }
         for i, harmonic in enumerate(harmonics)
     ]
-# ratios: loc_comments=230:30 imports_exports=5:4 calls_definitions=96:11
+# ratios: loc_comments=221:35 imports_exports=5:4 calls_definitions=92:11

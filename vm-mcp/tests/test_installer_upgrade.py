@@ -194,6 +194,92 @@ class PtraceConfOrderTests(TempDirCase):
         self.assertEqual(1, text.count('ensure_ptrace_scope "$PROFILE"'))
 
 
+class ServiceHomeTests(TempDirCase):
+    def prepare(self, home: Path) -> subprocess.CompletedProcess:
+        import grp
+        import pwd
+        owner = pwd.getpwuid(os.getuid()).pw_name
+        group = grp.getgrgid(os.getgid()).gr_name
+        body = f'prepare_service_home "{home}" "{owner}" "{group}"; echo "rc=$?"'
+        return run_functions(body, ("prepare_service_home",))
+
+    def test_creates_a_private_home(self) -> None:
+        home = self.tmp() / ".vm-mcp-home"
+        result = self.prepare(home)
+        self.assertIn("rc=0", result.stdout, result.stderr)
+        self.assertEqual(0o700, stat.S_IMODE(home.stat().st_mode))
+
+    def test_tightens_an_existing_home_directory(self) -> None:
+        home = self.tmp() / ".vm-mcp-home"
+        home.mkdir(mode=0o755)
+        result = self.prepare(home)
+        self.assertIn("rc=0", result.stdout, result.stderr)
+        self.assertEqual(0o700, stat.S_IMODE(home.stat().st_mode))
+
+    def test_refuses_a_symlinked_home_and_leaves_its_target_alone(self) -> None:
+        directory = self.tmp()
+        target = directory / "elsewhere"
+        target.mkdir(mode=0o755)
+        target.chmod(0o755)
+        home = directory / ".vm-mcp-home"
+        home.symlink_to(target, target_is_directory=True)
+        result = self.prepare(home)
+        self.assertIn("rc=5", result.stdout)
+        self.assertIn("symbolic link", result.stderr)
+        self.assertEqual(0o755, stat.S_IMODE(target.stat().st_mode))
+        self.assertTrue(home.is_symlink())
+
+    def test_refuses_a_home_that_is_not_a_directory(self) -> None:
+        home = self.tmp() / ".vm-mcp-home"
+        home.write_text("x", encoding="utf-8")
+        result = self.prepare(home)
+        self.assertIn("rc=5", result.stdout)
+
+    def test_installer_prepares_the_home_through_the_guarded_helper(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertIn('prepare_service_home "$WORK_ROOT/.vm-mcp-home" "$SERVICE_USER" "$SERVICE_GROUP" || exit 5', text)
+        self.assertNotIn('-m 0700 "$WORK_ROOT/.vm-mcp-home"', text)
+
+
+class ServiceDropinTests(TempDirCase):
+    def test_dropins_quote_the_workspace_and_carry_the_broker_socket(self) -> None:
+        systemd = self.tmp() / "system"
+        body = (f'SYSTEMD_DIR="{systemd}"; WORK_ROOT="/srv/work space/100%"; '
+                'ADMIN_SOCKET="/run/vm-mcp/custom.sock"; write_service_dropins; echo "rc=$?"')
+        result = run_functions(body, ("systemd_quote", "systemd_unit_value", "write_service_dropins"))
+        self.assertIn("rc=0", result.stdout, result.stderr)
+        workspace = (systemd / "vm-mcp.service.d" / "workspace.conf").read_text(encoding="utf-8")
+        self.assertIn('ReadWritePaths=\nReadWritePaths="/srv/work space/100%%"\n', workspace)
+        socket_conf = (systemd / "vm-mcp-admin.service.d" / "socket.conf").read_text(encoding="utf-8")
+        self.assertEqual('[Service]\nEnvironment="VM_MCP_ADMIN_SOCKET=/run/vm-mcp/custom.sock"\n', socket_conf)
+
+    def test_dropin_units_parse_with_systemd_when_available(self) -> None:
+        analyze = shutil.which("systemd-analyze")
+        if analyze is None:
+            self.skipTest("systemd-analyze is not installed")
+        directory = self.tmp()
+        systemd = directory / "system"
+        body = (f'SYSTEMD_DIR="{systemd}"; WORK_ROOT="/srv/work space"; '
+                'ADMIN_SOCKET="/run/vm-mcp/custom.sock"; write_service_dropins; echo "rc=$?"')
+        run_functions(body, ("systemd_quote", "systemd_unit_value", "write_service_dropins"))
+        conf = (systemd / "vm-mcp.service.d" / "workspace.conf").read_text(encoding="utf-8")
+
+        def verify(body: str) -> str:
+            unit = directory / "probe.service"
+            unit.write_text("[Service]\nExecStart=/bin/true\n" + body, encoding="utf-8")
+            return subprocess.run([analyze, "verify", str(unit)], capture_output=True, text=True).stderr
+
+        if "not absolute" not in verify("ReadWritePaths=/srv/work space\n"):
+            self.skipTest("systemd-analyze cannot parse unit files in this environment")
+        self.assertNotIn("not absolute", verify(conf.split("\n", 1)[1]))
+
+    def test_installer_writes_dropins_and_backs_up_the_broker_dropin(self) -> None:
+        text = INSTALLER.read_text(encoding="utf-8")
+        self.assertIn("write_service_dropins || exit 6", text)
+        self.assertNotIn("ReadWritePaths=$WORK_ROOT", text)
+        self.assertIn('"$SYSTEMD_DIR/vm-mcp-admin.service.d"', text)
+
+
 class BackupTests(TempDirCase):
     def test_previous_install_is_copied_to_a_root_only_dir_before_overwrite(self) -> None:
         directory = self.tmp()

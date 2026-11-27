@@ -1,4 +1,4 @@
-# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11
+# ratios: loc_comments=329:55 imports_exports=16:6 calls_definitions=124:11
 """Syntax-aware code readers for the unified collection.
 
 Usage: registry calls read_python/read_typescript with bounded bytes and context.
@@ -11,7 +11,6 @@ results produce a reader failure without partial facts or guessed edges.
 from __future__ import annotations
 
 import ast
-import hashlib
 import json
 import os
 import re
@@ -201,10 +200,13 @@ def _kill_process_group(process: subprocess.Popen) -> None:
         try:
             os.killpg(process.pid, signal.SIGKILL)  # start_new_session: pgid == pid
         except (ProcessLookupError, PermissionError):
+            # The group already exited or is not ours to signal; the direct
+            # kill below still covers the child itself.
             pass
     try:
         process.kill()
     except ProcessLookupError:
+        # The child already exited; nothing is left to kill.
         pass
 
 
@@ -416,4 +418,4 @@ def _typescript_facts(parsed: dict[str, Any], context: dict[str, Any]) -> tuple[
         for target in targets or [fallback]:
             edges.append(_edge(fact['subject']['address'], target, 'exports:' + item['exported_name']))
     return facts, edges, diagnostics
-# ratios: loc_comments=330:52 imports_exports=17:6 calls_definitions=124:11
+# ratios: loc_comments=329:55 imports_exports=16:6 calls_definitions=124:11

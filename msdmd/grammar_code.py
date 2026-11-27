@@ -1,4 +1,4 @@
-# ratios: loc_comments=116:9 imports_exports=8:1 calls_definitions=41:4
+# ratios: loc_comments=115:9 imports_exports=7:1 calls_definitions=41:4
 """Source metadata from pinned Rust, Java, C and C++ grammars.
 
 Usage: read_grammar(path, supplied_bytes, context) through msdmd.collect.
@@ -8,7 +8,6 @@ retains raw comments and repeated tags; it does not run rustdoc or Doxygen.
 """
 from __future__ import annotations
 
-import hashlib
 import importlib
 import re
 from pathlib import Path
@@ -133,4 +132,4 @@ def read_grammar(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list
             emit(node, 'license-declaration', context['file'], {'tag': 'SPDX-' + match[1], 'value': match[2].strip()},
                  scope='module', convention='spdx.source-header')
     return facts, [], diagnostics
-# ratios: loc_comments=116:9 imports_exports=8:1 calls_definitions=41:4
+# ratios: loc_comments=115:9 imports_exports=7:1 calls_definitions=41:4

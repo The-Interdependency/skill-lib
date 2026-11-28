@@ -8,6 +8,8 @@ Type=simple
 User=root
 Group=root
 WorkingDirectory=/opt/vm-mcp
+# install.sh overrides this default in vm-mcp-admin.service.d/socket.conf with
+# the VM_MCP_ADMIN_SOCKET it writes to /etc/vm-mcp.env for vm-mcp.service.
 Environment=VM_MCP_ADMIN_SOCKET=/run/vm-mcp/admin.sock
 Environment=VM_MCP_CALLER_USER=vmmcp
 Environment=PYTHONDONTWRITEBYTECODE=1
@@ -19,7 +21,10 @@ RuntimeDirectory=vm-mcp
 RuntimeDirectoryMode=0750
 StateDirectory=vm-mcp-admin
 StateDirectoryMode=0700
-RestrictAddressFamilies=AF_UNIX
+# The broker listener is AF_UNIX in admin_broker.py. This filter also applies
+# to the commands the broker runs, so it allows the IP families those
+# commands need (git fetch, package installs, TCP database clients).
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
 TasksMax=256
 LimitNOFILE=4096
 

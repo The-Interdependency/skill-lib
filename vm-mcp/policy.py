@@ -1,4 +1,4 @@
-# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24
+# ratios: loc_comments=398:66 imports_exports=15:13 calls_definitions=144:25
 """Policy primitives for the vm-mcp runtime.
 
 Usage guidance:
@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import os
 import pwd
+import secrets
 import selectors
 import shutil
 import signal
@@ -291,10 +292,32 @@ def write_text(
     encoded = text.encode("utf-8")
     if len(encoded) > config.max_read_bytes:
         raise ValueError("write payload exceeds VM_MCP_MAX_READ_BYTES")
-    tmp = path.with_name(f".{path.name}.vm-mcp.tmp")
-    tmp.write_bytes(encoded)
-    os.replace(tmp, path)
+    tmp, fd = _create_exclusive_temp(path)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(encoded)
+        os.replace(tmp, path)
+    except BaseException:
+        tmp.unlink(missing_ok=True)
+        raise
     return {"path": str(path), "bytes_written": len(encoded)}
+
+
+def _create_exclusive_temp(path: Path) -> tuple[Path, int]:
+    """Create a new, uniquely named sibling of ``path`` for an atomic write.
+
+    O_CREAT|O_EXCL never opens an existing entry (including a symlink planted
+    under the temporary name), and O_NOFOLLOW is kept as a second guard.
+    """
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    flags |= getattr(os, "O_CLOEXEC", 0)
+    for _ in range(100):
+        tmp = path.with_name(f".{path.name}.{secrets.token_hex(8)}.vm-mcp.tmp")
+        try:
+            return tmp, os.open(tmp, flags, 0o600)
+        except FileExistsError:
+            continue
+    raise FileExistsError(f"could not create a unique temporary file beside {path}")
 
 
 def make_directory(
@@ -374,15 +397,25 @@ def _communicate_bounded(
     timed_out = False
     descendants_cleaned = False
     try:
-        while selector.get_map():
+        while True:
             now = time.monotonic()
             if not timed_out and now >= deadline:
                 timed_out = True
                 _kill_group(process)
                 descendants_cleaned = True
-            if process.poll() is not None and not descendants_cleaned:
+            exited = process.poll() is not None
+            if exited and not descendants_cleaned:
+                # The main process has finished: clean up descendants left in
+                # its process group even when both pipes already reached EOF.
                 _kill_group(process)
                 descendants_cleaned = True
+            if not selector.get_map():
+                if exited or timed_out:
+                    break
+                # Both output streams closed but the command is still running:
+                # keep waiting for it against the remaining timeout.
+                time.sleep(max(0.0, min(0.05, deadline - now)))
+                continue
             wait = 0.05 if timed_out else max(0.0, min(0.1, deadline - now))
             events = selector.select(wait)
             for key, _ in events:
@@ -482,4 +515,4 @@ def broker_exec(
         timeout_seconds=timeout,
         max_output_bytes=config.max_output_bytes,
     )
-# ratios: loc_comments=376:58 imports_exports=14:13 calls_definitions=135:24
+# ratios: loc_comments=398:66 imports_exports=15:13 calls_definitions=144:25

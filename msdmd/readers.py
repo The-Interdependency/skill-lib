@@ -1,4 +1,4 @@
-# ratios: loc_comments=1045:80 imports_exports=24:5 calls_definitions=330:35
+# ratios: loc_comments=1043:80 imports_exports=23:5 calls_definitions=330:35
 # === MODULE_BUILD ===
 # id: msdmd_native_reader_registry
 #   module_name: readers
@@ -43,7 +43,6 @@ import json
 import math
 import re
 import shlex
-import sys
 import tokenize
 import tomllib
 import xml.etree.ElementTree as ET
@@ -869,7 +868,6 @@ def _read_systemd(path: Path, data: bytes, context: dict[str, Any]) -> tuple[lis
             diagnostics.append(_diagnostic(context, reader_id=reader_id, code="invalid_systemd_directive", message="expected key=value", status="invalid", severity="error", location={"start_line": logical_start, "end_line": number}))
             continue
         key, value = (part.strip() for part in line.split("=", 1))
-        published_value = value
         location = {'start_line': logical_start, 'end_line': number}
         if key.lower() == 'environment':
             published_value, redacted, unsupported = _redact_systemd_environment(value)
@@ -1210,4 +1208,4 @@ def read_native(path: Path, data: bytes, context: dict[str, Any]) -> tuple[list[
         facts = [f for f in facts if not (f["kind"] == "structured-document" and f["extraction"]["reader_id"] != "metadata-standards"
             and (superseding or any(f["native"]["value"] == root["native"]["value"] for root in roots)))]
     return reader_ids, facts, edges, diagnostics
-# ratios: loc_comments=1045:80 imports_exports=24:5 calls_definitions=330:35
+# ratios: loc_comments=1043:80 imports_exports=23:5 calls_definitions=330:35

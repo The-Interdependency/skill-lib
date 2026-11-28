@@ -71,6 +71,11 @@ class VmMcpAssetTests(unittest.TestCase):
         self.assertIn("VM_MCP_PROFILE=personal-console", installer)
         self.assertNotIn("User=root\nGroup=root\nWorkingDirectory=/opt/vm-mcp\nEnvironmentFile", (ROOT / "systemd" / "vm-mcp.service").read_text(encoding="utf-8"))
 
+    def test_broker_commands_may_open_network_sockets(self) -> None:
+        service = (ROOT / "systemd" / "vm-mcp-admin.service").read_text(encoding="utf-8")
+        families = next(line for line in service.splitlines() if line.startswith("RestrictAddressFamilies="))
+        self.assertEqual({"AF_UNIX", "AF_INET", "AF_INET6"}, set(families.split("=", 1)[1].split()))
+
     def test_installer_preserves_existing_workspace_ownership(self) -> None:
         text = (ROOT / "install.sh").read_text(encoding="utf-8")
         self.assertIn('if [[ ! -e "$WORK_ROOT" ]]', text)

@@ -3,6 +3,41 @@
 Notable changes to shipped skill behaviour that consumers must act on. Newest
 first. Propagation PRs cite the skill-lib commit; this file explains why.
 
+## Unreleased: vm-mcp, manifest and ratios review fixes
+
+Fixes for review findings raised on the 1d47146 consumer syncs. Consumers pick
+them up on the next propagation; VMs pick up the vm-mcp changes on the next
+`vm-mcp/install.sh` run.
+
+- **Commands run to completion.** `shell_exec` and the privileged components'
+  `user_exec`/`admin_exec` keep waiting for a command after it closes both
+  output streams, until it exits or times out, instead of killing it early.
+  Descendants left in the command's process group are cleaned up after the
+  command exits even when its pipes closed first.
+- **Atomic writes use an exclusive temporary file.** `write_text` creates a new,
+  uniquely named temporary file and never opens an existing entry at the
+  temporary path.
+- **Configured broker socket reaches the broker.** The installer writes
+  `vm-mcp-admin.service.d/socket.conf` with the selected `VM_MCP_ADMIN_SOCKET`
+  (and backs that drop-in up on reruns), so a non-default socket path works.
+- **Broker-run commands may use IP sockets.** `vm-mcp-admin.service` allows
+  `AF_INET`/`AF_INET6` alongside `AF_UNIX`; the listener itself stays AF_UNIX.
+- **Workspace path quoted in the drop-in.** `ReadWritePaths=` is written quoted
+  (with `%` escaped), so a workspace path containing spaces stays one path.
+- **Service home preparation.** The installer refuses a symlink or non-directory
+  at `$VM_MCP_ROOT/.vm-mcp-home` and applies owner and mode through a
+  descriptor opened without following symlinks.
+- **Response limit covers JSON escaping.** The broker client sizes its response
+  limit from the request's output limit at worst-case JSON expansion.
+- **Broker survives disconnected clients.** A failed response send is logged
+  and the broker keeps accepting requests.
+- **manifest:** `generate.py` refuses a document whose END marker precedes its
+  BEGIN marker instead of duplicating text.
+- **ratios:** `harmonic_scan` fits the independent basis columns, so a sine
+  column that vanishes (Nyquist sampling) no longer reports zero power.
+- **Code-quality notes:** unused imports and an unused assignment removed in
+  msdmd/ratios; intentionally ignored exceptions are commented.
+
 ## Unreleased: pstack-orchestration skill
 
 New procedural skill `pstack-orchestration/` for evidence-bound GitHub repo and

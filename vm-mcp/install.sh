@@ -313,13 +313,14 @@ finish_install() {
 }
 
 # Usage: backup_previous_install
-# Copies the prior install root (without its venv), units, drop-in, env file
+# Copies the prior install root (without its venv), units, drop-ins, env file
 # and sysctl.d file into a new root-only directory under BACKUP_BASE before
 # anything is overwritten, and prints its path. No-op on a fresh install.
 backup_previous_install() {
   local dest item found=0
   local items=("$INSTALL_ROOT" "$SYSTEMD_DIR/vm-mcp.service" "$SYSTEMD_DIR/vm-mcp-admin.service"
-               "$SYSTEMD_DIR/vm-mcp.service.d" "$ENV_FILE" "$PTRACE_SYSCTL_CONF")
+               "$SYSTEMD_DIR/vm-mcp.service.d" "$SYSTEMD_DIR/vm-mcp-admin.service.d" "$ENV_FILE"
+               "$PTRACE_SYSCTL_CONF")
   for item in "${items[@]}"; do
     [[ -e "$item" || -L "$item" ]] && found=1
   done
@@ -472,6 +473,69 @@ systemd_quote() {
   printf '"%s"' "$value"
 }
 
+# Usage: systemd_unit_value VALUE
+# Quotes VALUE for a unit-file setting that is specifier-expanded and split on
+# whitespace (ReadWritePaths=, Environment=): like systemd_quote, and also
+# doubles % so a path containing it is not read as a specifier.
+systemd_unit_value() {
+  local value
+  value=$(systemd_quote "$1")
+  printf '%s' "${value//%/%%}"
+}
+
+# Usage: write_service_dropins
+# Writes the drop-ins that carry install-time settings into both units: the
+# workspace path for vm-mcp.service, and the selected broker socket for
+# vm-mcp-admin.service so the broker listens where the MCP service connects.
+write_service_dropins() {
+  install -d -m 0755 "$SYSTEMD_DIR/vm-mcp.service.d" "$SYSTEMD_DIR/vm-mcp-admin.service.d" || return 1
+  cat > "$SYSTEMD_DIR/vm-mcp.service.d/workspace.conf" <<EOF || return 1
+[Service]
+ReadWritePaths=
+ReadWritePaths=$(systemd_unit_value "$WORK_ROOT")
+EOF
+  chmod 0644 "$SYSTEMD_DIR/vm-mcp.service.d/workspace.conf" || return 1
+  cat > "$SYSTEMD_DIR/vm-mcp-admin.service.d/socket.conf" <<EOF || return 1
+[Service]
+Environment=$(systemd_unit_value "VM_MCP_ADMIN_SOCKET=$ADMIN_SOCKET")
+EOF
+  chmod 0644 "$SYSTEMD_DIR/vm-mcp-admin.service.d/socket.conf"
+}
+
+# Usage: prepare_service_home HOME OWNER GROUP
+# Creates the service home, or re-owns an existing one, without following a
+# symbolic link at that path. A symlink or non-directory is refused, and the
+# owner and mode are applied through a descriptor opened with O_NOFOLLOW, so
+# the entry that is checked is the entry that is changed.
+prepare_service_home() {
+  local home=$1 owner=$2 group=$3
+  if [[ -L "$home" ]]; then
+    echo "ERROR: $home is a symbolic link; refusing to use it as the service home" >&2
+    return 5
+  fi
+  if [[ -e "$home" && ! -d "$home" ]]; then
+    echo "ERROR: $home exists but is not a directory" >&2
+    return 5
+  fi
+  python3 - "$home" "$owner" "$group" <<'PYHOME' || return 5
+import grp, os, pwd, sys
+home, owner, group = sys.argv[1:4]
+try:
+    os.mkdir(home, 0o700)
+except FileExistsError:
+    pass
+try:
+    fd = os.open(home, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+except OSError as exc:
+    sys.exit(f"ERROR: refusing service home {home}: {exc.strerror}")
+try:
+    os.fchown(fd, pwd.getpwnam(owner).pw_uid, grp.getgrnam(group).gr_gid)
+    os.fchmod(fd, 0o700)
+finally:
+    os.close(fd)
+PYHOME
+}
+
 precheck_ptrace_scope "$PROFILE" || exit 7
 BACKUP_DIR=""
 backup_previous_install || { echo "ERROR: could not back up the previous install; nothing was changed" >&2; exit 9; }
@@ -491,7 +555,7 @@ elif [[ ! -d "$WORK_ROOT" ]]; then
   echo "ERROR: VM_MCP_ROOT exists but is not a directory: $WORK_ROOT" >&2
   exit 5
 fi
-install -d -o "$SERVICE_USER" -g "$SERVICE_GROUP" -m 0700 "$WORK_ROOT/.vm-mcp-home"
+prepare_service_home "$WORK_ROOT/.vm-mcp-home" "$SERVICE_USER" "$SERVICE_GROUP" || exit 5
 install -d -o root -g root -m 0755 "$INSTALL_ROOT" "$INSTALL_ROOT/systemd"
 
 for file in server.py auth.py policy.py profiles.py yama_gate.py admin_client.py admin_broker.py first_use.py requirements.txt; do
@@ -542,13 +606,7 @@ VM_MCP_PORT=$PORT
 VM_MCP_ADMIN_SOCKET=$(systemd_quote "$ADMIN_SOCKET")
 EOF
 
-install -d -m 0755 /etc/systemd/system/vm-mcp.service.d
-cat > /etc/systemd/system/vm-mcp.service.d/workspace.conf <<EOF
-[Service]
-ReadWritePaths=
-ReadWritePaths=$WORK_ROOT
-EOF
-chmod 0644 /etc/systemd/system/vm-mcp.service.d/workspace.conf
+write_service_dropins || exit 6
 
 systemctl daemon-reload
 if [[ "$PROFILE" == personal-console ]]; then

@@ -34,6 +34,14 @@ class HarmonicsTest(unittest.TestCase):
         self.assertEqual(dominant['harmonic'], 2)
         self.assertGreater(dominant['power'], 0.99)
 
+    def test_harmonic_scan_fits_cosine_when_sine_column_vanishes(self):
+        modes = H.harmonic_scan([0, 1, 2, 3, 4], [1, -1, 1, -1, 1], max_harmonic=3, permutations=0)
+        self.assertAlmostEqual(modes[1]['power'], 1.0, places=9)
+
+    def test_harmonic_scan_fits_nyquist_cosine_on_repeated_positions(self):
+        modes = H.harmonic_scan([0, 1, 1, 2, 2], [1, -1, -1, 1, 1], max_harmonic=2, permutations=0)
+        self.assertAlmostEqual(modes[0]['power'], 1.0, places=9)
+
     def test_contrast_preserves_zero_zero_as_undefined(self):
         self.assertIsNone(H.bounded_contrast(0, 0))
         self.assertEqual(H.bounded_contrast(3, 1), 0.5)

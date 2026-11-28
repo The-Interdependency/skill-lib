@@ -1,4 +1,4 @@
-# ratios: loc_comments=1078:263 imports_exports=23:10 calls_definitions=421:39
+# ratios: loc_comments=1078:265 imports_exports=23:10 calls_definitions=421:39
 # === DOCS ===
 # id: msdmd_foundational_contract
 #   source: msdmd/SKILL.md
@@ -379,6 +379,8 @@ def _git_identity(
                 input_changes.append(changed_path)
         dirty = bool(input_changes)
     except (OSError, subprocess.CalledProcessError):
+        # Git metadata is optional: without it the collection keeps the
+        # fallback revision ("hmmm") and the dirty state computed so far.
         pass
     return revision or "hmmm", dirty, git_head
 
@@ -1450,4 +1452,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=1078:263 imports_exports=23:10 calls_definitions=421:39
+# ratios: loc_comments=1078:265 imports_exports=23:10 calls_definitions=421:39

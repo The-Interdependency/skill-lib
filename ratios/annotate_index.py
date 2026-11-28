@@ -1,4 +1,4 @@
-# ratios: loc_comments=324:42 imports_exports=7:5 calls_definitions=124:23
+# ratios: loc_comments=324:44 imports_exports=7:5 calls_definitions=124:23
 """Portable computer for the canonical ratios seal — a0's `N:M C:D I:O`.
 
 This is the shared, stdlib port of `The-Interdependency/a0`'s
@@ -212,7 +212,9 @@ def _read_consumer_text(root: Path, consumer_dirs: Iterable[str]) -> str:
                 try:
                     parts.append(fp.read_text(encoding="utf-8"))
                 except OSError:
-                    pass
+                    # Best effort: an unreadable consumer file is skipped and
+                    # the scan continues with the remaining files.
+                    continue
     return "\n".join(parts)
 
 
@@ -430,4 +432,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-# ratios: loc_comments=324:42 imports_exports=7:5 calls_definitions=124:23
+# ratios: loc_comments=324:44 imports_exports=7:5 calls_definitions=124:23

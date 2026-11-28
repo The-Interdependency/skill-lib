@@ -98,6 +98,20 @@ from policy import (
 )
 
 
+def _assert_process_gone(case: unittest.TestCase, pid: int, *, wait: float = 3.0) -> None:
+    """Fail unless ``pid`` has exited (a reaped or zombie process counts as gone)."""
+    deadline = time.monotonic() + wait
+    while time.monotonic() < deadline:
+        try:
+            state = Path(f"/proc/{pid}/stat").read_text(encoding="utf-8").rsplit(")", 1)[1].split()[0]
+        except (FileNotFoundError, ProcessLookupError):
+            return
+        if state in {"Z", "X"}:
+            return
+        time.sleep(0.05)
+    os.kill(pid, 9)
+    case.fail(f"process {pid} outlived the command that started it")
+
 class VmMcpPolicyTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -182,9 +196,15 @@ class VmMcpPolicyTests(unittest.TestCase):
 
     def test_write_and_move_remain_under_root(self) -> None:
         config = self.config(profile="workspace")
-        write_text(config, "a/x.txt", "hello", create_parents=True)
+        previous_umask = os.umask(0)
+        try:
+            write_text(config, "a/x.txt", "hello", create_parents=True)
+        finally:
+            os.umask(previous_umask)
         result = move_path(config, "a/x.txt", "moved.txt")
-        self.assertEqual(Path(result["destination"]).read_text(encoding="utf-8"), "hello")
+        destination = Path(result["destination"])
+        self.assertEqual(destination.read_text(encoding="utf-8"), "hello")
+        self.assertEqual(destination.stat().st_mode & 0o777, 0o600)
         with self.assertRaises(PermissionError):
             write_text(config, "../outside.txt", "no")
 
@@ -228,6 +248,42 @@ class VmMcpPolicyTests(unittest.TestCase):
                 self.config(profile="workspace"), mode="admin", user=None,
                 command="true", cwd="/", timeout_seconds=1,
             )
+
+
+    def test_shell_waits_for_command_after_both_streams_close(self) -> None:
+        result = run_shell(
+            self.config(profile="workspace"),
+            "exec >/dev/null 2>&1; sleep 0.3; printf done > finished",
+            timeout_seconds=3,
+        )
+        self.assertFalse(result["timed_out"])
+        self.assertEqual(0, result["exit_code"])
+        self.assertEqual("done", (self.root / "finished").read_text(encoding="utf-8"))
+
+    def test_shell_cleans_up_background_children_after_parent_exit(self) -> None:
+        # Repeated because the pre-fix leak depended on whether pipe EOF or
+        # parent exit was observed first.
+        for _ in range(5):
+            result = run_shell(
+                self.config(profile="workspace"),
+                "exec 2>&-; sleep 20 >/dev/null 2>&1 & echo $!; sleep 0.1",
+                timeout_seconds=3,
+            )
+            self.assertEqual(0, result["exit_code"])
+            _assert_process_gone(self, int(result["stdout"].strip()))
+
+    def test_write_text_does_not_follow_a_planted_temporary_symlink(self) -> None:
+        outside = self.root.parent / f"{self.root.name}-outside.txt"
+        outside.write_text("keep", encoding="utf-8")
+        self.addCleanup(outside.unlink, missing_ok=True)
+        (self.root / ".target.txt.vm-mcp.tmp").symlink_to(outside)
+        write_text(self.config(profile="workspace"), "target.txt", "new")
+        self.assertEqual("keep", outside.read_text(encoding="utf-8"))
+        target = self.root / "target.txt"
+        self.assertFalse(target.is_symlink())
+        self.assertEqual("new", target.read_text(encoding="utf-8"))
+        leftovers = sorted(p.name for p in self.root.iterdir() if p.name.endswith(".vm-mcp.tmp"))
+        self.assertEqual([".target.txt.vm-mcp.tmp"], leftovers)
 
 
 if __name__ == "__main__":

@@ -196,9 +196,15 @@ class VmMcpPolicyTests(unittest.TestCase):
 
     def test_write_and_move_remain_under_root(self) -> None:
         config = self.config(profile="workspace")
-        write_text(config, "a/x.txt", "hello", create_parents=True)
+        previous_umask = os.umask(0)
+        try:
+            write_text(config, "a/x.txt", "hello", create_parents=True)
+        finally:
+            os.umask(previous_umask)
         result = move_path(config, "a/x.txt", "moved.txt")
-        self.assertEqual(Path(result["destination"]).read_text(encoding="utf-8"), "hello")
+        destination = Path(result["destination"])
+        self.assertEqual(destination.read_text(encoding="utf-8"), "hello")
+        self.assertEqual(destination.stat().st_mode & 0o777, 0o600)
         with self.assertRaises(PermissionError):
             write_text(config, "../outside.txt", "no")
 

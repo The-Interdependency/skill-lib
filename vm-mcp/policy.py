@@ -314,7 +314,7 @@ def _create_exclusive_temp(path: Path) -> tuple[Path, int]:
     for _ in range(100):
         tmp = path.with_name(f".{path.name}.{secrets.token_hex(8)}.vm-mcp.tmp")
         try:
-            return tmp, os.open(tmp, flags, 0o666)
+            return tmp, os.open(tmp, flags, 0o600)
         except FileExistsError:
             continue
     raise FileExistsError(f"could not create a unique temporary file beside {path}")
